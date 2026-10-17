@@ -1,0 +1,3492 @@
+{
+  "by_class": {
+    "build-export": {
+      "bytes": 109619950,
+      "entries": 9,
+      "verdicts": {
+        "regeneration_inputs_committed_rebuild_not_executed": 9
+      }
+    },
+    "cache-build": {
+      "bytes": 471451214,
+      "entries": 94,
+      "verdicts": {
+        "regeneration_inputs_committed_rebuild_not_executed": 94
+      }
+    },
+    "capsule": {
+      "bytes": 762615,
+      "entries": 5,
+      "verdicts": {
+        "remote_custody_verified": 5
+      }
+    },
+    "peer-lane": {
+      "bytes": 35426350,
+      "entries": 12,
+      "verdicts": {
+        "owned_by_peer_lane": 12
+      }
+    },
+    "private": {
+      "bytes": 96492,
+      "entries": 1,
+      "verdicts": {
+        "remote_custody_verified": 1
+      }
+    },
+    "source-copy": {
+      "bytes": 226097528,
+      "entries": 1,
+      "verdicts": {
+        "reconstruction_measured_with_custody_for_residue": 1
+      }
+    },
+    "telemetry": {
+      "bytes": 110432,
+      "entries": 36,
+      "verdicts": {
+        "derived_state_regenerable": 36
+      }
+    },
+    "tool-index": {
+      "bytes": 4129056,
+      "entries": 6,
+      "verdicts": {
+        "regenerable_tool_state": 6
+      }
+    }
+  },
+  "entries": [
+    {
+      "bytes": 20098,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-8eef-portfolio-astro",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ee5d49ef8d2c142eebdbee05b49b559d36f97877f19103eab649723af152ed42.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "portfolio/.astro",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-8eef-portfolio-typecheck-summary.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "6957582268dc0a53073b3560e8a9c79a77b94a8b36be936431a190f9ca574b0f.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "portfolio/.quality/typecheck-summary.json",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 25065,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_.pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "175f2f14e87e2d417d1c6dff1942710fc87865d31139b4497f2d764403a57123.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 45925917,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_.venv",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "bfefa556fe746255bb8b4a28b245e49d4f99f3842799ecafdad699a839b1f5e2.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.venv",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 22844,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_src_limen.egg-info",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "292415e6c5ce566899dfda7f89d37b0debcdf7ae9ee724743159cceaa746476c.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen.egg-info",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 1537614,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_src_limen___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "7e8a78e27d3c48bc4286908ec7c98d637417197e8670a20a7339f1640b401ca5.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 200407,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_src_limen_conduct___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "7923d7bdaedabd1aaf391f41da6de0f80950f04b4ca8bf233b6e2da95aa62fea.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/conduct/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 51008,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_src_limen_vigilia___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "4d841b0cd9205a5d1be9bc55e91042ea426c049e3ce51382773d1e41f0a28a32.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/vigilia/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 648259,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-cli_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "f73059f6e01454a3b70c9ed7d9c6100dffd3b1d1cca00df7a33c2ab317d50cb4.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 371352,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-chat-github-20260917-scripts___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "12067742c83f7c8de40bb86342711dc9af3350ca5fb79a054386f3f0155a14e6.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-hospes-pilot-acceptance-20260916-.coverage",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "0d38801b56c5d98c90c210b2e4fa2eb4bc63571863276ec5aec1462cf8a79a83.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json",
+          "uv.lock",
+          "pyproject.toml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".coverage",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 1297794,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-hospes-pilot-acceptance-20260916-out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "7f700c4cac4dc112951c2fd5ab91ff2fecb990c4e3f87f7723d6fe91bc9a317a.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json",
+          "uv.lock",
+          "pyproject.toml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-hospes-portal-hardening-20260916-.coverage",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "a34381b3b72b1d83350bc1859296908a6af53f7c585b03b6047a0fb4b6b6e040.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json",
+          "uv.lock",
+          "pyproject.toml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".coverage",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 1297566,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-hospes-portal-hardening-20260916-out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "a70d9040cedfbbfc68b770f4dad4e352452a2f8a6f27f3c60d48ab3fdeaa06ab.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json",
+          "uv.lock",
+          "pyproject.toml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 28450,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-jules-rolling-quota-20260925-cli-pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "748926cabce79d6b187210df4815fb281f9a0641b4a34fe9ee010ea0c5f20159.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 134210,
+      "class": "capsule",
+      "custody_evidence": "committed at docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004 in 4444J99/limen",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-lady-macbeth-macbeth-followup-20260809-.limen-workstream",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "22c62faa45278eb093bdacce994b1da524b899da57f9835c0fff242d5bc8f3f7.json",
+      "relative_path": ".worktrees/lady-macbeth-macbeth-followup-20260809/.limen-workstream",
+      "source": "<home-path-redacted>",
+      "verdict": "remote_custody_verified"
+    },
+    {
+      "bytes": 8632867,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-lady-macbeth-macbeth-followup-20260809-apps_web_out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "0f31b07b93ffe28c0634a50beb8357f509ca6cdc3fd75d74e66f09199b1fc733.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".worktrees/lady-macbeth-macbeth-followup-20260809/apps/web/out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-lady-macbeth-macbeth-followup-20260809-apps_web_tsconfig.tsbuildinfo",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "98bff88c642747d360d153719d4f094a9114ab66637bf74f13ec17a750e95f84.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".worktrees/lady-macbeth-macbeth-followup-20260809/apps/web/tsconfig.tsbuildinfo",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 18066041,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-lady-macbeth-macbeth-followup-20260809-out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "fbb41f236ed05fbd51a6cf4a55a8b74d0fe9d0fb333175e001f11bdf997b3c31.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".worktrees/lady-macbeth-macbeth-followup-20260809/out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 2236790,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-lady-macbeth-macbeth-followup-20260809-tools_.cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "18e84f36697a96b9613e72a796aa2bcfd2f580266cb465329f779844c730f448.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".worktrees/lady-macbeth-macbeth-followup-20260809/tools/.cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 96492,
+      "class": "private",
+      "custody_evidence": "AES-256-GCM bundle c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9 on gdrive and private 4444J99/arca-g3, each re-downloaded and decrypted",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "<private-cartridge-redacted>",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "fcbd4862e8dcac7e3343637b39043fe456236202ea4a7b2855cc9ac248b654ff.json",
+      "recovery_key_durability": "UNRESOLVED; see receipt.custody.recovery_key_evidence",
+      "relative_path": "<private-cartridge-redacted>",
+      "source": "<home-path-redacted>",
+      "verdict": "remote_custody_verified"
+    },
+    {
+      "bytes": 13865920,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-.mypy_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "f691a508d7e9d2173531b31654fdc985fba2ca1bcf42a5b7c41226a9b722951c.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".mypy_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 11677,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-.pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ea893149ba8702957f9ee61fc040a59d036437b6d4710776f5d86cd8d0179f5e.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 63102,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-.ruff_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "2907b6c3d25c3eb8dca5dfa347c09074b88635a97f242d6b68881db2f45a207f.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".ruff_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 18846703,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_.mypy_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "0b590b1a4873a95fe63cf072e1880cca514dc504193fd77eaebc804b6979f96c.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.mypy_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 54559,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_.pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "bd1c72af86a549584f44e39fe420927640549813fe20ed5faea41958efb498c9.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 2059020,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_src_limen___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "45d56254b3f1eb1d604331fdf068892c45159d9394a7f533afc6c6d742a05b04.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 160885,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_src_limen_agent_state___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ea1e1901eefa3562d172fc7111cb0f6f56de7590de6a0f4e7d2fedac3a8d9ea0.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/agent_state/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 232684,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_src_limen_conduct___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "654bb2f182282172204ea82365582cc13cb98538409f6a3fe177ebd454c1a6f7.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/conduct/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 59170,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_src_limen_vigilia___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "5e3a33ec250f8a1797df2c167778e62a6e04547971d87a4a88b7694e2acb38ec.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/vigilia/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 1456539,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-cli_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "a1703a2b430e1220a21f6ceaa30bc6d1fd2a8cd7b42c805855cf9567b66d0dac.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 20024,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-docs_positioning_offers___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "347cc8869f6cea2915b73ac49d92843cd24a9c081633232c01975cdd49d31d3b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "docs/positioning/offers/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 118319,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-docs_positioning_program___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "833c743c777436c85c5d2369da7f965d57fa8d0e530688f7be4c30284cd6c994.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "docs/positioning/program/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-logs_autonomy-policy.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "0208f57c66e53ee264fa47cf6d8b1b3916a79a3ff6163633dbf3c8dab11e827e.json",
+      "relative_path": "logs/autonomy-policy.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-logs_visibility-actions.jsonl",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "bc56a6d5de8d9021512dd7e8c275c54f385888eac66f51594817abc7cacd0345.json",
+      "relative_path": "logs/visibility-actions.jsonl",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 2656,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-logs_worktree-abandonment",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "79cd4b09d666ae7c26a592e3248e53be535806192f2046b5b07772ee8b1e2cf3.json",
+      "relative_path": "logs/worktree-abandonment",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 2043408,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-scripts___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ee53597f915b8d09a262dd050daa8223898b028b47dadc0521ca7691fc701817.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 486945,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-scripts_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "5cf77e54b8ef97f81467708891fe0b482bcc28e7f8833b1f1501222c4af55e4b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 49115,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "0e4c922a89537a7379e4e3ead21a84c352bc4d573daad0e00bd8fd405d4097b3.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 363,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-personal-estate-20260930-tests_e2e___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c75a8818d56863c9beeff0d703720d4db69a8f98412f682cdedeae9d74af68ca.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "tests/e2e/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-reap-scope-20261004-logs_.reclaim-last",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "858f53f8519734e0987be334a7da06e7f5b6da47a7b2444d800c6483d1d1ad0b.json",
+      "relative_path": "logs/.reclaim-last",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-reap-scope-20261004-logs_reclaim-worktrees.jsonl",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "4258b2ab971c45351b2d02e48ed1f8c25d0506e3fc18afca8c5d38e5008e4049.json",
+      "relative_path": "logs/reclaim-worktrees.jsonl",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 84608,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-reap-scope-20261004-logs_worktree-abandonment",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "7df5347ce649d1c1a1d353f5e04cb3dc4788e833442fcff14a8beb4567f13d04.json",
+      "relative_path": "logs/worktree-abandonment",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 14115776,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-repository-retirement-20260930-.mypy_cache-1791154306790518000-631782312",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 64026,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-repository-retirement-20260930-.ruff_cache-1791154306798601000-631583213",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 2477,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_api_dist",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "9b45bd1a3b7b2628775c4d75045b98e2f866c02426833e20748fbf4d23bf8385.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/api/dist",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 4872,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_api_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "7710da3547aa200e204ef3bb4732f0e26448bf44db3520996492bd1594c60535.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/api/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 90167484,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_web_.next",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "3645ecc0ff9b5cb7b2dc54b441de4e7ce0a05af476a78218577d599485473fd0.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/web/.next",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 5631,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_web_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "f10a0cc0bd8ad63caf3d55392e89b4241d8deb497488b15019402a0f0dce4b83.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/web/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 2618581,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_web_out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "b0369a2040283bef20734deeabf74f381798b540cd2cfc5ba3efce4eebdb99d7.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/web/out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_web_tsconfig.tsbuildinfo",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "4c1c58c09292eef3c983f13d01c9c560515ba3865deeeb11356eb676380230e3.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/web/tsconfig.tsbuildinfo",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 4846,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_worker_dist",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ac2b3cc36e90a0d41f0bf958be631c1f82da9191508149f5fb975eeefd10a861.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/worker/dist",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 4905,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-apps_worker_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "cb9f5758ba21c749f022fc576d6a48ef94556f077dca10acb0e970c33ea2095e.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "apps/worker/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 1546290,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-dist",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "7ebbccba138a83f28b9dc3f6c3ef832628af336c3dff3d04dfc9e391b166aee6.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "dist",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 77539805,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-speech-score-engine-out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "46e6803af352e06de277fb3d283bc80208a82e7e76da8d30196a742759d27c36.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 3085,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-packages_client-sdk_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c5913dffbb621199d09744d69699a331050f94c2433e0433c01f94b40fca2bf0.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "packages/client-sdk/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 3234,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-packages_config_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "12a99a99298363b7cc4f56ed474bb4a5b4d0ef71ef11f18febc853dbe72d1eed.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "packages/config/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 4725,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-packages_database_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "5da608a0ce10460a3d8278a7e82adf24fa3bb12e349390cfd5449299872ba24b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "packages/database/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 3030,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-packages_domain_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "199eca6cc69fb8b83f8556fc49b6a6cd633b247e28a978a2c9bf9d0bcb086d3c.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "packages/domain/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 4255,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-packages_observability_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "f61fdfdb847806ab11cfac59aad769ff4f648e2f6d24cb91f3d6c5f883016b01.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "packages/observability/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 3350,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-packages_ui_node_modules",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "b31f129d27426c32cf60d321cc65d448a01e401358bf3160dda224f7c2f3bc28.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "packages/ui/node_modules",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 2675405,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-tools_.cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "83aab06d11ac3972b931e6509d038c2ec3b4b96a8c0ad07eb8eb3bf857463390.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "tools/.cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 23054198,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-speech-score-engine-tools_.venv",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "cf1de259e476c1dfd828cfcc5b91fecd0efaf3f2b580fbb23076c988de980b38.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "package.json"
+        ],
+        "committed_lockfiles": [
+          "pnpm-lock.yaml"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "tools/.venv",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 219282,
+      "class": "capsule",
+      "custody_evidence": "committed at docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004 in 4444J99/limen",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-.limen-workstream",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "3f481f6d5d4cd277f5b9733cabc3ed8a3812793772e36d99d45cc1b2a511ed7c.json",
+      "relative_path": ".limen-workstream",
+      "source": "<home-path-redacted>",
+      "verdict": "remote_custody_verified"
+    },
+    {
+      "bytes": 12035,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-cli_.pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ccf5d5e44753cab020eefb93f05c6aa23450ec303b98dae46f52f500d95301e8.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 2104169,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-cli_src_limen___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "3a23b1ada7ea22978321cc30852a81f3d2c008f5ee67885c768a3a6380d23397.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 500061,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-cli_src_limen_conduct___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "f5f5cd0a8ff20e96e944743b2c78ac8c7ba0066a89c673274449699fe3475bd2.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/conduct/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 56019,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-cli_src_limen_vigilia___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "a5b55a6cf9e4a05b7e4c034523f2adf8c55937dd3f259d466cd7c618e8217d03.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/vigilia/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 575659,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-cli_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "5e60fdb0087171033a6608cccfa15c34db84b8ac76f318194a7337e62a5e864b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 138934,
+      "class": "capsule",
+      "custody_evidence": "committed at docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004 in 4444J99/limen",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-operator-relay-.limen-workstream",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "8cc835e740bf4c02ffe4b50b1928f5c06e04498e85426cd260ec39043ced7c1e.json",
+      "relative_path": ".limen-workstream",
+      "source": "<home-path-redacted>",
+      "verdict": "remote_custody_verified"
+    },
+    {
+      "bytes": 291338,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-operator-relay-cli_src_limen___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "60b24bbac46b6f3fcbf01a60171f26e18ca0999791a33109f847cee0e2f5687a.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 56109,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-operator-relay-cli_src_limen_vigilia___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "48f56bf5f037bb8b8ef0b89cee572d01af6bd9d06e3ffe7bce7de1e271f7a797.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/vigilia/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 74290,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-operator-relay-scripts___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "2a16280ed21ddff2b58ef79dc3f340a1671428260263a223ee8bdb16ef676324.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 74260,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-20260916-scripts___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "3073098818fec408471730ddb3674f420de326a220650b21ea2365337ef455c1.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 137207,
+      "class": "capsule",
+      "custody_evidence": "committed at docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004 in 4444J99/limen",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-.limen-workstream",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "b0dae4c6ef442e7c0cb2ce5efecc4bebee764e65919d29e335bbecc9cb5669b3.json",
+      "relative_path": ".limen-workstream",
+      "source": "<home-path-redacted>",
+      "verdict": "remote_custody_verified"
+    },
+    {
+      "bytes": 881172,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-cli_src_limen___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "fc380d41871e75b53ee637b4ab39dcccd852096e539d57f700b26960b37db989.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 160939,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-cli_src_limen_agent_state___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "108048093f5f5f4239c9e4bd88912a3b4f8c174557ea8f845d5a56482af4f028.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/agent_state/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 232738,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-cli_src_limen_conduct___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "81806c027e15b591153838db69b4f861065e48bf167a1ba9b6d988aa748cc3a8.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/conduct/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 59224,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-cli_src_limen_vigilia___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "9e21697f457b20d61633d7a4ed0ae4b8c05caadd92009eb008284cf3d91f2102.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/vigilia/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-logs_tabularius-organ-state.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "b387eaf7e21e718ff538663a1b9dc8cdbeea0dc983a6ded5156c1f12308f5ab1.json",
+      "relative_path": "logs/tabularius-organ-state.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 211531,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-spine-closeout-successor-20260926-scripts___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "933763c70bf08129769bf4bd96bd6a888ea96b935e28a6af1b3f530c3cda6880.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_claude-identity-bundle-status.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "a6dece99acffa69afdb3fecbce33a866f6d12a21efce8bb4e488eedea717daec.json",
+      "relative_path": "logs/claude-identity-bundle-status.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_feed-health.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "0d62194d064d29bba0e7f72ed23a3eaf603b48967b43ac654b635cc89aa0401c.json",
+      "relative_path": "logs/feed-health.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_fork-safety.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "544a31bdbe86a7ce10a76f09e148b662c3e720b399ef9c03dbb036f8ef7d1945.json",
+      "relative_path": "logs/fork-safety.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 1110,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_observation",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "87190be284efc87a2d0da2fd5cdca3c89c30973619e7be86bbe63bb28e3c85d4.json",
+      "relative_path": "logs/observation",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_route-health.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "819892e5f34f25364d9b42d8917dfa74d596783f1f7630b608bf28062ab6745b.json",
+      "relative_path": "logs/route-health.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_self-improve-proposal.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "83bef0661bf979535408ae046a48825ac9ed6ffcb387c44c657f6948e105e689.json",
+      "relative_path": "logs/self-improve-proposal.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_session-lifecycle-pressure.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "041c773e28ea0a127749b432af508f0440b129383b3e0bc63a26a7f3a5cdbfef.json",
+      "relative_path": "logs/session-lifecycle-pressure.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_session-lifecycle-pressure.md",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "9433c3e2e562283dd60b6bcc287923af9ae630a6011b82f4fadd17ce1cd0fe3d.json",
+      "relative_path": "logs/session-lifecycle-pressure.md",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_session-orientation.md",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "917d6b150fe079334ea4f2d9cbb2963ca03f61f00dcbae7bdef4a5e033941c2d.json",
+      "relative_path": "logs/session-orientation.md",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 759,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_vigilia",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "c4d9bf013bcc920c5359d24bf66834ea45f789b65cd7673000025173a8309fbd.json",
+      "relative_path": "logs/vigilia",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 1396,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-logs_worktree-abandonment",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "0388b130001257bf1b53c4ffae0320c009467786aca1cca8d2d2b35135b11930.json",
+      "relative_path": "logs/worktree-abandonment",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 4573538,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-web_app_.generated",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "95a814cfbdf616cb3ef4c50c85ddfa7e84c81964e3cb3dc569a6e5ccb71a30cf.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "web/app/.generated",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 5100,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-vltima-closeout-20260709-web_app_public",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "fcb4a665953b6d802517bfe822025326885e1d6ae4cd32e05f88e55c5fe56a30.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "web/app/public",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 132982,
+      "class": "capsule",
+      "custody_evidence": "committed at docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004 in 4444J99/limen",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-.limen-workstream",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "6f109df74b735d3bd82e8cacfda5ca52b51bb8ba32ff774870f4dd7842c39235.json",
+      "relative_path": ".limen-workstream",
+      "source": "<home-path-redacted>",
+      "verdict": "remote_custody_verified"
+    },
+    {
+      "bytes": 63350844,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-.mypy_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "31320a41ba5baff85ef32741715f4b152691526f807a1c7b9ab6e8478d264972.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".mypy_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 26378,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-.pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c78b9129635bf37fe82e8d92ff66b2e77bd568afba04cf851bd743a93e2bbff6.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 102994,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-.ruff_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c0fc5481224c27637b9dfc008073dda5be0869d66eed4bef21e7ce778b1acf44.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".ruff_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 84560954,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_.mypy_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "af3749f75f0a1c962266cdb51ff52a1339d17598c32b2de88538f3a97b72e3ba.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.mypy_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 142934,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_.pytest_cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ab126ffef106e88af3890e518a7539b63f6a91bf47419ddebc85ee6d6b3a06bb.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.pytest_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 11532773,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_.venv",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "70d4c31e72495676768ca3db0847514081af18fd3505f86a10c1d2136b3a9c7d.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/.venv",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 22844,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen.egg-info",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "ef896c07218e737c4599f1f7903663abb58a8d0982d2d4aae2b5988c491ab39a.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen.egg-info",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 6205376,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "29cd52dce8553559560d2775cb79944cb35f09f1965bd05793273e438305cd3c.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 453112,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen_agent_state___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "e9c32c3752c40a424ca997cf6be0a37aee01b7175e16e1686b3ecbc4faefc65b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/agent_state/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 925884,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen_conduct___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "25ed750baf4eb2cf46649195fc8368414c1cb3ec017dfb71bdc8909e86022753.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/conduct/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 17441,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen_observation___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "11cf8208200e381466ec726151553f636881a9a6f1e2cb1037f07d606ed8e1b2.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/observation/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 140237,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen_observatory___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "f1e2dfbb19d47245a8b26ba641c36dada81ebed4f703a8154685786350b93485.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/observatory/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 143935,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen_research___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "624e1a2ac067d3272e855b8d6f3c0a381700f604794e7e08d3571f967c20bcac.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/research/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 117001,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_src_limen_vigilia___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "1a88ec5065eeed16a27ac8a90ea6c954a15543f72cb54e41f2be3b896eb7d5e8.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/src/limen/vigilia/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 23654999,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "0b1c41da05db973a0c93e8d284d09a136a51f7123ae00e7d19853fa326fbb259.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 301217,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-cli_tests_e2e___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c2fed318c90ca941c144de2384953a93a1021735236104d254799540499980c0.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "cli/tests/e2e/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 38623,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-docs_positioning_offers___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "7181b94f4a1f061d34dc936b9a8b2e7ce797dab395ed653edf92e5fc76e45c1d.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "docs/positioning/offers/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 223546,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-docs_positioning_program___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c30e7f0ad1ea2d23014af7e45ea74cd3d27bcdb4dd8c81890dbda5410135c3fa.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "docs/positioning/program/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 54436,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-ianva_src_ianva___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "36a0b910f643051c1a11b2b8ccda0fb6c44fe03fc0217bff4a418865eba1fea9.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "ianva/src/ianva/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 26226,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-institutio_governance___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "1c8647f6ae1e98ee7c8f5209eccd26e740278a8573fa635a4d5a127788a3c4fe.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "institutio/governance/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_.reap-branches-last",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "451c686e5519b38dba662346456ffe7428c48caef9318d7abe090907d0074a6b.json",
+      "relative_path": "logs/.reap-branches-last",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_.reclaim-last",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "04f6855a5cd79b57329716f49a4ced86863e788d96d455d80063c562be22d40c.json",
+      "relative_path": "logs/.reclaim-last",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 115,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_.voice",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "b730780ee1c21bb0344b36736da74ca982afdf365cec06f4c592ad06c6f7095c.json",
+      "relative_path": "logs/.voice",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_claude-identity-bundle-status.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "14e788f517150df628a1bb042c6b822c5e5abd2c3b32a981dd6e90f4f484b1c6.json",
+      "relative_path": "logs/claude-identity-bundle-status.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_cvstos-organ-state.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "b5dd10d33928a2d8a1da1afbc5b051ce3d481f0e80733ea0ea5ed4cb1454479b.json",
+      "relative_path": "logs/cvstos-organ-state.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 96,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_dispatch-admission",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "c4ec50093fb76b73571dd999885dddab2674b4e05c26b5fbf78c20b7b9f98e54.json",
+      "relative_path": "logs/dispatch-admission",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_feed-health.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "d7a3ef420f3a0a13f761295b7d27952776ca766537f810d56e7a1a8f5739f46c.json",
+      "relative_path": "logs/feed-health.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_fork-safety.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "aeb91534829cdf743513285b160d0e1c8bbbeb7bacf7121ff29951f67c066f3d.json",
+      "relative_path": "logs/fork-safety.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_github-estate-census-cursor-cache.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "c38f22c9b235c6738960662da29a8abeb14a3ee76601a226fa6e3834b6d4090a.json",
+      "relative_path": "logs/github-estate-census-cursor-cache.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 1130,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_observation",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "be1cfc871d17c7b51ca0352a3aafaa514f1c925776e19ab95fa36a6e23e05146.json",
+      "relative_path": "logs/observation",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 479,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_preflight-receipts",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "3838d2bf997be88ffb832835a312821ef35199efec6d1ae0b801f047c399c8ee.json",
+      "relative_path": "logs/preflight-receipts",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_reap-branches-state.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "062fcc49f868a79576a45502e34d6c9fa329a7fe869a07eb21337e8bdc86a89e.json",
+      "relative_path": "logs/reap-branches-state.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_reap-branches.jsonl",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "dd1d12c7f7e98cdc617547763bdc9a8e62b55ddaff11be5900f178095a9c556e.json",
+      "relative_path": "logs/reap-branches.jsonl",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_reclaim-worktrees.jsonl",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "a0c15a5d00317632eafd58bb70289136cdf441fbfefc4c0e47f623a021bc87a5.json",
+      "relative_path": "logs/reclaim-worktrees.jsonl",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_route-health.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "a20adaecb2cae872e520c7f0dbddfd9bb6c91dec263150f801c45d7bb60bb62b.json",
+      "relative_path": "logs/route-health.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_self-improve-proposal.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "1e4a79566384be9ce0d05f7ea8f6c9d1652def9799b288eb8860088e894506eb.json",
+      "relative_path": "logs/self-improve-proposal.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 0,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_tabularius-organ-state.json",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "fc20a37e4efdea7252dbe2c3a91a31ae07b844e0ad751e5d1c9d99439b344559.json",
+      "relative_path": "logs/tabularius-organ-state.json",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 18083,
+      "class": "telemetry",
+      "custody_evidence": "derived state rewritten by the owning limen organ on its next beat",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-logs_worktree-abandonment",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "517ca1e2b7d42b99b1465de1990a3965b52ebd91a4c9c4ffecd67e3acb150662.json",
+      "relative_path": "logs/worktree-abandonment",
+      "source": "<home-path-redacted>",
+      "verdict": "derived_state_regenerable"
+    },
+    {
+      "bytes": 67524,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-mcp_src_limen_mcp___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "b38137c965e25a9c4fe2f637c72e71362b5537197ee42e6b076be3f439ff247b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "mcp/src/limen_mcp/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 26143,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-organs_consulting_constellation___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "af2c66811aebd585fd1ad670d80fb81ec52d804d2c44fb656d304feec2d54768.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "organs/consulting/constellation/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 34435,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-organs_financial___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "fadf5be90f5dc252965ad8ecd5dc0c97334baa40132e71a1e31b65775e69047b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "organs/financial/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 16084,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-organs_media_scheduler___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "827d96c38a0841946606c5388fcb2e5b92ee2e7f2fd66dd64d5c3a19cf1c23a4.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "organs/media/scheduler/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 203814,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-organs_representation___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "d7ad4c136dc161f73b38e8c842b5135792bdac78b752c98cd286a4dc62cc677e.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "organs/representation/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 10235420,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-scripts___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "4653e3ea27a58384e3936d21058cb5a5d7696cebe96c9de27c0e98b5868c8d8b.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 39098,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-scripts_hooks___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "eee714a2a4f67c9014088379f2bd762e1a3a7eea1fdb69f7148dfe1c62e52bde.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/hooks/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 1500593,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-scripts_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "6d01cdf6bf8e5c62eedcc5c8faad803bde3cf199a488ba25285454d03152aebe.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "scripts/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 43893,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "e7456b0569951851104ad318e0759c6bc140a701732d58ca44d605a4474e75d3.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 125803,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-web_api___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "1aa21e1e009b03b2d644bc5f0c2555807945270bbdd6eb02feb32e9133559199.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "web/api/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 205921,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-web_api_tests___pycache__",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "eb34d1a44a08e6e4bb79c4c50cd3adac7d6140e717dff306033f07aaa75d8ebb.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "web/api/tests/__pycache__",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 81098,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-web_app_out",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "76b8f4bcf4ff93b1134c6fc61eb2bb494a99c464030f2895bbaa769738634334.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "web/app/out",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 81098,
+      "class": "build-export",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown. Absence of tracked files under out/ shows only that the export was never committed; it is NOT evidence that the export is disposable. These entries are retained and are neither purge-authorized nor claimed as custody-verified.",
+      "exists": true,
+      "name": "generated-workspace-recovery-20260916-web_app_public",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "35a90754981bd513d56b46d9bbc099c0821d0a68271a2f293180e60aba5aa589.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": "web/app/public",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 48963626,
+      "class": "cache-build",
+      "destination": "<home-path-redacted>",
+      "evidence_limitation": "The committing of a pinning lockfile and a generating script makes regeneration a matter of running standard tooling; it is not itself a demonstration. No rebuild was executed in this session, so reproducibility is asserted, not shown.",
+      "exists": true,
+      "name": "generated-worktrees-mypy-cache",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "rebuild_executed": false,
+      "receipt": "c43187fe7510b93c4f4d83b4e75e596cd87a357ca16457c4dc20c3874306cac1.json",
+      "regeneration_inputs": {
+        "committed_generators": [
+          "web/app/scripts/generate-static-data.mjs",
+          "web/app/scripts/fetch-pr-status.mjs"
+        ],
+        "committed_lockfiles": [
+          "package-lock.json"
+        ],
+        "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+      },
+      "relative_path": ".mypy_cache",
+      "source": "<home-path-redacted>",
+      "verdict": "regeneration_inputs_committed_rebuild_not_executed"
+    },
+    {
+      "bytes": 18961344,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_.mypy_cache-1791154332587806000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 14240,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_.pytest_cache-1791154332589567000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 1020922,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_src_limen___pycache__-1791154332590874000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 160921,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_src_limen_agent_state___pycache__-1791154332592160000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 232720,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_src_limen_conduct___pycache__-1791154332593758000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 59206,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_src_limen_vigilia___pycache__-1791154332595254000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 450905,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-cli_tests___pycache__-1791154332596719000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 37188,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-docs_continuations_git-parity-20260930_S2-evidence_scripts___pycache__-1791154332598220000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 1360,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-logs_worktree-abandonment-1791154332599705000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 307742,
+      "class": "peer-lane",
+      "custody_evidence": "repository-retirement-20260930 lane; regenerable caches, not ours to purge",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "ignored-repository-retirement-20260930-scripts___pycache__-1791154332601216000",
+      "owning_store": null,
+      "purge_authorized": false,
+      "receipt": null,
+      "relative_path": null,
+      "source": null,
+      "verdict": "owned_by_peer_lane"
+    },
+    {
+      "bytes": 0,
+      "class": "tool-index",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "marker-claude-worktrees-ds-store",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "1c20e52098ca304ad9ae69956000a846e29dd3e73143c7a130c12f46b62e7f66.json",
+      "relative_path": ".DS_Store",
+      "source": "<home-path-redacted>",
+      "verdict": "regenerable_tool_state"
+    },
+    {
+      "bytes": 0,
+      "class": "tool-index",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "marker-codex-worktrees-metadata-never-index",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "fe52f06ff1be90683e27863404f1a9ff12402ce739af69d242d233ff2f0a9400.json",
+      "relative_path": ".metadata_never_index",
+      "source": "<home-path-redacted>",
+      "verdict": "regenerable_tool_state"
+    },
+    {
+      "bytes": 0,
+      "class": "tool-index",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "marker-worktrees-ds-store",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "b5ceeda6fa83feaf68b46638ca11ec1d90cb5e7a9c9e3e66fbdd00d83760c563.json",
+      "relative_path": ".DS_Store",
+      "source": "<home-path-redacted>",
+      "verdict": "regenerable_tool_state"
+    },
+    {
+      "bytes": 226097528,
+      "class": "source-copy",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "nongit-copy-b4ca-limen",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "875f11ffc19ebca8552719c8bba7a615742e8363a3b932dd66da09202a1361ce.json",
+      "reconstruction_evidence": {
+        "blobs_absent": 3,
+        "blobs_present": 3774,
+        "files": 3777,
+        "method": "git hash-object --stdin-paths against 4444J99/limen then git cat-file -e per blob"
+      },
+      "relative_path": "limen",
+      "residue_custody": "2 absent files encrypted in bundle c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9; 1 absent file is generated CPython bytecode",
+      "source": "<home-path-redacted>",
+      "verdict": "reconstruction_measured_with_custody_for_residue"
+    },
+    {
+      "bytes": 28768,
+      "class": "tool-index",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "tool-index-claude-worktrees-recode",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "b5e7f3594400c7c6a15a57d3a2c64a79692c5cbc6ddb3ff4213d4cf0b4e2c8d8.json",
+      "relative_path": ".recode",
+      "source": "<home-path-redacted>",
+      "verdict": "regenerable_tool_state"
+    },
+    {
+      "bytes": 28768,
+      "class": "tool-index",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "tool-index-codex-worktrees-recode",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "effada55cdf21c1d3f1fd0cc5a7818decd6996f57f7e72436683eacfade564ab.json",
+      "relative_path": ".recode",
+      "source": "<home-path-redacted>",
+      "verdict": "regenerable_tool_state"
+    },
+    {
+      "bytes": 4071520,
+      "class": "tool-index",
+      "destination": "<home-path-redacted>",
+      "exists": true,
+      "name": "tool-index-worktrees-recode",
+      "owning_store": "<home-path-redacted>",
+      "purge_authorized": false,
+      "receipt": "4066f2cdc1529e25aae3650768b79545af98a4709f4aabd1ebcbe58d42b58ff5.json",
+      "relative_path": ".recode",
+      "source": "<home-path-redacted>",
+      "verdict": "regenerable_tool_state"
+    }
+  ],
+  "entries_total": 164,
+  "note": "Redacted projection of limen.reap_quarantine_ledger.v2. Absolute paths are replaced with root-relative labels so no private path name is published; digests, verdicts and byte counts are unchanged. The unredacted ledger lives in the private owner 4444J99/arca-g3.",
+  "purge_authorized_entries": 0,
+  "quarantine_root": "<home-path-redacted>",
+  "regeneration_inputs": {
+    "<home-path-redacted>": {
+      "committed_generators": [
+        "package.json"
+      ],
+      "committed_lockfiles": [
+        "pnpm-lock.yaml"
+      ],
+      "method": "git cat-file -e HEAD:<path> against the real worktree tree"
+    }
+  },
+  "schema": "limen.reap_quarantine_ledger_public.v1",
+  "total_bytes": 847693637,
+  "unresolved_verdicts": []
+}

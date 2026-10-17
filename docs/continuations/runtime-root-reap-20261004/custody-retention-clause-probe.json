@@ -1,0 +1,18 @@
+{
+  "schema": "limen.custody_retention_clause_probe.v1",
+  "probed_at": "2026-10-05T04:19:32+00:00",
+  "target": "cli/src/limen/prima_materia.py CustodyReceiptV2",
+  "case_no_retention_evidence": {
+    "retention_until": null,
+    "retention_evidence_digest": null,
+    "accepted": false,
+    "rejection": "Value error, at least one restore-tested replica needs evidenced retention"
+  },
+  "case_with_retention_evidence": {
+    "retention_until": "2099-01-01T00:00:00+00:00",
+    "retention_evidence_digest": "<digest>",
+    "accepted": true,
+    "rejection": null
+  },
+  "conclusion": "CustodyReceiptV2 requires evidenced retention on at least one restore-tested replica. Google Drive and a private GitHub repository expose no retention attribute, versioning or lock, so no honest retention observation can be produced from the available backends. A 'physical' replica would be required, and no custody device is mounted."
+}

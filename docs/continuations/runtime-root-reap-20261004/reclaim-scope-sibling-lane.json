@@ -1,0 +1,23 @@
+{
+  "accepted": true,
+  "authorization": "Operator direct-session instruction 2026-10-04 assigning these exact TARGET_PATHs as the reap authorization, plus the 2026-10-04 correction: 'Finish retained directories when their actual owner-release and dependency predicates pass. An open PR alone is not a reap blocker; do not require PR closure as a substitute for release evidence.' This lane was admitted on the real predicates: no process cwd (limen.scripts._worktree_liveness.active_process_cwds), no running async task (logs/async-runs/*.running), clean tree, zero ignored payload after loss-free quarantine, and HEAD advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head on the live remote.",
+  "authorized_root_paths": [
+    "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+    "/Users/4jp/Workspace/limen/.worktrees",
+    "/Users/4jp/Workspace/limen/.claude/worktrees"
+  ],
+  "owner_url": "https://github.com/4444J99/limen.git",
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "targets": [
+    {
+      "head": "5f0b4604fcafd3ac48f694d3edbf0c6787e16cd8",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "path_sha256": "24195618428e1e1a90457a81c996117b48c74a32cb3d28c2fbae722798236d5f",
+      "regeneration_proof": "ignored payload was 139 peer-lane abandonment receipts plus two reclaim state files; the receipts were staged to a local evidence directory with a sha256 manifest and every entry was then moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "reap-scope-20261004"
+    }
+  ]
+}

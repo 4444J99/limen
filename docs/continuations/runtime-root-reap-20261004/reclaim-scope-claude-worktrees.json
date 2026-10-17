@@ -1,0 +1,23 @@
+{
+  "accepted": true,
+  "authorization": "Operator direct-session instruction 2026-10-04: 'You own the complete reap lifecycle for TARGET_PATH. TARGET_PATH(S): /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees, /Users/4jp/Workspace/limen/.worktrees, /Users/4jp/Workspace/limen/.claude/worktrees. Goal: preserve all unique local work remotely, verify full local-to-remote parity, then reap the local directory.' and 'For the Claude checkout, verify publication against the actual authenticated GitHub repository; its local-path origin is insufficient.'",
+  "authorized_root_paths": [
+    "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+    "/Users/4jp/Workspace/limen/.worktrees",
+    "/Users/4jp/Workspace/limen/.claude/worktrees"
+  ],
+  "owner_url": "https://github.com/4444J99/limen.git",
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "targets": [
+    {
+      "head": "043d23056b01dd540ee1f0372c7485895d3bf236",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.claude/worktrees/vltima-closeout-20260709",
+      "path_sha256": "ddd41e7c38578c262e39d8f96befd3fe1dd15085f002831581766cb32c039aac",
+      "regeneration_proof": "ignored payload was entirely generated telemetry and build output; each entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed limen.worktree_abandonment.v1 receipt, so the checkout reached zero ignored payload",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "vltima-closeout-20260709"
+    }
+  ]
+}

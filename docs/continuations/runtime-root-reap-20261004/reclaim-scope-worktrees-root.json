@@ -1,0 +1,107 @@
+{
+  "accepted": true,
+  "authorization": "Operator direct-session instruction 2026-10-04: 'You own the complete reap lifecycle for TARGET_PATH. TARGET_PATH(S): /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees, /Users/4jp/Workspace/limen/.worktrees, /Users/4jp/Workspace/limen/.claude/worktrees. Goal: preserve all unique local work remotely, verify full local-to-remote parity, then reap the local directory.' Children are processed before their shared store or parent.",
+  "authorized_root_paths": [
+    "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+    "/Users/4jp/Workspace/limen/.worktrees",
+    "/Users/4jp/Workspace/limen/.claude/worktrees"
+  ],
+  "excluded_within_authorized_roots": {
+    "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004": "active sibling recovery session; HEAD advanced during this reap",
+    "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine": "registered store owner for external worktree /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1"
+  },
+  "owner_url": "https://github.com/4444J99/limen",
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "targets": [
+    {
+      "head": "c09e9f9c1fda0bb6400511f92a27ff3e7ad09791",
+      "kind": "linked-worktree",
+      "origin": "git@github.com:organvm-iii-ergon/speech-score-engine.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine/.worktrees/lady-macbeth-macbeth-followup-20260809",
+      "path_sha256": "a60488eafc101f97f50442cd0153cb8a8e1c7196d36e305de479703414fa5c5b",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "git@github.com:organvm-iii-ergon/speech-score-engine.git",
+      "root": "lady-macbeth-macbeth-followup-20260809"
+    },
+    {
+      "head": "44ad0e7e5feaf1e381e529824ecdd42bffb41ec9",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/chat-github-20260917",
+      "path_sha256": "68fbe5de950ffa15296ce82b76e1cc680933cfa1b1040765e60f5d1af94c9fc9",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "chat-github-20260917"
+    },
+    {
+      "head": "2efd56177f477dc2373e2eb6c83af490682e188c",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/organvm/hospes.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/hospes-pilot-acceptance-20260916",
+      "path_sha256": "5c717386a9ba693b380b6204e41910f17597a1d68b04cbfed0c1b087037f0a13",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/organvm/hospes.git",
+      "root": "hospes-pilot-acceptance-20260916"
+    },
+    {
+      "head": "a9d3d575a32229941b6c3d8f738bb748d1c419ea",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/organvm/hospes-operations-private.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/hospes-portal-hardening-20260916",
+      "path_sha256": "bff08f7c6450bac0840a674326b942024532f3d60c4bef951b2b497dd3aecac7",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/organvm/hospes-operations-private.git",
+      "root": "hospes-portal-hardening-20260916"
+    },
+    {
+      "head": "463073923969e7f3e54a01dc5b003193517c8623",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/personal-estate-20260930",
+      "path_sha256": "558f75d2f8c8a8fdb70723f09d7d432350c80583cf0e2c2ec18783afe4b6ded5",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "personal-estate-20260930"
+    },
+    {
+      "head": "ae07414880a64dac44e6ad56e2ced4e2394089d4",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-20260916",
+      "path_sha256": "aac32e81a618c57f09b0c5f3c6727a512320f36e3cd65887b0a931acdcf9ad9e",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "spine-closeout-20260916"
+    },
+    {
+      "head": "5b066e9b91b5da1c0fd128c3fcf4492ea259d314",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-20260916-operator-relay",
+      "path_sha256": "1400098617275b4393ff700d7ddb7de09040795d7b0a3ed086e3adfd7ebe4c1b",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "spine-closeout-20260916-operator-relay"
+    },
+    {
+      "head": "e6580988383b3aefc40607a58797384a4a8f048f",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-successor-20260926",
+      "path_sha256": "fb06a212af69c778a8253100ae5494b8363db4e9b06dbb989deb6a6126c54955",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "spine-closeout-successor-20260926"
+    },
+    {
+      "head": "cc25d180bde21dcab66897b68d73387300c0dc34",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/workspace-recovery-20260916",
+      "path_sha256": "213017ede6dbefa12dc0d60dd50f926f5d146105732fa39052fc05e1b6bd5c24",
+      "regeneration_proof": "ignored payload reached zero: generated caches and build output were removed through scripts/reclaim-generated-state.py where allowlisted, and every remaining ignored entry was moved loss-free into same-filesystem recoverable quarantine through scripts/worktree-abandonment.py with a typed receipt; unique non-reconstructible payload was either committed to docs/continuations/runtime-root-reap-20261004/capsules or staged to the private custody-staging root before the move",
+      "repository": "https://github.com/4444J99/limen.git",
+      "root": "workspace-recovery-20260916"
+    }
+  ]
+}

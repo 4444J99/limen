@@ -1,0 +1,31 @@
+{
+  "accepted": true,
+  "authorization": "Operator direct-session instruction 2026-10-04: 'You own the complete reap lifecycle for TARGET_PATH. TARGET_PATH(S): /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees, /Users/4jp/Workspace/limen/.worktrees, /Users/4jp/Workspace/limen/.claude/worktrees. Goal: preserve all unique local work remotely, verify full local-to-remote parity, then reap the local directory.' and 'My explicit assignment of these exact TARGET_PATHS is the operator authorization required by the scoped reclaim contract. Bind that authorization truthfully in the required limen.worktree_reclaim_scope.v1 manifest and use the existing owner/PR rail.'",
+  "authorized_root_paths": [
+    "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+    "/Users/4jp/Workspace/limen/.worktrees",
+    "/Users/4jp/Workspace/limen/.claude/worktrees"
+  ],
+  "owner_url": "https://github.com/4444J99/limen",
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "targets": [
+    {
+      "head": "8974543ba9675ed0504141895812476efef5dd80",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/organvm-vii-kerygma/portfolio.git",
+      "path": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/580e/portfolio",
+      "path_sha256": "c0705a3c51e6b663609c4bd52a8271e2abb97af36337ef84e7d56418e36ed405",
+      "repository": "https://github.com/organvm-vii-kerygma/portfolio.git",
+      "root": "portfolio"
+    },
+    {
+      "head": "6cb1abf0bf08e71341476886385eba5499c51bb7",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/organvm-vii-kerygma/portfolio.git",
+      "path": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/b4ca/portfolio-psp-c06",
+      "path_sha256": "29e572996ac1b1e14e8733b660d0c181c4f9382908a8aa68cbf49f5dda39a40f",
+      "repository": "https://github.com/organvm-vii-kerygma/portfolio.git",
+      "root": "portfolio-psp-c06"
+    }
+  ]
+}

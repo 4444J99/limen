@@ -1,0 +1,14 @@
+{
+  "deadline_epoch": 1789598650,
+  "detail": "provider process exited or changed identity",
+  "keepalive_pid": 51894,
+  "last_failure_epoch": null,
+  "last_success_epoch": 1789594534,
+  "observed_at": "2026-09-16T21:35:50Z",
+  "observed_epoch": 1789594550,
+  "refresh_count": 8,
+  "schema": "limen.workstream.conduct-keepalive.v1",
+  "session_id": "workstream-spine-closeout-20260916-operator-relay-20260916T211407Z-51759",
+  "state": "stopped",
+  "target_pid": 51759
+}

@@ -1,0 +1,22 @@
+{
+  "accepted": true,
+  "authorization": "Operator direct-session instruction 2026-10-04 assigning these exact TARGET_PATHs as the reap authorization. Admitted for evaluation on the real dependency predicate, not on a PR proxy: scripts/reclaim-worktrees.py classify() refuses a standalone clone that still has registered sibling worktrees (reason registered-worktree-owner). /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1 is registered against this repository's common Git directory and carries an uncommitted modification, so removing this store would remove the only object database backing that work. That path is outside the operator-assigned TARGET_PATHs and is therefore not reaped by this session.",
+  "authorized_root_paths": [
+    "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+    "/Users/4jp/Workspace/limen/.worktrees",
+    "/Users/4jp/Workspace/limen/.claude/worktrees"
+  ],
+  "owner_url": "git@github.com:organvm-iii-ergon/speech-score-engine.git",
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "targets": [
+    {
+      "head": "f3e34d8721f5fa3af95166ebeb576808f25e58c9",
+      "kind": "standalone-clone",
+      "origin": "git@github.com:organvm-iii-ergon/speech-score-engine.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine",
+      "path_sha256": "decf7a66f48954ba36e48e9b0ba22ec7f34f1bbb561e46ae5749f05dcd3d64f2",
+      "repository": "git@github.com:organvm-iii-ergon/speech-score-engine.git",
+      "root": "speech-score-engine"
+    }
+  ]
+}
