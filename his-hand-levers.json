@@ -5050,18 +5050,20 @@
     },
     {
       "id": "L-TMB-INGRESS-SOURCE-MOUNT",
-      "label": "Mount the Ingress archival volume (backwards-up-hill originals) plus a separate custody disk so first-mount source hashes and the 16 role derivatives can be produced.",
+      "label": "Provide a custody disk on a physical device distinct from the Ingress device so the original footage gets a second physical copy (Ingress is now mounted; its first hash chain is done).",
       "owner": "yours",
-      "cost": "connect two drives; one bounded read-only hash pass + one derivative build",
-      "unlocks": "cd time-moment-brief && python3 synchronized-generation-calibration/tools/ingress_resume.py (first-mount sha256 chain over /Volumes/Ingress/backwards-up-hill/{2022FEB-360GOPRO,2022FEB-100GOPRO,2022FEB-PANASONIC,2022FEB-DJI,2022FEB-F6/220218_012.WAV} receipted BEFORE build_role_derivatives.py)",
+      "cost": "connect one drive on a physical device other than disk6s2; one bounded ~17 GB verified copy + readback",
+      "unlocks": "copy the six originals (~17 GB) to the new disk, verify sha256 against the private hash manifest / tracked census root 69e942b7…, then run a restore readback (sealed-custody.py seal for the derivatives; plain verified copy for the originals)",
       "source_task": "TMB PRESERVATION_REPAIR_RECEIPT (Ingress absent; no original sha256 exists anywhere); plan 2026-10-17-tmb-acceptance-gaps G9/G7",
-      "gate": "the archival source volume is physically absent; an agent cannot mount it or attest device identity",
+      "gate": "the originals have exactly one physical copy; Archive4T shares physical store disk6s2 with Ingress so it cannot serve as the independent copy; a human must connect a disk on a different physical device",
       "status": "needs_human",
       "added": "2026-10-17",
       "steps": [
-        "Connect Ingress and a custody disk distinct from Ingress and the Mac internal disk; move or delete nothing.",
-        "Agent runs the first-mount sha256 chain over every original and receipts it before any read-for-transform.",
-        "Agent runs build_role_derivatives.py, then the derivative-gated suites (t7_17, ingress_root fixtures)."
+        "DONE: Ingress mounted (observed 2026-10-17).",
+        "DONE: first sha256 chain of originals (TMB PR #9).",
+        "DONE: derivative rebuild, zero manifest drift.",
+        "REMAINING (human): connect a disk on a physical device other than disk6s2; move or delete nothing.",
+        "REMAINING (agent): copies and hash-verifies the originals there and receipts it."
       ],
       "issue": 2909,
       "sovereignty": {
@@ -5071,12 +5073,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Receipt a first-mount sha256 chain over the Ingress originals before any transform, then rebuild the 16 role derivatives and run the derivative-gated suites.",
-        "rationale": "No original sha256 exists anywhere, so lineage of every derivative is unverified until the source volume is mounted and hashed once, read-only, with a distinct custody disk attached.",
+        "behavior": "Copy the six Ingress originals to a custody disk on a physical device distinct from the Ingress store, verify sha256 against the private hash manifest and tracked census root, then run a restore readback.",
+        "rationale": "The first hash chain is committed, but the originals have exactly one physical copy: Archive4T shares physical store disk6s2 with Ingress, so a human must connect a disk on a different physical device.",
         "evidence_refs": [
           "his-hand-levers.json#L-TMB-INGRESS-SOURCE-MOUNT",
           "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
-          "time-moment-brief PRESERVATION_REPAIR_RECEIPT.md"
+          "time-moment-brief PRESERVATION_REPAIR_RECEIPT.md",
+          "time-moment-brief PR #9 (merge 60c6453f4b88048f115591dfd55abf8648a79e2b)",
+          "docs/receipts/2026-10-17-tmb-ingress-first-pass.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -5084,34 +5088,35 @@
         ],
         "owner": "TMB/AV acceptance gaps plan (docs/plans/2026-10-17-tmb-acceptance-gaps.md); owner issue #2909",
         "acceptance": {
-          "condition": "No original sha256 exists anywhere, so lineage of every derivative is unverified until the source volume is mounted and hashed once, read-only, with a distinct custody disk attached.",
+          "condition": "A second verified copy of the six originals exists on a disk on a physical device distinct from the Ingress store (not disk6s2), sha256-matching the private hash manifest / census root, with a restore readback receipt.",
           "predicate": null,
           "status": "not_currently_verified"
         },
         "dependencies": [
-          "Physical Ingress volume",
-          "A custody disk distinct from Ingress and the internal disk",
+          "A custody disk on a physical device distinct from Ingress (disk6s2) and the internal disk",
           "Host admission"
         ],
-        "remaining_human_action": "Connect Ingress and a separate custody disk; do not infer device identity from a mount label.",
-        "historical_gate_requires_verification": "the archival source volume is physically absent; an agent cannot mount it or attest device identity",
+        "remaining_human_action": "Connect a disk on a physical device other than disk6s2; do not infer device identity from a mount label.",
+        "historical_gate_requires_verification": "the originals have exactly one physical copy; Archive4T shares physical store disk6s2 with Ingress so it cannot serve as the independent copy; a human must connect a disk on a different physical device",
         "decision_status": "chosen_pending_evidence"
-      }
+      },
+      "note": "2026-10-17 first Ingress pass: Ingress (disk7s2) and Archive4T (disk7s1) are volumes of the same APFS container disk7 / physical store disk6s2, so Archive4T is not an independent physical copy of the originals; the originals currently have exactly one physical copy (Archive4T remains independent of the Mac internal disk, so the sealed-media custody from limen PR #2927 is unaffected). Ingress was mounted writable; the pass wrote nothing to it (find -newer check empty). Receipt: docs/receipts/2026-10-17-tmb-ingress-first-pass.md."
     },
     {
       "id": "L-TMB-FOURTH-CAMERA",
-      "label": "Supply a fourth physical camera view: confirm whether the 100GOPRO collection on Ingress covers the matched passage (F6 audio-onset match), else capture new matched footage.",
+      "label": "Supply a fourth physical camera view: 100GOPRO is eliminated (its clips match the F6 audio at other times, not the matched passage), so a new capture or an existing recording of the matched passage from a fourth sensor is required.",
       "owner": "yours",
-      "cost": "after the mount: one look at the onset verdict; otherwise a capture session",
-      "unlocks": "ingress_resume.py step 4 (verify_alignment.find_offset against F6 [510,526]) -> evidence/hundred-gopro-coverage.json; positive -> source-manifest.json sensors=4",
+      "cost": "locate an existing fourth-sensor recording of the matched passage, or a capture session",
+      "unlocks": "if a fourth-sensor recording of the matched passage exists elsewhere: place it under the ingress root, add its collection to the expected tree in synchronized-generation-calibration/tools/ingress_resume.py, run the tool (hash chain + onset match against F6 window [510,526]); otherwise schedule a new capture; then update webcodecs-spike/source-manifest.json to sensors=4 and rerun the four-view suites",
       "source_task": "4444J99/the-thing-without-a-name-screendance#69; webcodecs-spike/source-manifest.json sensors=3 views=4 (cam3 is a rectilinear crop of gopro-360); 100GOPRO metadata ends ~16:18:51Z vs passage ~16:43:44Z (camera clocks untrusted)",
-      "gate": "depends on L-TMB-INGRESS-SOURCE-MOUNT; a new capture needs hardware and a body; generated substitutes cannot close the four-camera predicate",
+      "gate": "a new capture needs hardware and a body; generated substitutes cannot close the four-camera predicate",
       "status": "needs_human",
       "added": "2026-10-17",
       "steps": [
-        "Wait on L-TMB-INGRESS-SOURCE-MOUNT.",
-        "Agent runs the onset match and reports on Danse #69.",
-        "Approve 100GOPRO as view 4 or schedule a capture; agent updates the manifest and reruns the four-view suites."
+        "DONE: Ingress check ran (TMB PR #9); 100GOPRO metadata verdict no-coverage-likely (gap 1492.7 s, camera clocks untrusted).",
+        "DONE: onset verdict negative — GH010043 matches F6 elsewhere (peak 54.0018 s, margin 71.0%), GH010044 matches F6 elsewhere (peak 760.0005 s, margin 57.25%), floor 19.2%, window overlap 0.0 s with the matched passage [510, 526]; 100GOPRO eliminated.",
+        "REMAINING (human): supply a fourth-sensor recording of the matched passage if one exists, or schedule a new capture.",
+        "REMAINING (agent): ingest it (ingress_resume.py hash chain + onset match), update webcodecs-spike/source-manifest.json to sensors=4 and rerun the four-view suites."
       ],
       "issue": 2909,
       "sovereignty": {
@@ -5121,12 +5126,15 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Run the F6 onset match for 100GOPRO and either promote it to a fourth sensor in source-manifest.json or schedule a new matched capture.",
-        "rationale": "The manifest declares three sensors for four views (cam3 is a crop of the 360 camera); only a real fourth sensor view closes the four-camera predicate.",
+        "behavior": "Ingest a real fourth-sensor recording of the matched passage (hash chain + F6 onset match) and promote it to a fourth sensor in source-manifest.json, or schedule a new matched capture.",
+        "rationale": "The manifest declares three sensors for four views (cam3 is a crop of the 360 camera); 100GOPRO was checked and eliminated (onset negative), so only a new real fourth sensor view closes the four-camera predicate.",
         "evidence_refs": [
           "his-hand-levers.json#L-TMB-FOURTH-CAMERA",
           "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
-          "time-moment-brief/webcodecs-spike/source-manifest.json"
+          "time-moment-brief/webcodecs-spike/source-manifest.json",
+          "time-moment-brief evidence/hundred-gopro-coverage.json",
+          "time-moment-brief PR #9 (merge 60c6453f4b88048f115591dfd55abf8648a79e2b)",
+          "docs/receipts/2026-10-17-tmb-ingress-first-pass.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -5139,13 +5147,13 @@
           "status": "not_currently_verified"
         },
         "dependencies": [
-          "L-TMB-INGRESS-SOURCE-MOUNT",
           "Danse #69 matched-pair capture decision"
         ],
-        "remaining_human_action": "Approve 100GOPRO as view 4 after the onset verdict, or supply new matched footage.",
-        "historical_gate_requires_verification": "depends on L-TMB-INGRESS-SOURCE-MOUNT; a new capture needs hardware and a body; generated substitutes cannot close the four-camera predicate",
+        "remaining_human_action": "Supply a fourth-sensor recording of the matched passage if one exists, or schedule a new matched capture.",
+        "historical_gate_requires_verification": "a new capture needs hardware and a body; generated substitutes cannot close the four-camera predicate",
         "decision_status": "chosen_pending_evidence"
-      }
+      },
+      "note": "2026-10-17 first Ingress pass: evidence/hundred-gopro-coverage.json records metadata_verdict no-coverage-likely and onset_verdict negative (blind full-range onset-envelope correlation against F6, floor 19.2%). 100GOPRO is the only fourth sensor on the disk, so the four-independent-camera predicate still requires a new capture or a recording from elsewhere. The negative is evidence of non-overlap with the matched window, not proof that nothing else exists. Receipt: docs/receipts/2026-10-17-tmb-ingress-first-pass.md."
     },
     {
       "id": "L-TMB-DEVICE-ACCEPTANCE",
