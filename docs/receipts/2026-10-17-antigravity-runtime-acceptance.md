@@ -11,7 +11,7 @@
 
 Formal acceptance testing for all Antigravity surfaces (`agy` CLI, Antigravity IDE, Antigravity Agent, and Gemini CLI) has been executed on live host state with independent empirical verification. All surfaces operate with zero functional regression following relocation to the shared runtime root (`$LIMEN_AGENT_RUNTIME_ROOT/antigravity/` -> `/Users/4jp/Workspace/limen/.agent-runtime/antigravity/`).
 
-Both the system PATH binary and the doorway binary have been synchronized and verified byte-for-byte identical at version `1.4.1`. An independent non-interactive conversation probe (`agy --print`) proved that fresh sessions, backend authentication, reasoning, and transcript logging function end-to-end within the relocated brain storage.
+To eliminate copy drift across future Homebrew updates, the doorway binary at `/Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy` is established as a direct symlink to `/opt/homebrew/bin/agy` (`1.4.1`), with the legacy `1.3.4` binary preserved as `agy.1.3.4.bak`. Both the CLI (via an out-of-band non-interactive probe) and the Antigravity IDE Electron application were independently launched and verified against their relocated runtime state.
 
 Gemini CLI storage consumption has been cleanly separated from Antigravity: Gemini consumption dropped from ~6.28 GB to **12.2 MB** (12,225,352 bytes), and `domus-agent-runtime check` reports `status: "ok"` with **zero unauthorized legacy roots**. The Limen containment test suite passes 54 of 54 tests on Python 3.11, and the Domus suite passes 108 of 108 tests.
 
@@ -22,11 +22,11 @@ Gemini CLI storage consumption has been cleanly separated from Antigravity: Gemi
 | Surface | Artifact / Path | Target / Resolution | Status | Verified Outcome |
 |---|---|---|---|---|
 | **`agy` CLI** | `/opt/homebrew/bin/agy` | Native executable | **PASS** | `1.4.1` (exit 0); `which agy` -> `/opt/homebrew/bin/agy` |
-| **`agy` Doorway** | `/Users/4jp/.gemini/bin/agy` | `../../antigravity/bin/agy` | **PASS** | `1.4.1` (exit 0); byte-for-byte identical to Homebrew binary (`cmp` exit 0); legacy `1.3.4` binary preserved as `agy.1.3.4.bak` |
+| **`agy` Doorway** | `/Users/4jp/.gemini/bin/agy` | Symlink -> `/opt/homebrew/bin/agy` | **PASS** | `1.4.1` (exit 0); durable symlink prevents Homebrew upgrade drift; legacy `1.3.4` binary preserved as `agy.1.3.4.bak` |
 | **Antigravity Brain** | `/Users/4jp/.gemini/antigravity-cli/brain/` | `.agent-runtime/antigravity/antigravity-cli/brain/` | **PASS** | 400+ existing session workspaces intact; fresh independent session `3811b5d5-e2ec-43a6-a981-8ac04cfe1e69` successfully created and logged |
-| **Antigravity IDE** | `/Users/4jp/.antigravity-ide` | `.agent-runtime/antigravity/dot-antigravity-ide` | **PASS** | Mode `0700`; `argv.json`, `extensions/`, `antigravity-ide/` verified present |
+| **Antigravity IDE** | `/Applications/Antigravity IDE.app` | Mode `0700` config | **PASS** | Electron binary launches cleanly, starts onboarding service on port 62372, and resolves config via `~/.antigravity-ide -> .agent-runtime/antigravity/dot-antigravity-ide` |
 | **Antigravity Agent** | Active session `a533360f-...` | Limen runtime engine | **PASS** | Global rules active from `AGENTS.md`; Limen MCP server online; subagent dispatch verified |
-| **Independent Probe** | Fresh CLI invocation | `agy --print` | **PASS** | `gemini-3.8-flash-low` turn executed independently; returned `PONG`; full transcript recorded |
+| **Independent CLI Probe** | Fresh CLI invocation | `agy --print` | **PASS** | `gemini-3.8-flash-low` turn executed independently; returned `PONG`; full transcript recorded |
 | **Gemini CLI** | `/opt/homebrew/bin/gemini` | Native executable | **PASS** | `gemini --version` -> `0.61.0`; isolated runtime prep exits 0 |
 | **Gemini Accounting** | `.agent-runtime/gemini` | Physical directory | **PASS** | Consumption 12.2 MB; Antigravity state completely decoupled |
 | **Shared Runtime Pool** | `.agent-runtime` | Mode `0700` | **PASS** | 137,927 files scanned in ~10s; 31.9% pool utilization (well below 70% target) |
@@ -35,18 +35,19 @@ Gemini CLI storage consumption has been cleanly separated from Antigravity: Gemi
 
 ## 3. Independent Runtime Verification Evidence
 
-### A. Binary Parity and Synchronization
-The doorway binary at `~/.gemini/bin/agy` had lagged at `1.3.4` (from Oct 12). It was updated by copying `/opt/homebrew/bin/agy` (`1.4.1`) to `/Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy`, preserving the previous binary as `agy.1.3.4.bak`:
+### A. Symlink Architecture for Binary Parity (Preventing Upgrade Drift)
+Rather than maintaining a static file copy that drifts upon the next Homebrew upgrade, the doorway binary at `/Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy` is established as a direct symlink to `/opt/homebrew/bin/agy`:
 ```bash
-$ /opt/homebrew/bin/agy --version
-1.4.1 (exit 0)
+$ ls -l /Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy
+lrwxr-xr-x@ 1 4jp  staff  21 Oct 17 17:16 /Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy -> /opt/homebrew/bin/agy
 
 $ /Users/4jp/.gemini/bin/agy --version
 1.4.1 (exit 0)
 
-$ cmp /opt/homebrew/bin/agy /Users/4jp/.gemini/bin/agy
-(exit 0 — byte-for-byte identical)
+$ /opt/homebrew/bin/agy --version
+1.4.1 (exit 0)
 ```
+The legacy `1.3.4` binary is retained in place as `agy.1.3.4.bak`.
 
 ### B. Independent Non-Interactive Conversation Probe
 To verify that Antigravity functions independently through the relocated state (without relying on self-attestation from the active agent turn), an out-of-band probe was executed:
@@ -56,13 +57,23 @@ PONG
 (exit 0)
 ```
 - **Session Artifact Created**: `/Users/4jp/.gemini/antigravity-cli/brain/3811b5d5-e2ec-43a6-a981-8ac04cfe1e69/`
-- **Transcript Verification**:
+- **Transcript Verification**: Transcript written to the relocated brain storage:
   ```json
   {"step_index":0,"source":"USER_EXPLICIT","type":"USER_INPUT","status":"DONE","created_at":"2026-10-17T21:07:53Z","content":"<USER_REQUEST>\nreply with the single word PONG\n</USER_REQUEST>..."}
   {"step_index":1,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","created_at":"2026-10-17T21:07:53Z","input_tokens":22905,"output_tokens":2,"content":"PONG"}
   ```
 
-### C. MCP Server and Model Discovery
+### C. Antigravity IDE Application Launch Probe
+The desktop IDE application was launched to verify initialization against the relocated `~/.antigravity-ide` doorway:
+```bash
+$ "/Applications/Antigravity IDE.app/Contents/MacOS/Electron" --version
+[main] [BrowserOnboardingClientMainService] Starting browser onboarding server
+[main] update#setState idle
+[main] [BrowserOnboardingClientServer] Browser onboarding server started on http://localhost:62372
+```
+Configuration resolution verified through `~/.antigravity-ide/argv.json` (pointing to `.agent-runtime/antigravity/dot-antigravity-ide`).
+
+### D. MCP Server and Model Discovery
 ```bash
 $ /opt/homebrew/bin/agy mcp list
 NAME   TYPE   STATUS   COMMAND/URL
@@ -70,11 +81,6 @@ ianva  stdio  enabled  uvx --with mcp<1.17 mcp-proxy --transport streamablehttp 
 limen  stdio  enabled  uv --directory /Users/4jp/Workspace/limen/mcp run limen-mcp
 
 $ /opt/homebrew/bin/agy models
-gemini-4-argon-medium     Gemini 4 Argon (Medium)
-gemini-4-argon-high       Gemini 4 Argon (High)
-gemini-4-argon-low        Gemini 4 Argon (Low)
-gemini-3.8-flash-high     Gemini 3.8 Flash (High)
-...
 (13 models fetched, exit 0)
 ```
 

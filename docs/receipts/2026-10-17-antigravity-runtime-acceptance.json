@@ -1,6 +1,6 @@
 {
   "schema": "limen.runtime_acceptance.v1",
-  "recorded_at": "2026-10-17T21:10:24Z",
+  "recorded_at": "2026-10-17T21:18:21Z",
   "rollout_step": 8,
   "platform": "darwin-arm64",
   "status": "passed",
@@ -10,13 +10,19 @@
       "version": "1.4.1",
       "status": "ok",
       "doorway_path": "/Users/4jp/.gemini/bin/agy",
+      "doorway_target": "/opt/homebrew/bin/agy",
       "doorway_version": "1.4.1",
-      "byte_parity_verified": true,
+      "symlink_verified": true,
+      "drift_prevention": "durable_symlink_to_homebrew",
       "legacy_binary_backup": "/Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy.1.3.4.bak"
     },
     "antigravity_ide": {
-      "path": "/Users/4jp/.antigravity-ide",
-      "target": "/Users/4jp/Workspace/limen/.agent-runtime/antigravity/dot-antigravity-ide",
+      "application_path": "/Applications/Antigravity IDE.app",
+      "binary_path": "/Applications/Antigravity IDE.app/Contents/MacOS/Electron",
+      "onboarding_server_port": 62372,
+      "config_doorway": "/Users/4jp/.antigravity-ide",
+      "config_target": "/Users/4jp/Workspace/limen/.agent-runtime/antigravity/dot-antigravity-ide",
+      "launch_verified": true,
       "status": "ok"
     },
     "antigravity_brain": {
