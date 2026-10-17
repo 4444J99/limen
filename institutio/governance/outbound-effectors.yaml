@@ -126,6 +126,6 @@ in_process_gates:
     guard: "public_publish: exact open owner and authenticated principal; journal-bound redacted progress only"
   scripts/merge-drain.py:
     verbs: ["gh pr edit"]
-    code_sha256: 487e82b856f2fd7e603cda99da0dcf6c46aa778fb33a5cf03c15674881ff1d8c
+    code_sha256: 3a7e1eb559065a8b294b6d3d77e3b090b2a4ffd7aa806200624c749112abad5b
     owner: "gitvs"
     guard: "ensure_delivery_classification: explicit one-PR submission; live open non-draft exact head; no lifecycle or preservation hold; additive label only; exact-head readback before assessment"

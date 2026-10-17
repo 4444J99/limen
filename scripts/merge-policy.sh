@@ -8,6 +8,9 @@
 #
 #   exit 0  CLEARED — safe to `gh pr merge`. (A non-deploy PR that is mergeable, or a
 #                     deploy-touching PR whose CI is fully GREEN + COMPLETE.)
+#                     A non-limen repo whose estate class is `single_owner_fast_lane: true` (every private
+#                     repo: Actions are billing-locked, so remote checks are never evidence) is CLEARED
+#                     direct whenever GitHub reports it mergeable and it is not a draft.
 #   exit 2  HOLD    — website-sensitive AND CI not yet green/complete, or the PR is a draft,
 #                     or a non-deploy PR still has checks running, or autonomy is paused
 #                     (autonomy-governor mode=paused). Wait for green; never
@@ -196,10 +199,30 @@ if [ -z "$head_now" ] || [ "$head_now" != "$head" ]; then
   exit 2
 fi
 
+# Single-owner fast lane (registry-derived; institutio/github/estate.yaml class `single_owner_fast_lane`).
+# The GATES deploy_triggers registry describes LIMEN's own site/API, so it says nothing about any other
+# repository — and every private repo runs no GitHub Actions at all (billing lock, operator fact
+# 2026-10-17), so a remote check can never be evidence for one. On a fast-lane repo the caller's exact-head
+# local verification is the admission; remote checks are advisory. limen itself is excluded: its deploy
+# rails stay governed by GATES exactly as before. If the class cannot be derived, fast_lane stays 0 and the
+# conservative path below applies unchanged.
+fast_lane=0
+lane_repo="${canonical_repo:-$requested_repo}"
+if [ -n "$lane_repo" ] && [ "$canonical_repo" != "4444j99/limen" ] && [ "$requested_repo" != "4444j99/limen" ] \
+    && [ "$canonical_repo" != "organvm/limen" ] && [ "$requested_repo" != "organvm/limen" ]; then
+  lane_answer="$("$_py" "$_root/scripts/_fast_lane.py" "$lane_repo" 2>/dev/null || true)"
+  case "$lane_answer" in
+    true) fast_lane=1 ;;
+    false) ;;
+    *) echo "merge-policy: cannot derive the estate class for $lane_repo — keeping the conservative path (fail toward caution)." >&2 ;;
+  esac
+fi
+
 deploy_hits=$(jq -r '.files[].path' "$j" | grep -E "$DEPLOY_RE" || true)
 sensitive=0
 [ -n "$deploy_hits" ] && sensitive=1
 [ "$STALE" = 1 ] && sensitive=1   # fail-safe: uncertain classification ⇒ treat as a live deploy
+[ "$fast_lane" = 1 ] && sensitive=0   # limen's deploy registry does not describe this repository
 
 # CI rollup: count failing / pending across CheckRuns (conclusion/status) and StatusContexts (state).
 # Dedupe to the LATEST run per check name first. GitHub attaches every re-run of a check (a
@@ -246,7 +269,9 @@ echo "PR #$PR — $title"
 echo "  $url"
 echo "  base=$base  head=${head:0:12}  mergeState=$mss  draft=$draft"
 echo "  merge-queue=$queue_capability"
-if [ "$sensitive" = 1 ]; then
+if [ "$fast_lane" = 1 ]; then
+  echo "  single-owner fast lane ($lane_repo) — not a limen deploy rail; merging will NOT trigger a live website/API deploy"
+elif [ "$sensitive" = 1 ]; then
   if [ -n "$deploy_hits" ]; then
     echo "  WEBSITE-SENSITIVE — diff touches deploy-trigger paths:"
     printf '%s\n' "$deploy_hits" | sed 's/^/      /'
@@ -287,7 +312,7 @@ fi
 if [ "$sensitive" = 1 ] && [ "$failing" -gt 0 ]; then
   echo "VERDICT: HOLD — $failing CI check(s) failing and the merge deploys the live site. Fix before merge."; exit 2
 fi
-if [ "$sensitive" != 1 ] && [ "$req_failing" -gt 0 ]; then
+if [ "$sensitive" != 1 ] && [ "$fast_lane" != 1 ] && [ "$req_failing" -gt 0 ]; then
   echo "VERDICT: HOLD — $req_failing required check(s) failing ($req_scope scope). Fix before merge."; exit 2
 fi
 # --- optional review gate (LIMEN_REVIEW_GATE=1; DEFAULT OFF) ---
@@ -306,6 +331,21 @@ if [ "${LIMEN_REVIEW_GATE:-0}" = "1" ]; then
       echo "VERDICT: HOLD — $unresolved unresolved review thread(s) (LIMEN_REVIEW_GATE=1). Address + resolve them (self-heal's REVIEW-FEEDBACK tasks own the loop), then re-run."; exit 2
     fi
   fi
+fi
+# Single-owner fast lane: GitHub reports the PR mergeable (conflicts, drafts and protection gates were
+# already refused above), so the verdict is CLEARED direct. Remote checks — which on a billing-locked
+# private repo never run — are advisory; admission is the caller's exact-head local verification.
+# Any other merge state (e.g. BEHIND under an active queue) falls through to the shared logic below.
+if [ "$fast_lane" = 1 ]; then
+  case "$mss" in
+    CLEAN|UNSTABLE|HAS_HOOKS)
+      echo "  note: remote checks are advisory on this single-owner fast lane (private repos run no Actions: billing lock); admission is the caller's exact-head local verification."
+      echo "VERDICT: CLEARED — single-owner fast lane; remote checks advisory. Merge the locally verified exact head."
+      echo "MERGE-MODE: direct"
+      echo "MERGE-HEAD: $head (use gh pr merge --match-head-commit $head)"
+      exit 0
+      ;;
+  esac
 fi
 # Past the not-mergeable states: only an explicitly mergeable state may proceed toward CLEARED.
 case "$mss" in
