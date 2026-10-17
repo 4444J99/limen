@@ -71,3 +71,15 @@ at2026-10-17T00:13:58Z measured9.12GiB swap on16GiB RAM (fraction0.5702 versus t
 canonical0.25 threshold), healthy sensors, and vitals action `shed`. These inputs
 justify `swap-fraction,vitals-shed`; they do not justify changing thresholds,
 clearing streaks or stopping processes without demonstrated ownership.
+
+Existing shared MCP instances retain their launch-time alias in argv. Limen's
+canonical process observer now resolves permission-limited Darwin aliases through
+a read-only native file descriptor and F_GETPATH. Descriptor-before, reported-path
+and descriptor-after device/inode identities must match; unsupported or mismatched
+observations remain unavailable. This preserves existing shared services without
+guessing paths, ignoring instances or stopping another session's processes.
+
+The human subsequently authorized one bounded local verification run despite host
+admission, explicitly superseding the earlier no-override constraint for that run.
+The exception is confined to that invocation; persisted guard configuration,
+machine-wide serialization, process bounds and failure reporting remain intact.

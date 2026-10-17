@@ -95,6 +95,40 @@ def test_command_normalization_is_bounded_to_each_census(cohort, monkeypatch):
     assert len(calls) == before * 2  # No cached authority survives a new observation.
 
 
+@pytest.mark.parametrize("mismatch", [False, True])
+def test_permission_limited_alias_uses_only_identity_verified_native_fd_path(tmp_path, monkeypatch, mismatch):
+    import fcntl
+    from pathlib import Path
+
+    target = tmp_path / "binary"
+    target.write_text("native executable fixture")
+    alias = tmp_path / "alias"
+    alias.symlink_to(target)
+    other = tmp_path / "different-binary"
+    other.write_text("different inode")
+    original = Path.resolve
+
+    def deny_alias(path, *args, **kwargs):
+        if path == alias:
+            raise PermissionError(13, "unavailable traversal")
+        return original(path, *args, **kwargs)
+
+    def kernel_path(fd, command, buffer):
+        assert command == 50  # Darwin F_GETPATH
+        assert os.fstat(fd).st_ino == target.stat().st_ino
+        reported = os.fsencode(other if mismatch else target)
+        return reported + b"\0" * (len(buffer) - len(reported))
+
+    monkeypatch.setattr(Path, "resolve", deny_alias)
+    monkeypatch.setattr(ownership.sys, "platform", "darwin")
+    monkeypatch.setattr(fcntl, "fcntl", kernel_path)
+    if mismatch:
+        with pytest.raises(ownership.ObservationUnavailable, match="path_resolution_unavailable"):
+            ownership.canonical_argv([str(alias), "stdio"])
+    else:
+        assert ownership.canonical_argv([str(alias), "stdio"]) == (str(target), "stdio")
+
+
 def test_shared_services_alone_allow_release_without_stopping_them(cohort):
     processes, _, _, evaluate = cohort
     del processes[104], processes[105]
