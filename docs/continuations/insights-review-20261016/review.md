@@ -40,7 +40,34 @@ preserves HTML and extracts claims; Limen's separate cross-vendor renderer does 
 generate that native chart. Local changes therefore repair the owned interpretation
 boundary without claiming a native vendor release.
 
-Both isolated topic checkouts are retained on the external volume. Primary-checkout
+All three isolated topic checkouts are retained on the external volume. Primary-checkout
 concurrent edits and all native reports, chats and databases are preserved. This
 session introduced source, tests and redacted review evidence only; no raw reports,
 facets, timestamps, transcripts, personal records or credentials enter Git.
+
+## Follow-up corrections
+
+The managed Codex command used a root-owned mode-0700 symlink at
+`/usr/local/bin/1password-mcp`. Its binary was executable, but resolving the alias
+raised PermissionError13. Domus PR455 changes the canonical config modifier to the
+signed native app executable and preserves enabled state, comments and app-added
+keys through the existing section/key merge. The regression failed before the fix;
+all47 modifier tests pass afterward. PR455 merged at
+`fb88b36adc17649eb6ba454dc1284cc848410642`. Targeted chezmoi application changed
+only that command. Live service-contract derivation succeeds and retains the
+`codex/1password` contract. No permission bits, credentials or guards changed.
+
+The three automated review observations on PR2888 are accepted: undecodable UTF-8
+facets are excluded with warnings; a narrative must bind to the current index
+fingerprint; a facet must bind to its indexed session's captured-source fingerprint.
+Index bindings include metadata and bounded captured text, so resuming a logical
+session invalidates earlier judgments even when its ID and message count stay the
+same. File timestamps cannot renew judgments. Legacy or mismatched judgments are
+excluded with explicit regeneration guidance. The skill records the authoring
+workflow and the captured-view boundary.
+
+Host admission remains an independent runtime predicate. The read-only observation
+at2026-10-17T00:13:58Z measured9.12GiB swap on16GiB RAM (fraction0.5702 versus the
+canonical0.25 threshold), healthy sensors, and vitals action `shed`. These inputs
+justify `swap-fraction,vitals-shed`; they do not justify changing thresholds,
+clearing streaks or stopping processes without demonstrated ownership.

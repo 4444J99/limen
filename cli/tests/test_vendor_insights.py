@@ -338,6 +338,29 @@ def test_antigravity_index_and_cat(tmp_path):
 # ─── render: exit-code honesty + section rendering ───────────────────
 
 
+def _bind_test_artifacts(vdir):
+    """Bind synthetic judgments to synthetic captures, as the author workflow does."""
+    index = json.loads((vdir / "index.json").read_text())
+    for session in index.get("sessions", []):
+        if session.get("id"):
+            vi._bind_capture(session, "synthetic capture", vi.DEFAULT_MAX_CHARS)
+    index["binding_schema"] = "limen.vendor_insights.binding.v1"
+    index["index_fingerprint"] = vi._index_fingerprint(index)
+    (vdir / "index.json").write_text(json.dumps(index))
+    by_id = {s.get("id"): s for s in index.get("sessions", [])}
+    for path in (vdir / "facets").glob("*.json"):
+        facet = json.loads(path.read_text())
+        if facet.get("session_id") and facet.get("session_id") in by_id:
+            facet["source_fingerprint"] = by_id[facet["session_id"]].get("source_fingerprint")
+        path.write_text(json.dumps(facet))
+    narrative_path = vdir / "narrative.json"
+    if narrative_path.exists():
+        narrative = json.loads(narrative_path.read_text())
+        narrative["index_fingerprint"] = index["index_fingerprint"]
+        narrative_path.write_text(json.dumps(narrative))
+    return index
+
+
 def test_render_exits_2_without_facets_or_narrative(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(vi, "OUT_ROOT", tmp_path)
     (tmp_path / "codex").mkdir()
@@ -381,6 +404,7 @@ def test_render_writes_report_with_sections_and_coverage_notes(tmp_path, monkeyp
         "suggestions": [{"title": "t", "detail": "d"}],
     }
     (vdir / "narrative.json").write_text(json.dumps(narrative))
+    _bind_test_artifacts(vdir)
     assert vi.cmd_render("codex") == 0
     html_text = (vdir / "report.html").read_text()
     for expected in ("one line", "Campaign", "fully_achieved", "buggy_code", "likely_satisfied", "churn"):
@@ -397,6 +421,7 @@ def test_render_escapes_html_in_narrative(tmp_path, monkeypatch):
     vdir.mkdir()
     (vdir / "index.json").write_text(json.dumps({"vendor": "codex", "window": {}, "sessions": []}))
     (vdir / "narrative.json").write_text(json.dumps({"tldr": "<script>alert(1)</script>"}))
+    _bind_test_artifacts(vdir)
     assert vi.cmd_render("codex") == 0
     html_text = (vdir / "report.html").read_text()
     assert "<script>alert(1)</script>" not in html_text
@@ -423,6 +448,8 @@ def test_render_excludes_stale_duplicate_and_missing_facet_identities(tmp_path, 
         if name != "b.json":
             record["friction_counts"] = {"excluded_label": 100}
         (facets_dir / name).write_text(json.dumps(record))
+
+    _bind_test_artifacts(vdir)
 
     assert vi.cmd_render("codex") == 0
 
@@ -474,6 +501,66 @@ def test_render_keeps_recommendations_provisional_and_labels_repeated_estimates(
     # A legacy index without population metadata must not invent a corpus size.
     legacy_html = vi._render_html("codex", {"sessions": index["sessions"]}, facets, {})
     assert "Denominator: 2 faceted sessions of 3 indexed (unknown in-window)" in legacy_html
+
+
+def test_invalid_utf8_facet_is_excluded_without_losing_valid_bound_judgments(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(vi, "OUT_ROOT", tmp_path)
+    vdir = tmp_path / "codex"
+    (vdir / "facets").mkdir(parents=True)
+    (vdir / "index.json").write_text(json.dumps({"sessions": [{"id": "a"}]}))
+    (vdir / "facets/a.json").write_text(json.dumps({"session_id": "a"}))
+    _bind_test_artifacts(vdir)
+    (vdir / "facets/bad.json").write_bytes(b"\xff")
+    assert vi.cmd_render("codex") == 0
+    assert "unreadable facet bad.json" in capsys.readouterr().err
+    assert "Unreadable facet excluded" in (vdir / "report.html").read_text()
+
+
+def test_narrative_population_binding_and_legacy_freshness_fail_closed(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(vi, "OUT_ROOT", tmp_path)
+    vdir = tmp_path / "codex"
+    vdir.mkdir()
+    (vdir / "index.json").write_text(json.dumps({"sessions": [{"id": "a"}]}))
+    (vdir / "narrative.json").write_text(json.dumps({"tldr": "OLD POPULATION"}))
+    assert vi.cmd_render("codex") == 2
+    assert "freshness unknown" in capsys.readouterr().err
+    index = _bind_test_artifacts(vdir)
+    index["sessions"].append({"id": "b"})
+    index["index_fingerprint"] = vi._index_fingerprint(index)
+    (vdir / "index.json").write_text(json.dumps(index))
+    assert vi.cmd_render("codex") == 2
+    assert "narrative freshness unknown or mismatched" in capsys.readouterr().err
+
+
+def test_resumed_session_same_id_invalidates_facet_and_exposes_new_cat_binding(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(vi, "OUT_ROOT", tmp_path)
+    capture = {"text": "original", "turns": 1}
+    monkeypatch.setitem(
+        vi.INDEXERS,
+        "codex",
+        lambda *_: vi.IndexResult([{"id": "same-id", "user_msgs": capture["turns"]}], 1, "activity"),
+    )
+    monkeypatch.setitem(vi.CATTERS, "codex", lambda *_: capture["text"])
+    assert vi.cmd_index(None, "codex", 30, 10) == 0
+    vdir = tmp_path / "codex"
+    original = json.loads((vdir / "index.json").read_text())
+    (vdir / "facets").mkdir()
+    (vdir / "facets/a.json").write_text(
+        json.dumps({"session_id": "same-id", "source_fingerprint": original["sessions"][0]["source_fingerprint"]})
+    )
+    assert vi.cmd_cat(None, "codex", "same-id", 60_000) == 0
+    assert original["sessions"][0]["source_fingerprint"] in capsys.readouterr().err
+    capture.update(text="resumed content")  # Same ID/counts: metadata alone cannot prove freshness.
+    assert vi.cmd_cat(None, "codex", "same-id", 60_000) == 2
+    assert vi.cmd_index(None, "codex", 30, 10) == 0
+    assert vi.cmd_render("codex") == 2
+    assert "facet a.json freshness unknown or mismatched" in capsys.readouterr().err
+    refreshed = json.loads((vdir / "index.json").read_text())
+    assert refreshed["sessions"][0]["user_msgs"] == original["sessions"][0]["user_msgs"]
+    assert refreshed["sessions"][0]["source_fingerprint"] != original["sessions"][0]["source_fingerprint"]
+    before = refreshed["index_fingerprint"]
+    refreshed["generated_at"] = "file touch cannot renew judgments"
+    assert vi._index_fingerprint(refreshed) == before
 
 
 # ─── index honesty: population, cap, ordering (R3) ───────────────────
@@ -532,6 +619,7 @@ def test_render_names_the_cap_in_coverage_notes(tmp_path, monkeypatch):
     }
     (vdir / "index.json").write_text(json.dumps(index))
     (vdir / "narrative.json").write_text(json.dumps({"tldr": "x"}))
+    _bind_test_artifacts(vdir)
     assert vi.cmd_render("antigravity") == 0
     html_text = (vdir / "report.html").read_text()
     assert "2 of 638 in-window sessions indexed" in html_text

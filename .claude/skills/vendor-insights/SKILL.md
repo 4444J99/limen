@@ -25,6 +25,9 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    `coverage_notes` — the shown sample is the newest N by `meta.order_key`, and the narrative
    must never speak as if the sample were the corpus. `meta.notes` carries store-level caveats
    (pruned blobs, responses-not-captured) that belong in `coverage_notes` verbatim.
+   New indexes expose `index_fingerprint` and each session's `source_fingerprint`, derived
+   from indexed metadata plus a bounded captured-text digest (`capture_max_chars`). These
+   bind this captured view, not uncaptured history. Reindex after a session resumes.
 2. **Facet.** For each session worth reading (order by activity; state the sampling cap
    honestly), run `python3 scripts/vendor-insights.py cat-session --vendor <v> --session <id>`
    (bounded; raise `--max-chars` only when needed) and write
@@ -35,10 +38,17 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    brief_summary`. Facets must be PII-clean: no verbatim personal content, no secrets, no
    third-party names — summaries and counts only. Dispatch-lane sessions: the first "user"
    turn is usually an injected AGENTS.md/plan, not a human — read past it before judging goals.
+   Copy the session's current `source_fingerprint` into the facet. `cat-session` prints the
+   binding JSON on stderr separately from captured text and refuses changed captures; if
+   it requests regeneration, reindex and reread before authoring. Never refresh a judgment
+   by copying a new fingerprint onto old prose or touching a file.
 3. **Narrate.** Write `logs/vendor-insights/<v>/narrative.json`:
    `tldr, at_a_glance{whats_working, whats_hindering, quick_wins, ambitious_workflows},
    areas[{name, session_count, description}], interaction_style, friction[{category,
    description, examples[]}], suggestions[{title, detail}], coverage_notes[]`.
+   Include the exact current `index_fingerprint` from index.json. Regenerate the synthesis
+   when that binding changes; do not relabel an older narrative as current. Unbound legacy
+   or mismatched facets/narratives are excluded with explicit regeneration warnings.
    Ground every claim in the index numbers or a read transcript — the Data Grounding rules in
    `CLAUDE.md` apply in full (state denominators: "N of M sessions read"; a window is not the
    corpus; speech acts are not events). **The denominator is `meta.total_in_window`, not
