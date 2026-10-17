@@ -45,6 +45,7 @@ from limen.prompt_corpus import (  # noqa: E402
     current_source_scanner_code_digest,
     digest,
     load_event_journal,
+    load_archive_feed,
     load_json_strict,
     load_jsonl,
     load_jsonl_strict,
@@ -6210,6 +6211,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--events-jsonl", type=Path, help="provider-neutral normalized events")
     parser.add_argument("--outcomes-jsonl", type=Path, help="evidence-backed atom outcomes")
     parser.add_argument(
+        "--archive-feed",
+        type=Path,
+        action="append",
+        default=[],
+        help=(
+            "vendor archive prompt feed (feed-<provider>-prompts.jsonl); repeatable; its sibling receipt is "
+            "verified (sha256, row count, source and provenance) before any row reaches the ledger"
+        ),
+    )
+    parser.add_argument(
         "--reclassify",
         action="store_true",
         help="re-run the configured classifier over a bounded set of existing occurrences",
@@ -6311,6 +6322,12 @@ def main() -> int:
             return 2
     if args.events_jsonl:
         events.extend(load_jsonl(args.events_jsonl))
+    for archive_feed in args.archive_feed:
+        try:
+            events.extend(load_archive_feed(archive_feed))
+        except ValueError as exc:
+            print(f"FAIL: cannot read archive feed: {exc}", file=sys.stderr)
+            return 2
     if args.outcomes_jsonl:
         outcomes = load_jsonl(args.outcomes_jsonl)
     if args.reclassify:

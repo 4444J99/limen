@@ -99,6 +99,23 @@ DEFAULT_POLICY: dict[str, Any] = {
     "unconverged_repeat_limit": 15,
 }
 
+AUTHORITY_CLASSES = ("operator", "unknown", "derived")
+
+# Which authority classes count toward the recurrence dimension. The default is every class, which is
+# the behaviour from before this knob existed. It is deliberately NOT a key of DEFAULT_POLICY: the policy
+# digest hashes the whole loaded policy, so a new default key would change the digest of every existing
+# ledger. A policy file opts in by naming the key; an absent key means this default.
+RECURRENCE_AUTHORITIES_DEFAULT = AUTHORITY_CLASSES
+
+# Source families whose rows may never carry operator provenance. A vendor archive row is a typed ask
+# the person made somewhere else; nothing in the row proves it was typed at the operator's own terminal,
+# so it stays "unknown" authority however the feeding file labels it.
+NON_OPERATOR_SOURCE_PREFIXES = ("archive-",)
+ARCHIVE_SOURCE_PREFIX = "archive-"
+ARCHIVE_FEED_PROVENANCE = "unknown_user_input"
+_ARCHIVE_FEED_NAME = re.compile(r"^feed-([a-z0-9]+)-prompts\.jsonl$")
+_ARCHIVE_RECEIPT_NAME = re.compile(r"^receipt-([a-z0-9]+)-prompts-([0-9a-f]{16})-([0-9]{8})\.json$")
+
 _SAFE_ROUTE_LABEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@#-]{0,159}$")
 
 _THREAD_LOCK = threading.RLock()
@@ -240,6 +257,75 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     """Compatibility reader for caller-provided JSONL; journal checks use the strict form."""
 
     return load_jsonl_strict(path)[0]
+
+
+def _archive_feed_receipt(feed: Path, provider: str, feed_sha256: str) -> dict[str, Any]:
+    """Find the one sibling receipt that names this exact feed; fail closed otherwise."""
+
+    verified: list[tuple[Path, dict[str, Any]]] = []
+    for candidate in sorted(feed.parent.glob(f"receipt-{provider}-prompts-*.json")):
+        match = _ARCHIVE_RECEIPT_NAME.fullmatch(candidate.name)
+        if match is None or match.group(1) != provider:
+            continue
+        try:
+            dt.datetime.strptime(match.group(3), "%Y%m%d")
+            body = json.loads(candidate.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(body, dict) and body.get("feed_sha256") == feed_sha256:
+            fingerprint = body.get("source_fingerprint")
+            if not isinstance(fingerprint, str) or not fingerprint.startswith(match.group(2)):
+                raise ValueError(f"archive feed receipt fingerprint does not match its name: {candidate.name}")
+            verified.append((candidate, body))
+    if not verified:
+        raise ValueError(f"archive feed has no receipt that names its exact bytes: {feed.name}")
+    if len(verified) > 1:
+        raise ValueError(f"archive feed has more than one matching receipt: {feed.name}")
+    return verified[0][1]
+
+
+def load_archive_feed(feed: Path) -> list[dict[str, Any]]:
+    """Read a vendor archive prompt feed whose receipt verifies, or raise ValueError.
+
+    The feed is the only door vendor archive asks use to reach the ledger events. It must be named
+    feed-<provider>-prompts.jsonl and sit beside a receipt-<provider>-prompts-<16 hex>-<yyyymmdd>.json that
+    records the feed's sha256 and row count. Every row must come from the source family
+    archive-<provider>-messages and carry the unknown-user-input provenance; a row that claims anything
+    else (operator provenance above all) rejects the whole feed. No row text is ever echoed in an error.
+    """
+
+    name_match = _ARCHIVE_FEED_NAME.fullmatch(feed.name)
+    if name_match is None:
+        raise ValueError(f"archive feed name must be feed-<provider>-prompts.jsonl: {feed.name}")
+    provider = name_match.group(1)
+    try:
+        content = feed.read_bytes()
+    except OSError as exc:
+        raise ValueError(f"archive feed is unreadable: {feed.name} ({exc.__class__.__name__})") from exc
+    receipt = _archive_feed_receipt(feed, provider, hashlib.sha256(content).hexdigest())
+    rows: list[dict[str, Any]] = []
+    expected_source = f"{ARCHIVE_SOURCE_PREFIX}{provider}-messages"
+    for line_number, line in enumerate(content.decode("utf-8", errors="strict").split("\n"), start=1):
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError as exc:
+            raise ValueError(f"archive feed row is not valid JSON: {feed.name}:{line_number}") from exc
+        if not isinstance(row, dict):
+            raise ValueError(f"archive feed row is not an object: {feed.name}:{line_number}")
+        if row.get("source") != expected_source:
+            raise ValueError(f"archive feed row has a source other than {expected_source}: {feed.name}:{line_number}")
+        if row.get("provenance") != ARCHIVE_FEED_PROVENANCE:
+            raise ValueError(
+                f"archive feed row provenance must be {ARCHIVE_FEED_PROVENANCE}: {feed.name}:{line_number}"
+            )
+        rows.append(row)
+    if len({(row.get("session_ref"), row.get("event_ref")) for row in rows}) != len(rows):
+        raise ValueError(f"archive feed repeats an event reference: {feed.name}")
+    if receipt.get("row_count") != len(rows) or isinstance(receipt.get("row_count"), bool):
+        raise ValueError(f"archive feed row count differs from its receipt: {feed.name}")
+    return rows
 
 
 def atomic_write_bytes(path: Path, content: bytes, *, mode: int = 0o600) -> None:
@@ -455,7 +541,45 @@ def load_policy(path: Path) -> dict[str, Any]:
         policy["unconverged_repeat_limit"] = max(1, int(policy["unconverged_repeat_limit"]))
     except (TypeError, ValueError):
         policy["unconverged_repeat_limit"] = DEFAULT_POLICY["unconverged_repeat_limit"]
+    if "recurrence_authorities" in policy:
+        policy["recurrence_authorities"] = list(_normalized_recurrence_authorities(policy["recurrence_authorities"]))
     return policy
+
+
+def _normalized_recurrence_authorities(value: Any) -> tuple[str, ...]:
+    """Validate the recurrence authority list; anything unusable falls back to the unchanged default."""
+
+    if not isinstance(value, (list, tuple)):
+        return RECURRENCE_AUTHORITIES_DEFAULT
+    names = {str(item) for item in value}
+    if not names or not names <= set(AUTHORITY_CLASSES):
+        return RECURRENCE_AUTHORITIES_DEFAULT
+    return tuple(name for name in AUTHORITY_CLASSES if name in names)
+
+
+def recurrence_authorities(policy: dict[str, Any]) -> tuple[str, ...]:
+    """The authority classes that count toward recurrence under this policy."""
+
+    if "recurrence_authorities" not in policy:
+        return RECURRENCE_AUTHORITIES_DEFAULT
+    return _normalized_recurrence_authorities(policy["recurrence_authorities"])
+
+
+def source_family_operator_eligible(source: str) -> bool:
+    """True unless the source family is declared as never operator-authored."""
+
+    return not any(str(source).startswith(prefix) for prefix in NON_OPERATOR_SOURCE_PREFIXES)
+
+
+def _reject_operator_authority_for_ineligible_source(occurrence: dict[str, Any]) -> None:
+    source = str(occurrence.get("source") or "")
+    if source_family_operator_eligible(source):
+        return
+    if occurrence.get("provenance") == "operator_typed" or occurrence.get("authority") == "operator":
+        raise ValueError(
+            "operator provenance is not permitted for source family "
+            f"{source[:64]!r}: occurrence {occurrence.get('occurrence_id')}"
+        )
 
 
 def normalize_intent(text: str) -> str:
@@ -2485,7 +2609,13 @@ def build_snapshot(
     evidence_root: Path | None = None,
 ) -> dict[str, Any]:
     outcomes = {str(row.get("atom_id")): row for row in outcome_rows if isinstance(row, dict) and row.get("atom_id")}
-    recurrence = Counter(str(atom.get("lineage_id") or "") for atom in atoms)
+    counted_authorities = set(recurrence_authorities(policy))
+    recurrence = Counter(
+        str(atom.get("lineage_id") or "")
+        for atom in atoms
+        if counted_authorities == set(AUTHORITY_CLASSES)  # default: every atom counts, as before the knob
+        or str(atom.get("authority") or "unknown") in counted_authorities
+    )
     dependents: Counter[str] = Counter()
     for atom in atoms:
         for dependency in atom.get("dependency_ids") or []:
@@ -2510,7 +2640,9 @@ def build_snapshot(
             "operator_emphasis": _emphasis_score(atom),
             "system_leverage": _clamp(dependents.get(str(atom["atom_id"]), 0) / max_dependents),
             "magnitude": _magnitude_score(atom),
-            "recurrence": _clamp(recurrence.get(lineage_id, 1) / max_recurrence),
+            # Every lineage is present in the counter under the default authority set, so the 0 fallback
+            # only applies to a lineage with no counted authority (recurrence is then not evidenced).
+            "recurrence": _clamp(recurrence.get(lineage_id, 0) / max_recurrence),
             "dependency_impact": _clamp(dependency_count / max(1, max_dependents)),
             "preservation_risk": 0.0,
             "recency": _recency_score(atom.get("timestamp"), reference, float(policy["recency_half_life_days"])),
@@ -4359,6 +4491,7 @@ def update_ledger(
             if (str(event.get("source") or ""), event_path) in excluded_units:
                 continue
             proposed_occurrence = occurrence_from_event(event)
+            _reject_operator_authority_for_ineligible_source(proposed_occurrence)
             requested_existing_id = str(event.get("existing_occurrence_id") or "")
             if requested_existing_id:
                 existing_occurrence = occurrence_by_id.get(requested_existing_id)
@@ -4376,6 +4509,9 @@ def update_ledger(
                 occurrence = proposed_occurrence
                 occurrence_id = str(occurrence["occurrence_id"])
                 existing_occurrence = occurrence_by_id.get(occurrence_id)
+            # A revision copies provenance and authority from the proposal onto the stored occurrence,
+            # so the stored source family is checked again on the resolved record.
+            _reject_operator_authority_for_ineligible_source(occurrence)
             resolved_locator = str(occurrence.get("source_locator") or "")
             resolved_path = resolved_locator.rsplit("#", 1)[0] if "#" in resolved_locator else resolved_locator
             if (str(occurrence.get("source") or ""), resolved_path) in excluded_units:
