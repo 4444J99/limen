@@ -168,15 +168,85 @@ lock contention should read as a defect is a judgement call — a concurrent suc
 would make `down` a false alarm — so it is stated here rather than decided in either direction.
 Wiring it is a one-line addition of a `("memory_deferred",)` trail plus its control.
 
+## Round 3 — deferral classification: tolerated, then degraded
+
+Round 2 preserved `memory_deferred` but read nothing, which fixes *reporting* and leaves the
+monitoring false-green open from the other side: a lane that deferred forever stayed green.
+
+### The rule
+
+Deferring is memoria's designed behaviour under contention — `drain_memory_once` defers to the
+next beat rather than blocking — so **one recent deferral must not read `down`.** It is an
+*advisory*: named in the note, status untouched.
+
+Degradation requires **both** conditions, since each alone has a healthy explanation:
+
+| Condition | Alone it means |
+|---|---|
+| repetition: `memory_defer_streak >= 2` | a one-beat lock collision — the other drainer finishes |
+| persistence: `memory_deferred_since` older than 1h | a stamp nobody rewrote, which freshness already reports |
+
+Only both together mean no drain is succeeding.
+
+### Three design decisions worth naming
+
+**A new `advisory` hook, not a new status.** `defect` forces `down` for ANY non-empty string, so a
+tolerated deferral cannot be routed through it. Adding a `deferred` *status* would require the
+dot/label maps, the summary counts, and every downstream reader to learn it — the file's own
+comment at the defect branch already rejects that for the same reason.
+
+**The keeper carries the streak.** The stamp is overwritten every run, so one deferral and the
+hundredth consecutive one produced identical fields. Repetition was unmeasurable until the keeper
+read its own prior stamp and carried the streak forward.
+
+**The reset is explicit `= 0`, not absence.** If a clean run merely omitted the field, a single
+contended beat between two clean ones would restart the count at 1, and no streak could ever
+cross the threshold. A reader also has to distinguish "never deferred" from "deferred and
+recovered" — that requires the reset to be visible.
+
+### Controls
+
+| Run | exit | Outcome | Fails |
+|---|---:|---|---|
+| **Repaired** | **0** | **60 passed** | — |
+| Control H — deferral routed through `defect` | 1 | 4 failed, 21 passed | every tolerated-deferral case |
+| Control I — streak reset dropped | 1 | 2 failed, 33 passed | both streak tests |
+| Control J — streak increment dropped | 1 | 3 failed, 32 passed | streak tests + the stdout streak assertion |
+| Control K — persistence condition dropped | 1 | 1 failed, 24 passed | `test_either_deferral_condition_alone_stays_green[9-0.0]` |
+
+Control K failing **only** the persistence case is the proof that the two conditions are
+independent: repetition alone is genuinely insufficient.
+
+### A vacuous assertion this round's controls caught
+
+The carry-forward control — removing `since or` from the keeper — left the suite **green**, proving
+the streak-preservation assertions caught nothing. Cause: whole-second stamps. Two deferred runs
+inside one second write identical strings, so "the start was preserved" and "the start was
+rewritten to now" were indistinguishable.
+
+Fixed by sleeping past a second boundary, and by adding the sequence those tests could not express:
+**defer, succeed, defer**. That one needed the inbox re-seeded too — the recovery drain *consumes*
+the ticket, and an empty inbox returns before locking, so it would never have deferred and the
+sequence would have tested nothing. Re-ran the same control after strengthening: **1 failed**, as
+required.
+
+A test that passes whether or not the fix is present is not evidence, and this one was found only
+because a control was run rather than assumed.
+
 ## Predicates
 
 | Predicate | Status |
 |---|---|
-| Focused suites green | **Satisfied** — 48 passed, exit 0, controlled environment |
+| Focused suites green | **Satisfied** — 60 passed, exit 0, controlled environment |
+| One recent deferral reads green and is named | **Satisfied** — Control H |
+| Repeated deferrals with no drain degrade | **Satisfied** — Control K proves the conditions are independent |
+| A recovered lane reads clean | **Satisfied** — Controls I and J |
+| Reader fail-open on odd shapes | **Satisfied** |
 | Each of the three defects caught by its own tests | **Satisfied** — Controls E/F/G plus the lifecycle vacuity pair |
 | `ruff-lint` under pinned `0.15.8` | **Satisfied** — `check-ruff-pin.py` exit 0; `ruff check cli/src cli/tests web/api mcp ianva apps organs` → `All checks passed!` |
 | `ruff-format` under pinned `0.15.8` | **Satisfied** — `ruff format --check …` → `790 files already formatted` |
-| `scripts/verify-scoped.sh` | **Cheap wave PASS**; **heavy wave exit 75** — `Host admission denied scoped heavy verification: heavy-lease-held`, held by `claude-lane-j-foa-live` (pid 74553, surface `tmb-foa-live-browser`, alive). Not killed: at most one heavy surface machine-wide, and existing work is never killed. Exit 75 is the prescribed fail-open "blocked on a held condition", not a defect. The held gate is `pytest-cli` (whole `cli/tests`, `tier: heavy`, `serialize: true`). |
+| `scripts/verify-scoped.sh` | **Cheap wave PASS** (all 13 cheap gates); **heavy wave exit 75** — `Host admission denied scoped heavy verification: heavy-lease-held`, held by `claude-lane-j-foa-live` (pid 74553, surface `tmb-foa-live-browser`, alive). Not killed: at most one heavy surface machine-wide, and existing work is never killed. Exit 75 is the prescribed fail-open "blocked on a held condition", not a defect. The held gate is `pytest-cli` (whole `cli/tests`, `tier: heavy`, `serialize: true`). |
+| `APPLY FAILED: 4444J99/limen:estate-contract` in the gate log | **Not a failure.** It is the suppressed stdout of a deliberate negative control inside `merge-queue-contract-test` (`test_repository_plan_failure_refuses_all_mutations`, which mocks `gh_json_checked` to fail and asserts every mutation is refused). That gate reported `186 passed` / `FINISH status=PASS`. |
 | Heavy `pytest-cli` blast radius | **Contained** — `tabularius_organ_fixtures` is imported by exactly one file, `cli/tests/test_tabularius_organ_memory.py` (verified by full-repo grep; the other hits are receipt prose). `scripts/organ-health.py` is untouched this round. So the held gate exercises no changed path beyond the two files driven directly here. Full-suite confirmation is left to `pr-gate`. |
 | Consumer distinguishes recorded memory failure at equal freshness | **Satisfied** — Control D proves the wiring |
 | Lock attribution proven; unattributed rejected | **Satisfied** |
@@ -211,9 +281,16 @@ relevant gates pass, and the heavy `pytest-cli` gate has not yet run at this hea
 
 ### Not claimed
 
-Landing. No merge is claimed until the exact head is an ancestor of `origin/main`, verified by
-`git merge-base --is-ancestor` against the merged ref — not by this PR's state, its age, or the
-absence of an open PR.
+Landing. **No merge is claimed and none is asserted here.** `DEFERRED — BLOCKED` is not a receipt,
+and a later `mergeable: MERGEABLE` read proves nothing about landing — it is GitHub's own
+compatibility field, which reads `UNKNOWN` while it recomputes after a push. Landing requires the
+exact head to be an ancestor of `origin/main`:
+
+```bash
+git merge-base --is-ancestor <exact-head> origin/main   # exit 0 ⟺ landed
+```
+
+Not by this PR's state, its age, the absence of an open PR, or a passing merge-drain line.
 
 Local pinned-Ruff verification is not CI acceptance. The two are recorded separately.
 
