@@ -106,3 +106,27 @@ overrides did not restore CLI access. Existing SSH authentication successfully
 read the exact topic head, providing a publication route without changing account
 credentials or repository remotes. API authentication remains an access gap;
 SSH publication must not be described as restored GitHub API access.
+
+## Continuation checkpoint, 2026-10-17 16:53 UTC
+
+GitHub API access recovered: a fresh PR read returned the published `2f110da5`
+head and draft/open state. The earlier 401 observation is historical; it is no
+longer a current blocker. Issue #2886 remains open and unchanged. The bounded
+corrective verification attempt has already been consumed; do not repeatedly
+rerun the same failing fixture to obtain a passing sample.
+
+The other writer's post-rollout census, observed at 16:49:34 UTC, still reports
+unknown coverage: all 1138 surface records lack owner/disposition fields. Its
+current-client canary records `denied_marker_absent: false` and
+`allowed_marker_present: true`, with native CLI interception unmeasured and
+enforcement not established. This proves no native CLI denial; it also provides
+no permission to promote mandatory coverage. Those evidence files remain in the
+other active writer's checkout and were not altered here.
+
+Host admission currently denies new heavy work for `swap-fraction`, with no
+held lease to transfer. Independent review still lacks a keeper reservation.
+The remaining source-owner repair belongs to the active Domus writer; full
+verification belongs to #2886 and this draft; native trust review, two fresh
+sessions and the observation threshold belong to the hook-estate acceptance
+owner. Retain both checkouts. There is no passing full-scope or merge receipt,
+and this checkpoint does not reset the attempt or cumulative allowance.
