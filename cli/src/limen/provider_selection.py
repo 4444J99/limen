@@ -184,22 +184,32 @@ class ModelCapability:
     attachment: bool
     context_limit: int
     output_limit: int
-    input_cost: float
-    output_cost: float
+    input_cost: float | None
+    output_cost: float | None
     variant_count: int
     release_ordinal: int
 
     @property
+    def cost_known(self) -> bool:
+        return all(
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value) and value >= 0
+            for value in (self.input_cost, self.output_cost)
+        )
+
+    @property
     def zero_cost(self) -> bool:
-        return self.input_cost <= 0 and self.output_cost <= 0
+        return self.cost_known and self.input_cost == 0 and self.output_cost == 0
 
     def satisfies(self, profile: ExecutionProfile) -> bool:
         return (
             self.active
+            and self.cost_known
             and self.text_input
             and self.text_output
             and (self.toolcall or not profile.tools_required)
             and (self.attachment or not profile.attachments_required)
+            and (self.reasoning or profile.reasoning_depth < 0.75)
             and self.context_limit >= profile.min_context
             and self.output_limit >= profile.min_output
         )
@@ -217,6 +227,19 @@ def _dict_value(payload: dict[str, Any], key: str) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _catalog_price(costs: object, field: str) -> float | None:
+    tiers = costs if isinstance(costs, list) else [costs]
+    if not tiers:
+        return None
+    values = []
+    for tier in tiers:
+        value = _as_number(tier.get(field), math.nan) if isinstance(tier, dict) else math.nan
+        if not math.isfinite(value) or value < 0:
+            return None
+        values.append(value)
+    return max(values)
+
+
 def _capability_from_payload(payload: dict[str, Any], reported_id: str = "") -> ModelCapability | None:
     provider = str(payload.get("providerID") or "").strip()
     local_id = str(payload.get("id") or "").strip()
@@ -227,28 +250,41 @@ def _capability_from_payload(payload: dict[str, Any], reported_id: str = "") -> 
     input_caps = _dict_value(capabilities, "input")
     output_caps = _dict_value(capabilities, "output")
     limits = _dict_value(payload, "limit")
-    costs = _dict_value(payload, "cost")
-    variants = _dict_value(payload, "variants")
+    costs = payload.get("cost")
+    variants = payload.get("variants") or []
     status = str(payload.get("status") or "active").strip().lower()
     return ModelCapability(
         model_id=model_id,
-        active=status in {"active", "available", "ready"},
-        text_input=bool(input_caps.get("text", True)),
-        text_output=bool(output_caps.get("text", True)),
-        toolcall=bool(capabilities.get("toolcall")),
-        reasoning=bool(capabilities.get("reasoning")),
-        attachment=bool(capabilities.get("attachment")),
+        active=status in {"active", "available", "ready"} and payload.get("enabled", True) is True,
+        text_input=input_caps.get("text") is True or (
+            isinstance(capabilities.get("input"), list) and "text" in capabilities["input"]
+        ),
+        text_output=output_caps.get("text") is True or (
+            isinstance(capabilities.get("output"), list) and "text" in capabilities["output"]
+        ),
+        toolcall=capabilities.get("toolcall", capabilities.get("tools")) is True,
+        reasoning=capabilities.get("reasoning") is True,
+        attachment=capabilities.get("attachment") is True,
         context_limit=max(0, int(_as_number(limits.get("context")))),
         output_limit=max(0, int(_as_number(limits.get("output")))),
-        input_cost=max(0.0, _as_number(costs.get("input"))),
-        output_cost=max(0.0, _as_number(costs.get("output"))),
+        input_cost=_catalog_price(costs, "input"),
+        output_cost=_catalog_price(costs, "output"),
         variant_count=len(variants),
         release_ordinal=_release_ordinal(payload.get("release_date")),
     )
 
 
 def parse_opencode_catalog(output: str) -> list[ModelCapability]:
-    """Parse ``opencode models --verbose`` alternating IDs and JSON objects."""
+    """Parse V2 model.list data or the supported V1 verbose stream."""
+
+    try:
+        decoded = json.loads(output)
+    except json.JSONDecodeError:
+        decoded = None
+    rows = decoded.get("data", decoded.get("models")) if isinstance(decoded, dict) else decoded
+    if isinstance(rows, list):
+        return [model for row in rows if isinstance(row, dict)
+                if (model := _capability_from_payload(row)) is not None]
 
     decoder = json.JSONDecoder()
     cursor = 0
@@ -273,21 +309,33 @@ def parse_opencode_catalog(output: str) -> list[ModelCapability]:
 
 
 def discover_opencode_models(binary: str = "opencode", *, timeout: int = 30) -> list[ModelCapability]:
+    # The V2 API is the registry; its human `models` display has no verbose flag.
+    # One deadline covers current discovery and the older-client fallback.
+    import time
+
+    deadline = time.monotonic() + max(1, timeout)
     try:
         result = subprocess.run(
-            [binary, "models", "--verbose"],
+            [binary, "api", "model.list"],
             capture_output=True,
             text=True,
             timeout=max(1, timeout),
             check=False,
         )
+        if result.returncode == 0:
+            return parse_opencode_catalog(result.stdout)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return []
+        result = subprocess.run([binary, "models", "--verbose"], capture_output=True,
+                                text=True, timeout=remaining, check=False)
+        return parse_opencode_catalog(result.stdout) if result.returncode == 0 else []
     except (OSError, subprocess.SubprocessError):
         return []
-    return parse_opencode_catalog(result.stdout) if result.returncode == 0 else []
 
 
 def _model_score(model: ModelCapability, profile: ExecutionProfile) -> tuple[float, str]:
-    cost = model.input_cost + model.output_cost
+    cost = float(model.input_cost) + float(model.output_cost)
     context_headroom = math.log2(max(1, model.context_limit / max(1, profile.min_context)))
     output_headroom = math.log2(max(1, model.output_limit / max(1, profile.min_output)))
     score = (
