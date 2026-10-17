@@ -287,7 +287,10 @@ class TestTier1FeatureCoverage:
         """F2.4: PRAGMA quick_check = ok and exact row counts on historical Codex DBs."""
         codex_root = Path("/Users/4jp/.local/share/codex")
         if not codex_root.exists():
-            pytest.skip("Live ~/.local/share/codex has already been retired or relocated.")
+            staging_base = Path("/Users/4jp/Workspace/limen/.limen-private/custody-staging")
+            candidates = sorted(staging_base.glob("codex-legacy-share-20261017*"))
+            assert candidates, "Neither live ~/.local/share/codex nor custody-staged copy found"
+            codex_root = candidates[-1]
 
         # Test state_5.sqlite
         state_db = codex_root / "state_5.sqlite"
@@ -1090,7 +1093,7 @@ class TestLiveSystemInvariants:
     def test_acceptance_host_admission_status(self):
         """Host admission status allows read-only and worktree operations."""
         res = subprocess.run(
-            ["python3", "/Users/4jp/Workspace/limen/scripts/host-work-admission.py", "status"],
+            ["python3", "/Users/4jp/Workspace/limen/scripts/host-work-admission.py", "status", "--no-probe"],
             capture_output=True,
             text=True,
             check=True,
@@ -1100,3 +1103,35 @@ class TestLiveSystemInvariants:
         assert "allowed" in data
         assert isinstance(data["allowed"], bool)
         assert "leases" in data
+
+    def test_acceptance_m3_m4_m5_m6_live_artifacts(self):
+        """Verify live M3-M6 outputs: antigravity symlinks, skills catalog, s-02-plan fix, and 15 routes."""
+        rt = Path("/Users/4jp/Workspace/limen/.agent-runtime")
+        # M3: Antigravity root and depth-3 relative symlinks
+        agy_root = rt / "antigravity"
+        assert agy_root.is_dir()
+        assert (agy_root.stat().st_mode & 0o777) == 0o700
+        gemini_dot = rt / "gemini" / "home" / ".gemini"
+        for sd in ("antigravity", "antigravity-cli", "antigravity-ide", "bin", "config"):
+            link = gemini_dot / sd
+            assert link.is_symlink()
+            assert os.readlink(link) == f"../../../antigravity/{sd}"
+            assert link.resolve(strict=True) == (agy_root / sd).resolve(strict=True)
+
+        # M4: Shared skills catalog and s-02-plan durability fix
+        reg_file = rt / "shared" / "skills-catalog" / "skills-registry.json"
+        assert reg_file.is_file()
+        reg = json.loads(reg_file.read_text())
+        assert reg["arbitrary_cap_applied"] is False
+        assert reg["unique_skills_count"] >= 60
+
+        wt_domus = Path("/Users/4jp/Workspace/domus-genoma/.worktrees/contain-agent-surfaces")
+        s02_text = (wt_domus / "dot_agents/skills/s-02-plan/SKILL.md").read_text()
+        assert "/Users/4jp/Workspace/limen/docs/plans/" in s02_text
+
+        # M5: All 15 vendor surfaces declared in worktree home-surface.yaml
+        hs = json.loads((wt_domus / "dot_config/domus/home-surface.yaml").read_text())
+        routed_paths = {r["path"] for r in hs["routes"]}
+        for surf in ALL_15_UNCONTAINED_SURFACES:
+            assert surf in routed_paths, f"Missing route for {surf}"
+
