@@ -762,6 +762,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Bulk custody staging root (the shared liturgy's § Bulk custody staging): per-run 0700 directories for bundles, private clones and receipts, outside every vendor runtime root. scripts/check-prerewrite-containment.py keeps its limen--private bare clone, learned scrub map, private evidence and upstream-quarantine receipt under <root>/prerewrite-containment-20261016/; nothing there is committed."
+  LIMEN_SEALED_CUSTODY_TEST:
+    default: ""
+    env: LIMEN_SEALED_CUSTODY_TEST
+    self_update: none
+    owner: continuity
+    note: "Test-only switch for scripts/sealed-custody.py: only when set to 1 is LIMEN_SEALED_CUSTODY_DEVICE_ID_OVERRIDE honored. Production runs leave it unset so device identity always comes from the physical-disk probe."
+  LIMEN_SEALED_CUSTODY_DEVICE_ID_OVERRIDE:
+    default: ""
+    env: LIMEN_SEALED_CUSTODY_DEVICE_ID_OVERRIDE
+    self_update: none
+    owner: continuity
+    note: "Test-only opaque device id that replaces the diskutil probe in scripts/sealed-custody.py so the hermetic test can simulate two physical devices; ignored unless LIMEN_SEALED_CUSTODY_TEST=1."
+  LIMEN_SEALED_CUSTODY_PYTHON:
+    default: ""
+    env: LIMEN_SEALED_CUSTODY_PYTHON
+    self_update: none
+    owner: continuity
+    note: "Interpreter override for scripts/tests/sealed-custody.test.sh; must import rfc8785 and pydantic (the cli venv). Unset, the test probes the gate python, the cli venvs, then PATH pythons."
   LIMEN_PRIVATE_CUSTODY_ROOT:
     default: "$LIMEN_ROOT/.limen-private"
     env: LIMEN_PRIVATE_CUSTODY_ROOT

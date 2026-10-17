@@ -55,6 +55,13 @@ ARCA_RAW_FILE_ENCRYPTION_PROFILE: dict[str, Any] = {
     },
     "record_format": "raw-file-bytes",
 }
+ARCA_SEALED_TAR_PROFILE: dict[str, Any] = {
+    "cipher_command": list(_OPENSSL_ENCRYPT),
+    "compression": {
+        "format": "none",
+    },
+    "record_format": "tar-payload",
+}
 
 
 class CryptoError(RuntimeError):
@@ -73,6 +80,12 @@ def encryption_profile_digest(source_kind: str = "file-tree") -> str:
         external = {
             "form": "raw-source-copy",
             "profile": ARCA_RAW_FILE_ENCRYPTION_PROFILE,
+        }
+    elif source_kind == "arca-sealed-tar":
+        # scripts/arca.sh seal: one tar of the source, one openssl envelope, no compression.
+        external = {
+            "form": "single-ciphertext-envelope",
+            "profile": ARCA_SEALED_TAR_PROFILE,
         }
     else:
         raise ValueError(f"unsupported agent-state source kind: {source_kind}")
