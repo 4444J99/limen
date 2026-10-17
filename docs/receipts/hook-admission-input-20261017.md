@@ -146,3 +146,33 @@ The scheduling fixture suite passed every case with the cold-start delay in
 place. One intermediate run reported an invalid-byte output-limit failure; a
 bounded diagnostic was added and the final run passed that case too. This is
 not a claim to have diagnosed or fixed an unrelated intermittent output case.
+
+## Authorized session transfer and integration, 2026-10-17 17:37 UTC
+
+The human explicitly authorized transfer of the prior task writer leases.
+The exact two leases were released through the admission controller with exit 0;
+other sessions' leases and processes were preserved. Native successor identity:
+01a14ae3-b630-7ab0-b99d-ac2f0d3de089. Its direct registration returned 422,
+so no keeper registration or new broker reservation is claimed.
+
+The full earlier CI run on 874d899c recorded 8775 passed and one failing
+owner-diagnostic assertion. Correction 16d69512 preserves only fixed typed owner
+diagnostics. The focused admission-boundary and provider-owner-process suites
+passed 32 tests in 17.76 seconds. Ruff lint and format checks also passed.
+The original 62-case shard and 31 cheap gates remain scoped historical evidence;
+no new complete CLI/API pass is claimed.
+
+Domus #489 merged as f62299503d953a73812538bb8bd9a7421ca7f869 after its
+exact-head fast-lane predicate cleared. This is source integration, not installed
+adoption. The read-only rollout script invocation was denied by native review
+with write-target-outside-worktree; no managed file was applied.
+
+Limen #2900 was marked ready. Its single c803ab95 submission returned
+DEFERRED / STALE-CORE. One bounded base merge incorporated cf32c32fe, whose
+only incoming changes were two documentation files. An explicit diff against
+16d69512 proved all implicated implementation/test/gate paths unchanged.
+The new exact head may be submitted once; no repeated submission or moving-main
+verification loop is authorized. Domus issue #487 retains native acceptance;
+Limen #2900 retains source delivery, and #2901 retains its independent writer.
+Native trust, permitted-action proof, fresh sessions and the 24-hour/20-event
+window are still required. No successful closeout or deployment is asserted.
