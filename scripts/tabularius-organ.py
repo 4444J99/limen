@@ -91,6 +91,29 @@ def _describe(memory: dict[str, object]) -> str:
     return f"pass OK ({pending} pending, {applied} applied, {rejected} rejected)"
 
 
+def _prior_memory_deferral() -> tuple[int, str]:
+    """The previous run's deferral streak, so repetition is measurable.
+
+    The stamp is overwritten every run, so repetition cannot be derived from it alone: a
+    single contention event and the hundredth consecutive one produce identical fields.
+    Carrying the streak forward is what lets a reader distinguish "contended this beat" —
+    the designed outcome, since `drain_memory_once` defers rather than blocking — from "the
+    lane is stuck". Returns (streak, since) where `since` is when the current streak began.
+    """
+    try:
+        obj = json.loads(STATE.read_text())
+    except (OSError, ValueError):
+        return 0, ""
+    if not isinstance(obj, dict):
+        return 0, ""
+    streak = obj.get("memory_defer_streak")
+    since = obj.get("memory_deferred_since")
+    return (
+        streak if isinstance(streak, int) and streak > 0 else 0,
+        since if isinstance(since, str) else "",
+    )
+
+
 def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
     if not MEMORIA_ENABLED:
         return {}
@@ -117,14 +140,22 @@ def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
         if note:
             fields["memory_note"] = note
         if getattr(result, "deferred", False):
-            # A STRING, not a bool. `organ-health.py`'s `_json_nested_error` reads a
-            # recorded failure at a key path and requires a non-empty string, so a bare
-            # `true` would be written and then silently un-readable — the "signal with
-            # no effector" shape. Note the reader currently registers only
-            # `("memory_error",)`, so a deferral is recorded and reported on stdout
-            # but does NOT yet turn the TABVLARIVS row down; whether contention should
-            # read as a defect is a judgement for the owner, not a silent default.
+            # A STRING, not a bool. `organ-health.py` readers require a non-empty string
+            # at a key path, so a bare `true` would be written and then silently unread.
+            streak, since = _prior_memory_deferral()
             fields["memory_deferred"] = note or "deferred to next beat"
+            fields["memory_defer_streak"] = streak + 1
+            # When the CURRENT streak began, not when this run happened: a reader must
+            # be able to tell one recent deferral from a streak that has outlasted the
+            # threshold, and the stamp alone cannot express "how long".
+            fields["memory_deferred_since"] = since or datetime.now(timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
+        elif not dry_run:
+            # A drain that ran and did not defer IS a successful drain, and it ends the
+            # streak — including the "inbox empty" no-op, which means the lane worked
+            # and had nothing to do. Only a real deferred run may carry the streak on.
+            fields["memory_defer_streak"] = 0
         return fields
     except Exception as exc:
         print(f"tabularius[memoria]: skipped ({type(exc).__name__}: {str(exc)[:120]})")

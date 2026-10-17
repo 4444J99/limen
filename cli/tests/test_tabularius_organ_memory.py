@@ -387,6 +387,50 @@ def test_check_dry_run_count_is_not_relabelled_would_be(tmp_path):
     assert "1 pending" in out, f"--check did not report the pending count: {out!r}"
 
 
+def test_a_deferral_records_a_streak_that_a_success_resets(tmp_path):
+    """Repetition must be measurable, and it must be endable.
+
+    The stamp is overwritten every run, so a single deferral and the hundredth consecutive
+    one produce identical fields. The keeper carries the streak forward across runs and
+    clears it on any drain that did not defer — including the "inbox empty" no-op, which
+    means the lane worked and had nothing to do. Without the reset, one contention event
+    would leave a permanent latent `down`.
+    """
+    sb = KeeperSandbox(tmp_path, "defer-streak", memoria=True, memory_populated=True)
+
+    _run_with_deferred_memory_lock(sb)
+    first = sb.state_payload()
+    assert first.get("memory_defer_streak") == 1, first
+    assert first.get("memory_deferred_since"), f"streak start not recorded: {first}"
+    first_since = first["memory_deferred_since"]
+
+    # A second contended run advances the streak and preserves the original start, so a
+    # reader can tell repetition from a single recent event.
+    _run_with_deferred_memory_lock(sb)
+    second = sb.state_payload()
+    assert second.get("memory_defer_streak") == 2, second
+    assert second.get("memory_deferred_since") == first_since, (
+        f"streak start rewritten instead of preserved: {second}"
+    )
+
+    # A successful drain clears it.
+    sb.run()
+    third = sb.state_payload()
+    assert "memory_deferred" not in third, f"a clean drain still reports a deferral: {third}"
+    assert third.get("memory_defer_streak") == 0, third
+
+
+def test_a_clean_drain_records_no_deferral_fields(tmp_path):
+    """The control on the reset: the ordinary successful path carries no deferral state."""
+    sb = KeeperSandbox(tmp_path, "no-defer", memoria=True, memory_populated=True)
+    sb.run()
+    state = sb.state_payload()
+
+    assert "memory_deferred" not in state, state
+    assert "memory_deferred_since" not in state, state
+    assert state.get("memory_defer_streak") == 0, state
+
+
 def test_memory_pass_succeeds(tmp_path):
     """Separate from error propagation: the memory pass must actually work.
 
