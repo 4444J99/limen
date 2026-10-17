@@ -31,6 +31,6 @@
   "custody": {
     "verified": true,
     "evidence": "docs/receipts/session-closeout-01tq-20261017/custody.json",
-    "sha256": "787743b85761e869e360b5c1f2d6d1b879d484972048f5a1f2834306b55f213f"
+    "sha256": "6109348118f3005b04c6993fe7121fa98d8433196b0f2ab4d2263c6d379248cf"
   }
 }

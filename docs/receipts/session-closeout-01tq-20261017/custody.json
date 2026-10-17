@@ -11,8 +11,11 @@
     "https://github.com/4444J99/domus-genoma-private/issues/487"
   ],
   "deployed": {
-    "limen_runtime_current": "5d7f2ef70c16c02d35da664e065b53e5d42523ae",
-    "heartbeat_plan_sha256": "4d4624bd09d24f7d8fa80d662b6c32a3c1103a1603d8f2a2f823d1f59369b253",
+    "limen_runtime_first_install": "5d7f2ef70c16c02d35da664e065b53e5d42523ae",
+    "limen_runtime_current": "80efee81d0bbe3897edfd08b21c2d1178d93e2a8",
+    "limen_runtime_reinstall_reason": "the installed 5d7f2ef7 tree was edited in place by another lane (spec/runtime-maintenance-observation.json re-pin, later merged as #2930); reinstalled the exact merged commit",
+    "heartbeat_plan_sha256": "a75823d857758ff7370152903e710be1020b8e100ddc94b60cf886b24d061359",
+    "heartbeat_verification": "passed, runtime digest 902dd6c6fed6a74a981c2691bbaf2acd43bc13330558a623198c1649e4422043, 0 system failures",
     "chezmoi_targets": [
       "~/.local/bin/domus-limen-runtime",
       "~/.local/libexec/agent_hook_policy.py",
