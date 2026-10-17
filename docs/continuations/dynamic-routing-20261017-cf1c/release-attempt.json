@@ -1,0 +1,28 @@
+{
+  "schema": "limen.session_release_attempt.v1",
+  "session_id": "01a14ac6-cf1c-7043-a3d6-839e4fbd4f56",
+  "native_anchor": "home directory",
+  "receipt": "docs/continuations/dynamic-routing-20261017-cf1c/session-closeout.json",
+  "predicate": {
+    "executed": false,
+    "exit_code": null,
+    "host_rejection": "workspace-scope-unavailable",
+    "second_run": "not attempted after unchanged host rejection; no two-zero claim"
+  },
+  "recovery_dry_run": {
+    "executed": false,
+    "exit_code": null,
+    "host_rejection": "workspace-scope-unavailable"
+  },
+  "source_worktrees": {
+    "domus": "clean; remote snapshot 45e0690a899960fee1b099eaa16ea8b8660b670f",
+    "limen": "clean; remote snapshot 632b87311f0712bf43932a9854e491c533c9d0ea"
+  },
+  "task_disposition": "incomplete; drafts and existing owners retain work",
+  "owners": [
+    "https://github.com/4444J99/limen/pull/2903",
+    "https://github.com/4444J99/domus-genoma-private/pull/490",
+    "https://github.com/4444J99/limen/issues/940",
+    "https://github.com/4444J99/domus-genoma-private/issues/487"
+  ]
+}
