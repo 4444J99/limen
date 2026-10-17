@@ -529,7 +529,8 @@ def test_public_sources_reject_unexpected_and_credential_bearing_fields() -> Non
     assert "source PROFILE_API_RECEIPT must bind its exact public receipt_path" in errors
 
 
-def test_live_public_sources_require_public_repositories_and_exact_paths() -> None:
+@pytest.mark.parametrize("private_repository", ["4444J99/4444J99", "organvm-vii-kerygma/portfolio"])
+def test_live_public_sources_require_public_repositories_and_exact_paths(private_repository: str) -> None:
     artifact = _bundle()["artifact"]
 
     def valid_fetch(args):
@@ -555,12 +556,12 @@ def test_live_public_sources_require_public_repositories_and_exact_paths() -> No
 
     def private_fetch(args):
         endpoint = args[-1]
-        if endpoint == "repos/4444J99/4444J99":
-            return {"full_name": "4444J99/4444J99", "private": True, "visibility": "private"}
+        if endpoint == f"repos/{private_repository}":
+            return {"full_name": private_repository, "private": True, "visibility": "private"}
         return valid_fetch(args)
 
     assert (
-        "public source repository 4444J99/4444J99 must resolve as that exact public repository"
+        f"public source repository {private_repository} must resolve as that exact public repository"
         in MODULE.validate_live_sources(artifact, private_fetch)
     )
 
@@ -613,6 +614,45 @@ def test_complete_portfolio_identity_receipt_is_exact_value_bound() -> None:
         ), f"portfolio identity field {key} was not exact-bound"
 
 
+def test_current_private_registry_preserves_the_accepted_public_identity_receipt() -> None:
+    bundle = _bundle()
+    current = bundle["program"]["repository_identities"]["repositories"]["portfolio"]
+    historical = bundle["receipt"]["portfolio_repository_identity"]
+
+    assert current["github_repository_id"] == historical["github_repository_id"] == 1155412125
+    assert current["canonical_slug"] == "4444J99/portfolio"
+    assert current["visibility"] == "private"
+    assert current["previous_slugs"] == ["organvm/portfolio", "organvm-vii-kerygma/portfolio"]
+    assert historical["canonical_slug"] == "organvm-vii-kerygma/portfolio"
+    assert historical["visibility"] == "public"
+    assert historical["observed_at"] == "2026-08-10T19:21:11Z"
+    assert _errors(bundle) == []
+
+
+@pytest.mark.parametrize("retired_slug", ["organvm/portfolio", "organvm-vii-kerygma/portfolio"])
+def test_current_manifest_rejects_each_retired_portfolio_target(retired_slug: str) -> None:
+    bundle = _bundle()
+    work = next(
+        row
+        for phase in bundle["program"]["phases"]
+        for row in phase["work"]
+        if row["id"] == "PSP-P06-W01"
+    )
+    work["target_repo"] = retired_slug
+
+    assert "work packets still use the retired portfolio slug: PSP-P06-W01" in _errors(bundle)
+
+
+@pytest.mark.parametrize("retired_slug", ["organvm/portfolio", "organvm-vii-kerygma/portfolio"])
+def test_current_index_rejects_each_retired_portfolio_target(retired_slug: str) -> None:
+    bundle = _bundle()
+    original = bundle["issue_index"]
+    bundle["issue_index"] = original.replace("`4444J99/portfolio`", f"`{retired_slug}`", 1)
+    assert bundle["issue_index"] != original
+
+    assert "generated issue index still contains the retired portfolio slug" in _errors(bundle)
+
+
 def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
     bundle = _bundle()
     calls = []
@@ -621,9 +661,9 @@ def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
         calls.append(args)
         return {
             "id": MODULE.PORTFOLIO_REPOSITORY_ID,
-            "full_name": MODULE.PORTFOLIO_CANONICAL_SLUG,
-            "visibility": "public",
-            "private": False,
+            "full_name": "4444J99/portfolio",
+            "visibility": "private",
+            "private": True,
             "default_branch": "main",
             "archived": False,
         }
@@ -640,37 +680,58 @@ def test_live_identity_rejects_non_mapping_transport_payloads_neutrally() -> Non
             "stable repository identity response must be a mapping"
         ]
 
-    actions_token_payload = {
+    authenticated_payload = {
         "id": MODULE.PORTFOLIO_REPOSITORY_ID,
-        "full_name": MODULE.PORTFOLIO_CANONICAL_SLUG,
-        "visibility": "public",
-        "private": False,
+        "full_name": "4444J99/portfolio",
+        "visibility": "private",
+        "private": True,
         "default_branch": "main",
         "archived": False,
     }
-    assert MODULE.validate_live_identity(program, lambda _args: actions_token_payload) == []
+    assert MODULE.validate_live_identity(program, lambda _args: authenticated_payload) == []
 
 
-def test_live_identity_keeps_public_immutable_metadata_fail_closed_for_actions_tokens() -> None:
+def test_live_identity_keeps_metadata_fail_closed_independently_of_credential_permissions() -> None:
     program = _bundle()["program"]
-    moved_private = {
+    moved_public = {
         "id": MODULE.PORTFOLIO_REPOSITORY_ID,
         "full_name": "future-owner/portfolio",
-        "visibility": "private",
-        "private": True,
+        "visibility": "public",
+        "private": False,
         "default_branch": "trunk",
         "archived": True,
         "permissions": {"admin": False},
     }
 
-    errors = MODULE.validate_live_identity(program, lambda _args: moved_private)
+    errors = MODULE.validate_live_identity(program, lambda _args: moved_public)
 
     assert any("full_name='future-owner/portfolio'" in error for error in errors)
-    assert any("visibility='private'" in error for error in errors)
+    assert any("visibility='public'" in error for error in errors)
     assert any("default_branch='trunk'" in error for error in errors)
     assert any("archived=True" in error for error in errors)
-    assert "stable portfolio repository must remain public" in errors
+    assert "stable repository ID private flag must match the manifest visibility" in errors
     assert not any("admin" in error or "permissions" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    ("visibility", "private"),
+    [("private", False), ("public", True), ("private", None), ("private", 1)],
+)
+def test_live_identity_rejects_private_flags_inconsistent_with_manifest_visibility(visibility, private) -> None:
+    program = _bundle()["program"]
+    program["repository_identities"]["repositories"]["portfolio"]["visibility"] = visibility
+    live = {
+        "id": MODULE.PORTFOLIO_REPOSITORY_ID,
+        "full_name": "4444J99/portfolio",
+        "visibility": visibility,
+        "private": private,
+        "default_branch": "main",
+        "archived": False,
+    }
+
+    assert MODULE.validate_live_identity(program, lambda _args: live) == [
+        "stable repository ID private flag must match the manifest visibility"
+    ]
 
 
 def test_live_reference_binds_exact_open_issue_and_rejects_substitutes() -> None:
