@@ -4,7 +4,7 @@
 # WHY: this remains an optional zero-cash lane for private organization repositories. The public
 # personal Limen controller must use GitHub-hosted public-repository runners and must never attach
 # this machine. Private organization workflows may opt in explicitly. Limen's public workflows
-# are pinned to `ubuntu-latest`; this tool never changes them and no repository variable reroutes
+# are pinned to `ubuntu-24.04`; this tool never changes them and no repository variable reroutes
 # them.
 #
 # THE SECURITY INVARIANT (non-negotiable): self-hosted runners serve PRIVATE repos ONLY. A public
