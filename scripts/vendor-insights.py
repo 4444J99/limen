@@ -523,7 +523,8 @@ def _index_copilot(mod, window_start: datetime, max_sessions: int) -> IndexResul
     kept, total, _capped = _rank(candidates, max_sessions)
     sessions = []
     for sdir, meta in kept:
-        u = a = t = 0
+        u = a = t = errors = 0
+        error_codes: set[str] = set()
         models: set[str] = set()
         events = sdir / "events.jsonl"
         size = 0
@@ -548,6 +549,12 @@ def _index_copilot(mod, window_start: datetime, max_sessions: int) -> IndexResul
                             t += 1
                         elif typ == "session.start" and isinstance(data.get("model"), str):
                             models.add(data["model"])
+                        elif typ == "session.error":
+                            # A turn that dies at the model call leaves no assistant
+                            # message; without this count a failing lane reads as idle.
+                            errors += 1
+                            if isinstance(data.get("errorCode"), str):
+                                error_codes.add(data["errorCode"])
             except OSError:
                 pass
         sessions.append(
@@ -561,6 +568,7 @@ def _index_copilot(mod, window_start: datetime, max_sessions: int) -> IndexResul
                 t,
                 models,
                 size,
+                extra={"errors": errors, "error_codes": sorted(error_codes)},
             )
         )
     return IndexResult(sessions, total, "workspace.yaml updated_at (dir mtime fallback)")
@@ -578,6 +586,7 @@ def _cat_copilot(mod, sid: str, max_chars: int) -> str | None:
         return None
     out: list[str] = []
     total = 0
+    event_types: dict[str, int] = {}
     with events.open(encoding="utf-8", errors="replace") as fh:
         for line in fh:
             try:
@@ -586,6 +595,8 @@ def _cat_copilot(mod, sid: str, max_chars: int) -> str | None:
                 continue
             typ = rec.get("type")
             data = rec.get("data") or {}
+            if isinstance(typ, str):
+                event_types[typ] = event_types.get(typ, 0) + 1
             chunk = None
             if typ == "user.message":
                 chunk = f"--- user ({(rec.get('timestamp') or '')[:19]}) ---\n{data.get('content') or ''}\n"
@@ -595,12 +606,23 @@ def _cat_copilot(mod, sid: str, max_chars: int) -> str | None:
                     f"[tool: {tr.get('name')}]\n" for tr in data.get("toolRequests") or [] if isinstance(tr, dict)
                 )
                 chunk = f"--- assistant ({(rec.get('timestamp') or '')[:19]}) ---\n{body}\n{tools}"
+            elif typ == "session.error":
+                # Structured fields only: the free-text message can carry request ids.
+                fields = ", ".join(
+                    f"{k}={data[k]}" for k in ("errorType", "statusCode", "errorCode") if data.get(k) is not None
+                )
+                chunk = f"[session error ({(rec.get('timestamp') or '')[:19]}): {fields or 'unspecified'}]\n"
             if chunk:
                 out.append(chunk)
                 total += len(chunk)
                 if total >= max_chars:
                     out.append("[... truncated at max-chars ...]\n")
                     break
+    if not out and event_types:
+        # Launched, configured and shut down with no conversation: report the
+        # lifecycle honestly instead of returning None ("session not found").
+        shape = ", ".join(f"{k}×{v}" for k, v in sorted(event_types.items()))
+        return f"[lifecycle-only session: no conversational events; event types {shape}]\n"
     return "".join(out) or None
 
 
@@ -715,12 +737,16 @@ def _cat_opencode(mod, sid: str, max_chars: int) -> str | None:
 
 # ---------------------------------------------------------------------------
 # Adapter: antigravity (agy) — conversations/<uuid>.db (steps table; protobuf
-# blobs, printable-ASCII scrape only) + history.jsonl (clean user-prompt spine:
-# display, timestamp ms, workspace, conversationId). Older conversation DBs
-# rotate away while history.jsonl remembers — counts state this honestly.
+# blobs) + history.jsonl (clean user-prompt spine: display, timestamp ms,
+# workspace, conversationId). Older conversation DBs rotate away while
+# history.jsonl remembers — counts state this honestly.
 # step_type map (empirical, NOT authoritative): 14=task init, 15=assistant
-# turn wrapper, 132=send_message (outward assistant msg), 5/17/8/9/25/7=tool
-# results. Unknown types are counted as tool-ish steps, never dropped silently.
+# turn wrapper, 132=tool call (field 5 → 4: 2=tool name, 3=JSON args; the
+# send_message tool carries the outward assistant text in args.Message),
+# 5/17/8/9/25/7=legacy tool results. Re-measured 2026-10-17: 132 is the generic
+# tool call, not send_message — reading every 132 as a message hid the lane's
+# tool work and counted it as assistant output. Unknown types are counted as
+# other_steps, never dropped silently.
 # ---------------------------------------------------------------------------
 
 _AGY_TOOL_TYPES = {
@@ -849,18 +875,18 @@ def _index_antigravity(mod, window_start: datetime, max_sessions: int) -> IndexR
         srow = summaries.get(cid)
         blob = blobs.get(cid)
         h = hist.get(cid, {})
-        total_steps = t132 = t14 = size = 0
+        total_steps = n_assistant = n_tool = size = 0
         if blob is not None:
             try:
                 size = blob.stat().st_size
                 con = _ro_connect(blob)
                 cur = con.cursor()
-                cur.execute("SELECT COUNT(*) FROM steps")
-                total_steps = int(cur.fetchone()[0] or 0)
-                cur.execute("SELECT COUNT(*) FROM steps WHERE step_type = 132")
-                t132 = int(cur.fetchone()[0] or 0)
-                cur.execute("SELECT COUNT(*) FROM steps WHERE step_type = 14")
-                t14 = int(cur.fetchone()[0] or 0)
+                cur.execute("SELECT step_type, step_payload FROM steps")
+                for row in cur:
+                    total_steps += 1
+                    _chunk, kind = _agy_step_chunk(row["step_type"], row["step_payload"])
+                    n_assistant += kind == "assistant"
+                    n_tool += kind == "tool"
                 con.close()
             except sqlite3.Error:
                 blob = None
@@ -881,7 +907,8 @@ def _index_antigravity(mod, window_start: datetime, max_sessions: int) -> IndexR
             if present
         ]
         # user turns come from history.jsonl (the only clean per-message source);
-        # assistant msgs = send_message steps; everything else ≈ tool machinery.
+        # assistant msgs = send_message calls; tool calls = every other decoded
+        # call plus legacy tool-result steps; the remainder is other_steps.
         sessions.append(
             _mk(
                 cid,
@@ -889,12 +916,13 @@ def _index_antigravity(mod, window_start: datetime, max_sessions: int) -> IndexR
                 ended,
                 cwd,
                 h.get("count", 0),
-                t132,
-                max(0, total_steps - t132 - t14),
+                n_assistant,
+                n_tool,
                 [],
                 size,
                 extra={
                     "step_count": step_count,
+                    "other_steps": total_steps - n_assistant - n_tool,
                     "sources": provenance,
                     "content_depth": "blob" if blob is not None else "summary_only",
                 },
@@ -916,6 +944,90 @@ def _index_antigravity(mod, window_start: datetime, max_sessions: int) -> IndexR
         },
         extra={"order_key_coverage": coverage},
     )
+
+
+def _pb_fields(buf: bytes):
+    """Yield (field_no, value) for one protobuf message level; ValueError on malformed wire data.
+
+    Varints yield ints; length-delimited fields yield bytes; fixed-width fields yield
+    their raw bytes. Groups (wire types 3/4) are obsolete and treated as malformed.
+    """
+
+    def varint(i: int) -> tuple[int, int]:
+        shift = val = 0
+        while True:
+            if i >= len(buf) or shift > 63:
+                raise ValueError("truncated varint")
+            c = buf[i]
+            i += 1
+            val |= (c & 0x7F) << shift
+            if not c & 0x80:
+                return val, i
+            shift += 7
+
+    i = 0
+    while i < len(buf):
+        key, i = varint(i)
+        fn, wt = key >> 3, key & 7
+        if fn == 0:
+            raise ValueError("field number 0")
+        if wt == 0:
+            val, i = varint(i)
+            yield fn, val
+        elif wt in (1, 5):
+            width = 8 if wt == 1 else 4
+            if i + width > len(buf):
+                raise ValueError("truncated fixed field")
+            yield fn, buf[i : i + width]
+            i += width
+        elif wt == 2:
+            ln, i = varint(i)
+            if i + ln > len(buf):
+                raise ValueError("truncated length-delimited field")
+            yield fn, buf[i : i + ln]
+            i += ln
+        else:
+            raise ValueError(f"unsupported wire type {wt}")
+
+
+def _pb_first(buf: bytes | None, fn: int) -> bytes | None:
+    """First length-delimited value of field `fn`, or None."""
+    for f, val in _pb_fields(buf or b""):
+        if f == fn and isinstance(val, bytes):
+            return val
+    return None
+
+
+def _agy_tool_call(payload: bytes) -> tuple[str, dict] | None:
+    """Decode a type-132 step into (tool_name, args); None when the payload predates this shape."""
+    try:
+        header = _pb_first(_pb_first(payload, 5), 4)
+        name = _pb_first(header, 2)
+        raw_args = _pb_first(header, 3)
+        if not name or raw_args is None:
+            return None
+        args = json.loads(raw_args.decode("utf-8"))
+        return name.decode("utf-8"), args if isinstance(args, dict) else {}
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+def _agy_step_chunk(step_type: int, payload: bytes) -> tuple[str | None, str]:
+    """Render one step for cat-session: (chunk, kind) with kind in assistant|tool|other."""
+    if step_type == 132:
+        call = _agy_tool_call(payload)
+        if call is None:
+            msg = _agy_scrape_blob(payload, ("Message",))
+            return (f"--- assistant (send_message) ---\n{msg}\n", "assistant") if msg else (None, "other")
+        name, args = call
+        if name == "send_message" and isinstance(args.get("Message"), str):
+            return f"--- assistant (send_message) ---\n{args['Message']}\n", "assistant"
+        summary = args.get("toolSummary")
+        label = " ".join(summary.split())[:200] if isinstance(summary, str) else ""
+        return (f"[tool: {name} — {label}]\n" if label else f"[tool: {name}]\n"), "tool"
+    if step_type in _AGY_TOOL_TYPES:
+        return f"[tool: {_AGY_TOOL_TYPES[step_type]}]\n", "tool"
+    return None, "other"
 
 
 def _agy_scrape_blob(blob: bytes, keys: tuple[str, ...]) -> str | None:
@@ -986,22 +1098,25 @@ def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
         con = _ro_connect(db)
         cur = con.cursor()
         cur.execute("SELECT idx, step_type, step_payload FROM steps ORDER BY idx")
+        step_types: dict[int, int] = {}
+        rendered = 0
         for row in cur.fetchall():
             st = row["step_type"]
-            chunk = None
-            if st == 132:
-                msg = _agy_scrape_blob(row["step_payload"], ("Message",))
-                if msg:
-                    chunk = f"--- assistant (send_message) ---\n{msg}\n"
-            elif st in _AGY_TOOL_TYPES:
-                chunk = f"[tool: {_AGY_TOOL_TYPES[st]}]\n"
+            step_types[st] = step_types.get(st, 0) + 1
+            chunk, _kind = _agy_step_chunk(st, row["step_payload"])
             if chunk:
+                rendered += 1
                 out.append(chunk)
                 total += len(chunk)
                 if total >= max_chars:
                     out.append("[... truncated at max-chars ...]\n")
                     break
         con.close()
+        if step_types and not rendered:
+            # A readable DB whose steps all decode to nothing is a coverage fact,
+            # not a missing session — say so instead of returning None.
+            shape = ", ".join(f"{k}×{v}" for k, v in sorted(step_types.items()))
+            out.append(f"[antigravity conversation {sid}: no decodable messages or tool calls; step types {shape}]\n")
     except sqlite3.Error:
         pass
     return "".join(out) or None
@@ -1018,10 +1133,16 @@ def _index_gemini(mod, window_start: datetime, max_sessions: int) -> IndexResult
     if not root.is_dir():
         return IndexResult([], 0, "absent", notes=["gemini tmp root not found"])
     candidates = []
+    order_keys: dict[str, int] = {}
     for p in root.glob("*/chats/session-*.jsonl"):
-        mt = _mtime(p)
-        if mt is not None and mt >= window_start:
-            candidates.append((mt.timestamp(), p))
+        # The header's own lastUpdated decides the window: a file touched later
+        # (copied, synced, re-indexed) must not admit an older conversation.
+        dt, key = _gemini_header_time(p), "header lastUpdated/startTime"
+        if dt is None:
+            dt, key = _mtime(p), "file mtime"
+        if dt is not None and dt >= window_start:
+            candidates.append((dt.timestamp(), p))
+            order_keys[key] = order_keys.get(key, 0) + 1
     kept, total, _capped = _rank(candidates, max_sessions)
     sessions = []
     for p in kept:
@@ -1063,12 +1184,33 @@ def _index_gemini(mod, window_start: datetime, max_sessions: int) -> IndexResult
     return IndexResult(
         sessions,
         total,
-        "file mtime",
+        "header lastUpdated → startTime → file mtime",
         notes=[
             "gemini's store logs user prompts; assistant replies are frequently not captured — "
             "treat zero assistant_msgs as a store limitation, not silence"
         ],
+        extra={"order_key_coverage": order_keys},
     )
+
+
+def _gemini_header_time(p: Path) -> datetime | None:
+    """lastUpdated (else startTime) from a gemini session file's header line."""
+    try:
+        with p.open(encoding="utf-8", errors="replace") as fh:
+            header = json.loads(fh.readline() or "{}")
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(header, dict):
+        return None
+    for field in ("lastUpdated", "startTime"):
+        val = header.get(field)
+        if isinstance(val, str):
+            try:
+                dt = datetime.fromisoformat(val.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return None
 
 
 def _cat_gemini(mod, sid: str, max_chars: int) -> str | None:

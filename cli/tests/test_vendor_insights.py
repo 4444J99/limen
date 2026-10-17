@@ -13,6 +13,8 @@ import types
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 _SCRIPTS = Path(__file__).resolve().parent.parent.parent / "scripts"
 
 _spec = importlib.util.spec_from_file_location("vendor_insights", _SCRIPTS / "vendor-insights.py")
@@ -212,6 +214,62 @@ def test_copilot_cat_reports_stub_sessions_honestly(tmp_path):
     assert "stub session" in text
 
 
+def _copilot_session(tmp_path: Path, sid: str, events: list[dict]) -> None:
+    sdir = tmp_path / "session-state" / sid
+    sdir.mkdir(parents=True)
+    now = datetime.now(timezone.utc).isoformat()
+    (sdir / "workspace.yaml").write_text(f"id: {sid}\ncwd: /w\ncreated_at: '{now}'\nupdated_at: '{now}'\n")
+    (sdir / "events.jsonl").write_text("\n".join(json.dumps(e) for e in events))
+
+
+def test_copilot_quota_failure_is_counted_and_rendered(tmp_path):
+    now = datetime.now(timezone.utc).isoformat()
+    _copilot_session(
+        tmp_path,
+        "sid-quota",
+        [
+            {"type": "session.start", "timestamp": now, "data": {}},
+            {"type": "user.message", "timestamp": now, "data": {"content": "status please"}},
+            {"type": "model.model_call_failure", "timestamp": now, "data": {"modelCall": {"status": 402}}},
+            {
+                "type": "session.error",
+                "timestamp": now,
+                "data": {
+                    "errorType": "quota",
+                    "statusCode": 402,
+                    "errorCode": "quota_exceeded",
+                    "message": "quota (Request ID: SECRET-ID)",
+                },
+            },
+            {"type": "session.shutdown", "timestamp": now, "data": {}},
+        ],
+    )
+    mod = _copilot_mod(tmp_path)
+    s = vi._index_copilot(mod, WINDOW, 10).sessions[0]
+    assert (s["user_msgs"], s["assistant_msgs"], s["errors"], s["error_codes"]) == (1, 0, 1, ["quota_exceeded"])
+    text = vi._cat_copilot(mod, "sid-quota", 10_000)
+    assert "status please" in text
+    assert "errorType=quota, statusCode=402, errorCode=quota_exceeded" in text
+    assert "SECRET-ID" not in text  # free-text message (request ids) is never echoed
+
+
+def test_copilot_lifecycle_only_session_is_not_reported_missing(tmp_path):
+    now = datetime.now(timezone.utc).isoformat()
+    _copilot_session(
+        tmp_path,
+        "sid-empty",
+        [
+            {"type": "session.start", "timestamp": now, "data": {}},
+            {"type": "session.mode_changed", "timestamp": now, "data": {}},
+            {"type": "session.shutdown", "timestamp": now, "data": {}},
+        ],
+    )
+    text = vi._cat_copilot(_copilot_mod(tmp_path), "sid-empty", 10_000)
+    assert text is not None
+    assert "lifecycle-only session" in text
+    assert "session.mode_changed×1, session.shutdown×1, session.start×1" in text
+
+
 # ─── opencode adapter (sqlite, read-only) ────────────────────────────
 
 
@@ -292,6 +350,19 @@ def test_gemini_index_and_cat(tmp_path):
     assert "[tool: read_file]" in text
 
 
+def test_gemini_window_uses_header_time_not_file_mtime(tmp_path):
+    # A freshly touched file holding an old conversation must stay out of the window.
+    _write_gemini_session(tmp_path / "proj-slug", "gsid-old")
+    path = tmp_path / "proj-slug" / "chats" / "session-gsid-old.jsonl"
+    lines = path.read_text().splitlines()
+    header = json.loads(lines[0])
+    header["startTime"] = header["lastUpdated"] = OLD.isoformat()
+    path.write_text("\n".join([json.dumps(header), *lines[1:]]))
+    result = vi._index_gemini(_fake_mod(gemini={"path": tmp_path}), WINDOW, 10)
+    assert result.sessions == []
+    assert result.total_in_window == 0
+
+
 # ─── antigravity adapter ─────────────────────────────────────────────
 
 
@@ -333,6 +404,75 @@ def test_antigravity_index_and_cat(tmp_path):
     assert "please do it" in text
     assert "final answer" in text
     assert "[tool: view_file]" in text
+
+
+def _pb_len(field_no: int, payload: bytes) -> bytes:
+    """Encode one length-delimited protobuf field (enough wire format for fixtures)."""
+
+    def varint(n: int) -> bytes:
+        out = bytearray()
+        while True:
+            b = n & 0x7F
+            n >>= 7
+            out.append(b | (0x80 if n else 0))
+            if not n:
+                return bytes(out)
+
+    return varint(field_no << 3 | 2) + varint(len(payload)) + payload
+
+
+def _agy_call(name: str, args: dict) -> bytes:
+    # Measured 2026-10-17 shape of a type-132 step: field 5 → 4 (1 id, 2 name, 3 JSON args),
+    # plus an unrelated sibling (field 140) that the decoder must ignore.
+    header = _pb_len(1, b"call-01") + _pb_len(2, name.encode()) + _pb_len(3, json.dumps(args).encode())
+    return b"\x08\x01" + _pb_len(5, _pb_len(4, header)) + _pb_len(140, b"\x0a\x03abc")
+
+
+def test_antigravity_decodes_type_132_as_tool_calls_not_messages(tmp_path):
+    root = tmp_path / "antigravity-cli"
+    conv = root / "conversations"
+    conv.mkdir(parents=True)
+    con = sqlite3.connect(conv / "cid-pb.db")
+    con.execute(
+        "CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INT, status INT, step_payload BLOB, metadata BLOB)"
+    )
+    run = _agy_call("run_command", {"CommandLine": "ls", "toolSummary": "List   the\nrepo", "toolAction": "x"})
+    say = _agy_call("send_message", {"Message": "all done", "Recipient": "user", "toolSummary": "s"})
+    con.execute("INSERT INTO steps VALUES (1, 132, 3, ?, ?)", (run, b""))
+    con.execute("INSERT INTO steps VALUES (2, 132, 3, ?, ?)", (say, b""))
+    con.execute("INSERT INTO steps VALUES (3, 15, 3, ?, ?)", (b"wrapper", b""))
+    con.commit()
+    con.close()
+    mod = _fake_mod(antigravity={"path": root})
+    s = vi._index_antigravity(mod, WINDOW, 10).sessions[0]
+    assert (s["assistant_msgs"], s["tool_calls"], s["other_steps"]) == (1, 1, 1)
+    text = vi._cat_antigravity(mod, "cid-pb", 10_000)
+    assert "[tool: run_command — List the repo]" in text  # summary collapsed to one line
+    assert "--- assistant (send_message) ---\nall done" in text
+    assert "CommandLine" not in text  # args other than the summary never leak into the excerpt
+
+
+def test_antigravity_undecodable_blob_reports_shape_not_missing(tmp_path):
+    root = tmp_path / "antigravity-cli"
+    conv = root / "conversations"
+    conv.mkdir(parents=True)
+    con = sqlite3.connect(conv / "cid-opaque.db")
+    con.execute(
+        "CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INT, status INT, step_payload BLOB, metadata BLOB)"
+    )
+    con.execute("INSERT INTO steps VALUES (1, 15, 3, ?, ?)", (b"\xff\xfe", b""))
+    con.execute("INSERT INTO steps VALUES (2, 101, 3, ?, ?)", (b"\x00", b""))
+    con.commit()
+    con.close()
+    text = vi._cat_antigravity(_fake_mod(antigravity={"path": root}), "cid-opaque", 10_000)
+    assert text is not None
+    assert "no decodable messages or tool calls" in text
+    assert "15×1, 101×1" in text
+
+
+def test_pb_fields_rejects_truncated_input():
+    with pytest.raises(ValueError):
+        list(vi._pb_fields(b"\x2a\x10abc"))  # field 5, claims 16 bytes, has 3
 
 
 # ─── render: exit-code honesty + section rendering ───────────────────
