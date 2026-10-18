@@ -28,7 +28,9 @@ The ten checks:
                       that store alone, and it is not the corpus home. Drift in other stores is only counted
    4 archive          the engine verifies the archive and at least two providers are ok
    5 feed receipts    every feed has exactly one receipt bound to the manifest fingerprint and the feed bytes
-   6 ledger binding   every feed row is an unknown-authority occurrence in the ledger; no operator authority
+   6 ledger binding   each feed holds what its receipt declares (rows, alternate rows, rows plus excluded equal
+                      messages seen; no eligibility rule is recounted here), re-projects byte for byte, and
+                      every row is an unknown-authority occurrence in the ledger; no operator authority
    7 recurring forms  the form builder verifies byte for byte and the form invariants hold
    8 privacy          roots are git-ignored or outside a work tree; no exact private value is public
    9 receipt          (live) the counts-only receipt for the current fingerprint exists
@@ -107,7 +109,7 @@ FORMS_REPORT_FILE_NAME = "report-all-patterns.json"
 RECEIPT_STEM = "receipt-knowledge-alive"
 ARCHIVE_SOURCE_PREFIX = "archive-"
 ARCHIVE_PROVENANCE = "unknown_user_input"
-ELIGIBLE_CONVERSATION_KINDS = frozenset({"chat", "search", "activity"})
+ALTERNATE_BRANCH_FLAG = "alternate"
 FINGERPRINT_PREFIX_LENGTH = 16
 MINIMUM_SCANNED_VALUE_LENGTH = 12
 MAXIMUM_INDEX_VALUE_LENGTH = 200
@@ -480,26 +482,32 @@ def feed_receipt_files(ctx: Context) -> list[Path]:
     return sorted(ctx.feed_dir.glob("receipt-*-prompts-*.json")) if ctx.feed_dir.is_dir() else []
 
 
-def recount_eligible(ctx: Context, providers: list[str]) -> dict[str, int]:
-    """Eligible asks counted straight from the normalized files, independent of the feed projector."""
-    counts: dict[str, int] = {}
-    for provider in providers:
-        path = conversations_file(ctx, provider)
-        total = 0
-        if path.is_file():
-            for conversation in read_rows(path):
-                if conversation.get("kind") not in ELIGIBLE_CONVERSATION_KINDS:
-                    continue
-                messages = list(conversation.get("messages") or [])
-                extra = conversation.get("extra") or {}
-                messages += list(extra.get("alternate_messages") or []) if isinstance(extra, dict) else []
-                total += sum(
-                    1
-                    for message in messages
-                    if isinstance(message, dict) and message.get("role") == "user" and message.get("channel") == "typed"
-                )
-        counts[provider] = total
-    return counts
+def composition_problem(receipt: dict[str, Any], rows: list[dict[str, Any]]) -> str | None:
+    """Hold a feed to the composition its own receipt declares. Counts only; no eligibility rule is copied.
+
+    The engine decides which messages become rows and writes down what it did. Every row it writes is one
+    line of the feed, and `rows` counts all of them: the off-branch ones (`branch: alternate`) are a subset,
+    counted again in `alternate_rows`, not additional rows. Every message it read is either a row or counted
+    under a reason in `excluded`, so `rows + sum(excluded) == messages_seen`. Whether the engine's rule is the
+    right rule is not asked here: the byte-for-byte re-projection binds the feed content to the archive.
+    """
+    declared = receipt.get("rows")
+    alternate = receipt.get("alternate_rows")
+    seen = receipt.get("messages_seen")
+    excluded = receipt.get("excluded")
+    numbers = [declared, alternate, seen]
+    if not isinstance(excluded, dict):
+        return "the receipt holds no excluded counts"
+    numbers += list(excluded.values())
+    if any(isinstance(n, bool) or not isinstance(n, int) or n < 0 for n in numbers):
+        return "the receipt holds a count that is not a whole number"
+    if len(rows) != declared:
+        return "the feed holds a different number of rows than its receipt declares"
+    if sum(1 for row in rows if row.get("branch") == ALTERNATE_BRANCH_FLAG) != alternate or alternate > declared:
+        return "the feed holds a different number of alternate rows than its receipt declares"
+    if declared + sum(excluded.values()) != seen:
+        return "the receipt does not reconcile: rows plus excluded differ from messages seen"
+    return None
 
 
 # --------------------------------------------------------------------------- pure helpers
@@ -827,7 +835,7 @@ def check_feed_receipts(ctx: Context, state: State) -> CheckResult:
             rows = list(read_rows(feed))
         except OSError:
             return CheckResult(False, f"{provider} feed is unreadable")
-        loaded[provider] = {"rows": rows, "receipt_rows": receipt["rows"], "feed_sha256": receipt["feed_sha256"]}
+        loaded[provider] = {"rows": rows, "receipt": receipt, "feed_sha256": receipt["feed_sha256"]}
     state["feeds"] = loaded
     return CheckResult(True, f"{len(loaded)} feeds bound to the fingerprint")
 
@@ -907,13 +915,13 @@ def snapshot_problem(paths: LedgerPaths, occurrences: list[dict[str, Any]]) -> s
 
 def check_ledger_binding(ctx: Context, state: State) -> CheckResult:
     feeds: dict[str, dict[str, Any]] = state["feeds"]
-    recount = recount_eligible(ctx, list(feeds))
     wanted: set[str] = set()
     total = 0
     for provider, loaded in feeds.items():
         rows = loaded["rows"]
-        if not (len(rows) == loaded["receipt_rows"] == recount[provider]):
-            return CheckResult(False, "feed rows, receipt count and recount disagree")
+        problem = composition_problem(loaded["receipt"], rows)
+        if problem is not None:
+            return CheckResult(False, f"{provider}: {problem}")
         for row in rows:
             if not str(row.get("source", "")).startswith(ARCHIVE_SOURCE_PREFIX):
                 return CheckResult(False, "a feed row is not from an archive source")

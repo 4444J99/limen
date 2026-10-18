@@ -157,16 +157,24 @@ def main():
         for provider, info in manifest["providers"].items():
             if info["status"] != "ok" or ("missing-feed" in FAULTS and provider == "claude"):
                 continue
-            rows = []
+            rows, seen, excluded = [], 0, {}
             path = archive / f"provider-{provider}" / f"collection-{provider}-conversations.jsonl"
             for line in path.read_text().splitlines():
                 conversation = json.loads(line)
-                if conversation["kind"] not in ELIGIBLE:
-                    continue
                 items = [(m, False) for m in conversation["messages"]]
                 items += [(m, True) for m in conversation["extra"].get("alternate_messages", [])]
                 for message, alternate in items:
-                    if message["role"] != "user" or message["channel"] != "typed":
+                    seen += 1
+                    if conversation["kind"] not in ELIGIBLE:
+                        reason = "kind-" + conversation["kind"]
+                    elif message["role"] != "user":
+                        reason = "role-" + message["role"]
+                    elif message["channel"] != "typed":
+                        reason = "channel-" + message["channel"]
+                    else:
+                        reason = None
+                    if reason:
+                        excluded[reason] = excluded.get(reason, 0) + 1
                         continue
                     row = {"source": f"archive-{provider}-messages", "session_ref": conversation["uid"],
                            "event_ref": message["id"], "event_index": len(rows), "text_index": 0,
@@ -182,13 +190,20 @@ def main():
                 rows[0]["source"] = "claude-code-sessions"
             if rows and "reproject-differs" in FAULTS and "reproject" in out.name:
                 rows[0]["text"] += " changed"
+            declared = len(rows)
+            if rows and "feed-extra-row" in FAULTS:
+                rows.append({**rows[0], "event_index": len(rows), "event_ref": "msg-extra-row"})
             text = lines(rows)
             (out / f"feed-{provider}-prompts.jsonl").write_text(text)
             prefix = "0" * 16 if "stale-receipt" in FAULTS else hashlib.sha256(fingerprint.encode()).hexdigest()[:16]
             named_day = "20250101" if "receipt-day-name" in FAULTS else day
+            if excluded and "receipt-excluded-off" in FAULTS:
+                excluded[sorted(excluded)[0]] += 1
             receipt = {"feed_sha256": hashlib.sha256(text.encode()).hexdigest(),
-                       "rows": len(rows) + (1 if "row-count" in FAULTS else 0),
-                       "excluded_counts": {"notebook": 1}, "alternate_branch_count": 1,
+                       "rows": declared + (1 if "row-count" in FAULTS else 0),
+                       "alternate_rows": sum(1 for row in rows if "branch" in row) + (
+                           1 if "receipt-alternate-off" in FAULTS else 0),
+                       "messages_seen": seen, "excluded": excluded,
                        "source_fingerprint": "f" * 64 if "receipt-fingerprint" in FAULTS else fingerprint,
                        "day": "20250102" if "receipt-day-body" in FAULTS else named_day,
                        "naming_version": 1, "reader_versions": {provider: "2"}}
@@ -444,6 +459,9 @@ FAULT_CASES = [
     ("receipt-day-name", "feed receipts"),
     ("reproject-differs", "ledger binding"),
     ("row-count", "ledger binding"),
+    ("feed-extra-row", "ledger binding"),
+    ("receipt-excluded-off", "ledger binding"),
+    ("receipt-alternate-off", "ledger binding"),
     ("provenance", "ledger binding"),
     ("source-name", "ledger binding"),
     ("ledger-drop", "ledger binding"),
@@ -481,12 +499,61 @@ def test_each_break_names_exactly_one_failing_check(stubs, fault, check):
         ("receipt-day-body", 5, "chatgpt receipt day differs from its name"),
         ("receipt-day-name", 5, "chatgpt receipt day differs from the manifest's latest activity"),
         ("reproject-differs", 6, "chatgpt feed differs from its reprojection"),
+        (
+            "feed-extra-row",
+            6,
+            "chatgpt: the feed holds a different number of rows than its receipt declares",
+        ),
+        (
+            "row-count",
+            6,
+            "chatgpt: the feed holds a different number of rows than its receipt declares",
+        ),
+        (
+            "receipt-alternate-off",
+            6,
+            "chatgpt: the feed holds a different number of alternate rows than its receipt declares",
+        ),
+        (
+            "receipt-excluded-off",
+            6,
+            "chatgpt: the receipt does not reconcile: rows plus excluded differ from messages seen",
+        ),
     ],
 )
 def test_feed_failures_name_the_provider(stubs, fault, check, reason):
     done = _run(stubs, "--fixture", STUB_FAULT=fault)
     failing = [line for line in done.stdout.splitlines() if ": FAIL" in line]
     assert len(failing) == 1 and f"check {check} " in failing[0] and failing[0].endswith(f"FAIL {reason}"), failing
+
+
+def test_a_receipt_with_exclusions_and_alternate_rows_passes_check_six(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    receipts = sorted(context.feed_dir.glob("receipt-*-prompts-*.json"))
+    assert receipts
+    for path in receipts:
+        body = json.loads(path.read_text())
+        assert body["excluded"] and body["alternate_rows"] > 0
+        assert body["rows"] + sum(body["excluded"].values()) == body["messages_seen"]
+    lines, code = module.evaluate(context)
+    assert code == 0, lines
+    assert lines[5].startswith("check 6 ledger binding: ok")
+
+
+def test_composition_problem_holds_a_feed_to_its_receipt_only(module):
+    rows = [{"event_ref": "a"}, {"event_ref": "b", "branch": "alternate"}]
+    receipt = {"rows": 2, "alternate_rows": 1, "messages_seen": 5, "excluded": {"role-assistant": 2, "empty-text": 1}}
+    assert module.composition_problem(receipt, rows) is None
+    assert module.composition_problem({**receipt, "excluded": {}, "messages_seen": 2}, rows) is None
+    assert "reconcile" in module.composition_problem({**receipt, "messages_seen": 6}, rows)
+    assert "reconcile" in module.composition_problem({**receipt, "messages_seen": 4}, rows)
+    assert "different number of rows" in module.composition_problem({**receipt, "rows": 1}, rows)
+    assert "different number of rows" in module.composition_problem(receipt, [*rows, {"event_ref": "c"}])
+    assert "alternate rows" in module.composition_problem({**receipt, "alternate_rows": 0}, rows)
+    assert "alternate rows" in module.composition_problem({**receipt, "alternate_rows": 3}, rows)
+    assert "no excluded counts" in module.composition_problem({**receipt, "excluded": None}, rows)
+    for broken in ({"rows": True}, {"messages_seen": "5"}, {"excluded": {"empty-text": -1}}, {"alternate_rows": 1.0}):
+        assert "whole number" in module.composition_problem({**receipt, **broken}, rows)
 
 
 def test_a_provider_with_an_empty_feed_and_a_zero_row_receipt_is_alive(stubs):
@@ -1099,15 +1166,14 @@ def test_an_unusable_environment_inside_a_check_is_not_swallowed(module, stubs, 
 @pytest.mark.parametrize("bad_line", [b"{not json SENTINEL-TEXT\n", b"[1, 2, 3]\n", b"\xff\xfe SENTINEL-TEXT\n"])
 def test_a_malformed_row_fails_its_check_with_the_line_number_only(module, stubs, tmp_path, monkeypatch, bad_line):
     context = _build_loop(module, stubs, tmp_path, monkeypatch)
-    conversations = context.archive_root / "provider-chatgpt" / "collection-chatgpt-conversations.jsonl"
-    with conversations.open("ab") as handle:
+    # The conversation index is read by the privacy check, after the feed checks have passed.
+    index = context.archive_root / "provider-chatgpt" / "index-chatgpt-conversations.jsonl"
+    with index.open("ab") as handle:
         handle.write(bad_line)
     lines, code = module.evaluate(context)
     assert code == 1
-    assert (
-        lines[5] == "check 6 ledger binding: FAIL line 3 of collection-chatgpt-conversations.jsonl is not a JSON object"
-    )
-    assert lines[-1] == "NOT ALIVE: ledger binding"
+    assert lines[7] == "check 8 privacy: FAIL line 3 of index-chatgpt-conversations.jsonl is not a JSON object"
+    assert lines[-1] == "NOT ALIVE: privacy"
     assert "SENTINEL" not in "\n".join(lines)
 
 

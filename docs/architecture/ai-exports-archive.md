@@ -111,7 +111,7 @@ last line is `ALIVE <16hex>`, `NOT ALIVE: <check name>` or `UNUSABLE: <reason>`.
 | 3 | registry | live only: the archive store is bound (declared last with its row, registered root is the store under check, check-corpora checks B and C pass for it alone, not the corpus home); drift in other stores is counted, never failed |
 | 4 | archive | the engine verifies the archive and at least two providers are ok |
 | 5 | feed receipts | one feed and one receipt per provider, bound to fingerprint and feed bytes |
-| 6 | ledger binding | feed rows are in the ledger as unknown authority, and feeds reproject byte for byte |
+| 6 | ledger binding | each feed holds the rows, alternate rows and exclusions its receipt declares (rows plus excluded equal messages seen), feeds reproject byte for byte, and every row is in the ledger as unknown authority |
 | 7 | recurring forms | the form builder verifies and the form invariants hold |
 | 8 | privacy | roots are Git-ignored and no exact private value appears in a public file |
 | 9 | receipt | live only: the counts-only receipt for the current fingerprint exists |
