@@ -16,7 +16,8 @@ The loop being proven:
 
 Output is ten fixed-order lines (`check N <name>: ok|FAIL <reason>|skipped ...|not run`), then one last
 line: `ALIVE <16 hex of the SHA-256 of the archive fingerprint>`, `NOT ALIVE: <check name>` or `UNUSABLE: <reason>`.
-It carries no timestamps, paths, titles, ids or conversation text, only counts and fixed phrases.
+It carries no timestamps, titles, ids or conversation text, only counts and fixed phrases. The one path is
+the engine that won check 1. A provider name appears where a check names the provider that failed.
 
 The ten checks:
 
