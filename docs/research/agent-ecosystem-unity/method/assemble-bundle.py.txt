@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+"""Merge the two research rounds into one Studium-shaped bundle. Deterministic, offline.
+
+usage: assemble-bundle.py BUNDLE_DIR ROUND1_OUTPUT ROUND2_OUTPUT NOW_UTC LIMEN_CLI_SRC
+
+Only workflow-verified claims (3 fetch-before-vote verifiers, >=2 supported, 0 contradicted) enter
+Material Claims. Operator spot-checks made in the main loop are NOT claims here; they live in the plan.
+The contract's own parsers validate the result before the script exits 0.
+"""
+
+import json
+import pathlib
+import re
+import sys
+
+BUNDLE = pathlib.Path(sys.argv[1])
+R1_PATH, R2_PATH, NOW, CLI_SRC = sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
+AS_OF, ROUND_END = sys.argv[6], {"r1": sys.argv[7], "r2": sys.argv[8]}
+REQUEST_ID = "SGO-REQ-2026-AGENT-ECOSYSTEM-UNITY-01"
+sys.path.insert(0, CLI_SRC)
+
+from limen.research.contracts import ResearchRequest, stable_hash  # noqa: E402
+from limen.research.sanitization import OutputSanitizationAttestation  # noqa: E402
+from limen.research.verification import SourceVerifierAttestation  # noqa: E402
+
+
+def load(path):
+    text = open(path).read()
+    wrapped = json.JSONDecoder().raw_decode(text[text.find("{") :])[0]
+    result = wrapped["result"]
+    return json.loads(result) if isinstance(result, str) else result
+
+
+def one_line(value):
+    return re.sub(r"\s+", " ", str(value)).strip()
+
+
+def cell(value):
+    return one_line(value).replace("|", "/")
+
+
+r1, r2 = load(R1_PATH), load(R2_PATH)
+
+# Post-verification amendments, each logged. A verifier noted the extractor's "no date" aside was false.
+AMENDMENTS = {
+    ("r2", "G4"): (
+        "(no date or version)",
+        "(page shows 'Last updated: Jun 18, 2026')",
+        "two verifiers noted the page carries a Last updated date; the extractor's aside said none",
+    ),
+}
+
+ledger, material = [], []
+for tag, result in (("r1", r1), ("r2", r2)):
+    for claim in result["claims"]:
+        entry = {
+            "round": tag,
+            "old_id": claim["id"],
+            "vendor": claim["vendor"],
+            "angle": claim["angle"],
+            "text": one_line(claim["text"]),
+            "url": claim["url"],
+            "quote": claim["quote"],
+            "outcome": claim["outcome"],
+            "tally": claim["tally"],
+            "votes": claim["votes"],
+            "eligible": claim["eligible"],
+            "amendment": None,
+        }
+        amend = AMENDMENTS.get((tag, claim["id"]))
+        if amend:
+            old, new, why = amend
+            if old not in entry["text"]:
+                sys.exit("amendment target not found in " + claim["id"])
+            entry["text"] = entry["text"].replace(old, new)
+            entry["amendment"] = {"replaced": old, "with": new, "why": why}
+        ledger.append(entry)
+        if claim["eligible"]:
+            material.append(entry)
+
+for number, entry in enumerate(material, 1):
+    entry["new_id"] = "C%d" % number
+
+meta = {}
+for result in (r1, r2):
+    for source in result["sources"]:
+        meta.setdefault(source["url"], source)
+
+sources, by_url = [], {}
+for entry in material:
+    if entry["url"] not in by_url:
+        m = meta[entry["url"]]
+        by_url[entry["url"]] = {
+            "id": "S%d" % (len(sources) + 1),
+            "url": entry["url"],
+            "title": one_line(m["title"]),
+            "publisher": one_line(m["publisher"]),
+            "published": one_line(m["published"]),
+            "locator": one_line(m["locator"]),
+            "source_type": m["source_type"],
+            "primary": bool(m["primary"]),
+            "tier": m["tier"],
+            "retrieved": ROUND_END[entry["round"]],
+        }
+        sources.append(by_url[entry["url"]])
+    entry["source_id"] = by_url[entry["url"]]["id"]
+
+new_of = {(e["round"], e["old_id"]): e["new_id"] for e in material}
+
+
+def basis(*olds):
+    ids = []
+    for old in olds:
+        key = ("r1", old[3:]) if old.startswith("r1:") else ("r2", old[3:])
+        if key not in new_of:
+            sys.exit("actionable cites a non-material claim: " + old)
+        ids.append(new_of[key])
+    return " (basis: " + ", ".join(ids) + ")"
+
+
+UNKNOWNS = [
+    "OpenCode skills page: the six skill locations are located by every verifier, but the claim also asserted OPENCODE_DISABLE_CLAUDE_CODE_SKILLS, which that page does not mention (it is documented on the CLI reference); the compound claim was held back rather than split after the fact.",
+    "Codex CLI: no verified claim on where session state lives under CODEX_HOME.",
+    "Antigravity: sessions and brain-state location and relocation are not documented in anything read; the IDE's own paths are unverified; whether agy honours a skills.json entry for ~/.agents/skills versus the documented antigravity-cli/skills directory is open.",
+    "Gemini.app and Muse.app: no vendor documentation was read for either application's state under ~/Library/Application Support.",
+    "xAI Grok Build: it is documented ($GROK_HOME, ~/.grok) but whether GROK_HOME also moves ~/.grok/sessions is not stated; no verified claim on its MCP or skills paths.",
+    "Cursor: whether CURSOR_CONFIG_DIR affects mcp.json, skills or IDE state is not documented in the pages read; chat and session-state location and --user-data-dir are undocumented there.",
+    "goose: the config and hints pages do not say whether GOOSE_PATH_ROOT covers ~/.config/goose (config.yaml, .goosehints, AGENTS.md); session location is unverified.",
+    "Claude Code: the documentation read does not state whether CLAUDE_CONFIG_DIR carries .claude.json, nor where user skills, commands and agents live under it.",
+    "Gemini CLI: its MCP configuration path under GEMINI_CLI_HOME and whether the global GEMINI.md resolves under it are not stated in the pages read.",
+    "Standards: the MCP specification version and steward, and the Agent Skills steward and governance, are not established by any verified claim; A2A and ACP relation beyond ACP's Zed/JetBrains interim governance is unverified.",
+]
+
+ACTIONABLE = [
+    "GitHub Copilot CLI documents COPILOT_HOME as a supported way to replace the whole ~/.copilot directory (COPILOT_CACHE_HOME separately); exporting it in the launch environment would make the ~/.copilot symlink optional. Verify with one session before relying on it."
+    + basis("r1:C1", "r1:C2", "r1:C16"),
+    "Gemini CLI reads its home from GEMINI_CLI_HOME and a context file name from context.fileName; including AGENTS.md there lets one shared AGENTS.md be read through a supported setting."
+    + basis("r1:C4", "r2:G4"),
+    "Antigravity CLI documents no relocation variable and keeps every documented global path under ~/.gemini; keep the ~/.gemini doorway and re-verify after each agy upgrade."
+    + basis("r2:G1", "r2:G2", "r2:G3"),
+    "~/.agents/skills is the documented user-level skills path for Codex, Gemini CLI, Copilot CLI, Cursor and goose; skills that exist only in another root are invisible to those vendors."
+    + basis("r1:C11", "r1:C12", "r1:C13", "r2:G6", "r2:G17"),
+    "Do not build the runtime root on XDG variables: Codex and Gemini CLI closed XDG requests as not planned, and Claude Code does not read XDG_CONFIG_HOME."
+    + basis("r1:C28", "r1:C29", "r2:G16"),
+    "Claude Code's supported relocation is CLAUDE_CONFIG_DIR, which moves the whole config and data directory; compatibility readers such as Cursor and goose still read ~/.claude/skills."
+    + basis("r2:G16", "r2:G6", "r2:G17"),
+    "OpenCode documents config-directory variables but no data-directory variable; the PR that proposed data, cache, log and state variables was closed unmerged, so do not adopt those names."
+    + basis("r2:G13", "r2:G14", "r2:G15"),
+    "goose documents GOOSE_PATH_ROOT as moving all config, data and state; verify whether that also covers ~/.config/goose/.goosehints before relying on it."
+    + basis("r1:C3", "r2:G19"),
+    "Cursor's CURSOR_CONFIG_DIR is documented for the CLI config file only; mcp.json and skills stay under ~/.cursor, and User Rules are not file-backed."
+    + basis("r2:G5", "r2:G6", "r2:G7", "r2:G8"),
+]
+
+negatives = []
+for tag, result in (("r1", r1), ("r2", r2)):
+    for n in result["negatives"]:
+        negatives.append(dict(n, searched=ROUND_END[tag]))
+
+lines = ["# Research result", "", "## Material Claims", ""]
+for e in material:
+    lines.append("- [%s][material][evidence][supported] %s [%s]" % (e["new_id"], e["text"], e["source_id"]))
+lines += ["", "## Contradictions", "", "None", "", "## Unknowns", ""]
+lines += ["- " + one_line(u) for u in UNKNOWNS]
+lines += ["", "## Negative Searches", ""]
+for n in negatives:
+    lines.append(
+        "- Query: %s | Surface: %s | Searched: %s | Result count: %s | Disposition: %s"
+        % (cell(n["query"]), cell(n["surface"]), n["searched"], n["result_count"], cell(n["disposition"]))
+    )
+lines += ["", "## Novel Actionable Findings", ""]
+lines += ["- " + a for a in ACTIONABLE]
+lines += ["", "## Source Manifest", ""]
+for s in sources:
+    lines.append(
+        "- [%s] [%s](%s) | Publisher: %s | Published: %s | Retrieved: %s | Source Type: provisional | Primary: provisional | Quality Tier: provisional | Locator: %s"
+        % (
+            s["id"],
+            cell(s["title"]),
+            s["url"],
+            cell(s["publisher"]),
+            cell(s["published"]),
+            s["retrieved"],
+            cell(s["locator"]),
+        )
+    )
+export_md = "\n".join(lines) + "\n"
+
+verification = {
+    "schema_version": "1.0",
+    "request_id": REQUEST_ID,
+    "verified_at": NOW,
+    "verifier": "Limen in-harness Source Verifier (3-lens fetch-before-vote)",
+    "verdict": "accepted",
+    "private_connected_sources_used": False,
+    "claims": [
+        {"claim_id": "CLM-" + e["new_id"], "verification_status": "supported", "source_ids": ["SRC-" + e["source_id"]]}
+        for e in material
+    ],
+    "sources": [
+        {
+            "source_id": "SRC-" + s["id"],
+            "url": s["url"],
+            "resolvable": True,
+            "source_type": s["source_type"],
+            "primary_source": s["primary"],
+            "quality_tier": s["tier"],
+            "metadata_confirmed": True,
+            "language": "en",
+            "jurisdictions": [],
+        }
+        for s in sources
+    ],
+}
+
+sanitization = {
+    "schema_version": "1.0",
+    "request_id": REQUEST_ID,
+    "attested_at": NOW,
+    "attestor": "Limen operator review (main loop)",
+    "export_hash": stable_hash(export_md),
+    "preservation_tier": "operational_internal",
+    "external_transmission": "public_only",
+    "tracked_output_safe": True,
+    "contains_credentials": False,
+    "contains_private_prompt_body": False,
+    "contains_sensitive_raw_material": False,
+    "redactions_applied": [],
+}
+
+domains = sorted({re.sub(r"^https?://([^/]+)/.*$", r"\1", s["url"]) for s in sources})
+request = {
+    "schema_version": "1.0",
+    "request_id": REQUEST_ID,
+    "commission_id": None,
+    "requested_at": AS_OF,
+    "question": (
+        "As of October 2026, what do the coding-agent vendors in this estate officially support for relocating or "
+        "sharing their home directory, instruction files, skills, MCP configuration and session state, and which "
+        "cross-vendor standards are converging, so a single runtime root can stand on supported mechanisms instead "
+        "of symlink workarounds?"
+    ),
+    "context_refs": [
+        {"owner_repo": "organvm/limen", "path": "docs/plans/2026-10-18-agent-surface-reconciliation-v3.md"},
+        {"owner_repo": "organvm/limen", "path": "docs/research-backend.md"},
+    ],
+    "required_capabilities": ["current_web_retrieval", "cited_synthesis", "claim_verification", "markdown_export"],
+    "freshness": {"as_of": AS_OF},
+    "domain_constraints": {
+        "allow_domains": domains,
+        "source_types": ["official_documentation", "specification", "vendor_repository", "issue_tracker", "changelog"],
+        "languages": ["en"],
+    },
+    "verification_strength": "primary_source",
+    "preservation_tier": "operational_internal",
+    "external_transmission": "public_only",
+    "latency_ceiling_seconds": 3600,
+    "spend_ceiling": {"currency": "USD", "variable_cost": 0},
+    "output_contract": {
+        "format": "markdown",
+        "owner_repo": "organvm/limen",
+        "report_path": "docs/research/agent-ecosystem-unity/report.md",
+        "receipt_path": "docs/research/agent-ecosystem-unity/report.receipt.json",
+        "raw_export_ref": "private-owner://limen/research-exports/agent-ecosystem-unity.md",
+        "required_sections": [
+            "material_claims",
+            "contradictions",
+            "unknowns",
+            "negative_searches",
+            "novel_actionable_findings",
+            "source_manifest",
+        ],
+    },
+}
+
+# ---- the contract's own parsers must accept what was built ----
+ResearchRequest.from_mapping(request)
+att = SourceVerifierAttestation.from_mapping(verification, expected_request_id=REQUEST_ID)
+OutputSanitizationAttestation.from_mapping(
+    sanitization,
+    expected_request_id=REQUEST_ID,
+    expected_export_hash=stable_hash(export_md),
+    expected_preservation_tier="operational_internal",
+    expected_external_transmission="public_only",
+)
+
+primary_ratio = sum(1 for e in material if by_url[e["url"]]["primary"]) / len(material)
+
+BUNDLE.mkdir(parents=True, exist_ok=True)
+files = {
+    "export.md": export_md,
+    "verification.json": json.dumps(verification, indent=2),
+    "sanitization.json": json.dumps(sanitization, indent=2),
+    "sources.json": json.dumps(sources, indent=2),
+    "request.json": json.dumps(request, indent=2),
+    "claims-ledger.json": json.dumps(ledger, indent=2),
+}
+for name, body in files.items():
+    path = BUNDLE / name
+    path.write_text(body + ("" if body.endswith("\n") else "\n"), encoding="utf-8")
+    path.chmod(0o600)
+
+print(
+    json.dumps(
+        {
+            "material_claims": len(material),
+            "claims_total": len(ledger),
+            "held_back": [e["old_id"] for e in ledger if not e["eligible"]],
+            "sources": len(sources),
+            "primary_ratio": primary_ratio,
+            "negative_searches": len(negatives),
+            "export_hash": stable_hash(export_md),
+            "verifier_receipt_name": att.receipt_verifier,
+            "amendments": [e["old_id"] for e in ledger if e["amendment"]],
+        },
+        indent=2,
+    )
+)

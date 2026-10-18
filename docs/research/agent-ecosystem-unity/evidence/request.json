@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "request_id": "SGO-REQ-2026-AGENT-ECOSYSTEM-UNITY-01",
+  "commission_id": null,
+  "requested_at": "2026-10-18T11:39:08Z",
+  "question": "As of October 2026, what do the coding-agent vendors in this estate officially support for relocating or sharing their home directory, instruction files, skills, MCP configuration and session state, and which cross-vendor standards are converging, so a single runtime root can stand on supported mechanisms instead of symlink workarounds?",
+  "context_refs": [
+    {
+      "owner_repo": "organvm/limen",
+      "path": "docs/plans/2026-10-18-agent-surface-reconciliation-v3.md"
+    },
+    {
+      "owner_repo": "organvm/limen",
+      "path": "docs/research-backend.md"
+    }
+  ],
+  "required_capabilities": [
+    "current_web_retrieval",
+    "cited_synthesis",
+    "claim_verification",
+    "markdown_export"
+  ],
+  "freshness": {
+    "as_of": "2026-10-18T11:39:08Z"
+  },
+  "domain_constraints": {
+    "allow_domains": [
+      "aaif.io",
+      "agentclientprotocol.com",
+      "agents.md",
+      "agentskills.io",
+      "antigravity.google",
+      "code.claude.com",
+      "codelabs.developers.google.com",
+      "cursor.com",
+      "docs.github.com",
+      "docs.x.ai",
+      "geminicli.com",
+      "github.com",
+      "goose-docs.ai",
+      "jules.google",
+      "learn.chatgpt.com",
+      "opencode.ai",
+      "www.linuxfoundation.org"
+    ],
+    "source_types": [
+      "official_documentation",
+      "specification",
+      "vendor_repository",
+      "issue_tracker",
+      "changelog"
+    ],
+    "languages": [
+      "en"
+    ]
+  },
+  "verification_strength": "primary_source",
+  "preservation_tier": "operational_internal",
+  "external_transmission": "public_only",
+  "latency_ceiling_seconds": 3600,
+  "spend_ceiling": {
+    "currency": "USD",
+    "variable_cost": 0
+  },
+  "output_contract": {
+    "format": "markdown",
+    "owner_repo": "organvm/limen",
+    "report_path": "docs/research/agent-ecosystem-unity/report.md",
+    "receipt_path": "docs/research/agent-ecosystem-unity/report.receipt.json",
+    "raw_export_ref": "private-owner://limen/research-exports/agent-ecosystem-unity.md",
+    "required_sections": [
+      "material_claims",
+      "contradictions",
+      "unknowns",
+      "negative_searches",
+      "novel_actionable_findings",
+      "source_manifest"
+    ]
+  }
+}
