@@ -54,7 +54,10 @@ acceptance predicate passes. Session release does not authorize checkout retirem
    With v2, keep `--worktree` bound to the native caller and supply every declared
    `--scope-root ID=PATH`; never substitute a child repository for the native anchor.
    This read-only predicate checks publication, ownership, custody, scoped verification,
-   retained broker obligations and surviving processes. Exit 2 is unmeasured, never pass.
+   retained broker obligations and surviving processes. Exit 2 is unmeasured, never pass: before naming why,
+   read the log of the producer that feeds it (for broker registration `$CLAUDE_JOB_DIR/tmp/conduct-register.log`;
+   a session in the shared checkout writes none) and `docs/session-closeout.md`, and label any remaining
+   inference as an inference (`PREC-2026-10-18-read-the-feeding-log-before-naming-a-blocker`).
    No-argument `no-tasks-on-me.sh` and `closeout-fast.sh` remain estate diagnostics.
 7. Idempotence is two runs: run the session predicate twice and quote both bare exit
    codes (never through a pipe). Both must be 0, and the second creates no files, issues,
