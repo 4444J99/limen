@@ -19,3 +19,8 @@ CI must shard module predicates and run eligible shards in parallel. The final i
 the shard receipts plus only genuine cross-module seams. Each shard has an execution-profile timeout,
 finite transient retry policy, output cap, and stable receipt; no unbounded wait, retry, or log stream
 is a valid verification strategy.
+
+Reflexive depth is bounded the same way: observation of observation (an agent mapping an agent that
+maps an agent) stops at three levels or at convergence, whichever comes first, and a pattern that does
+not converge by the third level is flagged non-convergent rather than recursed. See
+`docs/architecture/reflexive-observation.md`.

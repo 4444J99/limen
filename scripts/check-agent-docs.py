@@ -809,6 +809,28 @@ def main() -> int:
                 f"{scoped.relative_to(ROOT)} presents non-canonical status values: {sorted(invalid_presented)} (T)"
             )
 
+    # U — the reflexive stance is Tier-1 doctrine bound from the uncapped standard (AGENTS.md is
+    # over its byte budget, so the pointer lives in docs/agent-instruction-standard.md, never there).
+    reflexive_doc = ROOT / "docs" / "architecture" / "reflexive-observation.md"
+    if not reflexive_doc.exists():
+        errors.append("docs/architecture/reflexive-observation.md is missing (U)")
+    else:
+        reflexive_text = reflexive_doc.read_text(encoding="utf-8")
+        for phrase, label in [
+            ("Absorb structure, not totality", "structure-not-totality rule"),
+            ("One source, lossy projections", "one-source-lossy-projections rule"),
+            ("Observation is not participation", "observation-is-not-participation rule"),
+            ("Agents are mutually legible", "mutual-legibility rule"),
+        ]:
+            if phrase not in reflexive_text:
+                errors.append(f"docs/architecture/reflexive-observation.md lacks the {label} (U)")
+        standard_text = (ROOT / "docs" / "agent-instruction-standard.md").read_text(encoding="utf-8")
+        if "docs/architecture/reflexive-observation.md" not in standard_text:
+            errors.append("agent instruction standard does not link the reflexive-observation doctrine (U)")
+        composition_text = (ROOT / "docs" / "architecture" / "bounded-composition.md").read_text(encoding="utf-8")
+        if "observation of observation" not in composition_text:
+            errors.append("bounded-composition.md lacks the reflexive depth cap (U)")
+
     # O. Record-Keeper Covenant keeper law
     claude_note = section(agents_text, "Agent-Specific Notes")
     for phrase, label in [
