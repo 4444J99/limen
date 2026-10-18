@@ -149,6 +149,32 @@ def _native_helper_contracts(host: dict, home: str, policy_digest: str) -> list[
     return commands
 
 
+def _command_file_digests(command: list[str], helper: str | None, hashes: dict[str, str]) -> dict[str, str] | None:
+    """SHA-256 of every absolute file named by `command` (plus `helper`), keyed by resolved path.
+
+    A service contract binds the bytes of each file it names, so a file this checker cannot read
+    cannot be witnessed. Return None then and let the caller derive no contract: the process stays
+    unattributed, which fails closed. Letting the OSError escape instead made one unreadable argv path
+    on the host (any process the census enumerates) turn every session-release check into "unmeasured".
+    Dropping just the unreadable path would be worse: a contract whose provenance silently omits a file.
+    `hashes` memoises digests across commands.
+    """
+    try:
+        files = [Path(word).resolve() for word in command if Path(word).is_absolute() and Path(word).is_file()]
+        if helper:
+            files.append(Path(helper).resolve())
+        digests: dict[str, str] = {}
+        for path in files:
+            key = str(path)
+            if key not in hashes:
+                with path.open("rb") as source:
+                    hashes[key] = hashlib.file_digest(source, "sha256").hexdigest()
+            digests[key] = hashes[key]
+    except OSError:
+        return None
+    return digests
+
+
 def service_contracts(processes: dict[int, Process]) -> list[dict]:
     estate = load_estate()
     policy, policy_digest = estate.load_policy(estate.policy_path())
@@ -157,7 +183,7 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
         return []  # Missing authority cannot exempt any process.
     hosts = settings.get("hosts", [])
     contracts = []
-    hashes = {}
+    hashes: dict[str, str] = {}
     singleton_candidates = []
     homes = {p.env["CODEX_HOME"] for p in processes.values() if p.env.get("CODEX_HOME")}
     if not homes:
@@ -262,16 +288,10 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
                         for command in _cua_embedded_commands(Path(helper), processes, resolved_hosts, byte_witnesses)
                     )
             for command, parent_service in commands:
-                files = [Path(word).resolve() for word in command if Path(word).is_absolute() and Path(word).is_file()]
-                if byte_witnesses and helper:
-                    files.append(Path(helper).resolve())
-                file_digests = {}
-                for path in files:
-                    key = str(path)
-                    if key not in hashes:
-                        with path.open("rb") as source:
-                            hashes[key] = hashlib.file_digest(source, "sha256").hexdigest()
-                    file_digests[key] = hashes[key]
+                # `helper` is bound only by the CUA branch above; read it lazily, as before.
+                file_digests = _command_file_digests(command, helper if byte_witnesses else None, hashes)
+                if file_digests is None:
+                    continue  # A named file this checker cannot read cannot be witnessed: no contract.
                 provenance = digest([policy_digest, record["fingerprint"], canonical_argv(command), file_digests])
                 if any(
                     key in byte_witnesses and checksum != byte_witnesses[key] for key, checksum in file_digests.items()

@@ -166,22 +166,29 @@ def canonical_argv(argv: tuple[str, ...] | list[str]) -> tuple[str, ...]:
 
     result = []
     for index, word in enumerate(argv):
-        path = Path(word)
-        if index == 0 and not path.is_absolute():
-            word = shutil.which(word) or word
+        try:
             path = Path(word)
-        if index == 0 and path.is_file():
-            resolved = path.resolve()
-            # Homebrew's framework stub execs this app binary in the SAME framework.
-            if (
-                resolved.parent.name == "bin"
-                and "Python.framework" in resolved.parts
-                and resolved.name.startswith("python")
-            ):
-                app = resolved.parent.parent / "Resources/Python.app/Contents/MacOS/Python"
-                if app.is_file():
-                    path = app
-        result.append(str(path.resolve()) if path.is_absolute() and path.exists() else word)
+            if index == 0 and not path.is_absolute():
+                word = shutil.which(word) or word
+                path = Path(word)
+            if index == 0 and path.is_file():
+                resolved = path.resolve()
+                # Homebrew's framework stub execs this app binary in the SAME framework.
+                if (
+                    resolved.parent.name == "bin"
+                    and "Python.framework" in resolved.parts
+                    and resolved.name.startswith("python")
+                ):
+                    app = resolved.parent.parent / "Resources/Python.app/Contents/MacOS/Python"
+                    if app.is_file():
+                        path = app
+            result.append(str(path.resolve()) if path.is_absolute() and path.exists() else word)
+        except OSError:
+            # A path this checker cannot traverse (observed: EACCES on /usr/local/bin/1password-mcp, an
+            # argv word of an unrelated host process) cannot be resolved. Keep it literally: the process
+            # is still counted and an unattributed one still blocks release, whereas letting the error
+            # escape made one unreadable word anywhere on the host turn every release check "unmeasured".
+            result.append(word)
     return tuple(result)
 
 
