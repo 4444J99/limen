@@ -109,3 +109,11 @@ lifetime message counts are explicitly named in index metadata.
   file spelunking against vendor stores.
 - "all" = run the loop per vendor; each vendor gets its own report. Cross-vendor synthesis
   goes in the message, not into a merged file.
+
+### Read receipts and synthesis validation
+
+Include the cat-session JSON receipt as capture_receipt in each facet, omitting only text. Keep capture_fingerprint unchanged. The renderer accepts judgments only for complete, response-bearing reads matching the indexed capture. Expanded reads require reindexing; truncated and prompt-only captures cannot support success or failure judgments. Distinguish quoted historical conversation from the current session, and use unclear when terminal outcome evidence is absent.
+
+Render the facets before writing a narrative. The renderer writes validation.json even when no narrative is accepted. Copy its index_fingerprint, facets_fingerprint, and coverage_summary into a newly authored narrative, then render again. The report derives judgeable totals from validated outcomes and excludes unclear outcomes from that numerator. Record whether reads are fresh or reused verified captures, and preserve original reports when regenerating evidence.
+
+Existing indexes created before capture lengths and structural role checks were added must be regenerated before attaching read receipts. Do not stamp old facets with current fingerprints. Textual role counts are display estimates; source message roles separately gate response eligibility.

@@ -514,22 +514,30 @@ def test_pb_fields_rejects_truncated_input():
 def _bind_test_artifacts(vdir):
     """Bind synthetic judgments to synthetic captures, as the author workflow does."""
     index = json.loads((vdir / "index.json").read_text())
+    capture = "--- user ---\nrequest\n--- assistant ---\nresponse\n"
     for session in index.get("sessions", []):
         if session.get("id"):
-            vi._bind_capture(session, "synthetic capture", vi.DEFAULT_MAX_CHARS)
+            session.setdefault("assistant_msgs", 1)
+            vi._bind_capture(session, capture, vi.DEFAULT_MAX_CHARS)
     index["binding_schema"] = "limen.vendor_insights.binding.v1"
     index["index_fingerprint"] = vi._index_fingerprint(index)
     (vdir / "index.json").write_text(json.dumps(index))
     by_id = {s.get("id"): s for s in index.get("sessions", [])}
+    facets = []
     for path in (vdir / "facets").glob("*.json"):
         facet = json.loads(path.read_text())
         if facet.get("session_id") and facet.get("session_id") in by_id:
-            facet["source_fingerprint"] = by_id[facet["session_id"]].get("source_fingerprint")
+            session = by_id[facet["session_id"]]
+            facet["source_fingerprint"] = session.get("source_fingerprint")
+            facet["capture_receipt"] = vi._read_receipt(index, session, capture, vi.DEFAULT_MAX_CHARS)
+            facets.append(facet)
         path.write_text(json.dumps(facet))
     narrative_path = vdir / "narrative.json"
     if narrative_path.exists():
         narrative = json.loads(narrative_path.read_text())
         narrative["index_fingerprint"] = index["index_fingerprint"]
+        narrative["facets_fingerprint"] = vi._facets_fingerprint(facets)
+        narrative["coverage_summary"] = vi._coverage_summary(facets)
         narrative_path.write_text(json.dumps(narrative))
     return index
 
@@ -1272,3 +1280,25 @@ def test_aggregate_facets_tolerates_non_numeric_counts():
     assert agg["goal_categories"] == {"coding": 1, "other": 1, "research": 0}
     assert agg["friction_counts"] == {"errors": 2}
     assert agg["satisfaction_counts"] == {"neutral": 1}
+
+def test_gemini_reply_receipt_survives_render(tmp_path, monkeypatch, capsys):
+    _write_gemini_session(tmp_path / "store/proj", "gemini-reply")
+    mod = _fake_mod(gemini={"path": tmp_path / "store"})
+    monkeypatch.setattr(vi, "OUT_ROOT", tmp_path / "out")
+    assert vi.cmd_index(mod, "gemini", 14, 10) == 0
+    capsys.readouterr()
+    assert vi.cmd_cat(mod, "gemini", "gemini-reply", 60000, json_mode=True) == 0
+    receipt = json.loads(capsys.readouterr().out)
+    assert receipt["judgment_eligible"] is True
+    assert receipt["structural_assistant_msgs"] == 1
+    receipt.pop("text")
+    vdir = tmp_path / "out/gemini"
+    (vdir / "facets").mkdir()
+    (vdir / "facets/reply.json").write_text(json.dumps({
+        "session_id": "gemini-reply", "outcome": "unclear",
+        "source_fingerprint": receipt["source_fingerprint"],
+        "capture_receipt": receipt,
+    }))
+    assert vi.cmd_render("gemini") == 0
+    validation = json.loads((vdir / "validation.json").read_text())
+    assert validation["coverage_summary"]["faceted_sessions"] == 1

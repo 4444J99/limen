@@ -1465,7 +1465,7 @@ def _cat_gemini(mod, sid: str, max_chars: int) -> str | None:
                 f"[tool: {tc.get('name')}]\n" for tc in rec.get("toolCalls") or [] if isinstance(tc, dict)
             )
             if body or tools:
-                chunk = f"--- gemini ---\n{body}\n{tools}"
+                chunk = f"--- assistant ---\n{body}\n{tools}"
         if chunk:
             out.append(chunk)
             total += len(chunk)
@@ -1919,6 +1919,8 @@ def _aggregate_facets(facets: list[dict]) -> dict:
     }
     for f in facets:
         oc = f.get("outcome") or "unclear"
+        if oc not in {"fully_achieved", "mostly_achieved", "partially_achieved", "not_achieved"}:
+            oc = "unclear"
         agg["outcomes"][oc] = agg["outcomes"].get(oc, 0) + 1
         st = f.get("session_type") or "unknown"
         agg["session_types"][st] = agg["session_types"].get(st, 0) + 1
@@ -2008,6 +2010,8 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
             "satisfaction. "
             f"Denominator: {len(facets)} faceted sessions of {n_sessions} indexed "
             f"({_esc(imeta.get('total_in_window', 'unknown'))} in-window).</p>"
+            f"<p>Judgeable outcomes: {_coverage_summary(facets)['judgeable_sessions']} of {len(facets)} "
+            "validated facets; unclear outcomes are excluded from that numerator.</p>"
             "<div class='tables'>"
             f"<table><caption>Outcomes</caption>{_dl(agg['outcomes'])}</table>"
             f"<table><caption>Friction label counts</caption>{_dl(agg['friction_counts'])}</table>"
@@ -2107,6 +2111,7 @@ def _fingerprint(value: object) -> str:
 def _bind_capture(session: dict, text: str, max_chars: int) -> None:
     session["capture_sha256"] = hashlib.sha256(text.encode()).hexdigest()
     session["capture_max_chars"] = max_chars
+    session["capture_chars"] = len(text)
     session["source_fingerprint"] = _fingerprint({k: v for k, v in session.items() if k != "source_fingerprint"})
 
 
@@ -2271,8 +2276,22 @@ def cmd_cat(mod, vendor: str, sid: str | None, max_chars: int, *, record_id: str
     if text is None:
         print(f"ERROR: session '{sid}' not found for vendor '{vendor}'", file=sys.stderr)
         return 2
+    receipt = _read_receipt(index, session, text, max_chars)
+    print(json.dumps(receipt), file=sys.stderr)
+    if json_mode:
+        print(json.dumps({**receipt, "text": text}))
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+def _read_receipt(index: dict, session: dict, text: str, max_chars: int) -> dict:
+    coverage = _capture_coverage(text)
+    assistant_msgs = session.get("assistant_msgs")
+    structural_response = type(assistant_msgs) is int and assistant_msgs > 0
     receipt = {
-        **_capture_coverage(text),
+        **coverage,
+        "structural_assistant_msgs": assistant_msgs,
         "record_id": session.get("record_id", session["id"]),
         "session_id": session["id"],
         "source_fingerprint": session["source_fingerprint"],
@@ -2281,16 +2300,56 @@ def cmd_cat(mod, vendor: str, sid: str | None, max_chars: int, *, record_id: str
         "capture_sha256": hashlib.sha256(text.encode()).hexdigest(),
         "returned_chars": len(text),
         "truncated": "truncated at max-chars" in text,
-        "judgment_eligible": max_chars <= session["capture_max_chars"],
+        "judgment_eligible": (max_chars <= session["capture_max_chars"]
+                              and structural_response
+                              and coverage["availability"] == "readable_response"
+                              and coverage["readable_assistant_turns"] <= assistant_msgs
+                              and "truncated at max-chars" not in text),
         "reindex_required": max_chars > session["capture_max_chars"],
     }
     receipt["capture_fingerprint"] = _fingerprint(receipt)
-    print(json.dumps(receipt), file=sys.stderr)
-    if json_mode:
-        print(json.dumps({**receipt, "text": text}))
-    else:
-        sys.stdout.write(text)
-    return 0
+    return receipt
+
+
+
+def _valid_facet_read(index: dict, session: dict, facet: dict) -> bool:
+    """An index fingerprint alone does not prove the author read that capture."""
+    receipt = facet.get("capture_receipt")
+    if not isinstance(receipt, dict):
+        return False
+    body = {k: v for k, v in receipt.items() if k != "capture_fingerprint"}
+    limit = receipt.get("capture_max_chars")
+    return (
+        receipt.get("capture_fingerprint") == _fingerprint(body)
+        and receipt.get("record_id") == session.get("record_id", session["id"])
+        and receipt.get("source_fingerprint") == session.get("source_fingerprint")
+        and receipt.get("index_fingerprint") == index.get("index_fingerprint")
+        and receipt.get("capture_sha256") == session.get("capture_sha256")
+        and receipt.get("returned_chars") == session.get("capture_chars")
+        and type(limit) is int and 0 <= limit <= session.get("capture_max_chars", -1)
+        and receipt.get("judgment_eligible") is True
+        and receipt.get("reindex_required") is False
+        and receipt.get("truncated") is False
+        and receipt.get("availability") == "readable_response"
+        and type(session.get("assistant_msgs")) is int and session["assistant_msgs"] > 0
+        and receipt.get("structural_assistant_msgs") == session["assistant_msgs"]
+        and type(receipt.get("readable_assistant_turns")) is int
+        and 0 < receipt["readable_assistant_turns"] <= session["assistant_msgs"]
+    )
+
+
+def _facets_fingerprint(facets: list[dict]) -> str:
+    return _fingerprint(sorted(_fingerprint(facet) for facet in facets))
+
+
+def _coverage_summary(facets: list[dict]) -> dict:
+    outcomes = _aggregate_facets(facets)["outcomes"]
+    return {
+        "faceted_sessions": len(facets),
+        "judgeable_sessions": len(facets) - outcomes.get("unclear", 0),
+        "unclear_sessions": outcomes.get("unclear", 0),
+        "outcomes": outcomes,
+    }
 
 
 def cmd_render(vendor: str) -> int:
@@ -2347,6 +2406,11 @@ def cmd_render(vendor: str) -> int:
                     "Unbound or stale facet excluded; regenerate against the current captured-source fingerprint."
                 )
                 continue
+            if not _valid_facet_read(index, indexed_sessions[sid], facet):
+                validation_notes.append(
+                    "Facet excluded: a complete, eligible read receipt matching the indexed capture is required."
+                )
+                continue
             facets_by_id[sid] = facet
     facets = list(facets_by_id.values())
     narrative = {}
@@ -2360,12 +2424,20 @@ def cmd_render(vendor: str) -> int:
             not isinstance(narrative, dict)
             or not binding_current
             or narrative.get("index_fingerprint") != index.get("index_fingerprint")
+            or narrative.get("facets_fingerprint") != _facets_fingerprint(facets)
+            or narrative.get("coverage_summary") != _coverage_summary(facets)
         ):
             narrative = {}
             print("WARN: narrative freshness unknown or mismatched; excluded; regenerate", file=sys.stderr)
             validation_notes.append(
-                "Narrative excluded: unbound or stale index population; regenerate against the current index fingerprint."
+                "Narrative excluded: index, validated facets, or derived counts changed; regenerate from validation.json."
             )
+    _atomic_write(vdir / "validation.json", json.dumps({
+        "index_fingerprint": index.get("index_fingerprint"),
+        "facets_fingerprint": _facets_fingerprint(facets),
+        "coverage_summary": _coverage_summary(facets),
+        "validation_notes": sorted(set(validation_notes)),
+    }, indent=2))
     if validation_notes:
         index.setdefault("meta", {}).setdefault("notes", []).extend(sorted(set(validation_notes)))
         for note in sorted(set(validation_notes)):

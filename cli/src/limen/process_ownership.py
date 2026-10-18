@@ -185,6 +185,8 @@ def _native_fd_path(path: Path) -> Path:
         if len(identities) != 1:
             raise ObservationUnavailable("path_resolution_unavailable:identity_mismatch")
         return reported
+    except ObservationUnavailable:
+        raise
     except (OSError, ValueError):
         raise ObservationUnavailable("path_resolution_unavailable") from None
     finally:
