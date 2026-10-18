@@ -237,6 +237,17 @@ engine there, so unset it for the command and also pass `--corpus-store-root`. R
 `build` and `verify` exit non-zero when a provider failed to read, a vault link dangles, or a surface
 disagrees with the manifest. A failing provider never stops the others.
 
+Always build every provider. `--provider` narrows only the ingest stage: the manifest is rewritten
+from the providers named in that call and from nothing else, while the folders of the other
+providers stay on disk and the later stages still read them. On a synthetic store holding two
+providers (`cce archive fixture`, observed through the installed `cce` on 2026-10-18),
+`build --provider claude` left a manifest listing claude alone with a new fingerprint, and both
+`build` and `verify` exited 1: the analysis row count, the graph node count and the site page count
+each differed from the manifest. A second, full build restored the first manifest and fingerprint
+exactly. Never aim `--provider` at the live store. To add or refresh one provider, repeat the whole
+stage-one command, and give a provider whose folder is not under the export root its own with
+`--source <provider>=<folder>`, as Copilot needs below.
+
 The fixture gate and the live run answer different questions. Gate `check-knowledge-alive` in
 `institutio/governance/gates.yaml` runs the four archive test suites, then the fixture run. It has no
 remote job because it needs an engine, and `bash scripts/verify-scoped.sh` selects it by path. The
@@ -266,15 +277,21 @@ is attached and has been re-read. Time Machine retention is unverified here.
 
 ## Providers not in the archive
 
-Microsoft Copilot is not in the normalized archive. Its sources are held outside the archive store as
-a single copy, in `/Volumes/Archive4T/workspace-backup/session-meta/data/session-transcripts/copilot-captures-2026-03/`,
-and the archive reader does not parse them into turns, so no Copilot provider exists in the archive
-manifest. The registry lists the captures as a harvest source of the `session-atoms` stream; whether
-anything there reads them beyond opaque blobs is not verified here. The registry row
-`copilot-history-memory` in `institutio/governance/corpora.yaml` records that vacuum. The preservation
-receipt is `docs/receipts/receipt-custody-copilot-captures-20261018.json`, and the follow-up is issue
-#3010, which is blocked on attaching T7Recovery for the second copy. GitHub Copilot CLI history under
-`~/.copilot/session-state` is a different product and is not part of this.
+Microsoft Copilot is not in the live normalized archive. Its sources are held outside the archive
+store as a single copy, in `/Volumes/Archive4T/workspace-backup/session-meta/data/session-transcripts/copilot-captures-2026-03/`.
+The engine has read them since `conversation-corpus-engine` pull request 82 (commit `c46256075a5d`):
+the reader takes the saved `copilot.microsoft.com` pages (SingleFile `.html`) as conversations,
+counts the Word and text files in the folder by suffix without opening them, and puts `copilot`
+among the providers of `cce archive build`. The live archive has not been rebuilt with it, so its
+manifest still lists six providers and holds no Copilot conversation. The folder is not under the
+export root, so adding Copilot is the full stage-one build with `--source copilot=<that folder>`
+(see Rebuild and verify), never `--provider copilot` alone. The registry lists the captures as a
+harvest source of the `session-atoms` stream; whether anything there reads them beyond opaque blobs
+is not verified here. The registry row `copilot-history-memory` in
+`institutio/governance/corpora.yaml` records that vacuum until the rebuild. The preservation receipt
+is `docs/receipts/receipt-custody-copilot-captures-20261018.json`, and issue #3010 orders the
+rebuild, the registry update and the second copy, which is blocked on attaching T7Recovery. GitHub
+Copilot CLI history under `~/.copilot/session-state` is a different product and is not part of this.
 
 ## Engine dependency
 
