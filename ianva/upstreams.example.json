@@ -1,7 +1,7 @@
 {
   "_comment": "Example ianva upstream set. Copy to ~/.config/ianva/upstreams.json and edit, or let build-mcp-registry.py populate ~/.agents/mcp/servers.json. ianva merges both (this file wins on name collisions). stdio upstreams give {command,args,env}; remote upstreams give {url,type} and oauth:true when MCPHub should hold + auto-refresh their OAuth.",
 
-  "_comment_limen_lane": "A gateway whose clients are one lane (e.g. OpenCode) gives this upstream an env of {\"LIMEN_AGENT\": \"<lane>\", \"LIMEN_CONDUCT_ENV_FILE\": \"<absolute path to ~/.limen.env>\"} and no bearer value at all; limen-mcp then resolves that lane's own conduct bearer from the owned cache on each call (docs/session-closeout.md, Lane credential resolution). Left unset here because this example is lane-neutral; the deployed entry is Domus-owned.",
+  "_comment_limen_lane": "Do not give this upstream a lane variable on a shared gateway: Codex, Gemini and OpenCode all reach one endpoint, so a single lane value would relabel every client's conduct calls as that lane (issue 2961). A lane variable plus LIMEN_CONDUCT_ENV_FILE (a path, never a bearer value) belongs only on an upstream process that serves exactly one lane; limen-mcp then resolves that lane's own conduct bearer from the owned cache on each call (docs/session-closeout.md, Lane credential resolution). The shared-gateway go-live shape is undesigned; the deployed entry is Domus-owned.",
 
   "limen": {
     "command": "uv",
