@@ -1,0 +1,36 @@
+Session a89fb304-ecdf-45a7-aef4-2cebe27d2309 (Claude, bg job "pickup-2961-landing") — scoped verification, 2026-10-18 UTC
+Every command below was run bare; its own exit code was read (never through a pipe). All outputs are quoted from this session.
+
+POST-MERGE — run on this receipt's base, origin/main bd4e539347cc4e25ceaba3256d14c4e7744fc011
+(contains all five session merges)
+- scripts/run-pytest-hermetic.sh cli/tests/test_conduct_env_cache.py cli/tests/test_mcp_server.py cli/tests/test_conduct_client.py -q -> 61 passed, exit 0
+- bash -c 'PYTHONPATH=ianva/src python3 -m unittest discover -s ianva/tests' (the ianva-unit-test gate command, bare host python3) -> Ran 10 tests, OK, exit 0
+- scripts/tests/merge-policy.test.sh -> passed=95 failed=0, "merge-policy regression test PASSED", exit 0
+- ruff check cli/src cli/tests web/api mcp ianva -> All checks passed, exit 0
+- ruff format --check cli/src cli/tests web/api mcp ianva -> 770 files already formatted, exit 0
+- mypy --config-file cli/pyproject.toml cli/src/limen/conduct/client.py cli/src/limen/conduct/env_cache.py -> no issues in 2 source files, exit 0
+- mypy --ignore-missing-imports mcp/src/limen_mcp/server.py ianva/src/ianva/ -> no issues in 12 source files, exit 0
+- scripts/check-gates.py -> OK, 178 gates, exit 0
+- scripts/check-root-manifest.py --surface docs -> OK, 145 sanctioned, 3 grandfathered, none undeclared, exit 0
+- scripts/credential-wall.py --check -> all 32 secret atoms registered, exit 0
+- git merge-base --is-ancestor SHA origin/main, exit 0 for each of:
+  21e3f21fb22b6373c4e18338622cf9d8d40dd1ff  #3048 rehome of the parity T2 receipt (check-docs-manifest red on main fixed)
+  cf89cd8257f87d749a0b7722c1deb1f9d0a7aa63  #3043 lane credential consumer
+  acfa0a6ad88cb1269b40284d0d2a55e537bccac8  #3050 merge-policy bare form judges the same policy as --repo
+  f2d557e5fc4d3f88d7ab2e8879ab33cac0c95966  #3052 registers the ianva-unit-test gate
+  bd4e539347cc4e25ceaba3256d14c4e7744fc011  #3053 the pickup plan and its Outcome
+
+PRE-MERGE — exact-tree scoped verification at each PR's final head (squash-merged away; each head is the PR head of a merged same-repository PR)
+- #3043 final head 6b7e60fb77a392a529e01315d773789864f86c4d (origin/main 21e3f21fb + the PR; base-synced after a STALE-CORE deferral, incoming diff = 5 docs files):
+  cli tests above -> 61 passed, exit 0; ianva unittest 4 passed (10 in the full suite); verify-scoped.sh cheap wave PASS (23 gates before the sync, PASS after);
+  sentinel-cache subprocess run: LIMEN_AGENT=opencode presented the lane bearer, never the generic one, nothing leaked into os.environ; codex / unset / malformed lane kept the original "not configured" error.
+- #3050 head d14c3a9f23f97720ab4a590cb3b94e2a4baccdb2: merge-policy.test.sh 95 passed (A/B against the parent script fails exactly the discriminating case); verify-scoped.sh cheap wave PASS (merge-policy-test, check-gates, merge-queue-contract-test), exit 0.
+- #3052 head aeac9b6c600535bbb414e87bee79cd4981bcc054: check-gates OK (178); ianva suite 10 OK; mutation check (cache keys no longer stripped) fails exactly test_private_cache_keys_do_not_reach_backend; verify-scoped.sh cheap wave PASS, exit 0.
+- #3048 head 944b5f6aeb8a3de8e6b6c5c0080df51569862b41: check-root-manifest --surface docs exit 0 (failed before the change with "[B] undeclared docs/ entry (fat): session-closeout"); verify-scoped.sh 6 of 6 cheap gates PASS.
+
+NOT RUN / NOT CLAIMED
+- Heavy wave (pytest-cli, pytest-api) of verify-scoped.sh on #3043: REFUSED by host admission, "Host admission denied scoped heavy verification: heavy-lease-held", exit 75. Not a pass. The hosted pr-gate (the same heavy tier) passed on #3043's pre-sync head 2681027d77b4e86331c91defed699351b0f0b22e; it was not re-observed on the synced head.
+- Not live. The installed limen-mcp uv tool (built from an old Archive4T worktree) and the ianva "limen" upstream env were NOT changed, and the gateway was NOT restarted: the approved go-live pre-check found Codex, Gemini and OpenCode share http://127.0.0.1:7666/mcp (a LIMEN_AGENT=opencode upstream env would relabel the others) and the running backend's npx cache is empty (a cold restart could fail). Filed once on issue 2961.
+- Live checkout /Users/4jp/Workspace/limen: check-live-checkout.py (LIMEN_ROOT pinned to it) -> state=drift, behind origin/main by 4 commits at closeout; owned by scripts/sync-release.sh, not hand-fast-forwarded. Installed scheduled runtime: check-runtime-lag.py -> OK (06fa2287c893, 11 commits behind, 0.1d old).
+- witness-contract (advisory; GitHub reports no required checks on main) fails fleet-wide on a dead OPS_SOURCE_GITHUB_TOKEN, issue 3003; not touched.
+- The session closeout predicate itself is measured separately and is not asserted by this file.
