@@ -31,8 +31,6 @@ def _write_cache(root: Path, *, generated_at: str, total=0, by_repo=None, recent
         json.dumps(
             {
                 "generated_at": generated_at,
-                "complete": True,
-                "error": None,
                 "total": total,
                 "by_repo": by_repo or {},
                 "recent": recent or [],
