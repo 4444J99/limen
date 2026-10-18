@@ -49,7 +49,12 @@ def _parser() -> argparse.ArgumentParser:
     release.add_argument("--superproject", type=Path, required=True)
     release.add_argument("--target", type=Path, required=True)
     release.add_argument("--expected-head", required=True)
-    release.add_argument("--remote-ref", required=True)
+    release.add_argument(
+        "--remote-ref",
+        required=True,
+        help="origin ref whose tip must equal --expected-head: refs/heads/<branch>, or refs/pull/<N>/head "
+        "for a squash-merged PR whose branch was deleted",
+    )
 
     quarantine = subparsers.add_parser("quarantine")
     quarantine.add_argument("--source", type=Path, required=True)
