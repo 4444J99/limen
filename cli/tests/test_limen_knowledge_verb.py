@@ -538,8 +538,9 @@ def layout(tmp_path):
                 with contextlib.suppress(ValueError, OSError):
                     recorded.append(int(pid_file.read_text().strip()))
         for pid in recorded:
-            # Only ever signal what is still our stand-in engine, never a recycled number.
-            if alive(pid) and str(binaries / "cce") in command_of(pid):
+            # Only ever signal what is still our stand-in engine, never a recycled number. Its command line
+            # carries this test's own directory (the store roots), whichever path the engine was found by.
+            if alive(pid) and str(tmp_path) in command_of(pid):
                 stop_pid(pid)
 
 
@@ -800,8 +801,9 @@ def test_a_start_that_times_out_leaves_no_live_child_and_no_pid_file(layout):
     assert not layout["lock"]().exists(), "the start lock outlived a timed-out start"
 
 
-@pytest.mark.parametrize("value", ["0", "abc"])
+@pytest.mark.parametrize("value", ["0", "abc", "9223372036854775808"])
 def test_a_start_timeout_that_is_not_a_positive_integer_is_ignored(layout, value):
+    """The last value is one digit past the largest bash integer: it would wrap to a negative deadline."""
     result = layout["run"]("--no-open", extra_env={TIMEOUT_VARIABLE: value})
     assert result.returncode == 0, result.stdout + result.stderr
     assert f"server started on port {layout['port']}" in result.stdout
@@ -864,6 +866,96 @@ def test_a_start_waiting_on_a_held_lock_joins_the_server_that_comes_up(layout):
     assert f"http://127.0.0.1:{port}/" in out
     assert [launched for launched, _ in layout["launches"]()] == [engine.pid], "the waiter launched its own engine"
     assert (lock / "pid").read_text().strip() == str(holder.pid), "the waiter disturbed a lock it did not own"
+
+
+# The orderings a repeated run only hits by luck are driven here by pausing the lock section at named
+# points in this test's own COPY of the script: a `_hook` function and two call sites are added, and each
+# is armed through a file in a hooks directory. Every anchor must match exactly once, so a refactor of the
+# lock section fails these tests loudly instead of silently un-pausing them.
+HOOK_FUNCTION = """
+# TEST HOOK (this test's copy only): pause at a named point when armed.
+_hook() {
+  [[ -n "${OK_HOOK_DIR:-}" && -e "$OK_HOOK_DIR/$1.arm" ]] || return 0
+  rm -f "$OK_HOOK_DIR/$1.arm"
+  : >"$OK_HOOK_DIR/$1.reached"
+  while [[ ! -e "$OK_HOOK_DIR/$1.go" ]]; do sleep 0.05; done
+}
+"""
+HOOK_EDITS = [
+    (
+        "lock_wait=$(( start_timeout + 5 > 15 ? start_timeout + 5 : 15 ))\n",
+        "lock_wait=$(( start_timeout + 5 > 15 ? start_timeout + 5 : 15 ))\n" + HOOK_FUNCTION,
+    ),
+    (
+        '    if mkdir "$lock_dir" 2>/dev/null; then\n',
+        '    if mkdir "$lock_dir" 2>/dev/null; then\n      _hook after_mkdir\n',
+    ),
+    (
+        '    if lock_holder_is_dead; then\n      if mkdir "$reap_dir" 2>/dev/null; then\n',
+        '    if lock_holder_is_dead; then\n      _hook before_reap\n      if mkdir "$reap_dir" 2>/dev/null; then\n',
+    ),
+]
+
+
+def install_pause_hooks(layout) -> Path:
+    """Add the pause hooks to this layout's copy of the script; returns the directory that arms them."""
+    script = layout["repo"] / "scripts" / "open-knowledge.sh"
+    text = script.read_text(encoding="utf-8")
+    for anchor, replacement in HOOK_EDITS:
+        assert text.count(anchor) == 1, f"the lock section no longer has the line the pause hooks attach to: {anchor!r}"
+        text = text.replace(anchor, replacement)
+    script.write_text(text, encoding="utf-8")
+    hooks = layout["tmp"] / "hooks"
+    hooks.mkdir()
+    return hooks
+
+
+def test_a_fresh_lock_that_replaces_a_dead_one_before_the_recheck_is_kept(layout):
+    """A recoverer judges a stale pid-less lock dead. Before it takes the recovery mutex, a new start creates a
+    fresh pid-less lock in its place. The recheck under the mutex must measure the new lock's own age."""
+    hooks = install_pause_hooks(layout)
+    lock = layout["take_lock"](layout["port"])
+    long_ago = time.time() - 10
+    os.utime(lock, (long_ago, long_ago))
+    (hooks / "before_reap.arm").touch()
+    recoverer = layout["spawn"]("--no-open", extra_env={"OK_HOOK_DIR": str(hooks)})
+    wait_until(lambda: (hooks / "before_reap.reached").exists(), 15, "the recoverer to judge the old lock dead")
+
+    shutil.rmtree(lock)
+    lock.mkdir()
+    fresh = lock.stat().st_ino
+    (hooks / "before_reap.go").touch()
+
+    # A negative, so it needs a duration: long enough for a recheck that skips the age test to remove the lock
+    # and launch an engine, well short of the 3 seconds the fresh lock needs before it may be recovered.
+    time.sleep(1.0)
+    assert recoverer.poll() is None, "the recoverer gave up instead of waiting behind the fresh lock"
+    assert lock.exists() and lock.stat().st_ino == fresh, "the recheck removed a fresh lock that was not dead"
+    assert layout["launches"]() == [], "an engine was launched behind a lock that was alive"
+
+
+def test_a_holder_that_stalls_before_its_pid_write_cannot_share_the_lock_with_its_replacement(layout):
+    """Start A takes the lock directory and stalls before it writes its pid. The lock turns old, start B recovers
+    it, takes a new one and launches the engine. When A resumes, its pid write must lose: A must not believe it
+    holds the lock and launch a second engine."""
+    hooks = install_pause_hooks(layout)
+    (hooks / "after_mkdir.arm").touch()
+    stalled = layout["spawn"]("--no-open", extra_env={"OK_HOOK_DIR": str(hooks)})
+    wait_until(lambda: (hooks / "after_mkdir.reached").exists(), 15, "start A to take the lock directory")
+    lock = layout["lock"]()
+    long_ago = time.time() - 10
+    os.utime(lock, (long_ago, long_ago))
+
+    # A slow-binding engine keeps B inside its start, holding the new lock, while A resumes.
+    replacement = layout["spawn"]("--no-open", extra_env={"FAKE_ENGINE_BIND_DELAY": "3.0"})
+    wait_until(lambda: len(layout["launches"]()) == 1, 20, "start B to recover the lock and launch the engine")
+    assert (lock / "pid").read_text().strip() == str(replacement.pid), "start B does not hold the new lock"
+    (hooks / "after_mkdir.go").touch()
+
+    outputs = [proc.communicate(timeout=60) for proc in (stalled, replacement)]
+    assert [stalled.returncode, replacement.returncode] == [0, 0], outputs
+    assert len(layout["launches"]()) == 1, "the stalled start launched an engine of its own"
+    assert not lock.exists(), "the start lock outlived both starts"
 
 
 def test_a_start_gives_up_at_a_wait_bound_that_follows_the_start_timeout(layout):
@@ -1216,6 +1308,57 @@ def test_a_running_server_is_reused_even_when_the_state_directory_is_unwritable(
     assert [pid for pid, _ in layout["launches"]()] == [engine.pid], "a second engine was launched"
 
 
+@pytest.mark.parametrize("how", ["state-path-is-a-file", "read-only-store"])
+def test_a_running_server_is_reused_even_when_the_state_directory_cannot_be_created(layout, how):
+    """The same reuse when there is no state directory at all and none can be made."""
+    engine = layout["serve_engine"](layout["port"])
+    store = layout["store"]
+    if how == "state-path-is-a-file":
+        layout["state"].write_text("this is a file, not a directory")
+    else:
+        if os.geteuid() == 0:
+            pytest.skip("root can create entries in a mode 555 directory, so the read-only store cannot be built")
+        store.chmod(0o555)
+        if os.access(store, os.W_OK):
+            store.chmod(0o755)
+            pytest.skip("this file system ignores directory modes, so the read-only store cannot be built")
+    try:
+        result = layout["run"]("--no-open", timeout=45)
+    finally:
+        store.chmod(0o755)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"server already up on port {layout['port']}" in result.stdout
+    assert [pid for pid, _ in layout["launches"]()] == [engine.pid], "a second engine was launched"
+
+
+def test_a_dead_lock_in_an_unwritable_state_directory_fails_the_start_at_once(layout):
+    """Recovery needs to remove the dead lock and create the recovery mutex; with neither possible the start
+    must say so, not wait out the lock bound and blame a start that does not exist."""
+    if os.geteuid() == 0:
+        pytest.skip("root can write into a mode 555 directory, so the unwritable state cannot be built")
+    state = layout["state"]
+    layout["take_lock"](layout["port"], layout["dead_pid"]())
+    state.chmod(0o555)
+    try:
+        if os.access(state, os.W_OK):
+            pytest.skip("this file system ignores directory modes, so the unwritable state cannot be built")
+        began = time.monotonic()
+        result = layout["run"]("--no-open", timeout=45)
+        elapsed = time.monotonic() - began
+    finally:
+        state.chmod(0o755)
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert (
+        f"open-knowledge: cannot take the start lock; the state directory is not writable: {state}"
+        in result.stderr.splitlines()
+    )
+    assert "did not finish within" not in result.stderr
+    assert elapsed < 5, f"waited {elapsed:.1f}s for a recovery that could never happen"
+    assert layout["launches"]() == []
+
+
 # --- C14: curl is required --------------------------------------------------------------------------
 
 
@@ -1285,6 +1428,23 @@ def test_the_browser_opens_only_after_readiness_and_its_failure_never_fails_the_
     assert "could not open the browser" in result.stderr
     calls = [json.loads(line) for line in record.read_text().splitlines()]
     assert calls == [{"arguments": [url], "answered": True}], calls
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="the browser step only runs on macOS, where `open` exists")
+def test_a_vault_link_that_cannot_be_built_never_fails_the_door(layout):
+    """The vault is a bonus: when its link cannot be built the door still opens and still exits 0."""
+    (layout["store"] / "archive-all" / "vault-all").mkdir()
+    binaries = layout["binaries"]
+    # Obsidian "is installed" and every open succeeds; only the URL-quoting call of the interpreter fails.
+    opener = binaries / "open"
+    opener.write_text("#!/bin/sh\nexit 0\n")
+    opener.chmod(0o755)
+    interpreter = binaries / "python3"
+    interpreter.write_text(f'#!/bin/sh\ncase "$*" in *urllib.parse*) exit 1 ;; esac\nexec "{sys.executable}" "$@"\n')
+    result = layout["run"]()
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"server started on port {layout['port']}" in result.stdout
+    assert "could not build the Obsidian link" in result.stderr
 
 
 # --- C6: status binds the receipt to the live fingerprint ------------------------------------------
@@ -1398,6 +1558,24 @@ def test_probes_ignore_a_user_curlrc_that_breaks_plain_curl(layout):
     assert f"server up on port {port}" in status.stdout, "a user curlrc made the live server read as down"
 
     again = layout["run"]("--no-open", extra_env=broken_home)
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert f"server already up on port {port}" in again.stdout
+    assert [pid for pid, _ in layout["launches"]()] == [engine.pid]
+
+
+def test_probes_ignore_a_proxy_environment(layout):
+    """curl sends even a 127.0.0.1 request through http_proxy or all_proxy, which read a live server as down."""
+    port = layout["port"]
+    engine = layout["serve_engine"](port)
+    # Nothing listens on port 9, so a probe that honours a proxy is refused and the server reads as down.
+    proxy = "http://127.0.0.1:9"
+    proxied = {"http_proxy": proxy, "all_proxy": proxy, "ALL_PROXY": proxy, "HTTP_PROXY": proxy}
+
+    status = layout["run"]("--status", extra_env=proxied)
+    assert status.returncode == 0, status.stdout + status.stderr
+    assert f"server up on port {port}" in status.stdout, "a proxy environment made the live server read as down"
+
+    again = layout["run"]("--no-open", extra_env=proxied)
     assert again.returncode == 0, again.stdout + again.stderr
     assert f"server already up on port {port}" in again.stdout
     assert [pid for pid, _ in layout["launches"]()] == [engine.pid]

@@ -17,7 +17,8 @@
 # NOTHING LEAVES THE MACHINE
 #   The engine binds the loopback interface only, and rejects any Host header that is not
 #   127.0.0.1 or localhost on its own port, so the URL printed here is the 127.0.0.1 form. Every
-#   loopback probe runs `curl -q --http1.1`, so a user ~/.curlrc (for example --http2) cannot break it.
+#   HTTP liveness probe runs `curl -q --http1.1 --noproxy '*'`, so neither a user ~/.curlrc (for
+#   example --http2) nor a proxy environment can break it.
 #
 # IDEMPOTENT
 #   A server already answering is reused, never started twice. A port held by something that is not
@@ -43,7 +44,8 @@
 #   file is absent, empty or names the releasing process. A second start finds the lock held and
 #   polls every 0.2 seconds until the server answers (it then reuses it), the lock is dead (it is
 #   recovered and taken), or max(15, start timeout + 5) seconds pass, 15 by default (exit 1). Two
-#   concurrent starts launch exactly one engine. --stop and --status never wait on the lock.
+#   concurrent starts run one engine between them; a waiter whose holder failed starts its own.
+#   --stop and --status never wait on the lock.
 #   A lock is dead when its pid names no process, a zombie, or a process whose command line lacks
 #   open-knowledge (judged with ps, never kill -0, so a live process of another user counts as
 #   alive), or when it has no usable pid and the lock directory is at least 3 seconds old (a holder
@@ -55,9 +57,10 @@
 #
 # ERRORS THAT DO NOT WAIT
 #   If the state directory cannot be created, or the lock cannot be taken because the state
-#   directory is not writable, the start exits 1 at once with a message naming the directory; a
-#   server that already answers is reused instead, since it needs no lock. A host without curl
-#   exits 127 before any probe, for --stop, --status and the start path alike.
+#   directory is not writable (or a dead lock must be recovered there), the start exits 1 at once
+#   with a message naming the directory; a server that already answers is reused instead, since it
+#   needs no lock. A host without curl exits 127 before any probe, for --stop, --status and the
+#   start path alike.
 #   --port must be a decimal number from 1 to 65535 without leading zeros; anything else exits 2.
 #
 # --STOP
@@ -71,13 +74,15 @@
 #
 # A START THAT TIMES OUT CLEANS UP AFTER ITSELF
 #   If the server does not answer within 10 seconds (override with the environment variable
-#   OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS, a positive integer), the child this start launched is
+#   OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS, a positive integer of at most six digits), the child this
+#   start launched is
 #   terminated (SIGTERM, then SIGKILL after 2 seconds), its pid file is removed, and the exit is 1.
 #
 # STATUS BINDS THE RECEIPT TO THE LIVE ARCHIVE
 #   The receipt shown is the newest docs/receipts/receipt-knowledge-alive-<16hex>-<yyyymmdd>.json
 #   whose 16hex is the first 16 hex characters of sha256 of the manifest's source_fingerprint. When
-#   receipts exist but none match, --status says so and names the newest on disk as stale.
+#   receipts of that name shape exist but none match, --status says so and names the newest on disk
+#   as stale.
 #
 # WHY THE PYTHON IS CHOSEN, NOT ASSUMED
 #   corpus_resolve reads corpora.yaml, which needs PyYAML, and the host python3 does not carry it.
@@ -120,7 +125,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 number_re='^[0-9]+$'
-positive_re='^[1-9][0-9]*$'
+# At most six digits: a longer value would wrap in bash arithmetic and become a negative deadline.
+timeout_re='^[1-9][0-9]{0,5}$'
 port_re='^[1-9][0-9]{0,4}$'
 
 # The pattern rules out leading zeros (octal in arithmetic) and overflow before any arithmetic runs.
@@ -130,7 +136,7 @@ if [[ ! "$port" =~ $port_re ]] || (( port > 65535 )); then
 fi
 
 start_timeout=10
-if [[ "${OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS:-}" =~ $positive_re ]]; then
+if [[ "${OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS:-}" =~ $timeout_re ]]; then
   start_timeout="$OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS"
 fi
 
@@ -191,7 +197,7 @@ fi
 # The archive server, by protocol: the engine's own liveness ping answers 200 with "ok": true.
 server_answers() {
   local reply code body
-  reply="$(curl -q --http1.1 -s --max-time 2 -w $'\n%{http_code}' "${url}api/ping" 2>/dev/null || true)"
+  reply="$(curl -q --http1.1 --noproxy '*' -s --max-time 2 -w $'\n%{http_code}' "${url}api/ping" 2>/dev/null || true)"
   code="${reply##*$'\n'}"
   body="${reply%$'\n'*}"
   [[ "$code" == "200" ]] || return 1
@@ -375,6 +381,11 @@ lock_holder_is_dead() {
 acquire_start_lock() {
   local deadline=$((SECONDS + lock_wait))
   if ! mkdir -p "$state_dir" 2>/dev/null; then
+    # A server that answers needs no state directory to be reused; only a start that would have to
+    # launch an engine fails here.
+    if server_answers; then
+      return 10
+    fi
     echo "open-knowledge: cannot create the state directory $state_dir" >&2
     exit 1
   fi
@@ -406,6 +417,11 @@ acquire_start_lock() {
         if lock_holder_is_dead; then rm -rf "$lock_dir"; fi
         reap_held=0
         rm -rf "$reap_dir"
+      elif [[ ! -w "$state_dir" ]]; then
+        # A dead lock cannot be recovered where nothing can be created or removed; waiting out the
+        # lock bound would only blame a start that does not exist.
+        echo "open-knowledge: cannot take the start lock; the state directory is not writable: $state_dir" >&2
+        exit 1
       elif path_is_older_than "$reap_dir" 60; then
         rm -rf "$reap_dir"
       fi
@@ -484,8 +500,11 @@ if [[ "$no_open" -eq 0 ]]; then
     open "$url" || echo "open-knowledge: could not open the browser — visit $url" >&2
     # The vault is a bonus: opened only when Obsidian is installed, and a failure never fails the door.
     if [[ -d "$vault" ]] && open -Ra Obsidian >/dev/null 2>&1; then
-      vault_link="obsidian://open?path=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$vault")"
-      open "$vault_link" || echo "open-knowledge: could not open the vault in Obsidian — folder: $vault" >&2
+      if vault_link="obsidian://open?path=$("$python_with_yaml" -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$vault")"; then
+        open "$vault_link" || echo "open-knowledge: could not open the vault in Obsidian — folder: $vault" >&2
+      else
+        echo "open-knowledge: could not build the Obsidian link — folder: $vault" >&2
+      fi
     fi
   else
     echo "open-knowledge: not on macOS with 'open' — visit $url"
