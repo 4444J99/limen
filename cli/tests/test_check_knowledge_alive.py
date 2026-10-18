@@ -80,7 +80,8 @@ def main():
             counter = Path(os.environ["STUB_COUNTER"])
             calls = int(counter.read_text()) if counter.is_file() else 0
             counter.write_text(str(calls + 1))
-            if calls >= 1:
+            # Call 0 is the engine probe and call 1 is the first pass, so only the second pass differs.
+            if calls >= 2:
                 kinds.remove("guide")
         print(json.dumps({"naming_version": version, "kinds": kinds, "scopes": [*PROVIDERS, "all"]}))
         return 0
@@ -388,8 +389,11 @@ def test_output_is_deterministic_and_carries_no_text_ids_titles_or_paths(stubs):
     second = _run(stubs, "--fixture")
     assert first.returncode == 0 and second.returncode == 0, first.stdout + first.stderr
     assert first.stdout == second.stdout
-    for fragment in (SHARED_ASK, "Synthetic", "conv-one", "msg-", "chatgpt-conv", "/tmp", "/var", "knowledge-alive-"):
-        assert fragment not in first.stdout
+    # The only path in the output is the engine that won check 1; the work directory never appears.
+    first_line, *rest = first.stdout.splitlines()
+    assert first_line.endswith(f"engine environment {stubs.engine}")
+    for fragment in (SHARED_ASK, "Synthetic", "conv-one", "msg-", "chatgpt-conv", "knowledge-alive-", "/tmp", "/var"):
+        assert fragment not in "\n".join(rest)
     assert first.stderr == ""
 
 
@@ -446,7 +450,94 @@ def test_checks_after_a_failure_are_not_run(stubs):
 def test_missing_engine_command_is_exit_two_never_a_skip(stubs, tmp_path):
     done = _run(stubs, "--fixture", KNOWLEDGE_ALIVE_ENGINE=str(tmp_path / "absent"))
     assert done.returncode == 2
-    assert done.stdout.splitlines() == ["UNUSABLE: engine command missing"]
+    assert done.stdout.splitlines() == ["UNUSABLE: no working engine"]
+
+
+NAMES_ONLY_MODULE = (
+    "import json, sys\n"
+    "if sys.argv[1:3] == ['archive', 'names']:\n"
+    "    print(json.dumps({'naming_version': 1, 'kinds': ['archive'], 'scopes': []}))\n"
+    "    sys.exit(0)\n"
+    "sys.exit(2)\n"
+)
+
+
+def _fake_checkout(source: Path) -> Path:
+    package = source / "conversation_corpus_engine"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "cli.py").write_text(NAMES_ONLY_MODULE, encoding="utf-8")
+    return source
+
+
+def _fake_cce(directory: Path, body: str) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    return _write_tool(directory, "cce", body)
+
+
+def _isolate_engine_search(monkeypatch, *, path: Path, checkouts: list[Path]) -> None:
+    import corpus_resolve
+
+    monkeypatch.delenv("KNOWLEDGE_ALIVE_ENGINE", raising=False)
+    monkeypatch.setenv("PATH", str(path))
+    monkeypatch.setattr(corpus_resolve, "cce_src_roots", lambda: checkouts)
+
+
+def test_a_crashing_engine_on_path_falls_through_to_the_next_candidate(module, tmp_path, monkeypatch):
+    _fake_cce(tmp_path / "bin", "import sys\nsys.exit(3)\n")
+    checkout = _fake_checkout(tmp_path / "checkout" / "src")
+    _isolate_engine_search(monkeypatch, path=tmp_path / "bin", checkouts=[checkout])
+    engine = module.locate_engine()
+    assert engine.origin == f"checkout {checkout}"
+    assert module.engine_works(engine)
+
+
+def test_a_working_engine_on_path_wins_over_a_checkout(module, tmp_path, monkeypatch):
+    names = "import json\nprint(json.dumps({'naming_version': 2, 'kinds': [{'kind': 'archive'}], 'scopes': []}))\n"
+    cce = _fake_cce(tmp_path / "bin", names)
+    checkout = _fake_checkout(tmp_path / "checkout" / "src")
+    _isolate_engine_search(monkeypatch, path=tmp_path / "bin", checkouts=[checkout])
+    assert module.locate_engine().origin == f"PATH {cce}"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "print('not json')\n",
+        "import json\nprint(json.dumps({'naming_version': 1}))\n",
+        "import json\nprint(json.dumps({'kinds': ['archive']}))\n",
+        "import json\nprint(json.dumps(['archive']))\n",
+    ],
+)
+def test_an_engine_whose_names_output_does_not_parse_is_not_a_candidate(module, tmp_path, monkeypatch, body):
+    _fake_cce(tmp_path / "bin", body)
+    _isolate_engine_search(monkeypatch, path=tmp_path / "bin", checkouts=[])
+    with pytest.raises(module.Unusable) as raised:
+        module.locate_engine()
+    assert raised.value.reason == "no working engine"
+
+
+def test_the_environment_override_is_exclusive(module, tmp_path, monkeypatch):
+    checkout = _fake_checkout(tmp_path / "checkout" / "src")
+    _isolate_engine_search(monkeypatch, path=tmp_path / "bin", checkouts=[checkout])
+    monkeypatch.setenv("KNOWLEDGE_ALIVE_ENGINE", str(tmp_path / "absent"))
+    with pytest.raises(module.Unusable) as raised:
+        module.locate_engine()
+    assert raised.value.reason == "no working engine"
+
+
+def test_the_environment_override_may_name_an_engine_checkout(module, tmp_path, monkeypatch):
+    checkout = _fake_checkout(tmp_path / "checkout" / "src")
+    _isolate_engine_search(monkeypatch, path=tmp_path / "bin", checkouts=[])
+    monkeypatch.setenv("KNOWLEDGE_ALIVE_ENGINE", str(checkout.parent))
+    assert module.locate_engine().origin == f"environment {checkout}"
+
+
+def test_no_working_engine_anywhere_is_exit_two(module, tmp_path, monkeypatch, capsys):
+    _fake_cce(tmp_path / "bin", "import sys\nsys.exit(3)\n")
+    _isolate_engine_search(monkeypatch, path=tmp_path / "bin", checkouts=[])
+    assert module.main(["--fixture"]) == 2
+    assert capsys.readouterr().out.splitlines() == ["UNUSABLE: no working engine"]
 
 
 def test_an_engine_without_the_fixture_command_is_exit_two(stubs):

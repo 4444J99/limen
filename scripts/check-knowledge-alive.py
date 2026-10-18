@@ -33,8 +33,11 @@ The ten checks:
 
 Tool table (resolved in one place, `build_context`; each override is read from the environment):
 
-  KNOWLEDGE_ALIVE_ENGINE          engine checkout directory (runs it as a module) or an executable file;
-                                  unset means `cce` on PATH, then the checkouts `corpus_resolve` knows
+  KNOWLEDGE_ALIVE_ENGINE          engine checkout directory (runs it as a module) or an executable file, used
+                                  alone when set; unset means `cce` on PATH, then each checkout `corpus_resolve`
+                                  knows. Every candidate is probed with `archive names --json` (exit 0, parses
+                                  with kinds and naming_version) and the first that passes wins; none passing
+                                  is `UNUSABLE: no working engine`. Check 1 reports the winner's path.
   KNOWLEDGE_ALIVE_LEDGER_SCRIPT   default scripts/prompt-atom-ledger.py
   KNOWLEDGE_ALIVE_FORMS_SCRIPT    default scripts/prompt-recurring-forms.py
   KNOWLEDGE_ALIVE_HOMING_SCRIPT   default scripts/check-atom-homing.py
@@ -172,9 +175,11 @@ def is_usage_error(done: Completed) -> bool:
 class Engine:
     """Adapter that shells out to the engine command. Nothing else in this file knows how it is started."""
 
-    def __init__(self, argv_prefix: list[str], extra_env: dict[str, str]) -> None:
+    def __init__(self, argv_prefix: list[str], extra_env: dict[str, str], origin: str = "") -> None:
         self.argv_prefix = argv_prefix
         self.extra_env = extra_env
+        # Where this engine was found, as `<how> <path>`; check 1 reports it so a run names the winner.
+        self.origin = origin
 
     def environment(self) -> dict[str, str]:
         env = {key: value for key, value in os.environ.items() if key != "CCE_CORPUS_STORE_ROOT"}
@@ -193,24 +198,66 @@ class Engine:
         return done
 
 
-def locate_engine() -> Engine:
+def parse_names(output: str) -> tuple[int, set[str]]:
+    """Read `archive names --json`: the naming version and the set of kind words. Raises on anything else."""
+    payload = json.loads(output)
+    version = int(payload["naming_version"])
+    kinds = payload["kinds"]
+    # The engine lists each kind as a row carrying its rules; a bare word or a word-keyed map also reads.
+    entries = kinds.keys() if isinstance(kinds, dict) else kinds
+    return version, {str(entry["kind"] if isinstance(entry, dict) else entry) for entry in entries}
+
+
+def engine_works(engine: Engine) -> bool:
+    """A candidate engine is usable when `archive names --json` exits 0 and parses with its kinds and version."""
+    try:
+        done = engine.run(["archive", "names", "--json"], timeout=TOOL_TIMEOUT_SECONDS)
+        if done.returncode != 0:
+            return False
+        parse_names(done.stdout)
+    except (Unusable, ValueError, TypeError, KeyError, AttributeError):
+        return False
+    return True
+
+
+def engine_candidates() -> Iterator[Engine]:
+    """Candidates in order: the environment override, `cce` on PATH, then each known engine checkout.
+
+    The override is exclusive. Someone who names an engine explicitly never gets a different one silently.
+    """
     configured = os.environ.get("KNOWLEDGE_ALIVE_ENGINE")
     if configured:
         path = Path(configured).expanduser()
         if path.is_file():
-            return Engine([str(path)], {})
-        if (path / "src" / "conversation_corpus_engine").is_dir():
-            return Engine([sys.executable, "-m", "conversation_corpus_engine.cli"], {"PYTHONPATH": str(path / "src")})
-        raise Unusable("engine command missing")
+            yield Engine([str(path)], {}, f"environment {path}")
+        elif (path / "src" / "conversation_corpus_engine").is_dir():
+            source = path / "src"
+            yield Engine(
+                [sys.executable, "-m", "conversation_corpus_engine.cli"],
+                {"PYTHONPATH": str(source)},
+                f"environment {source}",
+            )
+        return
     found = shutil.which("cce")
     if found:
-        return Engine([found], {})
+        yield Engine([found], {}, f"PATH {found}")
     import corpus_resolve
 
     for source in corpus_resolve.cce_src_roots():
         if (source / "conversation_corpus_engine").is_dir():
-            return Engine([sys.executable, "-m", "conversation_corpus_engine.cli"], {"PYTHONPATH": str(source)})
-    raise Unusable("engine command missing")
+            yield Engine(
+                [sys.executable, "-m", "conversation_corpus_engine.cli"],
+                {"PYTHONPATH": str(source)},
+                f"checkout {source}",
+            )
+
+
+def locate_engine() -> Engine:
+    """The first candidate engine that works. A crashing engine on PATH falls through to the next one."""
+    for engine in engine_candidates():
+        if engine_works(engine):
+            return engine
+    raise Unusable("no working engine")
 
 
 def tool_script(variable: str, default: Path, reason: str) -> Path:
@@ -498,13 +545,8 @@ def check_tools(ctx: Context, state: State) -> CheckResult:
     if done.returncode != 0:
         return CheckResult(False, "engine names command failed")
     try:
-        payload = json.loads(done.stdout)
-        version = int(payload.get("naming_version"))
-        kinds = payload.get("kinds")
-        # The engine lists each kind as a row carrying its rules; a bare word or a word-keyed map also reads.
-        entries = kinds.keys() if isinstance(kinds, dict) else kinds
-        kind_set = {str(entry["kind"] if isinstance(entry, dict) else entry) for entry in entries}
-    except (ValueError, TypeError, AttributeError):
+        version, kind_set = parse_names(done.stdout)
+    except (ValueError, TypeError, KeyError, AttributeError):
         return CheckResult(False, "engine names output is unreadable")
     if version < MINIMUM_NAMING_VERSION:
         return CheckResult(False, f"naming version below {MINIMUM_NAMING_VERSION}")
@@ -513,7 +555,9 @@ def check_tools(ctx: Context, state: State) -> CheckResult:
     if not ctx.store_root.is_dir():
         return CheckResult(False, "store is missing")
     state["kinds"] = kind_set
-    return CheckResult(True, f"naming version {version}, {len(kind_set)} kinds")
+    # The version the engine reported, not the pinned minimum: the receipt is written with and checked against it.
+    state["naming_version"] = version
+    return CheckResult(True, f"naming version {version}, {len(kind_set)} kinds, engine {ctx.engine.origin}")
 
 
 def check_names(ctx: Context, state: State) -> CheckResult:
