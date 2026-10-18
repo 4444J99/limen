@@ -49,7 +49,7 @@ lane has already written; all four are unbuilt.
 
 | Path | What it is |
 |---|---|
-| `docs/session-closeout/2026-10-18-parity-t2-deletion-correction/README.md` | The correction. Read first. |
+| `docs/receipts/session-closeout-parity-t2-deletion-correction-20261018/README.md` | The correction. Read first. |
 | `…/recovery-ledger.tsv` | 70 rows: full OID, named remote ref, PR state, quarantine epoch |
 | `…/restored-branches.tsv` | The 19 boundary crossings, with OIDs |
 | `…/evidence-sha256.txt` | Digests of the pre-deletion evidence |
