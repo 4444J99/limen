@@ -91,3 +91,5 @@ source failures and projection-only sessions, code follow-ups in their full sess
 substitutions on held-out whole sessions. Installation also needs provider collision checks.
 #3087's source repair, full repository gate, merge, live deployment and two successful release checks
 remain separate unfinished requirements; the scoped gate was again denied by host swap admission.
+
+A final targeted projection probe found native user items for all 26 source-limit failures: 416 projected user items. None is counted as a recovered complete session. The next bounded analysis can read only those user items and their associated replies, rather than weakening rollout limits or loading unrelated tool blobs.

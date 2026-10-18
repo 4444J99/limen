@@ -41,7 +41,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 0,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
     },
     {
       "root_id": "repair",
@@ -49,7 +49,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 1,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3",
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed",
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/3087"
     },
@@ -59,7 +59,7 @@
       "head": "46d8a0cdf6c5270af58092764da98305f5f8de55",
       "exit_code": 0,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
     }
   ],
   "custody": {
@@ -68,7 +68,7 @@
       "repair"
     ],
     "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-    "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+    "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
   },
   "external_effects": [
     {
@@ -77,14 +77,14 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/issues/3056",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
     },
     {
       "id": "currency-reconciliation",
       "kind": "deployment-readback",
       "verified": true,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
     },
     {
       "id": "process-source-repair",
@@ -92,7 +92,7 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/pull/3087",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
     },
     {
       "id": "native-study-v2-private-derivatives",
@@ -100,7 +100,7 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/issues/3056",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+      "sha256": "65eece44dcccfc99cdaab7fdd199bd0465c5f9fbea63c63269b4918b984f89ed"
     }
   ]
 }
