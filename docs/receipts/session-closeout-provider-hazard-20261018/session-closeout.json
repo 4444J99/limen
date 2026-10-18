@@ -17,7 +17,7 @@
       "head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
       "exit_code": 0,
       "evidence": "docs/receipts/session-closeout-provider-hazard-20261018/verification.txt",
-      "sha256": "f10b7e8bf79b947a47bfb2e7444ee6851c82f384f88ab29fe05e854da401c201",
+      "sha256": "bd9a1a867b42bd6ec6a3a6bb462bb27da1e985bce414e57aa7310ec1e415c1b5",
       "owner_url": "https://github.com/4444J99/limen/issues/3010"
     },
     {
@@ -25,13 +25,13 @@
       "head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
       "exit_code": 0,
       "evidence": "docs/receipts/session-closeout-provider-hazard-20261018/verification.txt",
-      "sha256": "f10b7e8bf79b947a47bfb2e7444ee6851c82f384f88ab29fe05e854da401c201",
+      "sha256": "bd9a1a867b42bd6ec6a3a6bb462bb27da1e985bce414e57aa7310ec1e415c1b5",
       "owner_url": "https://github.com/4444J99/limen/issues/3010"
     }
   ],
   "custody": {
     "verified": true,
     "evidence": "docs/receipts/session-closeout-provider-hazard-20261018/custody.json",
-    "sha256": "272bfe98de8c189b249f70ed64e28ffdfbdd51fd83b18ca7498f97bcbdc1a343"
+    "sha256": "81e249b41106904a075938f4a70fdc19cc83c71ec8b976f0dfe9c121482e2b6b"
   }
 }
