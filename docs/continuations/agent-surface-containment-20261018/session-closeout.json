@@ -103,5 +103,22 @@
     "executed": false,
     "reason": "host admission: swap-fraction,vitals-shed",
     "owner_url": "https://github.com/4444J99/limen/pull/3030"
+  },
+  "session_release_attempt": {
+    "exit_code": 2,
+    "status": "unmeasured",
+    "session_released": false,
+    "task_completed": false,
+    "reason": "process ownership observation unavailable or invalid",
+    "diagnostic": {
+      "complete": false,
+      "unknown_processes": 82,
+      "owned_survivors": 0,
+      "unmeasured_processes": 1,
+      "unmeasured_reason": "process_evidence_stale"
+    },
+    "owner_url": "https://github.com/4444J99/limen/pull/3030",
+    "next_action": "Process-ownership owner must reconcile the stale exact process witness and positively attribute the anchor processes without signaling peers. Re-run the explicit session predicate only after evidence changes.",
+    "idempotence_proven": false
   }
 }
