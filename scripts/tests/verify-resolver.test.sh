@@ -49,11 +49,21 @@ check-docs-manifest
 check-docs-exports
 check-note-links' docs/some-note.md
 
+# A PR that creates a NEW top-level docs directory carries only nested files. docs/* is direct
+# children only in this glob dialect, so before 2026-10-18 such a diff never selected
+# check-docs-manifest and #3039 put main red. docs/** keeps the manifest gate on that shape.
+expect new-toplevel-docs-dir-nested-file 'syntax-changed
+diff-hygiene
+check-docs-manifest
+check-docs-exports
+check-note-links' docs/brand-new-toplevel-dir/2026-10-18-x/README.md
+
 # Evidence packet files are nested below the registry path; the recursive glob keeps the
 # W04/W05 validator selected even when a packet-only diff does not touch its script or manifest.
 expect flagship-evidence-packet 'syntax-changed
 diff-hygiene
 flagship-evidence-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
@@ -63,30 +73,35 @@ expect foundry-readiness-change 'syntax-changed
 diff-hygiene
 positioning-foundry-technical-readiness-test
 positioning-foundry-technical-readiness-public-live
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/foundry/psp-c11/technical-readiness-audit.json
 
 expect bounded-retainer-capacity-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/offers/bounded-delivery-governance-retainer-capacity.json
 
 expect bounded-retainer-page-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/offers/bounded-delivery-governance-retainer.md
 
 expect offer-qualification-page-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/offers/qualification-and-routing.md
 
 expect partnership-review-page-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/offers/product-operating-partnership-review.md
 
@@ -103,6 +118,7 @@ for reader_path in \
   expect "reader-workflow-$reader_path" 'syntax-changed
 diff-hygiene
 research-adjudication-test
+check-docs-manifest
 check-docs-exports
 check-note-links' "$reader_path"
 done
@@ -110,6 +126,7 @@ done
 expect unmanaged-offer-artifact-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/offers/obsolete.json
 
@@ -125,18 +142,21 @@ check-note-links' institutio/positioning/program.yaml
 expect p03-evidence-matrix-offer-input-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/receipts/positioning/preflights/2026-08-10-psp-p03-leaf-evidence.md
 
 expect p04-evidence-matrix-offer-input-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/receipts/positioning/preflights/2026-08-10-psp-p04-leaf-evidence.md
 
 expect c03-relay-offer-input-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/receipts/positioning/relays/2026-08-10-psp-c03-identity-offers-preflight.md
 
@@ -165,6 +185,7 @@ for launch_path in \
 expect "launch-contract-$launch_path" 'syntax-changed
 diff-hygiene
 positioning-launch-prompts-test
+check-docs-manifest
 check-docs-exports
 check-note-links' "$launch_path"
 done
@@ -355,11 +376,13 @@ check-note-links' scripts/positioning-connector-driver.js
 expect report-source-change 'syntax-changed
 diff-hygiene
 positioning-report-reviewed-source
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/positioning/proof/limen-engineering-report.md
 expect report-observation-change 'syntax-changed
 diff-hygiene
 positioning-report-reviewed-source
+check-docs-manifest
 check-docs-exports
 check-note-links' docs/receipts/positioning/2026-09-09-limen-report-review-observation.json
 
