@@ -101,6 +101,10 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "mcp" / "src" / "limen_mcp" / "server.py"
 DOCS = [ROOT / "AGENTS.md", ROOT / "GEMINI.md", ROOT / "CLAUDE.md"]
+# CLAUDE.md loads into every Claude session and Claude Code warns above 40,000 characters. Prose-only
+# trims regrew past it twice (#1900, #2872 -> #2889), so the cap is an executable predicate: relocate
+# case history to docs/ rather than growing past it.
+CLAUDE_MD_CHAR_CAP = 40_000
 STANDARD = ROOT / "docs" / "agent-instruction-standard.md"
 AGY_SKILL = ROOT / ".agents" / "skills" / "agy_conductor" / "SKILL.md"
 COPILOT_PROFILE = ROOT / "integrations" / "copilot" / "limen-conductor.agent.md"
@@ -395,6 +399,11 @@ def main() -> int:
             errors.append(f"{doc.name} presents non-canonical status values: {sorted(invalid_presented)}")
 
     claude_text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    if len(claude_text) > CLAUDE_MD_CHAR_CAP:
+        errors.append(
+            f"CLAUDE.md is {len(claude_text):,} characters, over the {CLAUDE_MD_CHAR_CAP:,} cap; "
+            "relocate case history to docs/architecture/merge-and-branch-protocol-detail.md and link it"
+        )
     if "Anthony" in claude_text:
         errors.append("CLAUDE.md should use role-based wording, not the operator's personal name")
     if re.search(r"\broute around\b", claude_text, re.I):
@@ -799,6 +808,28 @@ def main() -> int:
             errors.append(
                 f"{scoped.relative_to(ROOT)} presents non-canonical status values: {sorted(invalid_presented)} (T)"
             )
+
+    # U — the reflexive stance is Tier-1 doctrine bound from the uncapped standard (AGENTS.md is
+    # over its byte budget, so the pointer lives in docs/agent-instruction-standard.md, never there).
+    reflexive_doc = ROOT / "docs" / "architecture" / "reflexive-observation.md"
+    if not reflexive_doc.exists():
+        errors.append("docs/architecture/reflexive-observation.md is missing (U)")
+    else:
+        reflexive_text = reflexive_doc.read_text(encoding="utf-8")
+        for phrase, label in [
+            ("Absorb structure, not totality", "structure-not-totality rule"),
+            ("One source, lossy projections", "one-source-lossy-projections rule"),
+            ("Observation is not participation", "observation-is-not-participation rule"),
+            ("Agents are mutually legible", "mutual-legibility rule"),
+        ]:
+            if phrase not in reflexive_text:
+                errors.append(f"docs/architecture/reflexive-observation.md lacks the {label} (U)")
+        standard_text = (ROOT / "docs" / "agent-instruction-standard.md").read_text(encoding="utf-8")
+        if "docs/architecture/reflexive-observation.md" not in standard_text:
+            errors.append("agent instruction standard does not link the reflexive-observation doctrine (U)")
+        composition_text = (ROOT / "docs" / "architecture" / "bounded-composition.md").read_text(encoding="utf-8")
+        if "observation of observation" not in composition_text:
+            errors.append("bounded-composition.md lacks the reflexive depth cap (U)")
 
     # O. Record-Keeper Covenant keeper law
     claude_note = section(agents_text, "Agent-Specific Notes")

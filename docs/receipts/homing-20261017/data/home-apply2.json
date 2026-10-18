@@ -1,0 +1,127 @@
+{
+  "date": "20261017",
+  "apply": true,
+  "results": [
+    {
+      "name": "domus-stash2-reauthored",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "4e8c9299248823a98abaa5aa085c22077d757138",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "   \nTo https://github.com/4444J99/domus-genoma-private.git\n ! [remote rejected]   4e8c9299248823a98abaa5aa085c22077d757138 -> preserve/stash-security-hardening-autonomic-sync-20260702 (pre-receive hook declined)\nerror: failed to push some refs to 'https://github.com/4444J99/domus-genoma-private.git'",
+        "stderr": "github.com.        \nTo https://github.com/4444J99/domus-genoma-private.git\n ! [remote rejected]   4e8c9299248823a98abaa5aa085c22077d757138 -> preserve/domus-stash2-reauthored-20261017 (pre-receive hook declined)\nerror: failed to push some refs to 'https://github.com/4444J99/domus-genoma-private.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "domus-quota-maintenance",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "736ccc236c2fefc6f3a998448ab460d6ab12ff8c",
+      "push": {
+        "pushed": true,
+        "target": "fix/quota-maintenance-20261010",
+        "stderr": "n GitHub by visiting:        \nremote:      https://github.com/4444J99/domus-genoma-private/pull/new/fix/quota-maintenance-20261010        \nremote: \nTo https://github.com/4444J99/domus-genoma-private.git\n * [new branch]        736ccc236c2fefc6f3a998448ab460d6ab12ff8c -> fix/quota-maintenance-20261010"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "domus-security-hardening",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "663b3cc97b0acc1ad1f59d62483c4182e0191611",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "hub.com/4444J99/domus-genoma-private.git'\nhint: Updates were rejected because a pushed branch tip is behind its remote\nhint: counterpart. If you want to integrate the remote changes, use 'git pull'\nhint: before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.",
+        "stderr": "b.com.        \nTo https://github.com/4444J99/domus-genoma-private.git\n ! [remote rejected]   663b3cc97b0acc1ad1f59d62483c4182e0191611 -> preserve/security-hardening-local-tip-20261017 (pre-receive hook declined)\nerror: failed to push some refs to 'https://github.com/4444J99/domus-genoma-private.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "skills-default-on",
+      "repo": "/Users/4jp/.local/share/ai-skills/source",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "0e497f6b93f40bac27c53cb3b05d7d0be5b3309b",
+      "push": {
+        "pushed": true,
+        "target": "preserve/claude-default-on-skills-local-tip-20261017",
+        "first_error": " the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.",
+        "stderr": "     \nremote:      https://github.com/4444J99/a-i--skills/pull/new/preserve/claude-default-on-skills-local-tip-20261017        \nremote: \nTo https://github.com/4444J99/a-i--skills.git\n * [new branch]      0e497f6b93f40bac27c53cb3b05d7d0be5b3309b -> preserve/claude-default-on-skills-local-tip-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "skills-closeout-live-state",
+      "repo": "/Users/4jp/.local/share/ai-skills/source",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "83502b13da0b560f477b831916fed01b372aff93",
+      "push": {
+        "pushed": true,
+        "target": "feat/closeout-live-state-20261016",
+        "stderr": "Everything up-to-date"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "skills-local-catalog-review",
+      "repo": "/Users/4jp/.local/share/ai-skills/source",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "ff94094f3ca6450b915103cd797c05848bd9590a",
+      "push": {
+        "pushed": true,
+        "target": "fix/local-skill-catalog-review-20261016",
+        "stderr": " on GitHub by visiting:        \nremote:      https://github.com/4444J99/a-i--skills/pull/new/fix/local-skill-catalog-review-20261016        \nremote: \nTo https://github.com/4444J99/a-i--skills.git\n * [new branch]      ff94094f3ca6450b915103cd797c05848bd9590a -> fix/local-skill-catalog-review-20261016"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "portfolio-chamber-pr-169-branch",
+      "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "a47b5147a528d51959ae005cef931c1453f3bdb0",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "batch response: This repository exceeded its LFS budget. The account responsible for the budget should increase it to restore access.\nerror: failed to push some refs to 'github.com:organvm-vii-kerygma/portfolio.git'",
+        "stderr": "batch response: This repository exceeded its LFS budget. The account responsible for the budget should increase it to restore access.\nerror: failed to push some refs to 'github.com:organvm-vii-kerygma/portfolio.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "portfolio-remediate-228",
+      "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "2e2ab9bc8eda8861d6b6acf58fe34ab811805242",
+      "push": {
+        "pushed": true,
+        "target": "preserve/remediate-228-orphaned-history-20261017",
+        "stderr": "ting:        \nremote:      https://github.com/4444J99/portfolio/pull/new/preserve/remediate-228-orphaned-history-20261017        \nremote: \nTo github.com:organvm-vii-kerygma/portfolio.git\n * [new branch]      2e2ab9bc8eda8861d6b6acf58fe34ab811805242 -> preserve/remediate-228-orphaned-history-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "portfolio-remediate-229",
+      "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "94ee0cada3697221f7a64af17b9c4df3e6a4169d",
+      "push": {
+        "pushed": true,
+        "target": "preserve/remediate-229-orphaned-history-20261017",
+        "stderr": "ting:        \nremote:      https://github.com/4444J99/portfolio/pull/new/preserve/remediate-229-orphaned-history-20261017        \nremote: \nTo github.com:organvm-vii-kerygma/portfolio.git\n * [new branch]      94ee0cada3697221f7a64af17b9c4df3e6a4169d -> preserve/remediate-229-orphaned-history-20261017"
+      },
+      "status": "pushed"
+    }
+  ]
+}

@@ -46,7 +46,11 @@ from _pr_scan import (  # noqa: E402
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
-POLICY = ROOT / "scripts" / "merge-policy.sh"
+# The policy is this script's sibling, never a path under $LIMEN_ROOT: that variable names the state root
+# (logs/), and a stale or relocated value made `bash <missing>/merge-policy.sh` exit 127 under the drain
+# while the same call bare exited with the real verdict (issue #2895 defect A).
+SCRIPTS_DIR = Path(__file__).resolve().parent
+POLICY = SCRIPTS_DIR / "merge-policy.sh"
 CI_RED_LEDGER = ROOT / "logs" / "merge-drain-ci-red-ledger.json"
 DELIVERY_LABEL = "lifecycle:delivery"
 LIFECYCLE_LABELS = frozenset(
@@ -484,6 +488,9 @@ def _queue_state(repo, num):
 
 def _merge_policy(repo, num, expected_head):
     """Re-run the one authority immediately before mutation and return its exact mode."""
+    if not POLICY.is_file():
+        print("MERGE-DIAGNOSTIC: stage=policy reason=policy-missing")
+        return None
     try:
         r = subprocess.run(
             [
@@ -506,13 +513,16 @@ def _merge_policy(repo, num, expected_head):
         return None
     if r.returncode != 0:
         # Emit only the policy vocabulary, never arbitrary provider output or secrets.
+        # The policy prints its VERDICT on stdout, but its GitHub lookup-failure verdicts go to stderr;
+        # read both so a real HOLD/BLOCKED is never reported as unknown.
         verdict = "unknown"
-        for line in r.stdout.splitlines():
+        for line in (r.stdout + "\n" + r.stderr).splitlines():
             if line.startswith("VERDICT: "):
                 candidate = line.removeprefix("VERDICT: ").split(maxsplit=1)
                 if candidate and candidate[0] in {"HOLD", "BLOCKED"}:
                     verdict = candidate[0]
-        print(f"MERGE-DIAGNOSTIC: stage=policy exit={r.returncode} verdict={verdict}")
+        suffix = " reason=command-not-runnable" if r.returncode in (126, 127) and verdict == "unknown" else ""
+        print(f"MERGE-DIAGNOSTIC: stage=policy exit={r.returncode} verdict={verdict}{suffix}")
         return None
     out = r.stdout + r.stderr
     mode = ""
@@ -550,7 +560,7 @@ def merge(repo, num, expected_head, mode_hint):
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "scripts/_relay_merge.py"),
+                    str(SCRIPTS_DIR / "_relay_merge.py"),
                     "--pr",
                     str(num),
                     "--expected-head",

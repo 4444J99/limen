@@ -1,0 +1,14 @@
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=1.72s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=1.77s
+WAVE cheap: FINISH gate=check-params status=PASS duration=2.62s
+WAVE cheap: FINISH gate=direct-main-writer-contract status=PASS duration=2.67s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=1.44s
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=0.54s
+WAVE cheap: FINISH gate=check-test-hygiene status=PASS duration=2.05s
+WAVE cheap: FINISH gate=check-board-consumers status=PASS duration=1.52s
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=0.43s
+WAVE cheap: FINISH gate=vendor-insights-test status=PASS duration=2.06s
+WAVE cheap: FINISH gate=check-effectors status=PASS duration=3.83s
+All checks passed!
+63 passed in 1.09s
+WAVE cheap: PASS

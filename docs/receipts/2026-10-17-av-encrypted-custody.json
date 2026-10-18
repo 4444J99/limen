@@ -1,0 +1,25 @@
+{
+  "ciphertext_bytes": 1544224,
+  "ciphertext_sha256": "c51c165e3757c1bca314ca9bb2f82b7b70183ae3c06273f33c48bf76560011bc",
+  "custody_receipt_sha256": "bef60b22cd5dfa4af927d7e760f6679d15f7e8ff6eb494f087b97062988d50a3",
+  "encryption_profile_digest": "2357a4029a1d363a44834290a0c3931ba49b3dd9d0f958dc6947117b376c90fc",
+  "independent_device_count": 2,
+  "key_sources": [
+    "op",
+    "op"
+  ],
+  "label": "TMB private AV derivatives + two superseded blobs (6 media)",
+  "member_count": 7,
+  "plaintext_retained": true,
+  "replica_ciphertext_sha256": [
+    "c51c165e3757c1bca314ca9bb2f82b7b70183ae3c06273f33c48bf76560011bc",
+    "bb95b6783820e280a5d830dfb7d49e6ffc42e7cb71c53949c65ccad73cf03fb5"
+  ],
+  "restore_verified": [
+    true,
+    true
+  ],
+  "retirement_lever": "L-TMB-HISTORY-REMOVAL",
+  "run_id": "av-media-custody-20261017",
+  "schema": "limen.sealed_custody_receipt.tracked.v1"
+}

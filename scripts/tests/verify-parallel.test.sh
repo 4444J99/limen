@@ -62,16 +62,83 @@ import subprocess
 import sys
 import time
 
+# Represent a cold interpreter/exec shim deterministically. Cleanup's short
+# deadline must be tested after readiness, independently of this setup delay.
+time.sleep(0.25)
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
 child = subprocess.Popen(
     [
         sys.executable,
         "-c",
-        "import signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(30)",
+        "import os,signal,time; from pathlib import Path; "
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        "Path('timeout-child-pid').write_text(str(os.getpid())); time.sleep(30)",
     ]
 )
-Path("timeout-child-pid").write_text(str(child.pid), encoding="utf-8")
-signal.signal(signal.SIGTERM, signal.SIG_IGN)
 time.sleep(30)
+PY
+  cat >"$dir/scripts/timeout-process-group.py" <<'PY'
+from pathlib import Path
+from types import SimpleNamespace
+import importlib.util
+import os
+import signal
+import subprocess
+import tempfile
+import threading
+import time
+
+module_path = Path(__file__).with_name("verify.py")
+spec = importlib.util.spec_from_file_location("verify_ready_timeout_fixture", module_path)
+assert spec and spec.loader
+verify = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(verify)
+command = "python3 scripts/timeout-fixture.py"
+process = subprocess.Popen(
+    ["bash", "-c", command], cwd=module_path.parent.parent,
+    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    start_new_session=True,
+)
+try:
+    readiness_deadline = time.monotonic() + 5
+    ready = module_path.parent.parent / "timeout-child-pid"
+    while not ready.is_file():
+        if process.poll() is not None or time.monotonic() >= readiness_deadline:
+            raise SystemExit("bounded fixture readiness failed before cleanup test")
+        time.sleep(0.01)
+
+    # Exercise the real monitor and real owned process group. Only launch is
+    # supplied by setup, so scheduler latency cannot consume the cleanup budget.
+    verify.subprocess = SimpleNamespace(**vars(subprocess))
+    def ready_process(args, **kwargs):
+        assert args == ["bash", "-c", command]
+        assert kwargs["start_new_session"] is True
+        return process
+    verify.subprocess.Popen = ready_process
+    with tempfile.TemporaryFile() as output:
+        result = verify.run_command(
+            command, output=output, deadline=time.monotonic() + 0.2,
+            output_limit_bytes=4096, cancel_event=threading.Event(),
+        )
+        output.seek(0)
+        assert result == 124, result
+        assert b"gate-command-timeout" in output.read()
+        assert process.poll() is not None, "timed-out fixture root survived"
+        status = subprocess.run(
+            ["ps", "-o", "stat=", "-p", ready.read_text().strip()],
+            capture_output=True, text=True, timeout=1,
+        )
+        assert not status.stdout.strip() or status.stdout.strip().startswith("Z"), (
+            "timed-out fixture descendant survived"
+        )
+finally:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    process.wait(timeout=2)
+    if process.stdout is not None:
+        process.stdout.close()
 PY
   cat >"$dir/scripts/noisy-fixture.py" <<'PY'
 import sys
@@ -423,6 +490,10 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
   || { grep -q "gate-command-timeout" <<<"$out" \
          && pass gate-timeout \
          || flunk gate-timeout "missing finite timeout receipt: $out"; }
+# A separate readied group proves descendant cleanup. The cold-start test above
+# still proves the original hard deadline, even before a child can start.
+sb="$(make_sandbox)"
+if out="$(python3 "$sb/scripts/timeout-process-group.py" 2>&1)"; then
 if [[ -f "$sb/timeout-child-pid" ]]; then
   child_pid="$(<"$sb/timeout-child-pid")"
   child_alive=1
@@ -438,6 +509,9 @@ if [[ -f "$sb/timeout-child-pid" ]]; then
     || flunk timeout-process-group "deadline left fixture descendant $child_pid alive"
 else
   flunk timeout-process-group "timeout fixture never recorded its descendant"
+fi
+else
+  flunk timeout-process-group "readied group failed its bounded cleanup: $out"
 fi
 
 sb="$(make_sandbox)"
@@ -461,7 +535,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
   && flunk invalid-byte-limit "invalid-byte flood unexpectedly passed" \
   || { grep -q "gate-command-output-limit" <<<"$out" \
          && pass invalid-byte-limit \
-         || flunk invalid-byte-limit "missing raw-byte output-limit receipt"; }
+         || flunk invalid-byte-limit "missing raw-byte output-limit receipt: ${out:0:1500}"; }
 (( ${#out} < 4096 )) \
   && pass invalid-byte-replay \
   || flunk invalid-byte-replay "invalid bytes expanded replay to ${#out} characters"

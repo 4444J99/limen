@@ -1,0 +1,15 @@
+{
+  "counts": {
+    "conversations": 5958,
+    "feed_rows": 27204,
+    "forms": 33833,
+    "forms_spanning_providers": 5540,
+    "messages": 106725,
+    "occurrences_bound": 27204,
+    "providers": 6
+  },
+  "date": "20261017",
+  "fingerprint": "cd674db6f3d1cab3",
+  "kind": "receipt",
+  "naming_version": 2
+}

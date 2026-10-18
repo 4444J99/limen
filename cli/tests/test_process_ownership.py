@@ -187,6 +187,55 @@ def test_native_witness_reads_header_only_and_checks_child_lineage(tmp_path):
         ownership.transcript_witness(path)
 
 
+def test_native_witness_accepts_thread_spawn_parent_without_forked_from(tmp_path):
+    sessions = tmp_path / "sessions" / "2026" / "10" / "17"
+    sessions.mkdir(parents=True)
+    child = {
+        "type": "session_meta",
+        "payload": {
+            "id": "child",
+            "session_id": "root",
+            "source": {"subagent": {"thread_spawn": {"parent_thread_id": "root"}}},
+        },
+    }
+    root = {"type": "session_meta", "payload": {"id": "root", "session_id": "root"}}
+    (sessions / "rollout-child.jsonl").write_text(json.dumps(child) + "\n")
+    (sessions / "rollout-root.jsonl").write_text(json.dumps(root) + "\n")
+
+    witnesses = ownership.read_native_witnesses(tmp_path, {"child"})
+
+    assert witnesses["child"]["parent_thread_id"] == "root"
+    assert witnesses["child"]["session_id"] == witnesses["root"]["session_id"]
+
+
+@pytest.mark.parametrize(
+    "root_header",
+    [
+        None,
+        {"type": "session_meta", "payload": {"id": "root", "session_id": "another-session"}},
+    ],
+    ids=["missing-parent", "cross-session-parent"],
+)
+def test_native_witness_rejects_missing_or_cross_session_parent(tmp_path, root_header):
+    sessions = tmp_path / "sessions" / "2026" / "10" / "17"
+    sessions.mkdir(parents=True)
+    child = {
+        "type": "session_meta",
+        "payload": {
+            "id": "child",
+            "session_id": "root",
+            "forked_from_id": "root",
+            "source": {"subagent": {"thread_spawn": {"parent_thread_id": "root"}}},
+        },
+    }
+    (sessions / "rollout-child.jsonl").write_text(json.dumps(child) + "\n")
+    if root_header:
+        (sessions / "rollout-root.jsonl").write_text(json.dumps(root_header) + "\n")
+
+    with pytest.raises(ownership.ObservationUnavailable, match="native_ancestry_invalid"):
+        ownership.read_native_witnesses(tmp_path, {"child"})
+
+
 def test_snapshot_rejects_permission_limited_census(monkeypatch, tmp_path):
     from unittest.mock import MagicMock
 
@@ -270,3 +319,94 @@ def test_subject_tagged_child_without_witness_stays_unmeasured(cohort):
     rows = {row["pid"]: row for row in result["processes"]}
     assert rows[104]["category"] == "unmeasured"
     assert not result["complete"]
+
+
+def test_command_file_digests_binds_every_named_file_and_the_helper(tmp_path):
+    import hashlib
+
+    from limen import process_services
+
+    binary, script, helper = (tmp_path / name for name in ("server", "tool.py", "node_repl"))
+    for path, body in ((binary, b"one"), (script, b"two"), (helper, b"three")):
+        path.write_bytes(body)
+    hashes: dict[str, str] = {}
+    digests = process_services._command_file_digests([str(binary), "--flag", str(script)], str(helper), hashes)
+    assert digests == {
+        str(path.resolve()): hashlib.sha256(body).hexdigest()
+        for path, body in ((binary, b"one"), (script, b"two"), (helper, b"three"))
+    }
+    assert hashes == digests  # the cross-command memo is populated
+
+
+def test_canonical_argv_keeps_an_unresolvable_word_literally_and_still_resolves_the_rest(tmp_path, monkeypatch):
+    # Observed 2026-10-18: EACCES on /usr/local/bin/1password-mcp, an argv word of an unrelated host
+    # process, escaped from here and made every session-release check "unmeasured".
+    from pathlib import Path
+
+    target = tmp_path / "real-binary"
+    target.write_bytes(b"x")
+    link = tmp_path / "link-to-binary"
+    link.symlink_to(target)
+    locked = tmp_path / "locked"
+    locked.write_bytes(b"y")
+    real_resolve = Path.resolve
+
+    def resolve(self, *args, **kwargs):
+        if self.name == "locked":
+            raise PermissionError(13, "Permission denied", str(self))
+        return real_resolve(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", resolve)
+    assert ownership.canonical_argv([str(locked), "--flag"]) == (str(locked), "--flag")  # argv[0], unresolvable
+    assert ownership.canonical_argv(["server", str(locked)])[1] == str(locked)  # a later word, unresolvable
+    # Resolvable words keep their normalization: a symlink still collapses to its target.
+    assert ownership.canonical_argv([str(link)]) == (str(target.resolve()),)
+
+
+def test_command_file_digests_ignores_non_files_and_relative_words(tmp_path):
+    from limen import process_services
+
+    assert process_services._command_file_digests(["server", "--flag", str(tmp_path / "missing")], None, {}) == {}
+
+
+def test_command_file_digests_unresolvable_path_yields_no_contract_not_a_crash(tmp_path, monkeypatch):
+    # An unreadable absolute argv path (observed: /usr/local/bin/1password-mcp) used to escape as
+    # PermissionError and turn every session-release check into "unmeasured".
+    from pathlib import Path
+
+    from limen import process_services
+
+    readable, locked = tmp_path / "readable", tmp_path / "locked"
+    readable.write_bytes(b"ok")
+    locked.write_bytes(b"sealed")
+    real_resolve = Path.resolve
+
+    def resolve(self, *args, **kwargs):
+        if self.name == "locked":
+            raise PermissionError(13, "Permission denied", str(self))
+        return real_resolve(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", resolve)
+    hashes: dict[str, str] = {}
+    assert process_services._command_file_digests([str(readable), str(locked)], None, hashes) is None
+
+
+def test_command_file_digests_unreadable_bytes_yield_no_contract_and_never_a_partial_one(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    from limen import process_services
+
+    readable, sealed = tmp_path / "readable", tmp_path / "sealed"
+    readable.write_bytes(b"ok")
+    sealed.write_bytes(b"sealed")
+    real_open = Path.open
+
+    def opener(self, *args, **kwargs):
+        if self.name == "sealed":
+            raise PermissionError(13, "Permission denied", str(self))
+        return real_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", opener)
+    # The readable file is hashed first, yet the result is None: a contract that silently omits the
+    # unreadable file's bytes would be weaker provenance, not a fail-closed one.
+    assert process_services._command_file_digests([str(readable), str(sealed)], None, {}) is None

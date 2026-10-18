@@ -43,7 +43,7 @@ REGISTRY = ROOT / "institutio" / "governance" / "corpora.yaml"
 RESOLVER = ROOT / "scripts" / "corpus_resolve.py"
 BASELINE = ROOT / "institutio" / "governance" / "corpus-root-literals-baseline.txt"
 
-VALID_KIND = {"session-memory", "raw-archive", "atom-stream", "brainstorm-extract"}
+VALID_KIND = {"session-memory", "raw-archive", "atom-stream", "brainstorm-extract", "normalized-archive"}
 
 # Directories under a store root that are infrastructure, not corpora.
 NON_CORPUS_DIRS = {".git", "federation", "reports", "state", "source-drop"}
@@ -236,10 +236,31 @@ def _docstring_nodes(tree: ast.AST) -> set[int]:
     return out
 
 
+def literal_dirnames(doc: dict) -> list[str]:
+    """Store directory names whose appearance in a string literal marks a second source of truth.
+
+    A store holding only `normalized-archive` rows is left out: its root directory is
+    named with an ordinary English word (`archive`), which sits inside hundreds of
+    unrelated literals, so a substring match would flag them all and prove nothing.
+    That store is reached by registry id through `corpus_resolve.corpus_root()`, and
+    the knowledge-alive predicate checks the store by name.
+    """
+    kinds: dict[str, set[str]] = {}
+    for row in (doc.get("corpora") or {}).values():
+        kinds.setdefault(str((row or {}).get("store")), set()).add(str((row or {}).get("kind")))
+    names = []
+    for name, store in (doc.get("stores") or {}).items():
+        if kinds.get(str(name)) == {"normalized-archive"}:
+            continue
+        dirname = Path(str((store or {}).get("root", ""))).name
+        if dirname:
+            names.append(dirname)
+    return names
+
+
 def collect_root_literals(doc: dict) -> set[str]:
     """Every `<path>::<literal>` naming a corpus root outside the resolver."""
-    dirnames = [Path(str(s.get("root", ""))).name for s in (doc.get("stores") or {}).values()]
-    dirnames = [d for d in dirnames if d]
+    dirnames = literal_dirnames(doc)
     found: set[str] = set()
     if not dirnames:
         return found
@@ -276,8 +297,7 @@ def check_d_resolver_sole(doc: dict, baseline: set[str]) -> None:
     undeclared-params-baseline.txt pattern) — new ones fail, the old set only
     shrinks. Converting a consumer means deleting its line from the baseline.
     """
-    dirnames = [Path(str(s.get("root", ""))).name for s in (doc.get("stores") or {}).values()]
-    dirnames = [d for d in dirnames if d]
+    dirnames = literal_dirnames(doc)
     if not dirnames:
         return
 

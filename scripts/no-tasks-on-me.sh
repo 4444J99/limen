@@ -23,6 +23,11 @@ set -euo pipefail
 # Explicit session mode never inspects the implementation root as the subject.
 # No arguments retain the historical estate check for existing beat callers.
 if [[ "$#" -gt 0 ]]; then
+  session_source="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+  session_python="${session_source%/*}/venv/bin/python"
+  if [[ "${session_source##*/}" == source && -f "${session_source%/*}/receipt.json" && -x "$session_python" ]]; then
+    exec "$session_python" "$session_source/scripts/session-closeout.py" "$@"
+  fi
   exec python3 "$(dirname "${BASH_SOURCE[0]}")/session-closeout.py" "$@"
 fi
 

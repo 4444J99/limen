@@ -253,6 +253,79 @@ def test_live_pr_identity_queries_are_partitioned_by_repository(monkeypatch) -> 
     assert len(calls) == 1
 
 
+def _pr_nodes(repository: str, numbers: range) -> list[dict]:
+    return [{"repository": {"nameWithOwner": repository}, "number": number} for number in numbers]
+
+
+def test_live_pr_identity_probe_follows_cursor_past_first_page(monkeypatch) -> None:
+    module = _load_check_module()
+    calls = []
+
+    class _Result:
+        returncode = 0
+
+        def __init__(self, payload):
+            self.stdout = json.dumps(payload)
+
+    def fake_run(args, **_kwargs):
+        query = " ".join(args)
+        calls.append(query)
+        if "after:" in query:
+            return _Result(
+                {
+                    "data": {
+                        "search": {
+                            "nodes": _pr_nodes("organvm/big", range(101, 131)),
+                            "pageInfo": {"hasNextPage": False, "endCursor": None},
+                        }
+                    }
+                }
+            )
+        return _Result(
+            {
+                "data": {
+                    "r0": {
+                        "issueCount": 130,
+                        "nodes": _pr_nodes("organvm/big", range(1, 101)),
+                        "pageInfo": {"hasNextPage": True, "endCursor": "Y3Vyc29yOjEwMA"},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    identities = module.live_open_pr_identities({"organvm/big"})
+
+    assert identities == {hashlib.sha256(f"organvm/big#{n}".encode()).hexdigest() for n in range(1, 131)}
+    assert len(calls) == 2
+    assert 'after: "Y3Vyc29yOjEwMA"' in calls[1]
+    assert not module.failures
+
+
+def test_live_pr_identity_probe_fails_closed_without_a_page_cursor(monkeypatch) -> None:
+    module = _load_check_module()
+
+    class _Result:
+        returncode = 0
+        stdout = json.dumps(
+            {
+                "data": {
+                    "r0": {
+                        "issueCount": 130,
+                        "nodes": _pr_nodes("organvm/big", range(1, 101)),
+                        "pageInfo": {"hasNextPage": True, "endCursor": None},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", lambda *_args, **_kwargs: _Result())
+
+    assert module.live_open_pr_identities({"organvm/big"}) is None
+    assert any("no usable page cursor" in failure for failure in module.failures)
+
+
 def test_new_consumer_requires_zero_initial_baseline() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())

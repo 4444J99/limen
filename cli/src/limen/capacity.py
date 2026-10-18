@@ -248,7 +248,19 @@ def _copilot_assignable(binary: str, repo: str, actor: str) -> bool:
     return False
 
 
-def _github_actions_workflow_status(binary: str, workflow: str, repo: str) -> tuple[bool, str]:
+def _github_actions_workflow_status(
+    binary: str, workflow: str, repo: str, *, control_repo: str | None = None
+) -> tuple[bool, str]:
+    from limen.remote_execution import (
+        RemoteExecutionError,
+        require_public_actions_repository,
+    )
+
+    try:
+        for carrier in dict.fromkeys((repo if control_repo is None else control_repo, repo)):
+            require_public_actions_repository(carrier, role="control", gh=binary, timeout=10)
+    except RemoteExecutionError as exc:
+        return False, f"workflow={workflow}@{repo} control={carrier} unavailable ({exc})"
     try:
         result = subprocess.run(
             [binary, "workflow", "view", workflow, "--repo", repo],
@@ -278,7 +290,9 @@ def agent_status(agent: str) -> AgentStatus:
         }
 
     configured = _configured_command(agent)
-    if configured:
+    # GitHub Actions always dispatches through the attested adapter, which ignores
+    # command overrides. Its capacity must describe that same guarded carrier.
+    if configured and agent != "github_actions":
         ok, detail = _binary_status(configured[0])
         return {
             "agent": agent,
@@ -334,11 +348,14 @@ def agent_status(agent: str) -> AgentStatus:
             detail = f"{detail}; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane"
     if agent == "github_actions" and ok:
         workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", DEFAULT_GITHUB_ACTIONS_WORKFLOW)
+        control_repo = os.environ.get("LIMEN_GITHUB_ACTIONS_REPO", "4444J99/limen")
         health_repo = os.environ.get(
             "LIMEN_GITHUB_ACTIONS_HEALTH_REPO",
-            os.environ.get("LIMEN_GITHUB_ACTIONS_REPO", "4444J99/limen"),
+            control_repo,
         )
-        workflow_ok, workflow_detail = _github_actions_workflow_status(binary, workflow, health_repo)
+        workflow_ok, workflow_detail = _github_actions_workflow_status(
+            binary, workflow, health_repo, control_repo=control_repo
+        )
         ok = ok and workflow_ok
         detail = f"{detail}; {workflow_detail}"
     if agent == "copilot" and ok:

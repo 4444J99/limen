@@ -9,6 +9,9 @@ The predicate's whole value is that it cannot be satisfied by writing more prose
 """
 
 import importlib.util
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -108,6 +111,23 @@ def test_no_baselined_row_is_already_homed():
     a place decisions hide after they stop needing to."""
     stale = [r["key"] for r in cpd.scan() if r["home"] and r["baselined"]]
     assert stale == [], f"homed decisions still in BASELINE: {stale}"
+
+
+# --- the tree it judges -----------------------------------------------------
+def test_a_stub_limen_root_cannot_redirect_the_predicate(tmp_path):
+    """An agent shell can export LIMEN_ROOT at a directory holding only logs/. Honouring it measured an empty
+    tree ("0 plan(s)", every baseline row stale) and failed every docs/plans change from that shell."""
+    (tmp_path / "logs").mkdir()
+    ran = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check-plan-decisions.py")],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "LIMEN_ROOT": str(tmp_path)},
+        check=False,
+    )
+    assert ran.returncode == 0, ran.stdout[-400:]
+    assert "STALE-BASELINE" not in ran.stdout and " 0 plan(s)" not in ran.stdout
+    assert "is set but NOT used" in ran.stderr
 
 
 # --- the live tree -----------------------------------------------------------

@@ -1,0 +1,4614 @@
+{
+ "boundary": "oid:05852172dcc28909cc165381",
+ "checkpoint_only_unpublished_blobs": [
+  "513a7df68cc0ad613423f83b"
+ ],
+ "issue": "4444J99/limen#2537",
+ "manifest_commit": "oid:b8c610f3db4cec49cbdeabc6",
+ "new_ref": "refs/remotes/origin/main",
+ "private_repository": "4444J99/limen--private",
+ "refs": [
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3644,
+    "purge-equivalent": 78,
+    "unique-work": 1
+   },
+   "kind": "hidden",
+   "private_custody": false,
+   "ref": "refs/cline/checkpoints/1786100750448_20440/1",
+   "tip": "0e104914161089c7e49b4c62"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3644,
+    "purge-equivalent": 78,
+    "unique-work": 1
+   },
+   "kind": "hidden",
+   "private_custody": false,
+   "ref": "refs/cline/checkpoints/1786101047953_br5xr/2",
+   "tip": "1dd248eb5f2d30b717d33239"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3644,
+    "purge-equivalent": 78,
+    "unique-work": 1
+   },
+   "kind": "hidden",
+   "private_custody": false,
+   "ref": "refs/cline/checkpoints/1786101057162_65yzq/3",
+   "tip": "a24e109e4089bc4b907b1710"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4172,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/codex/remote-estate-triage-20261003",
+   "remote_counterpart": true,
+   "tip": "c03c894a667b082de14f22cf",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4176,
+    "purge-equivalent": 99,
+    "unique-work": 4
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/docs/av-directory-recovery-20261010",
+   "remote_counterpart": true,
+   "tip": "81d56c3b75f6bd4f48b78ff0",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   },
+   "worktree": "path:e35bb7df12ff"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4123,
+    "purge-equivalent": 99,
+    "unique-work": 107
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/docs/heartbeat-natural-receipt-20260924",
+   "remote_counterpart": true,
+   "tip": "a78915abfe9cb561608ecd78",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4125,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/docs/spine-closeout-custody-20260926",
+   "remote_counterpart": true,
+   "tip": "c84aa641a69eff3a9163e8dd",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4153,
+    "purge-equivalent": 99,
+    "unique-work": 8
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/docs/stream-resolution-session-closeout-20261001",
+   "remote_counterpart": true,
+   "tip": "67fdeb5bce57223ff3bfcbd6",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4014,
+    "purge-equivalent": 98,
+    "unique-work": 4
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/feat/levers-triage-ui",
+   "remote_counterpart": true,
+   "tip": "96ba997962df1f0375fdec8f",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4170,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/antigravity-native-witness-20261003",
+   "remote_counterpart": true,
+   "tip": "12406b784e2bbd97d181c2bc",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4180,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/av-policy-conductor-custody-20261010",
+   "remote_counterpart": true,
+   "tip": "eb876785ba6107fe11dec468",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4179,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/av-policy-custody-read-20261010",
+   "remote_counterpart": true,
+   "tip": "fcb6f94ef6add5b321387ebf",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4178,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/av-policy-readback-20261010",
+   "remote_counterpart": true,
+   "tip": "2ab2ba06695134a81a9abe89",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4075,
+    "purge-equivalent": 98,
+    "unique-work": 5
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/group01-custody-policy-20261001",
+   "remote_counterpart": true,
+   "tip": "920b8ccce13e405697e1b0f7",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4163,
+    "purge-equivalent": 99,
+    "unique-work": 2
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/group02-session-handoff-20261001",
+   "remote_counterpart": true,
+   "tip": "5fda5c9eff30926b00fedfa0",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4073,
+    "purge-equivalent": 98,
+    "unique-work": 5
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/group05-archive-custody-20261001",
+   "remote_counterpart": true,
+   "tip": "6a9e1696e9b60b6e6822a2ea",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4080,
+    "purge-equivalent": 98,
+    "unique-work": 18
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/jules-rolling-observation-20260918",
+   "remote_counterpart": true,
+   "tip": "18614d5a2bdaa5a201f13bbe",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4170,
+    "purge-equivalent": 99,
+    "unique-work": 2
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/limen-retirement-ignore-20261003",
+   "remote_counterpart": true,
+   "tip": "8b92f573d8d669c759492218",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4177,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/ops-recovery-carrier-20261009",
+   "remote_counterpart": true,
+   "tip": "0c030e0ff1b9854e26f504c7",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4166,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/portable-acceptance-20261003",
+   "remote_counterpart": true,
+   "tip": "715bb524b3d94d0a6608e243",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4169,
+    "purge-equivalent": 99,
+    "unique-work": 3
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/portable-proof-consumer-20261003",
+   "remote_counterpart": true,
+   "tip": "ab429df4914e4cb7ead09bf6",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/portable-retired-scope-acceptance-20261004",
+   "remote_counterpart": true,
+   "tip": "c9255fc90f0a0aca8e334c40",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4173,
+    "purge-equivalent": 99,
+    "unique-work": 2
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/portable-retirement-lineage-20261004",
+   "remote_counterpart": true,
+   "tip": "c44ca8aba61167769da311fa",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4176,
+    "purge-equivalent": 99,
+    "unique-work": 6
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/portable-verification-defects-20261003",
+   "remote_counterpart": true,
+   "tip": "f67e6aeb9e1101052ee47b67",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4074,
+    "purge-equivalent": 98,
+    "unique-work": 3
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/portfolio-visibility-interlock-20260917",
+   "remote_counterpart": true,
+   "tip": "95523a2593ff110861994723",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4177,
+    "purge-equivalent": 99,
+    "unique-work": 4
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/recovery-admission-20261010",
+   "remote_counterpart": false,
+   "tip": "06aacb39565d2f34aab4ee4f",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4166,
+    "purge-equivalent": 99,
+    "unique-work": 5
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/replica-custody-v2-20261003",
+   "remote_counterpart": true,
+   "tip": "e8d2284e2153986509dd4802",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4168,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/ruff-format-replica-custody-20261003",
+   "remote_counterpart": true,
+   "tip": "1e79a545df2a71a037f21d0c",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4067,
+    "purge-equivalent": 98,
+    "unique-work": 1
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/ucc-cloudflare-source-reconciliation-20260917",
+   "remote_counterpart": true,
+   "tip": "4c5d0abe191b249a0cfec222",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4074,
+    "purge-equivalent": 98,
+    "unique-work": 6
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/fix/workstream-private-email-20260916",
+   "remote_counterpart": true,
+   "tip": "d71d82abb08efd4c5e811958",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4166,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/policy/ges-continuation-20261003",
+   "remote_counterpart": true,
+   "tip": "7dff1bfcd69123972486a82c",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4176,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/prerewrite/main-20261017",
+   "remote_counterpart": false,
+   "tip": "14769310d1f92f0fd4251cd9",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 3765,
+    "purge-equivalent": 79,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/preserve/agy-fix-self-heal-retirement-predicate",
+   "remote_counterpart": true,
+   "tip": "f4e5e6cc831178c76ecdf507",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4073,
+    "purge-equivalent": 98,
+    "unique-work": 1
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/preserve/live-root-continuations-20261003",
+   "remote_counterpart": true,
+   "tip": "fcf247c55704b2a81d370064",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4018,
+    "purge-equivalent": 98,
+    "unique-work": 1
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/preserve/temp-pr-2621-stash",
+   "remote_counterpart": true,
+   "tip": "8a9209787abbc33bcfe0a75b",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 14
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/reap/amend-receipt-20261005",
+   "remote_counterpart": false,
+   "tip": "ccd15293f80161fc90039e9d",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 16
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/reap/closeout-audit-20261005",
+   "remote_counterpart": false,
+   "tip": "629189970cb82deaf642a016",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 17
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/reap/closeout-correction-20261005",
+   "remote_counterpart": false,
+   "tip": "a51f3857364cdb4eff042a02",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 18
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/reap/closeout-invariant-20261005",
+   "remote_counterpart": false,
+   "tip": "01016dca974dd6fc8388cdae",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 13
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/reap/runtime-roots-authorization-20261004",
+   "remote_counterpart": true,
+   "tip": "febadae0f106c10a679e3da2",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3976,
+    "purge-equivalent": 98,
+    "unique-work": 26
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/git-finishline-handoff-20260908",
+   "remote_counterpart": true,
+   "tip": "d250bb1d0ddcfa4395a8e1bd",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 70
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/private-custody-completion-20261009",
+   "remote_counterpart": true,
+   "tip": "3b826fa873ebcc2c1f7cfd40",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 17
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/reap-scope-20261004",
+   "remote_counterpart": true,
+   "tip": "15b769200d3b45af936c8e7b",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   },
+   "worktree": "path:1252d6d228c8"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3978,
+    "purge-equivalent": 98,
+    "unique-work": 29
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/recovery-green-20260908",
+   "remote_counterpart": true,
+   "tip": "d475004779e2398bd9a47a9b",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3978,
+    "purge-equivalent": 98,
+    "unique-work": 27
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/recovery-intent-completion-20260908",
+   "remote_counterpart": true,
+   "tip": "940863eb4ddec35036a957a9",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3978,
+    "purge-equivalent": 98,
+    "unique-work": 35
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/recovery-isolation-20260908",
+   "remote_counterpart": true,
+   "tip": "434d6424657ca5265e75ff65",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4175,
+    "purge-equivalent": 99,
+    "unique-work": 73
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/remote-first-custody-20261005",
+   "remote_counterpart": true,
+   "tip": "0d0d95ce74c707232a7c82a0",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   },
+   "worktree": "path:da97326fe1de"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4153,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/scoped-houseclean-20261001",
+   "remote_counterpart": true,
+   "tip": "db9cea4530c70893351e15d0",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4064,
+    "purge-equivalent": 98,
+    "unique-work": 2
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/spine-closeout-20260916",
+   "remote_counterpart": true,
+   "tip": "2047ef1ff9d38ae690ab4707",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4066,
+    "purge-equivalent": 98,
+    "unique-work": 11
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/spine-closeout-20260916-operator-relay",
+   "remote_counterpart": true,
+   "tip": "dc3c4feddd64d10d89e5086e",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4124,
+    "purge-equivalent": 99,
+    "unique-work": 2
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/work/spine-closeout-successor-20260926",
+   "remote_counterpart": true,
+   "tip": "f78276488f727f7575a64237",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3991,
+    "purge-equivalent": 96,
+    "unique-work": 9
+   },
+   "kind": "hidden",
+   "private_custody": false,
+   "ref": "refs/limen/continuation-beat/worktree-preservation-receip-oid:be7863525432",
+   "tip": "3ea8d58207a872b5a757ba66"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4054,
+    "purge-equivalent": 98,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:7568f642dc17/oid:dc4e52966ba2d7f30192c524",
+   "tip": "dc4e52966ba2d7f30192c524"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4055,
+    "purge-equivalent": 98,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:7568f642dc17/oid:f1f2832507d53693c749a25e",
+   "tip": "f1f2832507d53693c749a25e"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4059,
+    "purge-equivalent": 98,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:24ce47f3c355/oid:61f6e85fe5371e508f52aaa9",
+   "tip": "61f6e85fe5371e508f52aaa9"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4058,
+    "purge-equivalent": 98,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:24ce47f3c355/oid:39decd891985ca6e3a6c4c43",
+   "tip": "39decd891985ca6e3a6c4c43"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4057,
+    "purge-equivalent": 98,
+    "unique-work": 1
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:333e37c396ea/oid:1e050aaab028e584b5c24945",
+   "tip": "1e050aaab028e584b5c24945"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4057,
+    "purge-equivalent": 98,
+    "unique-work": 2
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:333e37c396ea/oid:b855a8c10d4acecc76d65f2c",
+   "tip": "b855a8c10d4acecc76d65f2c"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4093,
+    "purge-equivalent": 98,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:333e37c396ea/oid:31ad79b1d8718996015d1c85",
+   "tip": "31ad79b1d8718996015d1c85"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4057,
+    "purge-equivalent": 98,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/limen/retired-worktrees/oid:333e37c396ea/oid:3df565f72ebcce30b33129a4",
+   "tip": "3df565f72ebcce30b33129a4"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4177,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "hidden",
+   "private_custody": false,
+   "ref": "refs/stash",
+   "tip": "455c5ac063b52cb2474f958d"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3962,
+    "purge-equivalent": 98,
+    "unique-work": 27
+   },
+   "kind": "tag",
+   "private_custody": true,
+   "ref": "refs/tags/archive/pr-2543-detached-oid:6887bf74ea3d-20260828",
+   "tip": "6855bfb823bee43404fa5455"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 345,
+    "purge-equivalent": 6,
+    "unique-work": 18
+   },
+   "kind": "tag",
+   "private_custody": true,
+   "ref": "refs/tags/preserve/reap-20261004/vigilia-pii-preserve-life",
+   "tip": "28c6835a49ae5632173eb52d"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commits": {
+    "already-on-new-lineage": 8,
+    "purge-equivalent": 0,
+    "unique-work": 0
+   },
+   "kind": "tag",
+   "private_custody": true,
+   "ref": "refs/tags/v0.1.0",
+   "tip": "784a9e7128fc9689201ce9ed"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 376,
+    "purge-equivalent": 6,
+    "unique-work": 0
+   },
+   "kind": "hidden",
+   "private_custody": true,
+   "ref": "refs/vigilia/main-snapshot",
+   "tip": "74397d5878a0efd569891eac"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4177,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "stash",
+   "private_custody": false,
+   "ref": "stash@{0}",
+   "tip": "455c5ac063b52cb2474f958d"
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4180,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "detached-worktree",
+   "private_custody": true,
+   "ref": "worktree-head:path:37b3edc73abe",
+   "tip": "8d0e332b56fb7c59e2d719a1"
+  }
+ ],
+ "schema": "limen.prerewrite_containment.v1",
+ "scrub_map_sha256": "5966160f219a75c6950b66c9e212387204de13b64d0a0ec6d39d6dd769030291",
+ "summary": {
+  "checkpoint_only_blobs_missing_in_private": 1,
+  "commits_by_class": {
+   "already-on-new-lineage": 4279,
+   "purge-equivalent": 99,
+   "unique-work": 400
+  },
+  "old_lineage_refs": 67,
+  "old_only_commits": 4778,
+  "purged_blobs": 132,
+  "purged_blobs_missing_in_private": 0,
+  "purged_paths": 77,
+  "purged_paths_without_private_match": 0,
+  "unmatched_commits": 688
+ },
+ "unmatched_commits": [
+  {
+   "class": "already-on-new-lineage",
+   "commit": "00160bc4ba7e0057f9d5cf3e",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "00ad7ac8c21d08e0318acbc0",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "00b6707e1eeee438b82712b9",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "00e4bd8ad7f0bea09941cc29",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "01016dca974dd6fc8388cdae",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "0112e8b148b07ae45fa8dcf6",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "019970881b29897b8a4ca672",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "020d433b2dd06857c2ce88a6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "025399a6bbfed832134ede52",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "025bf8db88b28d3da7505854",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "0293b1300225a33ca6f00875",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "02e8df009e40224a7f7fe400",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "03128f5326b5fa03fcc130e6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "03f266f00c4e694472acb056",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "045a22513e49309089d77fa9",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "04737ac0bb5f0d966b483319",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "05095f8a10441fc9a6db4661",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0593a54e25aee7ccfc856383",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "068b27144d54abb94c98c959",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "06a3d7dbd5c7d6847843cde7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "06aacb39565d2f34aab4ee4f",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "07329fb70bc164cd284c8378",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "076c2781b39cf6a8a5f6ebcb",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "07a9ff00af898f96d27b0296",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0847cf8ec09e067d4d97b7ed",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "08b7099fd2d27b103f3b371d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "08ef026d75688b017ac61a75",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "098472bc0f54d07f5dff606d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0a2f68977a4a6fd2e3deae51",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0a4d789ed16497090eb41d4c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0b32aa1bf1b6dbc2313554f1",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0b4b74959d2a4ba4da72355d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0becaa3ca25111acfd40d155",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0befc61be34ec43d81f59343",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0c3992b0b3a64147532d0298",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0c4b80c7b88f89a313f6526f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0c6152b1315bb0390bf01f71",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0c8677de69267d118088ac5f",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0cc701e314824d49c285a51e",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0d0d95ce74c707232a7c82a0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0d1b507187721eeb292aad01",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0d527d270297b8ab732ce154",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0dac4f5f9fbc733a8779d59a",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0e104914161089c7e49b4c62",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0e877655d723ff04e8b236f0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0f5997b86ff02996996158a7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "0f6676eba3da00b08c6620fd",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0f9b23beda31367ad34e9624",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "0fd4ecbf90fc3e5583b6046d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "10655d827cb1c4766caa5171",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "10d6c714b64feb8b8663873b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "10dd35483055b1efba33fa33",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "11246c88bb407e08d0606e37",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1134f54f1d0c8cafd32fb6a9",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "12294ff8ebe77f60053a2687",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "12406b784e2bbd97d181c2bc",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "134d907c29178d53833dd220",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "13c1aa736eb006c3aa5285c6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "14686fda8565a8986b8c9528",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "14938f56577fcef87b891097",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "15b769200d3b45af936c8e7b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "15e32e0d08a209b3655bf833",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1629485d591648fcec4d47ae",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "169182d4ac15eae288eb5c39",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "174be45580109143fc1cb056",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "17543c101e1cb7460aca7f13",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "179a852b86d5872cc6b53ede",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "184cac7530ddc2ffbc9f7bd6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "18586fcef91cf48a6380c2b6",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "18614d5a2bdaa5a201f13bbe",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "186efa85c364736eed73bb8f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "18c751a2ac17e92fe9270b7c",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "18cdd3c9241e6bf0fdd528a8",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "18f1cf1a9dc7f541b46bb7eb",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1904e5a025fd73b2dad7a327",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1a101e810e8f2a76d778e12c",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1a163902530489aa5b158b3f",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1a364b122f1688761c4e5196",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1a61a9953f0ac27fa8781a13",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1a639464e0ddfbea64237da5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1abe007164d9074a056363bd",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1ac8aea847cc74b2046dc922",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1ad97b0db69aae69b6095807",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1b4132b4e3c128dd85368baa",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1b45f74a74f603199b2c8468",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1b705bee29183c50d8e087c6",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1c1a7a9fdfe22b6b155f7f77",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1d56f851429620325e840d80",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1d8d8b1a39d903aba2bde5ed",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1dce58e5a9231f02afeb8271",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1dd248eb5f2d30b717d33239",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1de107d345977e3b3394c813",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1e050aaab028e584b5c24945",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "1e12ebfdd462278ce6f433cf",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1edffc0dd5ce6fff65771555",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "1fa490bfab0f9511cb139d95",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "1fc5491ff7eee298421f5093",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "2039c02e5419aa57e88fd52a",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2047ef1ff9d38ae690ab4707",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2162d3db911e6ff957842f5c",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "21e0b7bea4deebcf5986afc2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "228c88ef20593d166703269f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "22f3e8fe16de31319ca7236f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "23551f1cca077b5e263891d5",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "238345767d5aae5421493394",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2438d1e6de2b9a5e8fd96265",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "257bf6a8a08ca55ff710f4cc",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "25c9dc5d4cb8ebc62dec2484",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "25e21c81ceb5e1e5a594463e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "25f8184bef34cb1986beae45",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "262a256533ba7f30ec307f56",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "2656567792af61f066102fa1",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "26d5e9a346c0befc068a5c70",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "272dd3a237ac6b4b4e962e68",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "28537bfa9a839fceda1f5eb6",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "28b6f31f30b62dab4b1712a8",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "28c50aad3ec94c1456b4ebec",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "28c6835a49ae5632173eb52d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2af719a359976dc9a6bcd104",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2afaa8d7aeaefc285ca33937",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2b1e4a4c65b6e0866be39b96",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "2c28d070be56cd507145aff4",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2c624e65f46e5b07289e67e5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2c9cf5711ae66f321c3a59a4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2d5d2cfae5d9dee0a17024f7",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2d60c33644d6e1a8382bd3e9",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2d7586a501e4bb18a96a0294",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "2dea7046190f63b00fdcb28b",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2ec7164608959351a881b123",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2f24ef4f7edbf050538df862",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "2fa156bc46a6700dd37e1bdc",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "2fd6ddde5c2ef5ba05e218a7",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "3039f9fcaf517b9ce619eaf3",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "310b17a59b7d2c7c8883b7d8",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "32011d2d68c4554b1de67836",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "32950994d97d83b8ee768af5",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "32bc1e274b2502ca91701c04",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "32de58c51a029e1b71fb08e5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3349db2a94144c6fc791cd45",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "33daff06d42f7de82d2204db",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "33f668c5aae4d5c002d483ad",
+   "evidence": "only-purged-paths"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3472ed84b2a5f5a9280f3295",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "34c7ae25686c6fa01ea4cb91",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "34f6f1932e62538e1fd5ab34",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "354b8f6d0d6f8255e66f6014",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "35620c138e2dbf2320e2fb9c",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "35c94d79286156a655e95b35",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "35ce7bbe65cfa62010fa9100",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "36cbc1d88c761a9421a6032e",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "36f7af9e973912e11c893864",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "37cbb1f4d670ddb2618321db",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "37f120a68a722cd43d83c342",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "381454c3f23c388bf5a68385",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3881dffb601d5e4c96ff9ba9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "38ef860778e33a66a032f7f9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "39358bf3ae80b72b075e9f9b",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "39461161f5485893bef06bf4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3af615925edf5efd31916b38",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3b22f6e6375c2343fdf52198",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "3b4135e4bd3b11da9d1bdc5b",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3b826fa873ebcc2c1f7cfd40",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3bbaaafd6ef528c360ecb3a7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3d9497f8c754744f88dbe2af",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "3e38c8149855f9134065b70c",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "3ea8d58207a872b5a757ba66",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "3f33cf995552cc9dc0eff7b3",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "3f7b26f5871cbbe4b0e921a2",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "3ffb7b19765e2bc59024d323",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "402f6d9357345eb9de9b23e9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4095002b328554306d4c2f2d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "40f7195eab39dc6ac65e9100",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "41f20e488db25848ac79d00d",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4228c0fa8d853ecc9c2dc06f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "42721c2cea6745aacbde5fce",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "42d90091231791ce138ad08f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "434d6424657ca5265e75ff65",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4463e306924ee8df4ca50f74",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "451b4d9ff2594c6b6efafd0c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4545e7a8a3b76a4365825b5d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "455c5ac063b52cb2474f958d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "457c546b895286ec60393dd4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4611bf5388bebe57aee1ab36",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "481037711e57a46e918e56be",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "48c120b0a94338206dec3f99",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "48d4c6a5a6f7c577299e3df9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "491e978b105942fa1cf2edae",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "49e0e3f980bbdea7e55e7d72",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "4ab8143aa518a45528db7549",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4af5e468fe14d7bff50746b9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4b193e6c24dfa2ec125c8517",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4b1dc38ca9bb43b5fe189da2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4b377f09ccc08187f658217e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4c5d0abe191b249a0cfec222",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4cdd87672ac24665aecd03e7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4d2708a503fe185457ab968d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4d4c92737b1e5affa6a69ddb",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4de9e734be54f2a76ccd2237",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4df2b8129040d2f74157d51f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "4e10bae37ecbb8e063d534e1",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4f39c3bc7d3bf4e3524ed004",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "4f6eb9c395f3e389910ef340",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "4f9d65a56e5e92bbec582334",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "51608cb7a2a4e26ef6cef5fb",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5195394411f4455b7fdf6836",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "51fb5adb341e1a82a00a472f",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "5203c9e10aec6638874bc9cf",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "5260087ecd6e00e32150d317",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "52b523a6eef6adfd3ce330c0",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "52bd0e50312900c311247b49",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "52eb00a7ab52cbe870289f23",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "530aa99eac466e1f7522c84d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "533b0dbf358387926bc30e7f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "5370c74198b92bbe35d480f1",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "53c75157e5a5cdcf81b32cb9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "53e16197ed315aa1becf45ed",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "53ec17689fa7820eef4eaf3a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "53f816eb296c4a1fb7bfd9fb",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "545766237c5b6f92c07b77fd",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5512485cf2188b547607d225",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "55c3f38f7c5f375e5c7c0ef3",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "55fd6eef0d7738291d6d8cde",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "562831010fb8f415897df878",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "56ae20156cc5820ef6a18e0f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "57271a1f127266c2c4a7b87d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "59470f36ae61ebbdd6a3d708",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "59ea383a57f2eacb4eef4f9f",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "5a42c576a574d64564286a05",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "5a4f1f3fbcb85d1948b7b531",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5a7bc1caf009d2f73f673d75",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "5a9702189bb6b1f601e32ef4",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "5be1b65c4552276010fd7996",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5c092d235400380b82121215",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5c3cee968c1293e1454cf7d4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5cb3a23c8e6cb1fbda88f0e2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "5d6ab22555c3dd990d713ae8",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5d8d5f87167d466793f4af83",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5de1fa5f03650c19068c3652",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5e1fe31ecb255dfb623ece25",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "5e60db0a8b985bd6c9b268d0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "5e6be1a6be78655bf52ea490",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "5f9bfacd979f940ed2c3bd2f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "6022bfb830fce4e5e69e0c95",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "607892f269e861c39c4b8213",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "60a01cd4489fdbff9d55206f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "61b904a34f4910a1f2d265fa",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "625c56a13426328411aa293b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "628a012222203f790d30bbc7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "629189970cb82deaf642a016",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "631bece5ed9f5e09458bee2d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "634d8b391c61145f72703204",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "63783fca9d989855df8c5b0b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "63ac6f516bb328ba82e824dc",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "63b0e16a2a0eb0525b0b84e8",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "63cdac20fda01b633361ed68",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "65075a159906a786b03c61a1",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "655baa20f3283a44054a29d9",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6565648aa34cfc560e5c5a5a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "65677f8f707265a12c190b0a",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "65efb0312f2843812e649307",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "66589a933559494ceea68a6e",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6761a4b5fa047d0cc3ac48e2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "678ab3d19bf284ed1916b80e",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "67de794af74a2817d7f0a4e4",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "67fdeb5bce57223ff3bfcbd6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6855bfb823bee43404fa5455",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "694a5560f243ab32f680b02b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "699029c63d613c48cd334e32",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "69e06c5cfa8036a05f6fd850",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6a9e1696e9b60b6e6822a2ea",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6b19fe0570872f7b6eae10a3",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6b846854156d0f4b02a3cbae",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "6b98f3b3206944e8f03986c9",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "6bd8268c7683c442808b3fab",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "6c11c10321a38be143a4c956",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6cd3c0616b8f88ce4aba2b94",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6ce169a600de39dcc5b8165c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "6d9088bca13a82b100412e66",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "6da058d8dfe2b5e24a2e2133",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "6db178187417ba23c53f0ec2",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "6f0e9295738112c2b50f132a",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "704413c523fc6c64a43a1cd5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "7136ae5b421eca4b39ca8ab4",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "7284025fc6fce493394e964f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "728e6ec1537275edfc091f22",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "72a72c0f3966a941527830c0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "72c56fa714324a9eee78a964",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "72ebbccf226fe097d63c82e9",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "730e332803c7e5eda47802d8",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "733a60a80aaf7fe5562d9023",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "73fa1fae03c9ad6d0253beb6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "74eeed42634cca0c2524be2c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7515b601dd7628b2e7ee011e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "758d7dd1ea0d4cb7a0e5cdca",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "75a179e6735a70690f000d7e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "75ab6cebc5aa9a47eadfceee",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "76039406f6128f7545a40fa9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "77797869ed9bdee942551ac2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "77bb8406ea2a148c4e8dc35b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "78465338d95320a5aa5c5811",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "78eb8f3059289301c4328e9c",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "792e6189099711097a6c88b3",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "797d9bb26ef227f76fffe56f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "798a41623ed168a48adc5ef1",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "798aefd4d4d45f63bbd1911c",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7a138d08c436bf03c34a3402",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7b1d973bc4f5cae4e191d68d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7b89b4138bc8120339ed1a7a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7b9ce9572342998547ec3524",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7c2dd60819fcdab888ac482a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "7c61cccb2520fdd4ea57f979",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "7cfba5b02571358f1fa25a73",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7d021b45c5569aa0ba992d6c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "7d9ba69b3e35d499266873ee",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7dba8d8d8f6c97f09c855b7a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "7eaf1503f3db91c191bc81b4",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "7ed2c23c5837f92cda499d91",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "7f705fec6285272d34e7ff54",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "7fc85e554ece96c105bc8902",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "7fff31b387c01985886075fd",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8027580cb0fe71afa894586c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8115e5a9a91bc5691cd3b4e7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "811e4ea251a08ecd96717b37",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "81d56c3b75f6bd4f48b78ff0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "81d85753d4da3b357d8fc593",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "81f9af31cc23486c7a2b2d86",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "8255b249672108af1cd8fd1d",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "834606f812802245771d3677",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "836fcfee046b9d447cd8b618",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "83894d97b7fb25b8425ba4d4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "8452559bcd741455ff558667",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "848b1509ffc37f5e02dfbe5c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "8562fa6f472b8b6940ac6149",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "85d3f7eead4409e0ad80380f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "865c6eace2646e29575cd3b1",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "86742c2c8c2f29cdff792d67",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "868ed675bc493105ba5b5d76",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8693ea7882dd1b9aef0887b0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "86aa69efca7ddf21eba6accd",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "87017d0626a8e6f49fa46c77",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "874081d3b48d262c7cb69492",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "87a8e6f0079d9df301b04bf7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "89150524410f33e3704c08ab",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "89589b29ae39105af4ea02c2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8965331e66642a491b0882ca",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "89b756e0bad5958430bf53e3",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "89c172985f95af84c5d7505e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8a9209787abbc33bcfe0a75b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8af069e40a21ef7640e5edf6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "8b083e9345f3f624054b0e58",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8b70f928ac71eb7305dc756f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8b92f573d8d669c759492218",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8ba357cf4e077cc759006963",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "8bae46c7bd4c75495fb1251d",
+   "evidence": "only-purged-paths"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "8c2eee370923188e13956d97",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8ce6d43c4406b5ee5d4decbf",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8d0e9bfeb1b38c460e450703",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8d19fada1c62ece7e271df91",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "8d88e47cf5e42f2139352090",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "8de5decae25d7ec2d92233e6",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8e0706f1634a307760f74210",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8e4f0ad9666c277ce4ad6f56",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8eea8a896e5741413bef495b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8f1222c7cfdfb491a9ecad6d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "8f2d0283d07d70c94bc9864b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "8fa42b2df728411fa46b2f3d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "903dd78fcca2b4c1c842eac2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "910eb9cd5c17d73454565ee5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "911a9a92962a0385f731754a",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "916aa0064a10062cfe384065",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "91c5f1c9669c4522c751802f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "920b8ccce13e405697e1b0f7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "920e56ea32fee13366aba2af",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "928d98897548d7b51f5e58f9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "92dc6df621c78efbf7707a84",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9300068a592f154b5037f3c7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9359cdb497f25f02b36b201a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9384deebda19b1872cf6ec14",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "940863eb4ddec35036a957a9",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "944091a521ba2952eafb8ceb",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "94ce647f524b3008349c4d68",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "94e4c8d9411efbe056b0a93b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "94f5abc96e1da72aa1925139",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "95146306209125a7b0d68319",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "95523a2593ff110861994723",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "96045ef5e863f6ab2b352e3f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "96ba997962df1f0375fdec8f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "973f2d7083a92d5bc3be75ee",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "97b42a10ffae7478325de7aa",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "984092a96fd5f7acb6a47d91",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9843de989e0da0477a755742",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "984e85c1e7d675a56ad59999",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "993bd502ef09cb0714dc58a9",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "99668a03dee47ef4225af9fe",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "9979dba1fd9247d926707327",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "99a62717dbf82b92296f738d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "99ccaec66871d00810fe9f6f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "99d1581368b137f3a08000f7",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9b8ee0ee7bf981a0811ff046",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "9bd1e9e68cc5b4c8a12fff7f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9bed6fdc9040453f411b1c98",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "9c2e63bc8c8197af56a7edd0",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9c65c5b004a3338e5d778fd8",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "9c7a68bbcde9aaf58e8b33fe",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9cca8ce4a2b3d288bf7af18d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9d17698bbc75b0489dc6adc8",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9d652b144ad1edfec7a4b327",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9d6674b338ce9d490ea10285",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9dd54161c473c84b0ebe81ad",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9edc91bf773030c195c91449",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9ef56bd160f6c7e8695162f9",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "9f13c308093e0a37f1f2a21a",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9f4c6948258c7ef005e4e408",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9f5f3b89fb39046bb2d4ff54",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "9f75162a60f3575a6134d7f4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "9f8c65d9a9eebe4d79e2d350",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a091afae4f0f304c44882ca0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a09918b1c8f7d6da1a56c8d0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a0a060e84c29fb668fa412d6",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a0f171738276fdc98f6ea1c9",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a0ff32095ca52c578fd30c8b",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a13dc0b53a4db32306165f85",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a1569c8e6902f2144ef7a04e",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a24dd13e863762a3f251fe32",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a24e109e4089bc4b907b1710",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a34b383906eb3fec3febd557",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a37dc99c9d8b1057322835d6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "a3dc4dc5c646222eefeca731",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a41f80cf8086b3f6e5dda225",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "a41fec1de68e32a7c0ddebf9",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a4418f73adc3f89572afcbc9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a4f29ff97698193d8c74d411",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a51f3857364cdb4eff042a02",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a6174f2f131491e3af7379ce",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a639842acc48ba331a849425",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a6d0a8d8fa9f3ad2f0659ea9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a6d8f0b7aa10f09f52d8f2f8",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "a75227b05cf4129abb866c88",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a78915abfe9cb561608ecd78",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a79ee8b0dc4f057d0ed06966",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a7a5796eecad3d6a23ef5e43",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a85e8ce968952cfde71471d9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a88c186c46f0e9f612727440",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "a9569e194ad3f09215e08d59",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a9663780e0a98a57e9859d89",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "aa70404c36a76a88d43f74b8",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "aac28a6032bf6e8ee5fd4224",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ab429df4914e4cb7ead09bf6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ab8c0c622fe100fec8bfeeea",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "abd24a35d2f6bbf45069be18",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "ac3fd15938cfe1d93f5beae5",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "acef8eb3ebe7e841034747aa",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ad5e6e45f0ebd0980a1ba732",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "adbabcc2fb3e993f6f415ab0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "adc1a74a7d24af71c6f55e1f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "add661fb496d12caa685f457",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ae4b648019fc388796f9b0cf",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "aebcb632a8fd5f120bb37973",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "aefd68d9aab56f15c012752d",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "af21f6dd182b1a94bd7c7c34",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "afdb9d913c30530b8378b752",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b0466b879ac9b98d3fd0fd59",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "b05276d49ce59d52ae984d0c",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "b0a7cff69e0abd224388fc33",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b1121a913eb2d72b264eb0ba",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b22704472759ac07542b18c7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "b27e5e80e252e2b9021b6990",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "b2cd76b55162cfad3232f990",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "b2dd94c520f7552369d511dc",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b40ce456a54120681f3a54d7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "b41465d9efe437aa0a3c3b2a",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "b4bf4acb0f948d92f9b7af36",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b53bd1c582392343518b473e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b5b65743b94e53679919a45f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b5c9300696843c58217f47e6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "b63a3cf94574adc9454ae9cc",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b65975452bc245f2b79db0f4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b6bf08f9fc8020b63400dd3b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b6faff11ee71a62345001795",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b770f60f6218c53964cb8e72",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b77b0b38b09e0ec1d54b31a7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "b7bc7149294dd6085360e225",
+   "evidence": "only-purged-paths"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b855a8c10d4acecc76d65f2c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b8e7ee7578b2812a2cdf628e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "b989d8cd4e542ea5e934f541",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "b99140108255c1a3147fe224",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "b9c3560be1bdd1c086120628",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ba10caf30b0e08910e8a1e71",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "ba6cc7b541d89beca02fd359",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "bb09d4ed088801e16e7c39e1",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "bc133e2314b80b2f3308700e",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "bc9194d71e8c307b5ad17bfd",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "bcf745d66dbbf04a7b811a68",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "bdc8867d2c4033cd6492ab31",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "beb68dcc57bfb191c7213b88",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "becb7dd4128c06a90dd76827",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "bf7ffd0e65cd142004788cd0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "bfd8540c4a120a917691a317",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c0791ad9c0d814e8dd040c59",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c0d0c739e6456a274932174a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c0fa33f8a5eb83d589b9f8c4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c0fac917e032376044890a0e",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c104a8258be49a62eb24e451",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c116c3137fbdd608cf5b4821",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c133636daae969ba8bd3ca0b",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c1f7b554bea0df8171677e2a",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c21185f7d0ba4efa87d5872f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c28f5cd8a02278e5bbf5d523",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c36abe0b3066b4d03afe513e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c36cd65b7fa8c37482cdafb6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c3a2e96b95207b1c1f459deb",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c426a87d07545cf8ff6a0983",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c42a81af1dcbd8908ae22bbb",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c44ca8aba61167769da311fa",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c468e88a703f4e6c8feaf40e",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c4a6a676cecbad4003c03c5d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c4c6305409449c192cbcfb7d",
+   "evidence": "only-purged-paths"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c5a5693c59444ca86b29f593",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c5ac024b53fe96cacf2a95ec",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c5d21de4a23ac5de824054e5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c5e9d6344797c3ad76be3f8b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c733e2af17309d940f7a9e85",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c73d278ff3e1bdd3881b32e6",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c79912ec7f27448571c1bb0d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c7cc72fa095f1f37fc36626f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c8232ad43a8081ce58ace10d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c82da1f21075d9c42f7bdc16",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c84aa641a69eff3a9163e8dd",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c84d1650f81d83ef1eb0b4f9",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c868e14a7f4acde6af9bea1d",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c91621afa3bb87f3aa827b7c",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "c9255fc90f0a0aca8e334c40",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c94fd253cc790587ce8b16dc",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "c972bad69ac2b00d807c6df7",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "c998713837ae360866e9a0b7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ca1e1166ae0523eb7bca709d",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ca2d8c70c692b6345f4cf5fc",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "caa30d62e2b0521cb63624fb",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cadb218cb9963e89eef751d9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cb3878f1b3d40a60cf709409",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cb4eda1ae30fd70cc1a4b212",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "cb942f7c6899089a484e3c7a",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cc05ef6571ff69267a1840dd",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ccd15293f80161fc90039e9d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cd37a995268f893603bd2e09",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "cd3b26085f683327f91a5cbf",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cd86cf25cacc670f55351120",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ce67e419a5e69b3b1bbbee01",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cf1761b76fefa82e3701141a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "cf73f8deaa620401b1f51613",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "cf74d0332eb8dfcbd1d96b76",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "cf8b179d9ab411910974e7cf",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d04ac8ceb52b2fe1b89fee65",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d0861c04a98fbf3ac331ceea",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d0ee97f03fc50e90a243ba46",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d1234df96b3f4c6fb516db97",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "d16b031de5bbf34d781af9ab",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d191d6cb53bfb5fe9c094360",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d250bb1d0ddcfa4395a8e1bd",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d38644c107c4119929011985",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d475004779e2398bd9a47a9b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d4b9c9bc9203e65800e6e32a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d5db31e6961251939b179b88",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d5edad9222897976508c9068",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d6116a0423a0c49c19f627a9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "d6274e287fdd66d3a8642546",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d71d82abb08efd4c5e811958",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d7344136a4bb36f5bf4a8887",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d7965053c57392c5c5ae40bb",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d83d5b12254a1d4dbf77e2f7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d89567723c40e0a22e6144d1",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d89bd8f72ab2490035c0e38f",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "d91e982ef72ee46bcd18d9d5",
+   "evidence": "content-on-new-tip"
+  },
+  {
+   "class": "unique-work",
+   "commit": "d999c293605f0e792c2a761c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "da5055aed698bf706c2251b9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "da7159c6f14bb08405e3c601",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "da87dd32feed6daf5c51890d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "da9f1c73c7b6362a9b4ed5c0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "db363ab438fe8ed199fa5145",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "db3e53b4c80c81e453f45092",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dba6ea0539314a8c1efbe5c9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dc3c4feddd64d10d89e5086e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dcb87a19f273f9917cdc4138",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dcc0eed3e68c3fcd0122c778",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "dce0c4ff438b5cf655e6b189",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dd6bc936df6295f8583724b5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "ddac94c596581b8794b301a1",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ddea2551ec238bf573174246",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dec5cd7a22e75cd8c76abb99",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dee9031316d7daeb36dab0cd",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "dfaf658b548f375dfdc2bad5",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e01837232c982b107b370b8c",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e033d8c04a35ada1b1c0371b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e066c5bc2b0b71d756ed0b6f",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e0c651c00b3f4167167c76c0",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e1549c609e52dd05e1050460",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e155babc8030d7c542a77872",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e27402b398bf5e6d38a485d2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e2b11726c0b04c1ec222e9eb",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e2eb83f1eb2a829028785737",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e32f377badc84a244a97b06d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e332f958d8a96ad567b61f27",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e37bc4f5058f1bdd20ab320c",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e3a53ff37941451ce1654fd7",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e415eeaacda84aac9a36a81f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e4350b16577ed74302ff9388",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e472ee73340551f98e551d8d",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e4855396a61f53e1e43e0219",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "e53ccba994d0062a7ab12179",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e57b591c1dcb4c27c0330eb7",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e6b5db62841f019fa49dc223",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e6dc304b26dee68d4a07ea74",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e6dc963c7c7d51e78401d893",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e6e816210e45a5b386115554",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e720860405ee41dc51d21a0d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e72b7ae463db5ab07ae69c05",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e72f6ebec70ee0fc21973c21",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e77685c8e30a9cad51ac7eba",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e871fe33d52a1c359ca210d1",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "e8b1022e423a6a2593005e1f",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "e97649480db183f3518a1823",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "ea401378f370c3dd516ae288",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "ea453295d6aab0ad00f87510",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "eb66a637f6faee9312fe35a2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "eb8405269f9b227f56b6ecb6",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "eb9b09d6cc24e2e55f691e2e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ebaf83f208db7b8993f31c6b",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ec4f9813c736f2f21603a2fc",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ed020b52646e6ac8ea47e1f5",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ed679508636d387ac0a51f37",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "eda778580ffc14bc63288e87",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ee330443546217f3597829d4",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ee4d64b96321b8a3d82eaf70",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ef82da268772885f183bfc0c",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ef9f122837c26232aec61c28",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "efb201031b2ca6f3b8a04f30",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "efe8a9a9e2f0d07bdae80a20",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f015d485e8972acf15791826",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f034f384a6ee020c870e21af",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "f0865b58221d64e2f1973636",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f08d4394e1d541d5ab984fed",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "f0e10f7322083d3acef5a725",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f17026e09a35eea724f73907",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f1c6a6e45988ab1f9b758576",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f204de703a5011bf93db1e80",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f256e18b30de0a6b579823a8",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f273e9dca990652c5d783a2b",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f2aba68f48a99ca8f36de333",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f3190a1568653f3f29a457d0",
+   "evidence": "only-purged-paths"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f36695804df6de932f9f4ce5",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f3d0bf4d9fd63399763e8607",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f3f55cfa288327a93549f33c",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f4992ede79f59a8d72fa1a84",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f4f294e948c448b3fcee5b98",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f5976b3e766a44298c7fb641",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f5d81ceb66b3704bc03e4d45",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f5f561ee9748f97c2a5bf3c2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f67e6aeb9e1101052ee47b67",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "f6d44b778e3f91ffa32a63dc",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f6e74d8944777e79dcf627cd",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f6eec512d76d8b74d54d5a1e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f78276488f727f7575a64237",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f78cdf158a1db2ed32642668",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "f7b5b604bc557d756bbfbe66",
+   "evidence": "empty-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "f7db060894b01825e02cc472",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "f831f58acfc680b6e6cb8f31",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "f9272634d1377ebe7ed90833",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f9ab49db74e40cb58de2021a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "f9db29151c54beddcc1bd29a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fa4d3902b5ca2492e8268a34",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "fa951cb1510de3a65fae1ab6",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fb09df84355c365e8c2ca23f",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fb19bb1f3af2b2ffa4c8bd98",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "fbbe34ff1a0dd20aa637f32f",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fc1fb658b207c9afd1a49ce1",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "fc5303b542d1f5b0e46c55d2",
+   "evidence": "counterpart-equal-after-scrub"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fc819e27c1497761b1949e12",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fcb8589d5cd17eb68b24933d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fcf247c55704b2a81d370064",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fdd8b876db843616fc57666e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fde4393789e53baae69f247a",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "fe00003fa756cdf4fc571fa9",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "febadae0f106c10a679e3da2",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "purge-equivalent",
+   "commit": "ff03bd7c02cb91442f020ad6",
+   "evidence": "only-purged-paths"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ff1ecd2ba5243447153343a4",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ff2de17c64f598765f58554e",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "unique-work",
+   "commit": "ff590c1a2f2d4997955c9b4e",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ff9c898093d7fe57fddc1d22",
+   "evidence": "counterpart-identical-change"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "ffceee7db5fc7a7a73c97c1c",
+   "evidence": "content-on-new-tip"
+  }
+ ]
+}

@@ -84,6 +84,10 @@ back to `AGENTS.md` instead.
     debt line while any surface exceeds the budget. Doctrine that outgrows the budget relocates
     to a Tier-1 home (`docs/architecture/`) behind a pointer stub — the budget law lives HERE,
     in the uncapped standard, never inside the capped file it governs.
+15. Hold the reflexive stance in `docs/architecture/reflexive-observation.md`: absorb structure not
+    totality, keep one source with lossy projections, never let observation substitute for the
+    lease-and-receipt path, and stay mutually legible to every peer agent. It binds here rather than
+    in `AGENTS.md`, which is over its byte budget and carries the protocol, not the posture.
 
 ## Home-scope generated surfaces
 
@@ -227,8 +231,10 @@ from `institutio/governance/gates.yaml → instruction_surfaces` (budget/ceiling
 `debt:` line required iff a surface exceeds budget); **T** — the pointer file
 (`.github/copilot-instructions.md`) and declared directory-scoped surfaces stay
 in the estate: the pointer keeps its self-subordination clause and points at `AGENTS.md`, scoped
-files keep "root wins" deference, and neither presents non-canonical status values. A new check
-letters itself here when added.
+files keep "root wins" deference, and neither presents non-canonical status values; **U** — the
+reflexive-observation doctrine (`docs/architecture/reflexive-observation.md`) exists, carries its four
+binding rules, is linked from this standard, and `bounded-composition.md` carries the depth cap. A new
+check letters itself here when added.
 
 ---
 

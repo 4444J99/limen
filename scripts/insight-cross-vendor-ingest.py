@@ -29,6 +29,7 @@ import json
 import os
 import sqlite3
 import sys
+from collections import Counter
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -64,8 +65,20 @@ VENDOR_REGISTRY = {
     },
     "opencode": {
         "path": HOME / ".local" / "share" / "opencode" / "opencode.db",
+        # 2026-10-17: the store MOVED twice and the legacy path alone reports a
+        # false zero. Live v2 sessions land per-workspace under
+        # <workspace>/.agent-runtime/opencode/data/opencode/opencode.db (observed
+        # 2026-10-17: legacy path held 3 sessions ending 2026-08-09 while the
+        # workspace runtime root held 196 sessions, 27k messages, newest = that
+        # same minute). Legacy = history only; adapters must walk BOTH, exactly
+        # as claude_estate_roots() does for claude. Same shape as the claude
+        # entry above — one resolver, never a hand-resolved caller.
+        "extra_root_globs": [
+            str(HOME / "Workspace" / "*" / ".agent-runtime" / "opencode" / "data" / "opencode"),
+            str(HOME / "limen-lanes" / "*" / ".agent-runtime" / "opencode" / "data" / "opencode"),
+        ],
         "dormant": False,
-        "description": "OpenCode SQLite session store",
+        "description": "OpenCode SQLite session store (legacy ~/.local/share + per-workspace .agent-runtime roots)",
     },
     "copilot": {
         "path": HOME / ".copilot" / "session-store.db",
@@ -92,8 +105,14 @@ VENDOR_REGISTRY = {
         # Added 2026-08-06 — this estate was silent in the registry, violating the
         # "every vendor must appear here" rule above.
         "path": HOME / ".gemini" / "tmp",
+        # 2026-10-17: same relocation as opencode. The legacy tmp root stopped
+        # receiving sessions mid-July while live ones land under the per-workspace
+        # runtime root, so the legacy-only path reported a false zero. Walk both.
+        "extra_root_globs": [
+            str(HOME / "Workspace" / "*" / ".agent-runtime" / "gemini" / "home" / ".gemini" / "tmp"),
+        ],
         "dormant": False,
-        "description": "Gemini CLI session JSONL under ~/.gemini/tmp/<project>/chats/",
+        "description": "Gemini CLI session JSONL under ~/.gemini/tmp/<project>/chats/ + per-workspace .agent-runtime roots",
     },
     "jules": {
         "path": HOME / ".jules",
@@ -192,6 +211,44 @@ def claude_estate_roots() -> list[Path]:
     for pattern in meta.get("extra_root_globs", []):
         roots.extend(Path(p) for p in sorted(_glob.glob(pattern)) if Path(p).is_dir())
     return roots
+
+
+def gemini_estate_roots() -> list[Path]:
+    """Every dir whose children are gemini project slugs holding session JSONL.
+
+    Same migrated-layout contract as claude_estate_roots(): legacy tmp root plus
+    each workspace's .agent-runtime root (extra_root_globs on the registry entry).
+    """
+    import glob as _glob
+
+    meta = VENDOR_REGISTRY["gemini"]
+    roots = [meta["path"]] if meta["path"].is_dir() else []
+    for pattern in meta.get("extra_root_globs", []):
+        roots.extend(Path(p) for p in sorted(_glob.glob(pattern)) if Path(p).is_dir())
+    return roots
+
+
+def opencode_estate_stores() -> list[Path]:
+    """Every opencode.db that exists: the legacy path plus per-workspace roots.
+
+    Single source for the migrated layout, mirroring claude_estate_roots(). Order
+    is stable (legacy first, then sorted globs) so callers can dedupe by session id
+    deterministically. A store is included only if it exists; a missing store is
+    reported by the adapter's notes, never silently treated as zero activity.
+    """
+    import glob as _glob
+
+    meta = VENDOR_REGISTRY["opencode"]
+    stores: list[Path] = []
+    legacy = meta["path"]
+    if legacy.exists():
+        stores.append(legacy)
+    for pattern in meta.get("extra_root_globs", []):
+        for hit in sorted(_glob.glob(pattern)):
+            db = Path(hit) / "opencode.db"
+            if db.exists() and db not in stores:
+                stores.append(db)
+    return stores
 
 
 def _ingest_claude(window_start: datetime) -> dict:
@@ -485,127 +542,109 @@ def _ingest_codex(window_start: datetime) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def _opencode_session_rows(db_path: Path, window_ms: int) -> dict[str, dict]:
+    """Per-session structural facts from ONE opencode.db, keyed by session id.
+
+    OpenCode migrated sessions to session_v2/session_message on 2026-10-01 and the legacy
+    session/message/part tables froze, so the schema is detected per store. Counts only; no text is
+    read (PII firewall). Bounded: at most 5000 sessions per store, newest first.
+    """
+    con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
+    con.row_factory = sqlite3.Row
+    try:
+        cur = con.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('session_v2', 'session_message')")
+        if {r[0] for r in cur.fetchall()} == {"session_v2", "session_message"}:
+            # v2 stores tool calls as typed content blocks: the error signal is a tool block that
+            # finished with status 'error' (a substring match on the whole blob would count every
+            # conversation that merely mentions the word).
+            sql = """
+                SELECT s.id, s.cost, s.tokens_input, s.tokens_output, s.time_created, s.time_updated, s.model,
+                    EXISTS (SELECT 1 FROM session_message m WHERE m.session_id = s.id) AS has_msgs,
+                    (SELECT COUNT(*) FROM session_message m, json_each(m.data, '$.content') c
+                     WHERE m.session_id = s.id AND m.type = 'assistant'
+                     AND json_extract(c.value, '$.type') = 'tool'
+                     AND json_extract(c.value, '$.state.status') = 'error') AS errs
+                FROM session_v2 s
+                WHERE s.time_created >= ?
+                ORDER BY s.time_created DESC
+                LIMIT 5000
+                """
+        else:
+            sql = """
+                SELECT s.id, s.cost, s.tokens_input, s.tokens_output, s.time_created, s.time_updated, s.model,
+                    EXISTS (SELECT 1 FROM message m WHERE m.session_id = s.id) AS has_msgs,
+                    (SELECT COUNT(*) FROM part p WHERE p.session_id = s.id AND p.data LIKE '%error%') AS errs
+                FROM session s
+                WHERE s.time_created >= ?
+                ORDER BY s.time_created DESC
+                LIMIT 5000
+                """
+        cur.execute(sql, (window_ms,))
+        return {r["id"]: dict(r) for r in cur.fetchall()}
+    finally:
+        con.close()
+
+
 def _ingest_opencode(window_start: datetime) -> dict:
-    db_path = VENDOR_REGISTRY["opencode"]["path"]
-    if not db_path.exists():
+    stores = opencode_estate_stores()
+    if not stores:
         return _empty_packet("opencode", window_start, ["opencode.db not found"])
 
     window_ms = int(window_start.timestamp() * 1000)
     quality_notes = []
 
     try:
-        # Read-only URI — never write to vendor store
-        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
-
-        # Session stats — bounded by window, LIMIT guard
-        cur.execute(
-            """
-            SELECT
-                COUNT(*) AS cnt,
-                SUM(cost) AS total_cost,
-                SUM(tokens_input) AS total_input,
-                SUM(tokens_output) AS total_output,
-                AVG(CASE WHEN time_updated > time_created
-                         THEN (time_updated - time_created) / 1000.0 END) AS avg_duration_sec
-            FROM session
-            WHERE time_created >= ?
-            LIMIT 1
-            """,
-            (window_ms,),
-        )
-        row = cur.fetchone()
-        sessions_seen = int(row["cnt"] or 0)
-        total_cost = float(row["total_cost"] or 0)
-        total_input_tokens = int(row["total_input"] or 0)
-        total_output_tokens = int(row["total_output"] or 0)
-        avg_duration_sec = float(row["avg_duration_sec"] or 0)
-
-        # Zero-cost sessions (likely errored before model call)
-        cur.execute(
-            "SELECT COUNT(*) FROM session WHERE time_created >= ? AND cost = 0 LIMIT 1",
-            (window_ms,),
-        )
-        zero_cost_count = int(cur.fetchone()[0] or 0)
-
-        # Error signals: parts with 'error' in data (bounded)
-        cur.execute(
-            """
-            SELECT COUNT(*) FROM part
-            WHERE session_id IN (
-                SELECT id FROM session WHERE time_created >= ? LIMIT 5000
-            )
-            AND data LIKE '%error%'
-            LIMIT 1
-            """,
-            (window_ms,),
-        )
-        error_part_count = int(cur.fetchone()[0] or 0)
-
-        # Abandoned sessions: updated within 30s of creation, bounded
-        cur.execute(
-            """
-            SELECT COUNT(*) FROM session
-            WHERE time_created >= ?
-            AND (time_updated - time_created) < 30000
-            LIMIT 1
-            """,
-            (window_ms,),
-        )
-        abandoned_count = int(cur.fetchone()[0] or 0)
-
-        # D-gap-1: classify rapid-abandon sessions (bounded; structure only, no text)
-        # empty_shell    = <30s AND no messages at all
-        # completed_fast = <30s AND tokens_input>0 OR tokens_output>0 (model was called)
-        # aborted_after_content = remainder (has messages but zero tokens — user typed, no response)
-        cur.execute(
-            """
-            SELECT COUNT(*) FROM session s
-            WHERE s.time_created >= ?
-            AND (s.time_updated - s.time_created) < 30000
-            AND NOT EXISTS (SELECT 1 FROM message m WHERE m.session_id = s.id LIMIT 1)
-            LIMIT 1
-            """,
-            (window_ms,),
-        )
-        abandon_empty_shell = int(cur.fetchone()[0] or 0)
-
-        cur.execute(
-            """
-            SELECT COUNT(*) FROM session s
-            WHERE s.time_created >= ?
-            AND (s.time_updated - s.time_created) < 30000
-            AND (s.tokens_output > 0 OR s.tokens_input > 0)
-            LIMIT 1
-            """,
-            (window_ms,),
-        )
-        abandon_completed_fast = int(cur.fetchone()[0] or 0)
-
-        # aborted_after_content = the remainder (has messages, no tokens)
-        abandon_aborted_after_content = abandoned_count - abandon_empty_shell - abandon_completed_fast
-        # clamp to 0 in case of overlap edge cases
-        abandon_aborted_after_content = max(0, abandon_aborted_after_content)
-
-        # Model distribution (bounded to top-10)
-        cur.execute(
-            """
-            SELECT model, COUNT(*) as cnt
-            FROM session
-            WHERE time_created >= ? AND model IS NOT NULL
-            GROUP BY model
-            ORDER BY cnt DESC
-            LIMIT 10
-            """,
-            (window_ms,),
-        )
-        model_dist = {r["model"]: r["cnt"] for r in cur.fetchall()}
-
-        con.close()
-
+        # Stores are ordered legacy-first, then live. The live store holds every legacy session id
+        # (v2 is a superset), so keying by id with later stores winning counts each session once.
+        sessions: dict[str, dict] = {}
+        for db_path in stores:
+            sessions.update(_opencode_session_rows(db_path, window_ms))
     except sqlite3.Error as e:
         return _empty_packet("opencode", window_start, [f"SQLite error: {type(e).__name__}"])
+
+    rows = list(sessions.values())
+    sessions_seen = len(rows)
+    total_cost = float(sum(r["cost"] or 0 for r in rows))
+    total_input_tokens = int(sum(r["tokens_input"] or 0 for r in rows))
+    total_output_tokens = int(sum(r["tokens_output"] or 0 for r in rows))
+    durations = [
+        (r["time_updated"] - r["time_created"]) / 1000.0
+        for r in rows
+        if r["time_updated"] is not None and r["time_created"] is not None and r["time_updated"] > r["time_created"]
+    ]
+    avg_duration_sec = sum(durations) / len(durations) if durations else 0.0
+
+    # Zero-cost sessions (likely errored before model call)
+    zero_cost_count = sum(1 for r in rows if r["cost"] == 0)
+
+    # Error signals (bounded by the per-store session cap)
+    error_part_count = sum(int(r["errs"] or 0) for r in rows)
+
+    # Abandoned sessions: updated within 30s of creation
+    abandoned = [
+        r
+        for r in rows
+        if r["time_updated"] is not None
+        and r["time_created"] is not None
+        and (r["time_updated"] - r["time_created"]) < 30000
+    ]
+    abandoned_count = len(abandoned)
+
+    # D-gap-1: classify rapid-abandon sessions (structure only, no text)
+    # empty_shell    = <30s AND no messages at all
+    # completed_fast = <30s AND tokens_input>0 OR tokens_output>0 (model was called)
+    # aborted_after_content = remainder (has messages but zero tokens — user typed, no response)
+    abandon_empty_shell = sum(1 for r in abandoned if not r["has_msgs"])
+    abandon_completed_fast = sum(1 for r in abandoned if (r["tokens_output"] or 0) > 0 or (r["tokens_input"] or 0) > 0)
+
+    # aborted_after_content = the remainder (has messages, no tokens)
+    abandon_aborted_after_content = abandoned_count - abandon_empty_shell - abandon_completed_fast
+    # clamp to 0 in case of overlap edge cases
+    abandon_aborted_after_content = max(0, abandon_aborted_after_content)
+
+    # Model distribution (bounded to top-10)
+    model_dist = dict(Counter(r["model"] for r in rows if r["model"] is not None).most_common(10))
 
     friction_signals = []
     if zero_cost_count > 0:
@@ -621,7 +660,10 @@ def _ingest_opencode(window_start: datetime) -> dict:
             {
                 "signal": "error_parts",
                 "count": error_part_count,
-                "description": f"{error_part_count} message parts contain 'error' substring",
+                "description": (
+                    f"{error_part_count} error-flagged parts "
+                    "(v2: tool blocks finished with status=error; legacy: 'error' substring)"
+                ),
             }
         )
     if abandoned_count > 0:
@@ -657,8 +699,11 @@ def _ingest_opencode(window_start: datetime) -> dict:
             f" aborted_after_content={abandon_aborted_after_content}"
         )
 
-    quality_notes.append(f"All queries bounded with LIMIT; window filter on time_created >= {window_ms}")
-    quality_notes.append("Data field (JSON blob) not parsed — pattern match only for error detection")
+    quality_notes.append(
+        f"Per-store session query bounded with LIMIT 5000; window filter on time_created >= {window_ms}; "
+        f"{len(stores)} store(s) merged by session id (live v2 store is a superset of the frozen legacy one)"
+    )
+    quality_notes.append("Error signal: v2 tool-block status=error; legacy 'error' substring on part data")
     quality_notes.append("D-gap-1 classification: token/message presence only; no message text read (PII firewall)")
 
     return {
@@ -1430,17 +1475,21 @@ def _oldest_codex() -> str | None:
 
 
 def _oldest_opencode() -> str | None:
-    db = VENDOR_REGISTRY["opencode"]["path"]
-    if not db.is_file():
+    oldest: int | None = None
+    for db in opencode_estate_stores():
+        con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=10)
+        try:
+            # v2 is a superset of the frozen legacy table (same ids, plus everything since 2026-10-01)
+            has_v2 = con.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'session_v2'").fetchone()
+            table = "session_v2" if has_v2 else "session"
+            row = con.execute(f"SELECT MIN(COALESCE(time_created, time_updated)) FROM {table}").fetchone()
+        finally:
+            con.close()
+        if row and row[0] and (oldest is None or row[0] < oldest):
+            oldest = row[0]
+    if oldest is None:
         return None
-    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=10)
-    try:
-        row = con.execute("SELECT MIN(COALESCE(time_created, time_updated)) FROM session").fetchone()
-    finally:
-        con.close()
-    if not row or not row[0]:
-        return None
-    return _iso(datetime.fromtimestamp(row[0] / 1000, tz=timezone.utc))
+    return _iso(datetime.fromtimestamp(oldest / 1000, tz=timezone.utc))
 
 
 def _oldest_copilot() -> str | None:

@@ -1,0 +1,18 @@
+Session session_01Tq5hLA9iPoPcYacFesH2HG — scoped verification (2026-10-17 UTC)
+Every predicate below was run bare and its own exit code was read.
+
+Limen
+- merge-policy.sh 2901 --repo 4444J99/limen --expected-head 68c8d242219e95c4d499dd71c03f0188d4884e0e -> exit 0, CLEARED
+- merge-base --is-ancestor 46ae311a5a073bdebc11f4195a2e0430221efb67 5d7f2ef70c16c02d35da664e065b53e5d42523ae -> exit 0
+- domus-limen-runtime install --sha 5d7f2ef70c16c02d35da664e065b53e5d42523ae -> exit 0, status installed, so the bounded #2901 entrypoint is live
+- domus-limen-runtime activate-heartbeat --expected-plan-sha256 4d4624bd09d24f7d8fa80d662b6c32a3c1103a1603d8f2a2f823d1f59369b253 -> exit 0, activated, verified true, consecutive_system_failures 0
+- sync-release.sh --check (LIMEN_ROOT=/Users/4jp/Workspace/limen) -> exit 0, PASS: the live root is exact origin/main and clean
+
+Domus (4444J99/domus-genoma-private)
+- #496 head f238792adf7470a4d7f13652accda0e59594d258: tests/test_domus_limen_runtime.py -> 61 passed, exit 0
+- #497 head 0042434fb1d559802f0a0602ba563d3577ee7918: full tests/ -> 1060 passed. The 19 failures are identical on the untouched base cebff8df (Python 3.15 load_module, yamllint without yaml, a settings template count). The four-lens panel passed after one fix round.
+- chezmoi apply of ~/.local/bin/domus-limen-runtime, ~/.local/libexec/agent_hook_policy.py and ~/.local/libexec/hook_evidence.py, each preceded by chezmoi diff -> exit 0
+- guard-liveness-check.sh -> exit 0, ALL PASS
+- Live observation readback: client_surface cli, source env:CLAUDE_CODE_ENTRYPOINT, client_version 2.1.302, code identity aeb4873b…
+
+Not run: the full Limen CLI suite. #2901's last session reached 99% with zero failures before the 240 s shared deadline. This session changed no Limen code.
