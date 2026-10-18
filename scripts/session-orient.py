@@ -238,6 +238,22 @@ def section_git():
     return f"**Git** — {branch}{pos} · {dirty}{sha}{base} · {label}"
 
 
+def section_claude_registration():
+    """A hook on disk does not prove that a running job loaded it."""
+    job = os.environ.get("CLAUDE_JOB_DIR")
+    if not job:
+        return ""
+    log = _read_text(Path(job) / "tmp/conduct-register.log", limit_bytes=4096)
+    lines = log.splitlines()
+    if lines and " registered session=" in lines[-1]:
+        return ""
+    return (
+        "**Claude binding unobserved** — this job may predate the registration hook. "
+        "From its worktree, run scripts/bind-running-claude-session.py with the exact "
+        "native --session-id and --worktree; require its live readback before closeout."
+    )
+
+
 def section_lifecycle_pressure():
     """Local/remote lifecycle pressure from the last SessionEnd refresh."""
     txt = _read_text(ROOT / "logs" / "session-lifecycle-pressure.md", limit_bytes=1024)
@@ -431,6 +447,11 @@ def section_phase() -> str:
 
 
 def main():
+    if "--claude-binding-warning" in sys.argv[1:]:
+        warning = section_claude_registration()
+        if warning:
+            print(warning)
+        return
     sections = (
         section_north_star,
         section_phase,

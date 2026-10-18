@@ -21,6 +21,11 @@ fi
 GEN="$ROOT/scripts/session-orient.py"
 DIGEST="$ROOT/logs/session-orientation.md"
 
+# This job-specific warning is fresh even when the shared digest falls back to cache.
+if [ -n "${CLAUDE_JOB_DIR:-}" ] && command -v python3 >/dev/null 2>&1; then
+  python3 "$GEN" --claude-binding-warning 2>/dev/null || true
+fi
+
 # Primary: regenerate fresh (lean + read-only) under a hard timeout; the generator
 # prints the digest to stdout AND refreshes $DIGEST. No-op cleanly outside limen
 # (no generator present -> fall through). `timeout` is absent on stock macOS, so
