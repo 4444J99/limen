@@ -130,6 +130,27 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    Library/Application Support moves, `~/.agents/teamwork`, and #502's human gate (GitHub/Serena/Jupyter MCP vs `ianva`
    for OpenCode) — OpenCode's gate, already filed; not re-raised.
 
+## Reconciliation of the two OpenCode sessions (vendor-insights, AGENTS.md rewrite)
+
+Both pasted sessions closed with "pending" states. Each was re-read against `origin/main` and GitHub on 2026-10-18;
+three of the four pending claims had already resolved, so nothing from them becomes a new work item.
+
+| Pasted claim | Live state | Disposition |
+|---|---|---|
+| PR #2949 (vendor-insights store resolution) is open, hold for review | `MERGED` 2026-10-18T01:42Z; `insight-cross-vendor-ingest.py` on main resolves the per-workspace `.agent-runtime/*/opencode.db` roots via `extra_root_globs` | Landed. Accept the finding (moved stores read as false zero); no action |
+| `docs/agent-docs-repo-map-fixes` is unpushed (custody copy only) | Pushed at 3b346f6; PR #2976 closed unmerged *by design*, superseded by #2985, which carries 3b346f6 plus the six Codex-finding fixes; #2985 is on main | Landed. The custody copy is redundant but kept (never deleted) |
+| `.venv` paths in instruction files break `check-agent-docs.py` in fresh clones | `AGENTS.md` on main routes through `scripts/lib/gate-python.sh` and says never hardcode a `.venv` path | Landed. Accept; no action |
+| `stash@{0}` is an unowned vendor-insights WIP | The stash is labelled `pre-D3 realign 2026-10-17: shared-checkout WIP` and names its preservation copy in the private custody repo | Owned and preserved, not unowned. Do not pop, apply, or drop it from this plan; its owner closes it |
+| Outbound guard is wired unevenly across lanes | Absent from *both* the Claude and Codex runtime configs (uniformly unarmed), with a standing arming runbook (`docs/runbooks/outbound-preflight-arming.md`) | Reject "uneven"; it is a filed human lever, not re-raised here |
+
+Two durable lessons, recorded here because no other surface owns them:
+1. A pasted session's "pending" list is a snapshot. In this case it was hours stale on every item, so re-verify against
+   `origin/main` and `gh` before turning any of it into work. Ancestry alone misleads on squash repos; the PR #2976
+   closure shows a closed-unmerged PR can still be fully landed through its successor.
+2. **Item 3 gets a measured size:** the live `opencode.db` is 3.07 GB (the legacy-share copy is 8 MB), modified the same
+   day. That is the same large, same-day-written, no-named-prune-owner class item 3 already names for `vm_bundles`; add
+   `opencode.db` to item 3's scope (owner + bounded prune predicate, no symlink). Growth rate is not yet measured.
+
 ## Execution rails
 - Writer lease first: `python3 scripts/host-work-admission.py status --no-probe` should report `allowed: true`. It
   reported `false` (swap-fraction, 14 Codex leases) on 2026-10-18; this docs-only worktree was created under an explicit
