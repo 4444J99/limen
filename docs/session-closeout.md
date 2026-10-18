@@ -26,6 +26,27 @@ An absent registration requires `--native-transcript PATH` witnessing the exact 
 Codex ID, plus the same published owner receipt; absence alone never means no obligations.
 Do not publish raw transcripts or private artifact paths in the receipt.
 
+## Background Claude jobs
+
+A background job is a direct session nobody launched through `start-worktree-session.sh --conduct`,
+so it has no broker binding and this checker exits 2 (`no broker binding or exact native-session
+witness`). `scripts/hooks/conduct-register.sh`, wired from `.claude/settings.json` on `SessionStart`
+and `PostToolUse`, gives it the same human-protected direct registration through the launcher's own
+`workstream_register_conduct_session`. It acts only when `CLAUDE_JOB_DIR` is set, only once the
+session's cwd is inside `.claude/worktrees/<name>` (the shared checkout is never claimed), and
+at most once per `LIMEN_CONDUCT_REGISTER_INTERVAL_SECS` (default 120; the broker TTL is 5 minutes).
+Registration reflects the worktree at the last tool call; a job paused longer than the TTL is
+registered but not healthy, which the checker does not read. Failures are logged to
+`$CLAUDE_JOB_DIR/tmp/conduct-register.log` and never block the session.
+
+**Identity is the bearer, not `--agent`.** The broker overwrites a session's agent and surface with
+its bearer's principal, and pins a session id to its first identity: a second registration under
+another is a 409 and no deregister exists. The hook therefore registers only with
+`LIMEN_CONDUCT_TOKEN_CLAUDE` (principal `claude-direct`) and refuses, in the log, rather than fall
+back to the default `LIMEN_CONDUCT_TOKEN` (legacy `codex-direct-legacy`), which would label the job
+Codex permanently. Never probe registration against the real broker with a real session id; use a
+throwaway id and read the broker record back first. Held by `conduct-register-hook-test`.
+
 ## Existing owner receipt
 
 Store `limen.session_closeout.v1` in the existing continuation's `session-closeout.json`.

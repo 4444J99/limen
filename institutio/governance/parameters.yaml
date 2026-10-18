@@ -1742,6 +1742,18 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Credential-wall bearer for a dynamically discovered executor plugin that explicitly declares this environment reference. It must bind an executor-only principal and is never reused as the conductor token or by another adapter."
+  LIMEN_CONDUCT_TOKEN_CLAUDE:
+    default: ""
+    env: LIMEN_CONDUCT_TOKEN_CLAUDE
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Conduct bearer bound to the claude-direct principal. scripts/hooks/conduct-register.sh registers background Claude jobs with it and ONLY it: the broker labels a session by its bearer's principal and pins a session id to its first identity, so the default LIMEN_CONDUCT_TOKEN (legacy codex-direct-legacy) would label a Claude job codex permanently. Absent, the hook refuses and logs; it never falls back. The value stays private."
+  LIMEN_CONDUCT_REGISTER_INTERVAL_SECS:
+    default: "120"
+    env: LIMEN_CONDUCT_REGISTER_INTERVAL_SECS
+    self_update: none
+    owner: dispatch
+    note: "Minimum seconds between conduct registration attempts by scripts/hooks/conduct-register.sh for one session and worktree. Below the 5-minute broker session TTL by design; 0 disables the throttle (tests only)."
   LIMEN_CONDUCT_TOKEN_JULES:
     default: ""
     env: LIMEN_CONDUCT_TOKEN_JULES

@@ -68,6 +68,11 @@
           {
             "type": "command",
             "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/session-orient.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/session-orient.sh\" || true"
+          },
+          {
+            "type": "command",
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" ] && \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" || true",
+            "timeout": 15
           }
         ]
       }
@@ -98,6 +103,16 @@
           {
             "type": "command",
             "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/lint-edited-file.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/lint-edited-file.sh\" || true"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" ] && \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" || true",
+            "timeout": 15
           }
         ]
       }
