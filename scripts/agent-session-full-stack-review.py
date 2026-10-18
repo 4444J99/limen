@@ -14,10 +14,14 @@ import json
 import os
 import re
 import sqlite3
+import sys
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Iterator
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+from limen.session_sources import resolve_opencode_db  # noqa: E402
 
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -34,7 +38,7 @@ CODEX_SESSIONS = HOME / ".codex" / "sessions"
 CODEX_HISTORY = HOME / ".codex" / "history.jsonl"
 CLAUDE_PROJECTS = HOME / ".claude" / "projects"
 CLAUDE_TASKS = HOME / ".claude" / "tasks"
-OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
+OPENCODE_DB = resolve_opencode_db()
 GEMINI_TMP = HOME / ".gemini" / "tmp"
 AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
 AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"

@@ -7,12 +7,38 @@ the fanout planner.  Raw transcript bodies remain in their native stores.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 PRIMARY_SESSION_AGENTS = frozenset({"agy", "claude", "codex", "copilot", "opencode"})
+
+
+def resolve_opencode_db(home: Path | None = None, env: Mapping[str, str] | None = None) -> Path:
+    """Return the live OpenCode database path.
+
+    OpenCode keeps its data root inside the shared agent runtime, so the live store is
+    ``<runtime>/opencode/data/opencode/opencode.db``; ``~/.local/share/opencode`` is a symlink to a frozen
+    ``legacy-share`` copy. A reader pinned to the legacy path measures a different, far smaller database and
+    reports it as the real one. Order: explicit ``LIMEN_OPENCODE_DB``, the runtime store, then the legacy home
+    path (returned even when absent so callers report it as missing, never as empty).
+
+    An explicit ``home`` makes the result a pure function of that tree: the process environment is consulted
+    only when neither ``home`` nor ``env`` is given, so a test with a fake home can never reach the real store.
+    """
+
+    env = os.environ if (env is None and home is None) else (env or {})
+    home = (home or Path.home()).expanduser()
+    explicit = env.get("LIMEN_OPENCODE_DB")
+    if explicit:
+        return Path(explicit).expanduser()
+    runtime = Path(env.get("LIMEN_AGENT_RUNTIME_ROOT") or home / "Workspace" / "limen" / ".agent-runtime").expanduser()
+    live = runtime / "opencode" / "data" / "opencode" / "opencode.db"
+    if live.is_file():
+        return live
+    return home / ".local" / "share" / "opencode" / "opencode.db"
 
 
 @dataclass(frozen=True)
@@ -79,6 +105,7 @@ def _sqlite_latest(path: Path, agent: str) -> SessionSource | None:
 def discover_sources(home: Path | None = None) -> dict[str, SessionSource | None]:
     """Return the newest native session for each primary interactive agent."""
 
+    explicit_home = home
     home = (home or Path.home()).expanduser()
     codex = _latest_jsonl(home / ".codex" / "sessions")
     claude = _latest_jsonl(home / ".claude" / "projects", exclude_parts=frozenset({"subagents"}))
@@ -98,7 +125,7 @@ def discover_sources(home: Path | None = None) -> dict[str, SessionSource | None
             else SessionSource("copilot", copilot.locator, copilot.session_id, copilot.format, copilot.updated_ns)
         ),
         "agy": _sqlite_latest(home / ".gemini" / "antigravity-cli" / "conversation_summaries.db", "agy"),
-        "opencode": _sqlite_latest(home / ".local" / "share" / "opencode" / "opencode.db", "opencode"),
+        "opencode": _sqlite_latest(resolve_opencode_db(explicit_home), "opencode"),
     }
 
 

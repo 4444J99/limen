@@ -19,6 +19,7 @@ from typing import Any
 HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser()
 sys.path.insert(0, str(ROOT / "cli" / "src"))
+from limen.session_sources import resolve_opencode_db  # noqa: E402
 
 DOC_PATH = ROOT / "docs" / "substrate-storage-pressure.md"
 PRIVATE_PATH = ROOT / ".limen-private" / "session-corpus" / "lifecycle" / "substrate-storage-pressure.json"
@@ -34,7 +35,7 @@ OPENCODE_INTAKE_LOG = ROOT / "logs" / "opencode-db-corpus-intake.jsonl"
 BUCKETS = (
     {
         "id": "opencode-db",
-        "path": "~/.local/share/opencode/opencode.db",
+        "path": str(resolve_opencode_db()).replace(str(HOME), "~", 1),
         "class": "protected-agent-state",
         "owner": "aw-opencode-db-corpus-intake-0709",
         "gate": "extract/export into prompt-corpus intake before vendor retention decision; never delete outright",

@@ -979,11 +979,11 @@ parameters:
     owner: continuity
     note: "External archive SSD root used for durable custody receipts and run-and-gun substrate checks."
   LIMEN_OPENCODE_DB:
-    default: "$HOME/.local/share/opencode/opencode.db"
+    default: "$LIMEN_AGENT_RUNTIME_ROOT/opencode/data/opencode/opencode.db"
     env: LIMEN_OPENCODE_DB
     self_update: none
     owner: continuity
-    note: "OpenCode SQLite history database used by opencode-db-corpus-intake.py for private prompt-corpus preservation receipts. Protected agent state; never deleted by the intake tool."
+    note: "OpenCode SQLite history database (live store under the agent runtime root; the legacy $HOME/.local/share/opencode copy is a frozen symlink target and is only a fallback, resolved by limen.session_sources.resolve_opencode_db) used by opencode-db-corpus-intake.py for private prompt-corpus preservation receipts. Protected agent state; never deleted by the intake tool."
   LIMEN_OPENCODE_DB_ARCHIVE_ROOT:
     default: "/Volumes/Archive4T/limen-private/opencode-db-intake"
     env: LIMEN_OPENCODE_DB_ARCHIVE_ROOT
