@@ -27,6 +27,7 @@ for _path in (str(CLI_SRC), str(SCRIPTS)):
         sys.path.insert(0, _path)
 
 SHARED_ASK = "Draft the quarterly synthetic summary for the shared fixture now."
+SHORT_ASK = "Quarterly synthetic roadmap"
 
 STUB_ENGINE = r"""
 import hashlib, json, os, sys
@@ -38,7 +39,8 @@ KINDS = ["archive", "conversation", "message", "thread", "family", "pair", "acti
          "check", "fixture", "provider", "month", "topic", "collection", "home", "coverage", "guide"]
 PROVIDERS = ("chatgpt", "claude") + (("notebooklm",) if "zero-row-provider" in FAULTS else ())
 SHARED_ASK = "Draft the quarterly synthetic summary for the shared fixture now."
-ELIGIBLE = {"chat", "search", "activity"}
+SHORT_ASK = "Quarterly synthetic roadmap"
+ELIGIBLE ={"chat", "search", "activity"}
 
 
 def option(name):
@@ -60,6 +62,7 @@ def source_conversations(provider):
              message(2, "assistant", "reply", "Synthetic reply text one."),
              message(3, "assistant", "thinking", "Synthetic thinking text."),
              message(4, "user", "typed", f"Outline the synthetic {provider} migration plan with exact steps."),
+             *([message(7, "user", "typed", SHORT_ASK)] if "short-ask" in FAULTS else []),
          ],
          "extra": {"alternate_messages": [
              message(5, "user", "typed", f"Reword the synthetic {provider} outline in plain steps.")]}},
@@ -275,6 +278,8 @@ markdown.parent.mkdir(parents=True, exist_ok=True)
 leaked = rows[0]["occurrence"]["source_locator"].split("#")[0] if rows and "leak" in FAULTS else ""
 if texts and "leak-text" in FAULTS:
     leaked = texts[0]
+if "leak-short" in FAULTS:
+    leaked = "Quarterly synthetic roadmap"
 markdown.write_text(f"# Ledger\n\nCounts only: {len(rows)} occurrences. {leaked}\n")
 Path(option("--public-snapshot")).write_text(json.dumps({"occurrences": len(rows)}))
 Path(option("--public-seal")).write_text(json.dumps({"ok": True}))
@@ -554,6 +559,46 @@ def test_composition_problem_holds_a_feed_to_its_receipt_only(module):
     assert "no excluded counts" in module.composition_problem({**receipt, "excluded": None}, rows)
     for broken in ({"rows": True}, {"messages_seen": "5"}, {"excluded": {"empty-text": -1}}, {"alternate_rows": 1.0}):
         assert "whole number" in module.composition_problem({**receipt, **broken}, rows)
+
+
+def test_a_short_typed_phrase_in_a_public_file_is_shared_vocabulary_not_a_leak(stubs):
+    done = _run(stubs, "--fixture", STUB_FAULT="short-ask,leak-short")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert done.stdout.splitlines()[-1].startswith("ALIVE ")
+
+
+def test_a_full_typed_sentence_in_a_public_file_fails_check_eight(stubs):
+    done = _run(stubs, "--fixture", STUB_FAULT="short-ask,leak-text")
+    assert done.returncode == 1, done.stdout + done.stderr
+    assert "check 8 privacy: FAIL a public file holds an exact private value" in done.stdout
+    assert done.stdout.splitlines()[-1] == "NOT ALIVE: privacy"
+    assert SHARED_ASK not in done.stdout
+
+
+def test_typed_text_enters_the_leak_index_only_as_a_full_sentence(module):
+    sentence = "Draft the quarterly synthetic summary for the shared fixture now."
+    many_short_words = "Draft the roadmap for the team"  # 6 words but only 30 characters
+    few_long_words = (
+        "Supercalifragilistic extraordinarily internationalization considerations"  # 4 words, 70+ characters
+    )
+    at_the_floor = "Draft the quarterly synthetic summary for"  # exactly 6 words and 41 characters
+    rows = [{"text": text} for text in (SHORT_ASK, many_short_words, few_long_words, at_the_floor, f"  {sentence}\n")]
+    state = {"journal_hashes": set(), "feeds": {"chatgpt": {"rows": rows}}, "providers": []}
+    values = module.collect_private_values(None, state)
+    typed = {value for value in values if " " in value}
+    assert typed == {sentence, at_the_floor}
+    assert module.MINIMUM_TYPED_WORDS == 6 and module.MINIMUM_TYPED_CHARACTERS == 40
+
+
+def test_ids_and_titles_keep_the_plain_length_floor(module, tmp_path):
+    folder = tmp_path / "provider-chatgpt"
+    folder.mkdir()
+    (folder / "index-chatgpt-conversations.jsonl").write_text(
+        json.dumps({"uid": "chatgpt-conv-alpha", "title": "Synthetic planning thread"}) + "\n", encoding="utf-8"
+    )
+    context = SimpleNamespace(archive_root=tmp_path)
+    state = {"journal_hashes": set(), "feeds": {}, "providers": ["chatgpt"]}
+    assert {"chatgpt-conv-alpha", "Synthetic planning thread"} <= module.collect_private_values(context, state)
 
 
 def test_a_provider_with_an_empty_feed_and_a_zero_row_receipt_is_alive(stubs):

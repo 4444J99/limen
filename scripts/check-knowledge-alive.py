@@ -32,7 +32,8 @@ The ten checks:
                       messages seen; no eligibility rule is recounted here), re-projects byte for byte, and
                       every row is an unknown-authority occurrence in the ledger; no operator authority
    7 recurring forms  the form builder verifies byte for byte and the form invariants hold
-   8 privacy          roots are git-ignored or outside a work tree; no exact private value is public
+   8 privacy          roots are git-ignored or outside a work tree; no conversation id, title, message id,
+                      prompt hash or full typed sentence (6 words and 40 characters or more) is in a public file
    9 receipt          (live) the counts-only receipt for the current fingerprint exists
   10 determinism      the checks, run twice in-process, print identical bytes
 
@@ -112,6 +113,12 @@ ARCHIVE_PROVENANCE = "unknown_user_input"
 ALTERNATE_BRANCH_FLAG = "alternate"
 FINGERPRINT_PREFIX_LENGTH = 16
 MINIMUM_SCANNED_VALUE_LENGTH = 12
+# A typed ask enters the leak index only as a full sentence. A short ask ("two or three words") is shared
+# vocabulary: the estate's own project names are also things the operator once typed, and the public tree
+# legitimately uses them, so matching them exactly is noise, not a leak. Conversation ids, titles, message
+# ids and hashes are not prose and keep the plain length floor above.
+MINIMUM_TYPED_WORDS = 6
+MINIMUM_TYPED_CHARACTERS = 40
 MAXIMUM_INDEX_VALUE_LENGTH = 200
 MAXIMUM_PUBLIC_FILE_BYTES = 20_000_000
 MAXIMUM_NAME_LENGTH = 80
@@ -1007,9 +1014,11 @@ def collect_private_values(ctx: Context, state: State) -> set[str]:
         for row in loaded["rows"]:
             text = str(row.get("text") or "")
             values.add(hashlib.sha256(text.encode("utf-8")).hexdigest())
-            # The typed text itself. Only an exact copy (after strip) is found, so a public file that rewraps or
-            # edits an ask is a design limit of an exact-value scan; build_leak_index drops the short ones.
-            values.add(text.strip())
+            # The typed text itself, once it is a full sentence. Only an exact copy (after strip) is found, so a
+            # public file that rewraps or edits an ask is a design limit of an exact-value scan.
+            sentence = text.strip()
+            if len(sentence.split()) >= MINIMUM_TYPED_WORDS and len(sentence) >= MINIMUM_TYPED_CHARACTERS:
+                values.add(sentence)
     for provider in state["providers"]:
         index_path = index_file(ctx, provider)
         conversations_path = conversations_file(ctx, provider)

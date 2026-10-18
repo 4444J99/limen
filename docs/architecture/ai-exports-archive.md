@@ -113,7 +113,7 @@ last line is `ALIVE <16hex>`, `NOT ALIVE: <check name>` or `UNUSABLE: <reason>`.
 | 5 | feed receipts | one feed and one receipt per provider, bound to fingerprint and feed bytes |
 | 6 | ledger binding | each feed holds the rows, alternate rows and exclusions its receipt declares (rows plus excluded equal messages seen), feeds reproject byte for byte, and every row is in the ledger as unknown authority |
 | 7 | recurring forms | the form builder verifies and the form invariants hold |
-| 8 | privacy | roots are Git-ignored and no exact private value appears in a public file |
+| 8 | privacy | roots are Git-ignored and no conversation id, title, message id or full typed sentence (6 words and 40 characters or more; shorter asks are shared vocabulary) appears in a public file |
 | 9 | receipt | live only: the counts-only receipt for the current fingerprint exists |
 | 10 | determinism | a second pass prints identical bytes |
 
