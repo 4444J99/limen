@@ -18,7 +18,9 @@
         "cli/src/limen/action_admission.py",
         "cli/src/limen/action_admission_runtime.py",
         "cli/tests/test_codex_host_admission_hook.py",
-        "docs/continuations/prompt-sequence-study-20261018/handoff.json"
+        "docs/continuations/prompt-sequence-study-20261018/handoff.json",
+        "docs/continuations/prompt-sequence-study-20261018/bootstrap-domus.sh",
+        "docs/continuations/prompt-sequence-study-20261018/domus-host-contracts.proposed.patch"
       ],
       "retained_work": []
     }
@@ -30,7 +32,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 0,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
+      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
     },
     {
       "root_id": "repair",
@@ -38,7 +40,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 1,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017",
+      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517",
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/3087"
     }
@@ -49,7 +51,7 @@
       "repair"
     ],
     "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-    "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
+    "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
   },
   "external_effects": [
     {
@@ -58,14 +60,22 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/issues/3056",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
+      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
     },
     {
       "id": "currency-reconciliation",
       "kind": "deployment-readback",
       "verified": true,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
+      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
+    },
+    {
+      "id": "process-source-repair",
+      "kind": "unfinished-source-repair",
+      "verified": false,
+      "owner_url": "https://github.com/4444J99/limen/pull/3087",
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
     }
   ]
 }

@@ -99,7 +99,7 @@
       "predicate": "Native-source reconciliation, provider coverage and held-out semantic substitution validation."
     }
   ],
-  "scope": "Original native caller is preserved separately from this session's newly created repair worktree. The sibling study worktree and PR #3067 are not adopted or changed.",
+  "scope": "Original native anchor and all accepted scope roots retained. No sibling checkout was adopted, edited, or used for verification. Domus shared main was read only.",
   "external_effects": {
     "release_sync": "sync-release.sh advanced the live checkout to 056262d; live checker returned coherent.",
     "runtime_rotation": "domus-limen-runtime installed exact merged 056262d; runtime lag checker returned zero.",
@@ -121,6 +121,31 @@
     "owned_survivor": 0,
     "contracts_available": 102,
     "matching_shared_service_instances": 0,
-    "note": "Live processes require positive native/service attribution. No process was stopped, adopted, relabeled or excluded to manufacture a passing result. PID identities and raw argv remain private."
+    "note": "Live processes require positive native/service attribution. No process was stopped, adopted, relabeled or excluded to manufacture a passing result. PID identities and raw argv remain private.",
+    "source_owner": "4444J99/domus-genoma-private",
+    "source_path": ".chezmoidata/config-ownership.json",
+    "source_blob": "95bf1b6c613dc949dc43db44d95363374325bce6",
+    "root_cause": "Both observed app-server argv forms differ from the two declared exact host contracts. No shared service instance matched. App configuration and analytics arguments are absent from the declarations.",
+    "proposed_correction": "domus-host-contracts.proposed.patch adds only the two observed exact argv forms and preserves existing hosts, fail-closed unknowns, and individual-contract-only descendants. Unapplied and untested in source; not a verified fix."
+  },
+  "source_repair_admission": {
+    "created_checkout": false,
+    "bootstrap_attempted": true,
+    "interpreter_dependency": "Resolved through installed runtime interpreter",
+    "conduct_environment": "Documented bootstrap hydrated successfully",
+    "remaining_gate": "execution_work_key_required",
+    "owner_url": "https://github.com/4444J99/limen/pull/3087",
+    "next_command": "From this owned Limen checkout: bash docs/continuations/prompt-sequence-study-20261018/bootstrap-domus.sh --apply APPROVED_WORK_KEY ADMITTED_NEW_DESTINATION",
+    "acceptance": "Approved execution-policy work key for this exact outcome; canonical worktree reservation succeeds; apply the proposed patch only in that new owned Domus checkout, add regression coverage, run source tests, publish, merge and deploy from its owner."
+  },
+  "host_pressure": {
+    "allowed": false,
+    "swap_fraction": 0.7401391601306386,
+    "vitals_action": "shed",
+    "reasons": [
+      "swap-fraction",
+      "vitals-shed"
+    ],
+    "observed_at": "2026-10-18T18:01:15.312597+00:00"
   }
 }
