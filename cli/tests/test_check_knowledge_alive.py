@@ -244,7 +244,13 @@ if rows and "ledger-operator" in FAULTS:
 journal = Path(option("--private-root")) / "prompt-atoms" / "prompt-events.jsonl"
 journal.parent.mkdir(parents=True, exist_ok=True)
 journal.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
-markdown = Path(option("--public-markdown"))
+checkpoint_rows = rows[:-1] if rows and "snapshot-drop" in FAULTS else rows
+sources = {}
+for row in checkpoint_rows:
+    sources[row["occurrence"]["source"]] = sources.get(row["occurrence"]["source"], 0) + 1
+(journal.parent / "prompt-atom-ledger.json").write_text(json.dumps(
+    {"coverage": {"occurrences": len(checkpoint_rows)}, "counts": {"sources": sources}}))
+markdown =Path(option("--public-markdown"))
 markdown.parent.mkdir(parents=True, exist_ok=True)
 leaked = rows[0]["occurrence"]["source_locator"].split("#")[0] if rows and "leak" in FAULTS else ""
 if texts and "leak-text" in FAULTS:
@@ -438,6 +444,7 @@ FAULT_CASES = [
     ("source-name", "ledger binding"),
     ("ledger-drop", "ledger binding"),
     ("ledger-operator", "ledger binding"),
+    ("snapshot-drop", "ledger binding"),
     ("forms-text", "recurring forms"),
     ("forms-none", "recurring forms"),
     ("forms-verify-fails", "recurring forms"),
@@ -816,6 +823,114 @@ def test_live_mode_fails_the_registry_check_when_the_store_is_not_declared(
     out = capsys.readouterr().out.splitlines()
     assert out[-1] == "NOT ALIVE: registry"
     assert out[0].startswith("check 1 tools: ok") and out[1].startswith("check 2 names: ok")
+
+
+@pytest.mark.parametrize(
+    ("which", "reason"),
+    [
+        ("store", "the registered store is not the store under check"),
+        ("archive", "the registered archive is not the archive under check"),
+    ],
+)
+def test_live_mode_requires_the_registry_to_name_the_store_under_check(
+    module, stubs, tmp_path, monkeypatch, capsys, which, reason
+):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    import corpus_resolve
+
+    root = tmp_path / "another-store" if which == "store" else context.store_root
+    row = {"store": "limen-private-archive"}
+    if which == "archive":
+        row["path"] = "somewhere-else"
+    registry = {"stores": {"limen-private-archive": {"root": str(root)}}, "corpora": {"archive-all": row}}
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.setattr(corpus_resolve, "load_registry", lambda: registry)
+    monkeypatch.setattr(corpus_resolve, "corpus_home", lambda: elsewhere)
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    assert module.main(_live_arguments(context, repo)) == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[2] == f"check 3 registry: FAIL {reason}"
+    assert out[-1] == "NOT ALIVE: registry"
+
+
+# --------------------------------------------------------------------------- robustness
+
+
+def test_an_unexpected_exception_fails_that_check_with_its_type_only(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+
+    def explode(ctx, state):
+        raise RuntimeError(f"unexpected {SHARED_ASK} at /private/path")
+
+    checks = tuple((name, explode if name == "recurring forms" else function) for name, function in module.CHECKS)
+    monkeypatch.setattr(module, "CHECKS", checks)
+    lines, code = module.evaluate(context)
+    assert code == 1
+    assert lines[5].startswith("check 6 ledger binding: ok")
+    assert lines[6] == "check 7 recurring forms: FAIL internal error in recurring forms (RuntimeError)"
+    assert all(line.endswith(": not run") for line in lines[7:10])
+    assert lines[-1] == "NOT ALIVE: recurring forms"
+    assert SHARED_ASK not in "\n".join(lines) and "/private/path" not in "\n".join(lines)
+
+
+def test_an_unusable_environment_inside_a_check_is_not_swallowed(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+
+    def unusable(ctx, state):
+        raise module.Unusable("git is unavailable")
+
+    checks = tuple((name, unusable if name == "privacy" else function) for name, function in module.CHECKS)
+    monkeypatch.setattr(module, "CHECKS", checks)
+    with pytest.raises(module.Unusable):
+        module.evaluate(context)
+
+
+@pytest.mark.parametrize("bad_line", [b"{not json SENTINEL-TEXT\n", b"[1, 2, 3]\n", b"\xff\xfe SENTINEL-TEXT\n"])
+def test_a_malformed_row_fails_its_check_with_the_line_number_only(module, stubs, tmp_path, monkeypatch, bad_line):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    conversations = context.archive_root / "provider-chatgpt" / "collection-chatgpt-conversations.jsonl"
+    with conversations.open("ab") as handle:
+        handle.write(bad_line)
+    lines, code = module.evaluate(context)
+    assert code == 1
+    assert (
+        lines[5] == "check 6 ledger binding: FAIL line 3 of collection-chatgpt-conversations.jsonl is not a JSON object"
+    )
+    assert lines[-1] == "NOT ALIVE: ledger binding"
+    assert "SENTINEL" not in "\n".join(lines)
+
+
+def test_read_rows_names_the_line_of_a_malformed_row(module, tmp_path):
+    path = tmp_path / "rows.jsonl"
+    path.write_bytes(b'{"a": 1}\n\n{"b": \n')
+    with pytest.raises(module.MalformedRow) as raised:
+        list(module.read_rows(path))
+    assert str(raised.value) == "line 3 of rows.jsonl is not a JSON object"
+    assert isinstance(raised.value, ValueError)
+
+
+def test_a_missing_private_ledger_snapshot_fails_the_ledger_binding(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    (context.private_dir / "prompt-atom-ledger.json").unlink()
+    lines, code = module.evaluate(context)
+    assert code == 1
+    assert lines[5] == "check 6 ledger binding: FAIL the private ledger snapshot is missing or unreadable"
+
+
+def test_a_snapshot_short_of_a_journal_archive_occurrence_is_named(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    snapshot = context.private_dir / "prompt-atom-ledger.json"
+    body = json.loads(snapshot.read_text())
+    body["counts"]["sources"]["archive-chatgpt-messages"] -= 1
+    snapshot.write_text(json.dumps(body))
+    lines, code = module.evaluate(context)
+    assert code == 1
+    assert (
+        lines[5] == "check 6 ledger binding: FAIL the private ledger snapshot lacks an archive occurrence "
+        "that is in the journal"
+    )
 
 
 # --------------------------------------------------------------------------- pure pieces

@@ -73,6 +73,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections import Counter
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -87,6 +88,7 @@ for _path in (str(CLI_SRC), str(Path(__file__).resolve().parent)):
 from limen.prompt_corpus import (  # noqa: E402
     LedgerPaths,
     load_event_journal,
+    load_json_strict,
     load_jsonl_strict,
     occurrence_from_event,
 )
@@ -344,14 +346,30 @@ def read_json(path: Path) -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
 
 
+class MalformedRow(ValueError):
+    """A line of a JSON-lines file is not a JSON object. It names the file and the line, never the content."""
+
+    def __init__(self, name: str, line_number: int) -> None:
+        super().__init__(f"line {line_number} of {name} is not a JSON object")
+
+
 def read_rows(path: Path) -> Iterator[dict[str, Any]]:
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
+    # Lines are decoded one at a time so a bad byte is reported at its own line, not at the start of a buffer.
+    with path.open("rb") as handle:
+        for line_number, raw in enumerate(handle, start=1):
+            try:
+                line = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                raise MalformedRow(path.name, line_number) from None
+            if not line.strip():
+                continue
+            try:
                 row = json.loads(line)
-                if not isinstance(row, dict):
-                    raise ValueError("row is not an object")
-                yield row
+            except ValueError:
+                raise MalformedRow(path.name, line_number) from None
+            if not isinstance(row, dict):
+                raise MalformedRow(path.name, line_number)
+            yield row
 
 
 def file_sha256(path: Path) -> str:
@@ -628,6 +646,12 @@ def check_registry(ctx: Context, state: State) -> CheckResult:
     problems = registry_problems(corpus_resolve.load_registry(), ctx.store_root, corpus_resolve.corpus_home())
     if problems:
         return CheckResult(False, problems[0])
+    # The registry must name the very store under check, not another one that happens to look alike.
+    if registered_store_root().resolve() != ctx.store_root.resolve():
+        return CheckResult(False, "the registered store is not the store under check")
+    registered_archive = corpus_resolve.corpus_root(ARCHIVE_DIRECTORY_NAME)
+    if registered_archive is None or registered_archive.resolve() != ctx.archive_root.resolve():
+        return CheckResult(False, "the registered archive is not the archive under check")
     return CheckResult(True, "registry matches the store")
 
 
@@ -744,6 +768,34 @@ def reprojection_problem(ctx: Context, state: State) -> str | None:
     return None
 
 
+def snapshot_problem(paths: LedgerPaths, occurrences: list[dict[str, Any]]) -> str | None:
+    """Hold the private ledger snapshot to the journal: every archive occurrence in the journal is in it.
+
+    The private snapshot is the ledger's checkpoint, written last. It records the occurrence count and the
+    count per source family, so an archive occurrence that reached the journal but not the checkpoint shows
+    up as a count that does not match. Counts only: no id or text is read or reported.
+    """
+    snapshot, errors = load_json_strict(paths.private_snapshot)
+    if errors or not snapshot:
+        return "the private ledger snapshot is missing or unreadable"
+    counts = snapshot.get("counts")
+    by_source = counts.get("sources") if isinstance(counts, dict) else None
+    coverage = snapshot.get("coverage")
+    if not isinstance(by_source, dict) or not isinstance(coverage, dict):
+        return "the private ledger snapshot holds no occurrence counts"
+    in_journal = Counter(
+        str(row.get("source") or "")
+        for row in occurrences
+        if str(row.get("source") or "").startswith(ARCHIVE_SOURCE_PREFIX)
+    )
+    for source, count in in_journal.items():
+        if by_source.get(source) != count:
+            return "the private ledger snapshot lacks an archive occurrence that is in the journal"
+    if coverage.get("occurrences") != len(occurrences):
+        return "the private ledger snapshot count differs from the journal"
+    return None
+
+
 def check_ledger_binding(ctx: Context, state: State) -> CheckResult:
     feeds: dict[str, dict[str, Any]] = state["feeds"]
     recount = recount_eligible(ctx, list(feeds))
@@ -770,7 +822,8 @@ def check_ledger_binding(ctx: Context, state: State) -> CheckResult:
     problem = reprojection_problem(ctx, state)
     if problem is not None:
         return CheckResult(False, problem)
-    journal = LedgerPaths.for_root(ctx.ledger_root, private_root=ctx.private_root).event_journal
+    ledger_paths = LedgerPaths.for_root(ctx.ledger_root, private_root=ctx.private_root)
+    journal = ledger_paths.event_journal
     if not journal.is_file():
         return CheckResult(False, "the ledger journal is missing")
     occurrences, atoms, errors = load_event_journal(journal)
@@ -791,6 +844,9 @@ def check_ledger_binding(ctx: Context, state: State) -> CheckResult:
                 continue
             if entry.get("authority") == "operator" or entry.get("provenance") == "operator_typed":
                 return CheckResult(False, "the journal holds operator authority for an archive source")
+    problem = snapshot_problem(ledger_paths, list(present.values()))
+    if problem is not None:
+        return CheckResult(False, problem)
     state["occurrences_bound"] = len(wanted)
     state["feed_rows"] = total
     state["journal_atoms"] = {str(atom.get("atom_id")) for atom in atoms}
@@ -807,7 +863,7 @@ def check_recurring_forms(ctx: Context, state: State) -> CheckResult:
         return CheckResult(False, "the form report is missing or incomplete")
     try:
         rows = list(read_rows(ctx.private_dir / FORMS_INDEX_FILE_NAME))
-    except (OSError, ValueError):
+    except OSError:
         return CheckResult(False, "the form index is missing or unreadable")
     problems = index_problems(rows)
     if problems:
@@ -1017,7 +1073,15 @@ def run_pass(ctx: Context) -> tuple[list[str], str | None, State]:
         if failed is not None:
             lines.append(format_line(number, name, "not run"))
             continue
-        result = function(ctx, state)
+        try:
+            result = function(ctx, state)
+        except Unusable:
+            raise
+        except MalformedRow as problem:
+            result = CheckResult(False, str(problem))
+        except Exception as problem:
+            # Only the type is reported: an exception message can carry a path or a piece of row text.
+            result = CheckResult(False, f"internal error in {name} ({type(problem).__name__})")
         lines.append(format_line(number, name, result.render()))
         if not result.ok:
             failed = name
@@ -1035,8 +1099,12 @@ def evaluate(ctx: Context) -> tuple[list[str], int]:
     first_lines, failed, state = run_pass(ctx)
     pending = state.get("receipt_pending")
     if failed == "receipt" and pending is not None:
-        write_receipt_file(*pending)
-        first_lines, failed, state = run_pass(ctx)
+        try:
+            write_receipt_file(*pending)
+        except OSError:
+            first_lines[-1] = format_line(len(CHECKS), "receipt", "FAIL the receipt cannot be written")
+        else:
+            first_lines, failed, state = run_pass(ctx)
     if failed is not None:
         return [*first_lines, format_line(10, "determinism", "not run"), f"NOT ALIVE: {failed}"], 1
     second_lines, _failed, _state = run_pass(ctx)
