@@ -167,5 +167,78 @@
   "publication_update": {
     "pr_description_updated": false,
     "reason": "Host command policy denied metadata update; committed receipt is the durable owner evidence"
+  },
+  "study_v2": {
+    "head": "46d8a0cdf6c5270af58092764da98305f5f8de55",
+    "owner_url": "https://github.com/4444J99/limen/issues/3056",
+    "native_inventory": {
+      "files": 1517,
+      "compressed": 1308,
+      "direct_candidate_files": 509,
+      "candidate_ids": 503,
+      "delegated_files": 973,
+      "fork_files": 35
+    },
+    "streaming_capture": {
+      "files_visited": 509,
+      "multi_prompt_files": 383,
+      "prompt_rows": 3493,
+      "under_two_prompts": 100,
+      "source_limit_failures": 26
+    },
+    "catalog": {
+      "columns": 382,
+      "prompt_rows": 3497,
+      "codex_columns": 381,
+      "claude_columns": 1,
+      "contextual_candidate_annotations": 51,
+      "vocabulary_operations": 18,
+      "browser_observed": false,
+      "browser_gate": "local-file protocol policy"
+    },
+    "checks": [
+      {
+        "command": "node check-native-catalog.cjs PRIVATE_HTML",
+        "exit_code": 0,
+        "result": "All 382 selected columns and all 3497 prompt bodies preserved; default selection 3 columns / 14 prompts."
+      },
+      {
+        "command": "node --check native-catalog.js",
+        "exit_code": 0
+      },
+      {
+        "command": "Scoped Ruff lint and formatting",
+        "exit_code": 0
+      },
+      {
+        "command": "credential-wall.py --check",
+        "exit_code": 0,
+        "result": "32 secret atoms registered"
+      },
+      {
+        "command": "git diff --check",
+        "exit_code": 0
+      }
+    ],
+    "full_gate": {
+      "executed": false,
+      "reason": "Fresh PreToolUse admission again denied swap-fraction"
+    },
+    "remaining_acceptance": [
+      "Original-opener and logical-session lineage reconciliation",
+      "26 bounded source failures and projection-only sessions",
+      "Incomplete retained bodies and uninterpreted attachments",
+      "Contextual coding of remaining follow-ups",
+      "Held-out whole-session substitution review",
+      "Provider collision checks before any installation"
+    ],
+    "private_derivatives": {
+      "retained": true,
+      "owner_url": "https://github.com/4444J99/limen/issues/3056",
+      "home": "Existing private research root in this session's retained repair checkout",
+      "independent_custody_proven": false,
+      "retirement_authorized": false
+    },
+    "scope": "Current session repair lane only. Published PR 3067 was read for contract reconciliation; its sibling checkout was not adopted, edited, or used to satisfy a predicate."
   }
 }

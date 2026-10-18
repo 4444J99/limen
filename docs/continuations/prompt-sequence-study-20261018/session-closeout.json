@@ -20,7 +20,16 @@
         "cli/tests/test_codex_host_admission_hook.py",
         "docs/continuations/prompt-sequence-study-20261018/handoff.json",
         "docs/continuations/prompt-sequence-study-20261018/bootstrap-domus.sh",
-        "docs/continuations/prompt-sequence-study-20261018/domus-host-contracts.proposed.patch"
+        "docs/continuations/prompt-sequence-study-20261018/domus-host-contracts.proposed.patch",
+        "docs/continuations/prompt-sequence-study-20261018/capture-native-review.py",
+        "docs/continuations/prompt-sequence-study-20261018/capture-native-stream.py",
+        "docs/continuations/prompt-sequence-study-20261018/check-native-catalog.cjs",
+        "docs/continuations/prompt-sequence-study-20261018/native-catalog.js",
+        "docs/continuations/prompt-sequence-study-20261018/native-sequence-review.json",
+        "docs/continuations/prompt-sequence-study-20261018/render-native-catalog.py",
+        "docs/continuations/prompt-sequence-study-20261018/render-native-review.py",
+        "docs/continuations/prompt-sequence-study-20261018/study-v2.md",
+        "docs/continuations/prompt-sequence-study-20261018/vocabulary-v2.json"
       ],
       "retained_work": []
     }
@@ -32,7 +41,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 0,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
     },
     {
       "root_id": "repair",
@@ -40,9 +49,17 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 1,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1",
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3",
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/3087"
+    },
+    {
+      "root_id": "repair",
+      "command": "Native catalog data/selection checks, scoped Ruff, JavaScript syntax, credential-wall and whitespace",
+      "head": "46d8a0cdf6c5270af58092764da98305f5f8de55",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
     }
   ],
   "custody": {
@@ -51,7 +68,7 @@
       "repair"
     ],
     "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-    "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
+    "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
   },
   "external_effects": [
     {
@@ -60,14 +77,14 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/issues/3056",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
     },
     {
       "id": "currency-reconciliation",
       "kind": "deployment-readback",
       "verified": true,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
     },
     {
       "id": "process-source-repair",
@@ -75,7 +92,15 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/pull/3087",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
+    },
+    {
+      "id": "native-study-v2-private-derivatives",
+      "kind": "retained-private-research",
+      "verified": false,
+      "owner_url": "https://github.com/4444J99/limen/issues/3056",
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "6bb8e0bdfcc64e0ceaa62b8183c1e564adf4501b1ed7c069319d05c6f9f8eef3"
     }
   ]
 }
