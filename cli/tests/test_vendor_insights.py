@@ -413,6 +413,62 @@ def test_opencode_index_and_cat(tmp_path):
     assert "[tool: read]" in text
 
 
+def _make_opencode_v2_db(db_path: Path):
+    """v2 schema as measured 2026-10-18: user/synthetic/system keep `text` at the TOP LEVEL of data,
+    only assistant rows carry `content` blocks."""
+    con = sqlite3.connect(db_path)
+    con.execute(
+        "CREATE TABLE session_v2 (id TEXT PRIMARY KEY, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute(
+        "CREATE TABLE session_message (id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INT, "
+        "time_created INT, time_updated INT, data TEXT)"
+    )
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    con.execute("INSERT INTO session_v2 VALUES ('v2s', '/repo', 't', 'm', 0, 1, 1, ?, ?)", (now_ms, now_ms + 1000))
+    rows = [
+        ("m1", "system", {"text": "S" * 3_000}),
+        ("m2", "user", {"text": "why is the gate red on a clean tree?", "agents": [], "files": []}),
+        ("m3", "synthetic", {"text": "<system-reminder>\nYou are in Plan mode. " + "R" * 400 + "\n</system-reminder>"}),
+        ("m3b", "synthetic", {"text": "The following shell command was executed by the user: git status"}),
+        (
+            "m4",
+            "assistant",
+            {
+                "content": [
+                    {"type": "text", "text": "the cache key omits the lockfile"},
+                    {"type": "tool", "name": "read"},
+                ]
+            },
+        ),
+    ]
+    for seq, (mid, kind, data) in enumerate(rows):
+        con.execute(
+            "INSERT INTO session_message VALUES (?, 'v2s', ?, ?, ?, ?, ?)",
+            (mid, kind, seq, now_ms + seq, now_ms + seq, json.dumps(data)),
+        )
+    con.commit()
+    con.close()
+
+
+def test_opencode_v2_cat_renders_top_level_user_text_and_omits_injected_system(tmp_path):
+    # Measured 2026-10-18: 206 user messages across 59 opencode sessions were never rendered, because the
+    # reader walked only data["content"]. Operator turns (where corrections live) were invisible.
+    db = tmp_path / "opencode.db"
+    _make_opencode_v2_db(db)
+    text = vi._cat_opencode(_fake_mod(opencode={"path": db}), "v2s", 10_000)
+    assert "--- user ---\nwhy is the gate red on a clean tree?" in text
+    assert "--- synthetic ---\nThe following shell command was executed by the user: git status" in text
+    assert "the cache key omits the lockfile" in text and "[tool: read]" in text
+    assert "SSSSSSSS" not in text
+    assert "[omitted harness-injected system message: 3000 chars]" in text
+    # a synthetic row that is the harness's own <system-reminder> wrapper is omitted too, while a
+    # synthetic row recording a shell command the operator ran (asserted above) stays visible
+    assert "RRRRRRRR" not in text
+    assert "[omitted harness-injected synthetic message:" in text
+
+
 def test_opencode_cat_cap_clips_the_message_that_crosses_it(tmp_path):
     db = tmp_path / "opencode.db"
     _make_opencode_db(db)

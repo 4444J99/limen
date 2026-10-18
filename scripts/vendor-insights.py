@@ -830,6 +830,20 @@ def _cat_opencode(mod, sid: str, max_chars: int) -> str | None:
                     except (json.JSONDecodeError, TypeError):
                         data = {}
                     texts = []
+                    top_text = data.get("text")
+                    if isinstance(top_text, str) and top_text.strip():
+                        # v2 keeps user, synthetic and system text at the TOP LEVEL of data, not in
+                        # `content` blocks, so a content-only walk dropped every operator turn
+                        # (206 user messages across 59 sessions, measured 2026-10-18). `system` rows
+                        # are harness-injected instruction diffs (median 2.5 KB, max 74 KB), and a `synthetic`
+                        # row wrapped in <system-reminder> is the harness talking, not a shell command the
+                        # operator ran: both are named and omitted.
+                        if r["type"] == "system" or (
+                            r["type"] == "synthetic" and top_text.lstrip().startswith("<system-reminder>")
+                        ):
+                            texts.append(f"[omitted harness-injected {r['type']} message: {len(top_text)} chars]")
+                        else:
+                            texts.append(top_text)
                     for blk in data.get("content") or []:
                         if not isinstance(blk, dict):
                             continue
