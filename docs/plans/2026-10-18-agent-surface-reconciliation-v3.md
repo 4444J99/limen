@@ -98,19 +98,25 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    reclassify from `route_pending` to an `application` `preserve-and-link` doorway → `.agent-runtime/aux/grokbot`,
    guarded by `_exact_process_active()`; reconcile the two trees by inspect-then-merge (never delete, never overwrite
    the residue copy). Linking needs the daemon stopped — flag that sequencing constraint; do not kill it.
-   **Status (2026-10-18, later): domus PR #506 MERGED (`dfd82054` on `origin/main`); live checkout fast-forwarded; the
-   deployed manifest is NOT yet updated and the route is NOT applied.** Two corrections to the
+   **Status (2026-10-18, later): domus PR #506 MERGED (`dfd82054` on `origin/main`); live checkout fast-forwarded;
+   manifest deployed and the route APPLIED (see the apply note below).** Two corrections to the
    text above, both from live reads: (a) no grokbot process was running at implementation time and the directory was
    last written hours earlier, so the "daemon must be stopped" constraint was moot then (the guard's active-CWD check
    still enforces it at apply time); (b) the declared `move` was not merely redundant, it was *permanently blocked*
    (`destination already exists`), which `domus-home-guard --check` showed on `main`. The residue copy was **not**
    merged into the live tree: it holds a stale credential and connection file the daemon regenerates, so it stays as
-   custody. **Apply is blocked on a denial, not on a defect:** the auto-mode classifier denied `chezmoi apply
-   ~/.config/domus/home-surface.yaml` once, with no reason given. `chezmoi diff` for that target shows exactly the
-   `.grokbot` entry and route and nothing else. Not retried and not routed around (the guard apply would be the same
-   change to `$HOME`). Operator sequence: `chezmoi apply ~/.config/domus/home-surface.yaml`, then
-   `domus-home-guard --check --json` (read `plan_hash`), then `domus-home-guard --apply --plan-hash <hash>`, then
-   `domus-home-guard --check` (the three `.grokbot` violations clear; `visual_dashboard.html` is pre-existing).
+   custody. **Apply note.** The auto-mode classifier denied the agent's `chezmoi apply ~/.config/domus/home-surface.yaml`
+   once, with no reason given; it was not retried or routed around. The operator then ran that deploy by hand
+   (`chezmoi diff` afterwards empty). A fresh `domus-home-guard --check` produced plan hash `8cfb158e…`, identical to the
+   pre-merge dry-run (same manifest sha, same source fingerprint, no grokbot process), and
+   `domus-home-guard --apply --plan-hash 8cfb158e…` then ran without a denial. **Observed afterwards:** `~/.grokbot` is a
+   symlink to `Workspace/limen/.agent-runtime/aux/grokbot`; all seven files are present with their original mtimes; the
+   earlier `home-residue/.grokbot` copy is untouched; the guard reports `actions=0` and only the unrelated
+   `visual_dashboard.html` violation. **Not observed:** the Grok Bot app running through the doorway (it was not
+   running), so runtime continuity is unproven until it next launches. **Receipt:** `~/.local/state/domus/home-routing-receipts.jsonl`,
+   operation `44f647d5…`, phases `prepared` then `applied`; its recorded `reversal` preserves the installed link at
+   `aux/.grokbot.installed-link-44f647d5…` and then `mv`s `aux/grokbot` back to `~/.grokbot` (rename-aside, deletes
+   nothing).
 2. **Skills (v2 Phase 3) — domus-genoma PR.** Content-hash inventory across the three roots; register survivors in
    `skills-registry.json`; no pruning before Step 8. Close the cross-provider leak seen from Claude's side: two of four
    `claude/skills/*` links resolve into Claude-named paths (`distributions/claude/…`, `limen/.claude/skills/vendor-insights`).
