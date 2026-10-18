@@ -45,7 +45,7 @@ _MUTATING_BASH_RE = re.compile(r"\bgit\s+(add|commit|push|apply|merge|rebase)\b|
 # scripts/hooks/pytest-scope-guard.sh — change the two together).
 _PYTEST_CMD_RE = re.compile(
     r"(?:^|[;&|(\n{]|`|\b(?:then|do|else|elif|while|until|if)[ \t])[ \t]*(?:command[ \t]+)?"
-    r"(?:(?:time|nohup|exec|eval|sudo|nice(?:[ \t]+-n[ \t]+\d+)?|timeout[ \t]+\S+)[ \t]+)*"
+    r"(?:(?:time|nohup|exec|eval|sudo|nice(?:[ \t]+-n[ \t]+\d+)?|timeout[ \t]+(?:-[^\s;&|()`]+[ \t]+)*[0-9][0-9.]*[smhd]?)[ \t]+)*"
     r"(?:env[ \t]+(?:-u[ \t]+\S+[ \t]+|-i[ \t]+)*)?"
     r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*[ \t]+)*"
     r"(?:uvx?[ \t]+(?:run[ \t]+)?(?:-\S+[ \t]+)*)?"

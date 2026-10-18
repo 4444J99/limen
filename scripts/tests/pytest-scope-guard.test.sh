@@ -52,6 +52,7 @@ assert_denied 'bash -x scripts/run-pytest-hermetic.sh cli/tests'                
 assert_denied 'nohup bash scripts/run-pytest-hermetic.sh cli/tests &'           "$LIVE"
 assert_denied 'time pytest cli/tests'                         "$LIVE"
 assert_denied 'timeout 600 pytest cli/tests'                  "$LIVE"
+assert_denied 'timeout --foreground 600 pytest cli/tests'     "$LIVE"
 assert_denied 'pytest-3 cli/tests'                            "$LIVE"            # versioned binary name (Fedora/RHEL)
 assert_denied 'python3 -u -m pytest cli/tests'                "$LIVE"
 assert_denied 'uv run -q pytest cli/tests'                    "$LIVE"
