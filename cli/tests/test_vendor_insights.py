@@ -676,6 +676,124 @@ def test_opencode_window_includes_sessions_updated_in_window(tmp_path):
     assert result.total_in_window == 1
 
 
+# ─── opencode health-sensor ingest (insight-cross-vendor-ingest) ─────
+# The cross-vendor health packet must read the SAME stores vendor-insights does: the frozen
+# legacy-share copy alone reports a live lane as silent (sessions_seen=0).
+
+_NOW_MS = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+
+def _ingest_legacy_store(path: Path, sessions: dict[str, int]):
+    """Legacy-schema store: {session_id: cost}."""
+    con = sqlite3.connect(path)
+    con.execute(
+        "CREATE TABLE session (id TEXT, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute("CREATE TABLE message (id TEXT, session_id TEXT, data TEXT, time_created INT)")
+    con.execute("CREATE TABLE part (id TEXT, message_id TEXT, session_id TEXT, data TEXT, time_created INT)")
+    for sid, cost in sessions.items():
+        con.execute(
+            "INSERT INTO session VALUES (?, '/r', 't', 'm-legacy', ?, 5, 5, ?, ?)",
+            (sid, cost, _NOW_MS, _NOW_MS + 90_000),
+        )
+        con.execute("INSERT INTO message VALUES (?, ?, '{}', ?)", (f"lm-{sid}", sid, _NOW_MS))
+    con.commit()
+    con.close()
+
+
+def _ingest_v2_store(path: Path, sessions: dict[str, int], error_blocks: int = 0):
+    """v2-schema store: {session_id: cost}; error_blocks tool errors are attached to the first session."""
+    con = sqlite3.connect(path)
+    con.execute(
+        "CREATE TABLE session_v2 (id TEXT PRIMARY KEY, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute(
+        "CREATE TABLE session_message (id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INT, "
+        "time_created INT, time_updated INT, data TEXT)"
+    )
+    for i, (sid, cost) in enumerate(sessions.items()):
+        con.execute(
+            "INSERT INTO session_v2 VALUES (?, '/r', 't', 'm-v2', ?, 5, 5, ?, ?)",
+            (sid, cost, _NOW_MS, _NOW_MS + 90_000),
+        )
+        blocks = [{"type": "text", "text": "an error was mentioned in prose only"}]
+        if i == 0:
+            blocks += [{"type": "tool", "name": "shell", "state": {"status": "error"}}] * error_blocks
+            blocks.append({"type": "tool", "name": "read", "state": {"status": "completed"}})
+        con.execute(
+            "INSERT INTO session_message VALUES (?, ?, 'assistant', 1, ?, ?, ?)",
+            (f"m-{sid}", sid, _NOW_MS, _NOW_MS, json.dumps({"content": blocks})),
+        )
+    con.commit()
+    con.close()
+
+
+def _point_ingest_at(monkeypatch, legacy: Path, live_dir: Path | None = None):
+    entry = dict(ingest.VENDOR_REGISTRY["opencode"])
+    entry["path"] = legacy
+    entry["extra_root_globs"] = [str(live_dir)] if live_dir else []
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY, "opencode", entry)
+
+
+def test_ingest_opencode_v2_counts_tool_errors_not_prose(tmp_path, monkeypatch):
+    live = tmp_path / "live"
+    live.mkdir()
+    _ingest_v2_store(live / "opencode.db", {"s1": 0, "s2": 1.5}, error_blocks=2)
+    _point_ingest_at(monkeypatch, tmp_path / "absent.db", live)
+    packet = ingest._ingest_opencode(WINDOW)
+    signals = {s["signal"]: s["count"] for s in packet["friction_signals"]}
+    assert packet["sessions_seen"] == 2
+    # 2 tool blocks finished with status=error; the word 'error' in prose must not count
+    assert signals["error_parts"] == 2
+    assert signals["zero_cost_sessions"] == 1
+
+
+def test_ingest_opencode_counts_a_session_once_across_legacy_and_live_stores(tmp_path, monkeypatch):
+    legacy, live = tmp_path / "legacy.db", tmp_path / "live"
+    live.mkdir()
+    # s0 exists only in the frozen legacy store, s1 in both (v2 is a superset), s2 only in live
+    _ingest_legacy_store(legacy, {"s0": 1.0, "s1": 1.0})
+    _ingest_v2_store(live / "opencode.db", {"s1": 1.0, "s2": 1.0})
+    _point_ingest_at(monkeypatch, legacy, live)
+    packet = ingest._ingest_opencode(WINDOW)
+    assert packet["sessions_seen"] == 3
+
+
+def test_ingest_opencode_legacy_only_host_still_reads(tmp_path, monkeypatch):
+    legacy = tmp_path / "legacy.db"
+    _ingest_legacy_store(legacy, {"s0": 0})
+    _point_ingest_at(monkeypatch, legacy)
+    packet = ingest._ingest_opencode(WINDOW)
+    assert packet["sessions_seen"] == 1
+    assert {s["signal"] for s in packet["friction_signals"]} == {"zero_cost_sessions"}
+
+
+def test_ingest_opencode_no_store_reports_not_found(tmp_path, monkeypatch):
+    _point_ingest_at(monkeypatch, tmp_path / "absent.db")
+    packet = ingest._ingest_opencode(WINDOW)
+    assert packet["sessions_seen"] == 0
+    assert "opencode.db not found" in packet["data_quality_notes"]
+
+
+def test_oldest_opencode_spans_every_store(tmp_path, monkeypatch):
+    legacy, live = tmp_path / "legacy.db", tmp_path / "live"
+    live.mkdir()
+    _ingest_legacy_store(legacy, {"s0": 1.0})
+    _ingest_v2_store(live / "opencode.db", {"s1": 1.0})
+    # age the live store's only session so it is the oldest record anywhere
+    con = sqlite3.connect(live / "opencode.db")
+    old_ms = int(OLD.timestamp() * 1000)
+    con.execute("UPDATE session_v2 SET time_created = ?", (old_ms,))
+    con.commit()
+    con.close()
+    _point_ingest_at(monkeypatch, legacy, live)
+    assert ingest._oldest_opencode() == ingest._iso(datetime.fromtimestamp(old_ms / 1000, tz=timezone.utc))
+    _point_ingest_at(monkeypatch, tmp_path / "absent.db")
+    assert ingest._oldest_opencode() is None
+
+
 # ─── antigravity three-source union (R4) ─────────────────────────────
 
 _AGY_SUMMARIES_DDL = (
