@@ -1,7 +1,7 @@
 # Codex -> Claude session prompt path
 
 Issue: #3005
-PR: (pending)
+PR: #3017
 
 ## Context
 
