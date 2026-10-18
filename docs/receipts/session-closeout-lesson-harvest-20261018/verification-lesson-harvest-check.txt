@@ -1,0 +1,22 @@
+antigravity: 184 unprocessed / 15 processed
+claude: 9 unprocessed / 181 processed
+codex: 0 unprocessed / 85 processed
+copilot: 0 unprocessed / 5 processed
+gemini: 0 unprocessed / 3 processed
+opencode: 3 unprocessed / 56 processed
+coverage: antigravity: 199 session(s) from the vendor-insights index (window 14d 2026-10-04..2026-10-18, generated 2026-10-18T00:10); sessions older than the window are not enumerated
+coverage: codex: 85 session(s) from the vendor-insights index (window 14d 2026-10-04..2026-10-18, generated 2026-10-18T00:10); sessions older than the window are not enumerated
+coverage: copilot: 5 session(s) from the vendor-insights index (window 14d 2026-10-04..2026-10-18, generated 2026-10-18T00:10); sessions older than the window are not enumerated
+coverage: gemini: 3 session(s) from the vendor-insights index (window 30d 2026-09-18..2026-10-18, generated 2026-10-18T00:21); sessions older than the window are not enumerated
+coverage: opencode: 59 session(s) from the vendor-insights index (window 14d 2026-10-04..2026-10-18, generated 2026-10-18T00:21); sessions older than the window are not enumerated
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): antigravity-desktop
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): antigravity-ide
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): chatgpt-desktop
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): claude-desktop
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): cline
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): jules
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): ollama-desktop
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): vscode-copilot-chat
+excluded (no enumerator or no readable index — backlog unknown, NOT zero): vscode-copilot-chat-insiders
+note: 21 cursor records reference sessions no longer on disk (rotated/archived) — kept as history
+TOTAL unprocessed in scope: 196

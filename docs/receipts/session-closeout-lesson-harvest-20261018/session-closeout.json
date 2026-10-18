@@ -1,0 +1,60 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "7213f6b6-98a3-4aa8-88ee-d5bdbebb0251",
+  "worktree_name": "lesson-harvest-20261018",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-lesson-harvest-20261018",
+  "base_head": "4b2f97df644f3b04ee0709b752aff3fd1cdc688f",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/3108",
+  "owned_paths": [
+    ".claude/skills/lesson-harvest/SKILL.md",
+    "censor/lesson-harvest.jsonl",
+    "censor/precedents.jsonl",
+    "cli/tests/test_check_his_hand.py",
+    "cli/tests/test_lesson_harvest.py",
+    "cli/tests/test_vendor_insights.py",
+    "his-hand-levers.json",
+    "institutio/governance/gates.yaml",
+    "scripts/lesson-harvest.py",
+    "scripts/vendor-insights.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "release",
+      "head": "4b2f97df644f3b04ee0709b752aff3fd1cdc688f",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-lesson-harvest-20261018/verification-targeted-tests.txt",
+      "sha256": "39f6f8fce8feea47852a44694e410c3548cc77e590f6c0836d9f0817be20d3c3"
+    },
+    {
+      "purpose": "release",
+      "head": "4b2f97df644f3b04ee0709b752aff3fd1cdc688f",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-lesson-harvest-20261018/verification-credential-wall.txt",
+      "sha256": "a7303c329355c400f694a904b67eb6253b680c023e3a9bacdc5a5c9fd8a0debf"
+    },
+    {
+      "purpose": "completion",
+      "head": "4b2f97df644f3b04ee0709b752aff3fd1cdc688f",
+      "exit_code": 1,
+      "evidence": "docs/receipts/session-closeout-lesson-harvest-20261018/verification-lesson-harvest-check.txt",
+      "sha256": "8c30a4dd3828f6b8d7228e97d9fcca935d3bdafec02b5eeb95c89a6a1ba368ea",
+      "owner_url": "https://github.com/4444J99/limen/issues/3108"
+    },
+    {
+      "purpose": "completion",
+      "head": "075fb8efd82b6565f374e9a07eb0b574189c61dc",
+      "exit_code": 75,
+      "evidence": "docs/receipts/session-closeout-lesson-harvest-20261018/verification-scoped-3110.txt",
+      "sha256": "ac5212cc7a2aca9bd46808a559fcc94fc4f86e81a632ce0c250e9ecee591895c",
+      "owner_url": "https://github.com/4444J99/limen/issues/3108"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-lesson-harvest-20261018/custody.json",
+    "sha256": "96d74dbf32abc236d3bf6f4e8de6145a351fed81b49247914b77d6c7d06d4ef1"
+  }
+}
