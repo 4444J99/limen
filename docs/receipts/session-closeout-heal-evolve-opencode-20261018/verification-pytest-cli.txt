@@ -1,0 +1,7 @@
+WAVE serialized:pytest-cli: START gates=1 jobs=1 gate_timeout=300s output_limit=1048576B
+WAVE serialized:pytest-cli: START gate=pytest-cli
+WAVE serialized:pytest-cli: FINISH gate=pytest-cli status=FAIL duration=300.09s
+........................................................................ [ 99%]
+...........gate-command-timeout: shared gate deadline expired
+FAILED: pytest-cli
+WAVE serialized:pytest-cli: FAIL
