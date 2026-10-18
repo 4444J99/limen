@@ -276,10 +276,9 @@ def _archive_feed_receipt(feed: Path, provider: str, feed_sha256: str) -> dict[s
             fingerprint = body.get("source_fingerprint")
             # The engine's naming contract names the receipt by the first 16 hex of SHA-256 over the
             # exact fingerprint string (not by a prefix of the fingerprint itself).
-            if (
-                not isinstance(fingerprint, str)
-                or hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:16] != match.group(2)
-            ):
+            if not isinstance(fingerprint, str) or hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[
+                :16
+            ] != match.group(2):
                 raise ValueError(f"archive feed receipt fingerprint does not match its name: {candidate.name}")
             verified.append((candidate, body))
     if not verified:
