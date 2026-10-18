@@ -20,6 +20,7 @@ SCRIPT = ROOT / "scripts" / "prompt-atom-ledger.py"
 
 PROVIDER = "chatgpt"
 FINGERPRINT = "0123456789abcdef" + "f" * 48
+FINGERPRINT_NAME = hashlib.sha256(FINGERPRINT.encode("utf-8")).hexdigest()[:16]
 DAY = "20261017"
 
 
@@ -62,12 +63,12 @@ def _write_feed(
     feed.write_bytes(content)
     receipt = {
         "feed_sha256": hashlib.sha256(content).hexdigest(),
-        "row_count": len(rows),
+        "rows": len(rows),
         "source_fingerprint": FINGERPRINT,
         "naming_version": 1,
     }
     receipt.update(receipt_changes or {})
-    name = receipt_name or f"receipt-{provider}-prompts-{FINGERPRINT[:16]}-{DAY}.json"
+    name = receipt_name or f"receipt-{provider}-prompts-{FINGERPRINT_NAME}-{DAY}.json"
     (directory / name).write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
     return feed
 
@@ -129,14 +130,14 @@ def test_feed_changed_after_its_receipt_is_refused(tmp_path: Path):
 
 def test_row_count_must_match_the_receipt(tmp_path: Path):
     corpus = _load()
-    feed = _write_feed(tmp_path, [_row(0, "A synthetic ask.")], receipt_changes={"row_count": 2})
+    feed = _write_feed(tmp_path, [_row(0, "A synthetic ask.")], receipt_changes={"rows": 2})
     with pytest.raises(ValueError, match="row count"):
         corpus.load_archive_feed(feed)
 
 
 def test_boolean_row_count_is_not_a_count(tmp_path: Path):
     corpus = _load()
-    feed = _write_feed(tmp_path, [_row(0, "A synthetic ask.")], receipt_changes={"row_count": True})
+    feed = _write_feed(tmp_path, [_row(0, "A synthetic ask.")], receipt_changes={"rows": True})
     with pytest.raises(ValueError, match="row count"):
         corpus.load_archive_feed(feed)
 
@@ -164,7 +165,7 @@ def test_receipt_with_an_impossible_day_is_ignored(tmp_path: Path):
     feed = _write_feed(
         tmp_path,
         [_row(0, "A synthetic ask.")],
-        receipt_name=f"receipt-{PROVIDER}-prompts-{FINGERPRINT[:16]}-20261345.json",
+        receipt_name=f"receipt-{PROVIDER}-prompts-{FINGERPRINT_NAME}-20261345.json",
     )
     with pytest.raises(ValueError, match="no receipt"):
         corpus.load_archive_feed(feed)
@@ -174,7 +175,7 @@ def test_two_receipts_for_the_same_bytes_are_ambiguous(tmp_path: Path):
     corpus = _load()
     feed = _write_feed(tmp_path, [_row(0, "A synthetic ask.")])
     receipt = next(tmp_path.glob("receipt-*.json"))
-    (tmp_path / f"receipt-{PROVIDER}-prompts-{FINGERPRINT[:16]}-20261018.json").write_text(
+    (tmp_path / f"receipt-{PROVIDER}-prompts-{FINGERPRINT_NAME}-20261018.json").write_text(
         receipt.read_text(encoding="utf-8"), encoding="utf-8"
     )
     with pytest.raises(ValueError, match="more than one"):
@@ -184,7 +185,7 @@ def test_two_receipts_for_the_same_bytes_are_ambiguous(tmp_path: Path):
 def test_a_stale_receipt_for_older_bytes_does_not_block_the_current_one(tmp_path: Path):
     corpus = _load()
     stale = tmp_path / f"receipt-{PROVIDER}-prompts-{'a' * 16}-20260101.json"
-    stale.write_text(json.dumps({"feed_sha256": "0" * 64, "row_count": 9, "source_fingerprint": "a" * 64}))
+    stale.write_text(json.dumps({"feed_sha256": "0" * 64, "rows": 9, "source_fingerprint": "a" * 64}))
     rows = [_row(0, "A synthetic ask.")]
     assert corpus.load_archive_feed(_write_feed(tmp_path, rows)) == rows
 
@@ -193,7 +194,7 @@ def test_a_receipt_for_another_provider_is_not_used(tmp_path: Path):
     corpus = _load()
     feed = _write_feed(tmp_path, [_row(0, "A synthetic ask.")])
     receipt = next(tmp_path.glob("receipt-*.json"))
-    receipt.rename(tmp_path / f"receipt-claude-prompts-{FINGERPRINT[:16]}-{DAY}.json")
+    receipt.rename(tmp_path / f"receipt-claude-prompts-{FINGERPRINT_NAME}-{DAY}.json")
     with pytest.raises(ValueError, match="no receipt"):
         corpus.load_archive_feed(feed)
 
@@ -247,11 +248,11 @@ def test_malformed_and_non_object_rows_reject_the_feed(tmp_path: Path):
         feed = tmp_path / f"{body[:2].hex()}" / f"feed-{PROVIDER}-prompts.jsonl"
         feed.parent.mkdir()
         feed.write_bytes(body)
-        (feed.parent / f"receipt-{PROVIDER}-prompts-{FINGERPRINT[:16]}-{DAY}.json").write_text(
+        (feed.parent / f"receipt-{PROVIDER}-prompts-{FINGERPRINT_NAME}-{DAY}.json").write_text(
             json.dumps(
                 {
                     "feed_sha256": hashlib.sha256(body).hexdigest(),
-                    "row_count": 1,
+                    "rows": 1,
                     "source_fingerprint": FINGERPRINT,
                 }
             ),

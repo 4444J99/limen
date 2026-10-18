@@ -274,7 +274,12 @@ def _archive_feed_receipt(feed: Path, provider: str, feed_sha256: str) -> dict[s
             continue
         if isinstance(body, dict) and body.get("feed_sha256") == feed_sha256:
             fingerprint = body.get("source_fingerprint")
-            if not isinstance(fingerprint, str) or not fingerprint.startswith(match.group(2)):
+            # The engine's naming contract names the receipt by the first 16 hex of SHA-256 over the
+            # exact fingerprint string (not by a prefix of the fingerprint itself).
+            if (
+                not isinstance(fingerprint, str)
+                or hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:16] != match.group(2)
+            ):
                 raise ValueError(f"archive feed receipt fingerprint does not match its name: {candidate.name}")
             verified.append((candidate, body))
     if not verified:
@@ -323,7 +328,7 @@ def load_archive_feed(feed: Path) -> list[dict[str, Any]]:
         rows.append(row)
     if len({(row.get("session_ref"), row.get("event_ref")) for row in rows}) != len(rows):
         raise ValueError(f"archive feed repeats an event reference: {feed.name}")
-    if receipt.get("row_count") != len(rows) or isinstance(receipt.get("row_count"), bool):
+    if receipt.get("rows") != len(rows) or isinstance(receipt.get("rows"), bool):
         raise ValueError(f"archive feed row count differs from its receipt: {feed.name}")
     return rows
 

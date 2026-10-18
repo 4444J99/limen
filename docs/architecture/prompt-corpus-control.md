@@ -152,8 +152,9 @@ What `--archive-feed` checks before a single row reaches the ledger:
 - The file is named `feed-<provider>-prompts.jsonl`, and exactly one sibling receipt names the feed's
   exact bytes (sha256). A receipt for older bytes, another provider, or a malformed name is ignored; two
   receipts for the same bytes are refused as ambiguous.
-- The receipt's file name carries the first 16 hex characters of its own `source_fingerprint`, and the
-  receipt's `row_count` equals the number of rows read.
+- The receipt's file name carries the first 16 hex characters of the SHA-256 of its own
+  `source_fingerprint` string (the engine's naming rule for hashed identities), and the
+  receipt's `rows` equals the number of rows read.
 - Every row has `source` equal to `archive-<provider>-messages` and `provenance` equal to
   `unknown_user_input`. Any other value, including operator provenance, rejects the whole feed. An
   event reference repeated within a feed rejects it too. Error messages name the file and line, never

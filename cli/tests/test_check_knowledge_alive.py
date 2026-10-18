@@ -122,10 +122,10 @@ def main():
                 rows.append(row)
                 index.append({k: row[k] for k in ("uid", "provider", "title", "kind", "created", "updated")}
                              | {"last_activity": max(stamps)})
-            folder = archive / "normalized" / provider
+            folder = archive / f"provider-{provider}"
             folder.mkdir(parents=True, exist_ok=True)
-            (folder / "conversations.jsonl").write_text(lines(rows))
-            (folder / "index.jsonl").write_text(lines(index))
+            (folder / f"collection-{provider}-conversations.jsonl").write_text(lines(rows))
+            (folder / f"index-{provider}-conversations.jsonl").write_text(lines(index))
             parts.append(lines(rows))
             providers[provider] = {"status": "ok", "conversations": len(rows),
                                    "messages": sum(len(r["messages"]) for r in rows)}
@@ -144,7 +144,8 @@ def main():
             if info["status"] != "ok":
                 continue
             rows, days = [], []
-            for line in (archive / "normalized" / provider / "conversations.jsonl").read_text().splitlines():
+            path = archive / f"provider-{provider}" / f"collection-{provider}-conversations.jsonl"
+            for line in path.read_text().splitlines():
                 conversation = json.loads(line)
                 if conversation["kind"] not in ELIGIBLE:
                     continue
@@ -168,9 +169,9 @@ def main():
                 rows[0]["source"] = "claude-code-sessions"
             text = lines(rows)
             (out / f"feed-{provider}-prompts.jsonl").write_text(text)
-            prefix = "0" * 16 if "stale-receipt" in FAULTS else fingerprint[:16]
+            prefix = "0" * 16 if "stale-receipt" in FAULTS else hashlib.sha256(fingerprint.encode()).hexdigest()[:16]
             receipt = {"feed_sha256": hashlib.sha256(text.encode()).hexdigest(),
-                       "row_count": len(rows) + (1 if "row-count" in FAULTS else 0),
+                       "rows": len(rows) + (1 if "row-count" in FAULTS else 0),
                        "excluded_counts": {"notebook": 1}, "alternate_branch_count": 1,
                        "source_fingerprint": "f" * 64 if "receipt-fingerprint" in FAULTS else fingerprint,
                        "naming_version": 1, "reader_versions": {provider: "2"}}
@@ -640,9 +641,9 @@ def test_name_shape_and_activity_day(module, tmp_path):
     assert module.name_shape_problem("Receipt-x", kinds) is not None
     assert module.name_shape_problem("report-x", kinds) is not None
     assert module.name_shape_problem("feed-" + "x" * 80, kinds) is not None
-    folder = tmp_path / "normalized" / "chatgpt"
+    folder = tmp_path / "provider-chatgpt"
     folder.mkdir(parents=True)
-    (folder / "index.jsonl").write_text(
+    (folder / "index-chatgpt-conversations.jsonl").write_text(
         json.dumps({"last_activity": "2026-02-30T00:00:00Z"}) + "\n"
         + json.dumps({"last_activity": "2026-03-02T09:00:00Z"}) + "\n"
         + json.dumps({"last_activity": ""}) + "\n"

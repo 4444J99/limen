@@ -15,7 +15,7 @@ The loop being proven:
               -> recurring-form index -> counts-only public receipt
 
 Output is ten fixed-order lines (`check N <name>: ok|FAIL <reason>|skipped ...|not run`), then one last
-line: `ALIVE <16 hex of the archive fingerprint>`, `NOT ALIVE: <check name>` or `UNUSABLE: <reason>`.
+line: `ALIVE <16 hex of the SHA-256 of the archive fingerprint>`, `NOT ALIVE: <check name>` or `UNUSABLE: <reason>`.
 It carries no timestamps, paths, titles, ids or conversation text, only counts and fixed phrases.
 
 The ten checks:
@@ -49,7 +49,7 @@ Engine commands used (the engine owns the naming contract; nothing here copies i
   archive project feed --root <archive> --out <dir>
                                            feed-<provider>-prompts.jsonl plus
                                            receipt-<provider>-prompts-<16 hex>-<yyyymmdd>.json holding
-                                           feed_sha256, row_count, source_fingerprint, naming_version
+                                           feed_sha256, rows, source_fingerprint, naming_version
 
 Recurring-form builder contract (`prompt-recurring-forms.py`): `--root R --private-root P` with `--write`
 or `--verify`; it writes `<P>/prompt-atoms/index-all-patterns.jsonl` (one row per member atom) and
@@ -118,7 +118,7 @@ REPORT_COUNT_KEYS = (
     "forms_spanning_sources",
     "trivial_forms",
 )
-RECEIPT_REQUIRED_KEYS = ("feed_sha256", "row_count", "source_fingerprint", "naming_version")
+RECEIPT_REQUIRED_KEYS = ("feed_sha256", "rows", "source_fingerprint", "naming_version")
 
 CHECK_NAMES = (
     "tools",
@@ -329,11 +329,20 @@ def providers_ok(manifest: dict[str, Any]) -> list[str]:
     return sorted(name for name, info in providers.items() if isinstance(info, dict) and info.get("status") == "ok")
 
 
+def conversations_file(ctx: Context, provider: str) -> Path:
+    """The normalized conversations of one provider, named the way the engine's layout names them."""
+    return ctx.archive_root / f"provider-{provider}" / f"collection-{provider}-conversations.jsonl"
+
+
+def index_file(ctx: Context, provider: str) -> Path:
+    return ctx.archive_root / f"provider-{provider}" / f"index-{provider}-conversations.jsonl"
+
+
 def latest_activity_day(ctx: Context, providers: list[str]) -> str | None:
     """Newest `last_activity` day over the normalized index, as yyyymmdd. Data, never the clock."""
     best: str | None = None
     for provider in providers:
-        path = ctx.archive_root / "normalized" / provider / "index.jsonl"
+        path = index_file(ctx, provider)
         if not path.is_file():
             continue
         for row in read_rows(path):
@@ -372,7 +381,7 @@ def recount_eligible(ctx: Context, providers: list[str]) -> dict[str, int]:
     """Eligible asks counted straight from the normalized files, independent of the feed projector."""
     counts: dict[str, int] = {}
     for provider in providers:
-        path = ctx.archive_root / "normalized" / provider / "conversations.jsonl"
+        path = conversations_file(ctx, provider)
         total = 0
         if path.is_file():
             for conversation in read_rows(path):
@@ -492,7 +501,9 @@ def check_tools(ctx: Context, state: State) -> CheckResult:
         payload = json.loads(done.stdout)
         version = int(payload.get("naming_version"))
         kinds = payload.get("kinds")
-        kind_set = {str(kind) for kind in (kinds.keys() if isinstance(kinds, dict) else kinds)}
+        # The engine lists each kind as a row carrying its rules; a bare word or a word-keyed map also reads.
+        entries = kinds.keys() if isinstance(kinds, dict) else kinds
+        kind_set = {str(entry["kind"] if isinstance(entry, dict) else entry) for entry in entries}
     except (ValueError, TypeError, AttributeError):
         return CheckResult(False, "engine names output is unreadable")
     if version < MINIMUM_NAMING_VERSION:
@@ -546,7 +557,8 @@ def check_archive(ctx: Context, state: State) -> CheckResult:
     info = manifest["providers"]
     state.update(
         fingerprint=fingerprint,
-        prefix=fingerprint[:FINGERPRINT_PREFIX_LENGTH],
+        # The engine names a receipt by the first 16 hex of SHA-256 over the exact fingerprint string.
+        prefix=hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:FINGERPRINT_PREFIX_LENGTH],
         providers=providers,
         conversations=sum(int(info[name].get("conversations") or 0) for name in providers),
         messages=sum(int(info[name].get("messages") or 0) for name in providers),
@@ -580,7 +592,7 @@ def check_feed_receipts(ctx: Context, state: State) -> CheckResult:
             rows = list(read_rows(feed))
         except (OSError, ValueError):
             return CheckResult(False, "a feed is unreadable")
-        loaded[provider] = {"rows": rows, "receipt_rows": receipt["row_count"]}
+        loaded[provider] = {"rows": rows, "receipt_rows": receipt["rows"]}
     state["feeds"] = loaded
     return CheckResult(True, f"{len(loaded)} feeds bound to the fingerprint")
 
@@ -671,12 +683,13 @@ def collect_private_values(ctx: Context, state: State) -> set[str]:
     for loaded in state["feeds"].values():
         values.update(hashlib.sha256(str(row.get("text") or "").encode("utf-8")).hexdigest() for row in loaded["rows"])
     for provider in state["providers"]:
-        base = ctx.archive_root / "normalized" / provider
-        if (base / "index.jsonl").is_file():
-            for row in read_rows(base / "index.jsonl"):
+        index_path = index_file(ctx, provider)
+        conversations_path = conversations_file(ctx, provider)
+        if index_path.is_file():
+            for row in read_rows(index_path):
                 values.update(str(row.get(key) or "") for key in ("uid", "title"))
-        if (base / "conversations.jsonl").is_file():
-            for conversation in read_rows(base / "conversations.jsonl"):
+        if conversations_path.is_file():
+            for conversation in read_rows(conversations_path):
                 values.add(str(conversation.get("uid") or ""))
                 messages = list(conversation.get("messages") or [])
                 extra = conversation.get("extra") or {}
