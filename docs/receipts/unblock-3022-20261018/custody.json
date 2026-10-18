@@ -1,0 +1,29 @@
+{
+  "blocked_atom": "Independent restoration/readback evidence for the private recovery originals is unavailable; custody actions remain operator-gated.",
+  "deletion_authorized": false,
+  "independent_restoration_verified": false,
+  "native_transcript": {
+    "native_anchor_verified": true,
+    "raw_body_published": false,
+    "retained": true
+  },
+  "next_action": "Custody owner prepares and verifies the existing originals through its approved preservation procedure; no relocation, copy, retirement or deletion was performed by this closeout.",
+  "owner_url": "https://github.com/4444J99/limen/issues/685",
+  "retention": {
+    "all_user_owned": true,
+    "bytes": 163047,
+    "file_count": 55,
+    "independent_restoration_verified": false,
+    "manifest_sha256": "36df781ac8a70e2d5fd39cf97e9cb842ab732ef2e1bd61cee8e3df86402a6586",
+    "owner_url": "https://github.com/4444J99/limen/issues/685",
+    "root_mode": "0o700",
+    "root_path_sha256": "e00379e967329b1e083359b25d4b5cab8a2af6156ecda44291d0ccf1dcf701d8"
+  },
+  "root_ids": [
+    "implementation",
+    "native",
+    "recovery"
+  ],
+  "schema": "limen.unblock_closeout_custody.v1",
+  "verified": false
+}

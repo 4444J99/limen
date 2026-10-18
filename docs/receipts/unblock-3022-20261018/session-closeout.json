@@ -1,0 +1,162 @@
+{
+  "broker_scope_root_id": "implementation",
+  "continuation_owner": "existing #3001 / #3042; no successor or replacement task registry",
+  "custody": {
+    "evidence": "docs/receipts/unblock-3022-20261018/custody.json",
+    "owner_url": "https://github.com/4444J99/limen/issues/685",
+    "root_ids": [
+      "implementation",
+      "native",
+      "recovery"
+    ],
+    "sha256": "b90e4c3748bcd0beeac4a4d0aaf29f3f05264c341e6b72e4bb42993d3ed1f09d",
+    "verified": false
+  },
+  "disposition": "handoff",
+  "external_effects": [
+    {
+      "evidence": "docs/receipts/unblock-3022-20261018/verification.json",
+      "id": "source-merges",
+      "kind": "github-pr-merges",
+      "sha256": "5299229aab3905db8c46c62c8cfd2d608b983755a517193c3afb9d13c6078f43",
+      "verified": true
+    },
+    {
+      "evidence": "docs/receipts/unblock-3022-20261018/verification.json",
+      "id": "approved-worker-and-policy",
+      "kind": "operator-approved-production-update",
+      "sha256": "5299229aab3905db8c46c62c8cfd2d608b983755a517193c3afb9d13c6078f43",
+      "verified": true
+    },
+    {
+      "evidence": "docs/receipts/unblock-3022-20261018/verification.json",
+      "id": "source-handoff",
+      "kind": "open-draft-pr",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001",
+      "sha256": "5299229aab3905db8c46c62c8cfd2d608b983755a517193c3afb9d13c6078f43",
+      "verified": true
+    },
+    {
+      "evidence": "docs/receipts/unblock-3022-20261018/hanging-work.json",
+      "id": "broker-terminal-runs",
+      "kind": "conduct-lifecycle",
+      "sha256": "f261bdb43cf6a9e91fc57ca1c4fa776053c59ef52a8931b9525d9b7b65fd6882",
+      "verified": true
+    }
+  ],
+  "owner_url": "https://github.com/4444J99/limen/issues/3001",
+  "receipt_root_id": "implementation",
+  "retirement_authorized": false,
+  "schema": "limen.session_closeout.v2",
+  "scope_roots": [
+    {
+      "id": "native",
+      "kind": "retained",
+      "owner_url": "https://github.com/4444J99/limen/issues/685",
+      "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+      "reason": "Exact native start anchor and retained native transcript; this session's implementation mutation lane is the separately declared worktree."
+    },
+    {
+      "base_head": "d8703e0796c9d3938c76d2bff1f8162d8e4da8f9",
+      "id": "implementation",
+      "kind": "git",
+      "owned_paths": [
+        ".codex/plans/2026-10-18-unblock-3022-r5-r1-v2.md",
+        ".codex/plans/2026-10-18-unblock-3022-r5-r1.md",
+        ".codex/plans/2026-10-18-unblock-3022-r6.md",
+        "cli/src/limen/cli.py",
+        "cli/src/limen/conduct/cli.py",
+        "cli/src/limen/conduct/client.py",
+        "cli/src/limen/conduct/models.py",
+        "cli/src/limen/worktree_destination.py",
+        "cli/tests/test_bind_running_claude.py",
+        "cli/tests/test_conduct_cli.py",
+        "cli/tests/test_session_orient.py",
+        "cli/tests/test_workstream_command.py",
+        "docs/architecture/claude-running-session-binding.md",
+        "scripts/bind-running-claude-session.py",
+        "scripts/generate-conduct-schemas.py",
+        "scripts/hooks/session-orient.sh",
+        "scripts/repair-workstream-destination-3022.py",
+        "scripts/session-orient.py",
+        "scripts/start-worktree-session.sh",
+        "spec/contracts/conduct/session-release-request-v1.schema.json",
+        "web/worker/src/conduct/auth.js",
+        "web/worker/src/conduct/durable-object.js",
+        "web/worker/src/conduct/keeper.js",
+        "web/worker/src/conduct/schemas.js",
+        "web/worker/src/conduct/session-audit.js",
+        "web/worker/test/conduct-keeper.test.js"
+      ],
+      "path_sha256": "3c4590d03dcc5680659f94dc003f4d38a8096e3ac489f9c7347663c314510533",
+      "publication_branch": "work/unblock-3022-r5-r1-20261018",
+      "repository": "4444J99/limen",
+      "repository_id": 1255213941,
+      "retained_work": [
+        {
+          "owner_url": "https://github.com/4444J99/limen/issues/685",
+          "paths": [
+            "docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md",
+            "docs/plans/2026-10-18-agent-surface-reconciliation-v3.md"
+          ],
+          "reason": "Already-published default-branch integration content; retained without claiming its task acceptance."
+        }
+      ]
+    },
+    {
+      "id": "recovery",
+      "kind": "retained",
+      "owner_url": "https://github.com/4444J99/limen/issues/685",
+      "path_sha256": "21fffce5d0586adb3a6a8fd0cd0630a249300a7bf45f87f3cd1a7286a33a83df",
+      "reason": "Existing detached recovery checkout holding private admission/policy originals and the operator handoff scripts; no source ownership or retirement is adopted."
+    }
+  ],
+  "session_id": "01a14d95-6949-79d1-b836-c39edf9158f4",
+  "session_root_path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+  "verification": [
+    {
+      "command": "bash scripts/verify-scoped.sh (hosted exact-head batch)",
+      "evidence": "docs/receipts/unblock-3022-20261018/verification.json",
+      "exit_code": 0,
+      "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+      "root_id": "implementation",
+      "sha256": "5299229aab3905db8c46c62c8cfd2d608b983755a517193c3afb9d13c6078f43"
+    },
+    {
+      "command": "credential-wall ownership check",
+      "evidence": "docs/receipts/unblock-3022-20261018/verification.json",
+      "exit_code": 0,
+      "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+      "root_id": "implementation",
+      "sha256": "5299229aab3905db8c46c62c8cfd2d608b983755a517193c3afb9d13c6078f43"
+    },
+    {
+      "command": "hanging-work inventory and exact native/broker witness",
+      "evidence": "docs/receipts/unblock-3022-20261018/hanging-work.json",
+      "exit_code": 0,
+      "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+      "root_id": "implementation",
+      "sha256": "f261bdb43cf6a9e91fc57ca1c4fa776053c59ef52a8931b9525d9b7b65fd6882"
+    },
+    {
+      "command": "R6 correction and live acceptance",
+      "evidence": "docs/receipts/unblock-3022-20261018/hanging-work.json",
+      "exit_code": 1,
+      "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001",
+      "purpose": "completion",
+      "root_id": "implementation",
+      "sha256": "f261bdb43cf6a9e91fc57ca1c4fa776053c59ef52a8931b9525d9b7b65fd6882"
+    },
+    {
+      "command": "private-artifact independent-restoration custody",
+      "evidence": "docs/receipts/unblock-3022-20261018/custody.json",
+      "exit_code": 1,
+      "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+      "owner_url": "https://github.com/4444J99/limen/issues/685",
+      "purpose": "release",
+      "root_id": "implementation",
+      "sha256": "b90e4c3748bcd0beeac4a4d0aaf29f3f05264c341e6b72e4bb42993d3ed1f09d"
+    }
+  ]
+}
