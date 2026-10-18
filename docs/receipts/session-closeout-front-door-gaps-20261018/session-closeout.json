@@ -21,7 +21,7 @@
       "head": "d899a2e5e799fc4597c908669531fff16a087489",
       "exit_code": 0,
       "evidence": "docs/receipts/session-closeout-front-door-gaps-20261018/verification.txt",
-      "sha256": "9df6e4c790beb0996d2c9df8e3a45eb2170d54359764a4473048eb011b9d40d0",
+      "sha256": "0d53066643cb4a3e45725ce961d0b5e5e7dcc4cbd072fb571fc6a6c61e5f3fc3",
       "owner_url": "https://github.com/4444J99/limen/issues/3012"
     },
     {
@@ -29,13 +29,13 @@
       "head": "d899a2e5e799fc4597c908669531fff16a087489",
       "exit_code": 0,
       "evidence": "docs/receipts/session-closeout-front-door-gaps-20261018/verification.txt",
-      "sha256": "9df6e4c790beb0996d2c9df8e3a45eb2170d54359764a4473048eb011b9d40d0",
+      "sha256": "0d53066643cb4a3e45725ce961d0b5e5e7dcc4cbd072fb571fc6a6c61e5f3fc3",
       "owner_url": "https://github.com/4444J99/limen/issues/3012"
     }
   ],
   "custody": {
     "verified": true,
     "evidence": "docs/receipts/session-closeout-front-door-gaps-20261018/custody.json",
-    "sha256": "f3b16123249f410a8bfa017591b9ba81d3dd1a92f4e2b253021732ac6f52f618"
+    "sha256": "1f78c812e581434bfd613e63846cc36e456a40897a7ac8fb34340013f5ea7c6a"
   }
 }

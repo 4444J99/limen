@@ -5,7 +5,8 @@
     {"repository": "4444J99/limen", "pr": 3015, "merge_commit": "d95e5c07957e6085627db79c103cbb200f9433b4", "what": "the dated plan docs/plans/2026-10-18-close-front-door-verification-gaps.md"},
     {"repository": "4444J99/limen", "pr": 3025, "merge_commit": "06fa2287c893bfe0317c27d684d5d243d4c7a70b", "what": "Copilot captures preservation receipt, counts and hashes only"},
     {"repository": "4444J99/limen", "pr": 3033, "merge_commit": "cfed4d86d4a7e667b537f5156f0cad8cbcc128d5", "what": "scripts/open-knowledge.sh and cli/tests/test_limen_knowledge_verb.py: stop gate, ping identity, recoverable start lock, honest --stop, early errors, ps -ww; 80 passing tests"},
-    {"repository": "4444J99/limen", "pr": 3035, "merge_commit": "94a63230e16423df265c7b468b61c525b85d00e4", "what": "docs/architecture/ai-exports-archive.md corrections and the plan's PR: stamp"}
+    {"repository": "4444J99/limen", "pr": 3035, "merge_commit": "94a63230e16423df265c7b468b61c525b85d00e4", "what": "docs/architecture/ai-exports-archive.md corrections and the plan's PR: stamp"},
+    {"repository": "4444J99/conversation-corpus-engine", "pr": 82, "merge_commit": "c46256075a5d575d3eb0a20eb272e5efd4dafebb", "what": "the Copilot archive reader (archive_read_copilot, registered as the last provider of cce archive), 299 regression tests, docs; landing proved by an empty tree diff against the verified head 8b630772dd588010deacdda0dfa61d83fca1f0fa and identical reader and test blobs. This repository is not a Limen path: the evidence is in verification.txt"}
   ],
   "filed_owners": [
     "https://github.com/4444J99/limen/issues/3012",
@@ -17,7 +18,10 @@
     "https://github.com/4444J99/limen/issues/3032",
     "https://github.com/4444J99/limen/issues/3034",
     "https://github.com/4444J99/limen/issues/3036",
-    "https://github.com/4444J99/limen/issues/3041"
+    "https://github.com/4444J99/limen/issues/3041",
+    "https://github.com/4444J99/limen/issues/3077",
+    "https://github.com/4444J99/conversation-corpus-engine/issues/80",
+    "https://github.com/4444J99/conversation-corpus-engine/issues/81"
   ],
   "durable_records": {
     "issue_comments": [
@@ -25,33 +29,46 @@
       "https://github.com/4444J99/limen/issues/3001#issuecomment-6245882330",
       "https://github.com/4444J99/limen/issues/2959#issuecomment-6245994595",
       "https://github.com/4444J99/limen/issues/2960#issuecomment-6246420522",
-      "https://github.com/4444J99/limen/issues/3014#issuecomment-6246422001"
+      "https://github.com/4444J99/limen/issues/3014#issuecomment-6246422001",
+      "https://github.com/4444J99/limen/issues/3010#issuecomment-6249497139 (edited in place to the merged, installed and observed state)"
     ],
     "broker_registration": "Registered with the Claude lane bearer (principal claude-direct) as session 1ecb794a-0690-4782-a5a1-57c07ddde7fb, native_fanout declared, bound to the receipt worktree, heartbeat refreshed 2026-10-18T08:40:51Z before the predicate ran. An earlier registration under a different session id with the default bearer was recorded as codex; that record holds no lease or run, was disclosed in #3001, and is not used as evidence here.",
-    "native_fanout": "Four Workflows (round-one builders, five round-one verifiers, a protocol reviewer with two round-two builders, and two final verifiers) ran subagents without individual conduct leases, as declared at registration and in plan decision 8; the reservation mechanism is owed in #3000."
+    "native_fanout": "Four Workflows (round-one builders, five round-one verifiers, a protocol reviewer with two round-two builders, and two final verifiers) ran subagents without individual conduct leases, as declared at registration and in plan decision 8; the reservation mechanism is owed in #3000. The continuation added two more Workflows (a reader builder, a blind test author and an integrator; then three concurrent reviewers, read-only on the repository with scratch writes only) and one named test-builder teammate that was stopped after exceeding its time-box, about 112 descendant agent-minutes of the 120-minute allowance for that outcome, under the same declaration."
   },
   "host_effects": [
     {"effect": "installed runtime rotated", "readback": "domus-limen-runtime install --sha 06fa2287c893bfe0317c27d684d5d243d4c7a70b, receipt installed_at 2026-10-18T06:38:16+00:00; the previous runtime 80efee81 stays on disk for rollback; the one-shot heartbeat stays pinned to it (#3028)"},
     {"effect": "live checkout fast-forwarded by its owner organ, twice", "readback": "scripts/sync-release.sh: ccfdcc1 -> 06fa228, then 9bfdb59 -> 94a6323; check-live-checkout.py reads state=coherent"},
     {"effect": "archive engine started and stopped on throwaway port 8599, twice", "readback": "pids 64000 and 82420, stopped through limen knowledge --stop; the operator's server on 8472 (pid 14937) was never signalled; one small log file open-knowledge-8599.log remains in the private store's state directory (untracked)"},
-    {"effect": "five memory tickets queued", "readback": "in the memory inbox under ~/.claude (a symlink to the agent runtime's legacy-home); the lane is dark and cannot drain once armed (#3036)"}
+    {"effect": "five memory tickets queued", "readback": "in the memory inbox under ~/.claude (a symlink to the agent runtime's legacy-home); the lane is dark and cannot drain once armed (#3036)"},
+    {"effect": "installed archive engine rotated", "readback": "uv tool install --force --from git+https://github.com/4444J99/conversation-corpus-engine@c46256075a5d575d3eb0a20eb272e5efd4dafebb: uv tool list pins c46256075a5d (before: 7e55e2cb, the rollback target); the unshadowed interpreter imports archive_read_copilot@1; check-knowledge-alive.py --live read ALIVE afterwards"},
+    {"effect": "engine repository: a branch, a PR, two issues and one label", "readback": "branch feat/archive-read-copilot (commits 879b777, 48d1248; another actor added 8b63077), PR 82 merged as c46256075a5d, issues 80 and 81, and the label lifecycle:delivery created with Limen's definition so the merge drain could classify the PR (defect: Limen #3077). The label stays: it is the state the drain itself writes"},
+    {"effect": "seven landed local branches reaped", "readback": "scripts/reap-branches.py --apply with an exact --branch allowlist: worktree-front-door-gaps-20261018, worktree-wf_a1821565-3df-1, -2, -3, -4, worktree-wf_ad630953-642-2 and -3 (all landed-ancestor, ledger-authorized, 0 in-flight, 0 live-work); worktree directories are untouched"},
+    {"effect": "live checkout fast-forwarded by its owner organ", "readback": "scripts/sync-release.sh: 1b78978 -> 087ecd5; check-live-checkout.py read state=coherent drift=0 afterwards"},
+    {"effect": "four more memory tickets queued", "readback": "feedback x3 (measure a stated physical state; read what every stage prints over private data; verify a parser on private captures without printing them) and project x1 (build, test and drive engine branch code on this host), same inbox, same dark lane (#3036)"},
+    {"effect": "scratch corpus stores registered and removed", "readback": "four scratch stores were registered under their own project roots (never global config); the three that held real conversation text, and the hashed leakage index derived from the real captures, were deleted before the predicate; the fourth holds only synthetic A/B pages; the real captures were opened read-only and are unchanged"}
   ],
   "session_worktrees": {
     "receipt_worktree": "~/Workspace/limen/.claude/worktrees/front-door-gaps-20261018 (branch docs/session-closeout-front-door-gaps-20261018; its earlier branch fix/open-knowledge-stop-gate landed as #3033)",
+    "engine_worktree": "~/Workspace/.worktrees/cce-copilot-reader-20261018 (branch feat/archive-read-copilot, clean, tip 8b63077 = the merged PR head; the remote branch was auto-deleted on merge, git ls-remote --heads origin feat/archive-read-copilot is empty); nothing in it is unique: its tree equals engine main",
     "retained_for_the_sanctioned_reaper": [
-      "~/Workspace/limen/.claude/worktrees/wf_a1821565-3df-3 (branch docs/ai-exports-archive-drift, tip cc97ee81 = the head of merged PR 3035, remote branch auto-deleted)",
+      "~/Workspace/limen/.claude/worktrees/wf_a1821565-3df-3 (branch docs/ai-exports-archive-drift, tip cc97ee81 = the head of merged PR 3035, remote branch auto-deleted); its .limen-private/scratch holds this session's disposable harnesses, venvs and synthetic cases",
       "~/Workspace/limen/.claude/worktrees/wf_a1821565-3df-4 (branch docs/custody-copilot-captures-preservation, tip 17a1df72 = the head of merged PR 3025)",
-      "~/Workspace/limen/.claude/worktrees/wf_a1821565-3df-1 and -2 (round-one builders), wf_ad630953-642-2 and -3 (round-two builders, locked by the harness)"
+      "~/Workspace/limen/.claude/worktrees/wf_a1821565-3df-1 and -2 (round-one builders), wf_ad630953-642-2 and -3 (round-two builders, locked by the harness); their original worktree-* branches were reaped, the directories remain for the sanctioned reaper"
     ],
     "builder_branch_landing_proof": "git cherry against the local branch fix/open-knowledge-stop-gate (tip 3366021d = the head of merged PR 3033) lists every commit of fix/open-knowledge-stop-gate-impl, -tests, -impl2 and -tests2 as already applied (no '+' line), so none holds work that exists nowhere else"
   },
   "not_owned_by_this_session": [
     "the operator's archive server on port 8472 (pid 14937), untouched",
     "the other lanes' open pull requests on the shared account, their worktrees, and the codex-worktree-write and heavy leases in the host admission store",
-    "the earlier undrained memory ticket already in the inbox (2026-10-17)"
+    "the earlier undrained memory ticket already in the inbox (2026-10-17)",
+    "worktree-heal-evolve-opencode-20261018, another session's landed branch, deliberately outside the reap allowlist",
+    "engine commit 8b63077 (README only), pushed to the PR branch by an actor other than this session after green CI; its diff was read in full and adopted by fast-forward, never overwritten"
   ],
   "unfinished_and_owned": [
-    {"owner": "https://github.com/4444J99/limen/issues/3010", "what": "Copilot captures: the second copy is blocked on attaching T7Recovery (lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, #688); the CCE reader for the 8 saved chat pages is not built"},
+    {"owner": "https://github.com/4444J99/limen/issues/3010", "what": "Copilot captures: the reader is merged (engine PR 82) and installed, and check-knowledge-alive --live stays ALIVE; still open and ordered in the issue's comment: the live rebuild with Copilot (a heavy workload; the heavy lease was denied by swap pressure), then the Limen docs and corpora.yaml update, and the second copy, which stays BLOCKED on attaching T7Recovery (lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, #688; re-measured at the end of the session)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3077", "what": "merge-drain.py defers with an opaque LIFECYCLE-CLASSIFICATION-FAILED on a repository without the lifecycle:delivery label; repaired by hand here, the root cause is the issue"},
+    {"owner": "https://github.com/4444J99/conversation-corpus-engine/issues/80", "what": "archive_model.to_iso raises OverflowError for ISO timestamps at the ends of the calendar (the shared helper every provider reader uses)"},
+    {"owner": "https://github.com/4444J99/conversation-corpus-engine/issues/81", "what": "an inherited engine test leaks CCE_CORPUS_STORE_ROOT, so the suite needs env -u on a host that exports it"},
     {"owner": "https://github.com/4444J99/limen/issues/3028", "what": "the one-shot heartbeat is pinned to its activation SHA: re-activation after the runtime rotation is human-gated, and check-runtime-lag cannot see the pin"},
     {"owner": "https://github.com/4444J99/limen/issues/3032", "what": "start-lock residual windows and the missing test for SIGTERM while the recovery mutex is held"},
     {"owner": "https://github.com/4444J99/limen/issues/3034", "what": "session-plan.py close cannot find a slug containing -v"},
@@ -63,5 +80,5 @@
     {"owner": "https://github.com/4444J99/limen/issues/2948", "what": "merging this receipt's PR would delete its publication branch and leave the session predicate unmeasured, so the PR is left open on purpose; merge it once #2948 is resolved or the operator accepts that cost"},
     {"owner": "https://github.com/4444J99/limen/issues/3012", "what": "the tracking issue stays open: closing it is the operator's decision"}
   ],
-  "local_only_state": "Scratch under each worktree's .limen-private/scratch (probe, mutation and interleaving harnesses, the hooked script copies, body files, throwaway trees) is disposable and git-ignored; no restore copy is claimed because the durable results are the merged tests, the PR bodies, the issues above and this receipt. One leftover fake engine (pid 19861, a pre-fix mutation run, command line under /private/tmp/pytest-of-4jp/) could not be stopped because the auto-mode classifier denied the kill; it is harmless, outside the subject checkout, and `kill 19861` removes it after its command line is checked. Nothing durable exists only locally: every code change is merged on origin/main and every finding is a filed issue."
+  "local_only_state": "Scratch under each worktree's .limen-private/scratch (probe, mutation, interleaving, metamorphic and conformance harnesses, the leakage-index tool, the hooked script copies, body files, venvs, synthetic cases and one synthetic A/B store) is disposable and git-ignored; no restore copy is claimed because the durable results are the merged code and tests, the PR bodies, the issues above, the four queued memory tickets that preserve the method, and this receipt. Everything derived from the real captures (scratch stores, the hashed index) was deleted before the predicate. One leftover fake engine (pid 19861, a pre-fix mutation run, command line under /private/tmp/pytest-of-4jp/) could not be stopped because the auto-mode classifier denied the kill; it is harmless, outside the subject checkout, and `kill 19861` removes it after its command line is checked. Nothing durable exists only locally: every code change is merged on origin/main and every finding is a filed issue."
 }
