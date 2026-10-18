@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--model <id>] [--reasoning-effort <level>] [--sandbox <mode>] [--conduct] [--shell] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--predecessor-receipt <receipt>] [--runway-mode inherit|renew] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
+  scripts/start-worktree-session.sh [--autonomous] [--agent auto|<canonical-lane>] [--model <id>] [--reasoning-effort <level>] [--sandbox <mode>] [--conduct] [--shell] [--destination <absolute-worktree-path>] [--from <branch-or-ref>] [--prompt <text>] [--prompt-file <path>] [--predecessor-receipt <receipt>] [--runway-mode inherit|renew] [--runway <duration>] [--workstream <handle>] <repo-or-alias> <slug>
 
 Examples:
   scripts/start-worktree-session.sh portvs triptych-story
@@ -89,6 +89,7 @@ launch_shell=0
 conduct=0
 requested_agent=""
 from_ref=""
+destination=""
 prompt_text=""
 prompt_file=""
 runway=""
@@ -183,6 +184,14 @@ while [[ $# -gt 0 ]]; do
     --shell)
       launch_shell=1
       shift
+      ;;
+    --destination)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        echo "missing value for --destination" >&2
+        exit 2
+      fi
+      destination="$2"
+      shift 2
       ;;
     --from)
       if [[ $# -lt 2 ]]; then
@@ -746,6 +755,15 @@ fi
 
 branch="$branch_prefix/$slug"
 wt="$repo/.worktrees/$slug"
+if [[ -n "$destination" ]]; then
+  if [[ -n "$campaign_relay" ]]; then
+    echo "internal campaign relay does not accept --destination" >&2
+    exit 2
+  fi
+  PYTHONPATH="$script_dir/../cli/src" python3 -m limen.worktree_destination \
+    --repository "$repo" --branch "$branch" --destination "$destination"
+  wt="$destination"
+fi
 
 if [[ -n "$campaign_relay" ]]; then
   if [[ -e "$wt" || -L "$wt" ]] \

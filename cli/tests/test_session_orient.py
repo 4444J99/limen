@@ -136,3 +136,16 @@ def test_public_aggregate_without_custody_is_visible_and_does_not_crash(tmp_path
 def test_unreadable_board_remains_visible(tmp_path, monkeypatch):
     (tmp_path / "tasks.yaml").write_text("tasks: [")
     assert "unmeasured" in _load(monkeypatch, tmp_path).section_board()
+
+
+def test_missing_claude_hook_evidence_has_explicit_bind_path(tmp_path, monkeypatch):
+    monkeypatch.setenv("CLAUDE_JOB_DIR", str(tmp_path / "job"))
+    rendered = _load(monkeypatch, tmp_path).section_claude_registration()
+    assert "unobserved" in rendered
+    assert "may predate" in rendered
+    assert "--session-id" in rendered
+
+
+def test_claude_hook_warning_is_not_emitted_for_other_lanes(tmp_path, monkeypatch):
+    monkeypatch.delenv("CLAUDE_JOB_DIR", raising=False)
+    assert _load(monkeypatch, tmp_path).section_claude_registration() == ""

@@ -4266,3 +4266,17 @@ for (const accepted of [false, true]) {
     await assert.rejects(service.call("execution_info", {work_key: "jules-owned", principal: {principal_id: "local:jules:cli", roles: ["conductor"]}}), /active_reservation_required/);
   });
 }
+
+test("HTTP capabilities preserve the authenticated principal for safe native binding", async () => {
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = {};
+  const principal = {principal_id: "claude-direct", agent: "claude", surface: "direct", roles: ["observer", "conductor"]};
+  durable.service = {call: async (method, payload) => {
+    assert.equal(method, "capabilities");
+    assert.deepEqual(payload, {principal});
+    return {authenticated_principal: payload.principal};
+  }};
+  const response = await durable.route(new Request("https://limen.example/api/conduct/capabilities"), principal);
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).authenticated_principal, principal);
+});
