@@ -7,7 +7,7 @@
     "raw_body_published": false,
     "retained": true
   },
-  "next_action": "The custody operation is explicitly approved. Execution stopped before acquisition because a fresh canonical host-admission probe returned allowed=false for swap-fraction. After pressure inputs change and canonical admission passes, run the same approved procedure under its original bounds; no new approval is needed.",
+  "next_action": "Obtain positive release of a named finished client, or a supported owning-client operation that releases its proven inactive helpers without affecting active sessions. Then refresh canonical host admission after the measured resource change and execute the same approved custody plan. Do not kill protected/unknown owners, reset swap state, weaken thresholds or re-request custody approval.",
   "owner_url": "https://github.com/4444J99/limen/issues/685",
   "retention": {
     "all_user_owned": true,
@@ -356,5 +356,127 @@
       "owner_url": "https://github.com/4444J99/limen/issues/685",
       "next_action": "After host-pressure inputs change, acquire canonical admission and execute the already-approved bounded procedure. Existing approval persists; no new operator approval is required. Never bypass pressure, stop peers, delete state or reset recovery accounting."
     }
-  ]
+  ],
+  "memory_relief": {
+    "schema": "limen.unblock_custody_memory_relief.v1",
+    "started_at": "2026-10-18T23:22:19Z",
+    "last_admission_observed_at": "2026-10-18T23:33:24.616057+00:00",
+    "authorized_scope": "Investigate memory pressure and perform safe relief while preserving all originals, existing worktrees and active sessions; then execute the already-approved custody procedure only under valid admission.",
+    "status": "held_no_confirmed_inactive_owner",
+    "diagnosis": {
+      "inference": "Cumulative live client/helper co-residency is a contributor. No single resident-memory runaway or safely releasable owner was established. Per-process compressed/swap attribution remains unmeasured.",
+      "evidence": {
+        "process_census_before_count": 921,
+        "process_census_after_count": 929,
+        "codex_backend_direct_helpers_before": 230,
+        "codex_backend_direct_helper_rss_kib_before": 1518320,
+        "largest_renderer_rss_kib_before": 971744,
+        "largest_any_process_rss_kib_before": 971744,
+        "largest_any_process_rss_kib_after": 824560,
+        "rss_aggregates_are_not_unique_physical_memory": true,
+        "activity_monitor_observation": {
+          "observed_at": "2026-10-18T23:24:54Z",
+          "physical_memory_gb": 16,
+          "memory_used_gb": 14.3,
+          "app_memory_gb": 3.14,
+          "wired_memory_gb": 4.17,
+          "compressed_memory_gb": 6.34,
+          "swap_used_gb": 10.39,
+          "source": "native Activity Monitor screenshot",
+          "per_process_memory_table": "displayed zero values; not used as ownership or memory-reclamation proof"
+        },
+        "own_node_repl": {
+          "used_heap_bytes": 9054312,
+          "total_heap_bytes": 11878400,
+          "external_bytes": 4379701,
+          "conclusion": "small; no evidence it accounts for the pressure"
+        },
+        "thread_inventory": {
+          "coverage": "at most 50 most recent app entries; not a complete host/session ownership census",
+          "active_entries_returned": 2,
+          "foreign_session_release_authorized": false
+        }
+      }
+    },
+    "owning_relief_policy": {
+      "source": "scripts/host-relief.py; institutio/governance/host-pressure-axes.yaml; docs/architecture/host-work-admission.md",
+      "declared_default_agent_rss_ceiling_mib": 1024,
+      "declared_default_root_hog_rss_ceiling_mib": 4096,
+      "processes_exceeding_default_agent_ceiling_before": 0,
+      "processes_exceeding_default_agent_ceiling_after": 0,
+      "root_processes_exceeding_default_hog_ceiling": 0,
+      "effective_threshold_environment_overrides": "not measured",
+      "action": "No kickstart, signal, restart, priority retuning or threshold change performed. A warm-spare process name or an orphaned parent is not positive inactive-session release."
+    },
+    "safe_actions": [
+      {
+        "action": "closed Activity Monitor opened solely for this task",
+        "preexisting_process_observed": false,
+        "exit_confirmed": true,
+        "reclaimed_bytes": null
+      },
+      {
+        "action": "reset only this task's newly used CUA REPL state after closing its diagnostic app",
+        "tool_result": "js kernel reset",
+        "reclaimed_bytes": null
+      }
+    ],
+    "final_admission": {
+      "operation": "status",
+      "probe": true,
+      "bare_exit_code": 0,
+      "allowed": false,
+      "reasons": [
+        "swap-fraction",
+        "vitals-shed"
+      ],
+      "pressure": {
+        "observed_at": "2026-10-18T23:33:24.616057+00:00",
+        "swap_used_bytes": 12683449466,
+        "memory_bytes": 17179869184,
+        "swap_fraction": 0.7382739257300273,
+        "swap_growth_bytes_per_minute": 201497576.941,
+        "vitals_action": "shed"
+      },
+      "interpretation": "Read-only report exit 0 is not workload admission. Probe remained denied after the diagnostic app was closed. CUA kernel reset occurred afterward; no green admission is inferred."
+    },
+    "integration_limits": {
+      "actual_tool_workdir": "pwd confirmed the requested external worktree",
+      "read_only_shell_probes_denied": [
+        "vm_stat",
+        "sysctl vm.swapusage",
+        "lsof"
+      ],
+      "denial": "shared-checkout-write",
+      "canonical_admission_state_diagnostic": "valid, no legacy leases, nine scoped leases observed",
+      "conduct_capabilities": "ianva broker configuration unavailable",
+      "bypass_performed": false
+    },
+    "custody_execution": {
+      "approval_persists": true,
+      "source_acquisition_executed": false,
+      "replicas_created": 0,
+      "archive4t_restore_executed": false,
+      "t7recovery_restore_executed": false,
+      "escrow_read": false,
+      "heavy_workload_started": false,
+      "automatic_retry_scheduled": false
+    },
+    "preservation": {
+      "preexisting_processes_signaled": 0,
+      "active_sessions_stopped": 0,
+      "originals_modified": false,
+      "local_worktrees_modified": false,
+      "worktrees_removed": 0,
+      "swap_files_deleted": false,
+      "admission_thresholds_changed": false,
+      "credentials_changed": false
+    },
+    "owner_urls": [
+      "https://github.com/4444J99/limen/issues/685",
+      "https://github.com/4444J99/limen/issues/2763",
+      "https://github.com/4444J99/limen/issues/1417"
+    ],
+    "next_action": "Obtain positive release of a named finished client, or a supported owning-client operation that releases its proven inactive helpers without affecting active sessions. Then refresh canonical host admission after the measured resource change and execute the same approved custody plan. Do not kill protected/unknown owners, reset swap state, weaken thresholds or re-request custody approval."
+  }
 }
