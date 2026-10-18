@@ -248,5 +248,88 @@
       "projected_user_items": 416,
       "recovered_complete_sessions": 0
     }
+  },
+  "study_v3": {
+    "head": "1b3402ad8a7cdb78ee2fc2320043b1b76bb9a813",
+    "owner_url": "https://github.com/4444J99/limen/issues/3056",
+    "source_correction": {
+      "method": "Native turn association; retain derived frames, mark shared and unbound attribution",
+      "same_source_files": 382,
+      "changed_source_files": 1,
+      "new_prompt_positions": 3,
+      "reply_association_changes_same_source": 607,
+      "derived_frames": 1362,
+      "shared_turn_prompts": 641,
+      "unbound_prompts": 1211
+    },
+    "capture": {
+      "candidate_files_visited": 509,
+      "multi_prompt_files": 383,
+      "prompt_rows": 3496,
+      "source_limit_failures": 26,
+      "catalog_columns": 382,
+      "catalog_prompt_rows": 3500
+    },
+    "source_holdout": {
+      "file_sequences": 9,
+      "retained_prompts": 36,
+      "followups": 27,
+      "direct_controls": 15,
+      "payload_required": 6,
+      "composite_operations": 2,
+      "authority_binding_required": 4,
+      "independent_blind_validation": false,
+      "runtime_replay": false
+    },
+    "checks": [
+      {
+        "command": "Hermetic native projection/rollout fixture tests",
+        "exit_code": 0,
+        "result": "12 passed in 0.06s"
+      },
+      {
+        "command": "Catalog render-logic check",
+        "exit_code": 0,
+        "result": "382 columns and 3500 prompt bodies preserved; attribution and derived frames visible"
+      },
+      {
+        "command": "Scoped Ruff lint and format",
+        "exit_code": 0
+      },
+      {
+        "command": "Gate registry check",
+        "exit_code": 0,
+        "result": "182 gates; existing unjustified API deploy trigger remains recorded"
+      },
+      {
+        "command": "credential-wall.py --check",
+        "exit_code": 0,
+        "result": "32 registered secret atoms"
+      },
+      {
+        "command": "git diff --check",
+        "exit_code": 0
+      }
+    ],
+    "projection_live_capture": {
+      "executed": false,
+      "denial": "write-target-outside-worktree",
+      "note": "External database input was classified as a write target. No workaround used; 26 limited and 21 projection-only sources remain unrecovered."
+    },
+    "admission": {
+      "allowed": false,
+      "reasons": [
+        "swap-fraction"
+      ],
+      "swap_fraction": 0.7100372314453125,
+      "observed_at": "2026-10-18T23:37:46.390656+00:00"
+    },
+    "policy_owner_route": {
+      "authenticated_readback": true,
+      "retained_owner_candidates_checked": 2,
+      "matching_live_generation": 0,
+      "installed": false
+    },
+    "acceptance": "The original goal remains active; logical-session lineage, unresolved native sources, remaining contextual coding and independent substitution review are not complete. Original source repair, full gate, merge/live and successful closeouts remain required."
   }
 }
