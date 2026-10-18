@@ -1,7 +1,7 @@
 # Close the front-door verification gaps
 
 Issue: #3012
-PR: (pending)
+PR: #3033
 
 ## Context
 
