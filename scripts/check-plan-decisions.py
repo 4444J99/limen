@@ -46,7 +46,18 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+# ROOT is bound to __file__, NOT to $LIMEN_ROOT (see scripts/session-plan.py for the full reasoning): a
+# worktree runs verify-scoped with LIMEN_ROOT still exported, and an agent shell can export a stub root that
+# holds only logs/. Honouring the variable measured an empty tree ("0 plan(s)", every baseline row stale) and
+# failed every docs/plans change from an isolated session. The override is refused out loud, not ignored.
+ROOT = Path(__file__).resolve().parents[1]
+_env_root = os.environ.get("LIMEN_ROOT")
+if _env_root and Path(_env_root).resolve() != ROOT:
+    print(
+        f"check-plan-decisions: NOTE — $LIMEN_ROOT={_env_root} is set but NOT used; this predicate always "
+        f"judges its own tree ({ROOT}).",
+        file=sys.stderr,
+    )
 PLANS = ROOT / "docs" / "plans"
 
 # Decisions present when this predicate shipped (2026-07-30). Each entry is "<file>#<number>".
