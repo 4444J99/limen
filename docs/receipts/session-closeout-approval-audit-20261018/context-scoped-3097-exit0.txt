@@ -1,0 +1,9 @@
+Changed paths (1):
+  .agents/skills/closeout/SKILL.md
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.41s
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=2.45s
+WAVE cheap: FINISH gate=agent-docs status=PASS duration=2.49s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=2.50s
+  unclassified (single-token, not gated — see SCOPE): link, redirects, wikilink, wikilinks
+WAVE cheap: PASS
+Scoped verification passed

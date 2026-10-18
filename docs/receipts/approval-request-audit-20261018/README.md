@@ -18,6 +18,9 @@ section) and names the base to fix for each cause.
 - 19 classifier agents judged each event against the rubric; two skeptics per batch (litmus lens, evidence
   lens) tried to refute every "inappropriate" label; two forensic agents read the settings layers; one
   synthesis agent clustered by root cause. All were read-only.
+- Reproduce the extraction with `tooling/extract_approvals.py` and `tooling/make_batches.py`. They are audit
+  tooling, not a gate: the window constants are fixed to this audit, and they are the base for the transcript
+  detector filed on #3091.
 - The security warnings the runner raised on four subagents were checked against their tool calls: only
   `Read`, in-worktree `grep` and structured output. The flagged content is quoted transcript text inside
   the audited events, not subagent behavior.

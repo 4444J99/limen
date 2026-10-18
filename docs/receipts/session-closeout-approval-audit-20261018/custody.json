@@ -1,0 +1,39 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "20ca0534-92e4-46e8-b3ef-e5e306c3b189",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3088, "merge_commit": "549dbe25eb240f5a6c9f091a6174f17641419d33", "change": "26 read-only patterns appended to permissions.allow in .claude/settings.json, plus the plan docs/plans/purrfect-seeking-alpaca.md; project layer only"},
+    {"repository": "4444J99/limen", "pr": 3097, "merge_commit": "1335649d3b6d3ad97e8db20950bd407a3526f596", "change": "closeout skill step 2 names receipt-check forms that never prompt (.agents/skills/closeout/SKILL.md)"},
+    {"repository": "4444J99/limen", "pr": 3093, "merge_commit": "3f151aa6e6bdb89fb6655e789c0f18ed96e54117", "change": "72h approval-request audit receipt, two operator levers in his-hand-levers.json, lever-total pin 113 to 116 in cli/tests/test_check_his_hand.py; merged by the operator account, not by this session"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/3091"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2898#issuecomment-6253124393"
+    ],
+    "broker_registration": "none: the conduct broker rejects this job's registration with BrokerQuotaExhausted (HTTP 500, 'Exceeded allowed rows written in Durable Objects free tier'), last logged 2026-10-18T18:39:09Z in the job's conduct-register log. The repair is owned by https://github.com/4444J99/limen/issues/2054 (lever L-CLOUDFLARE-DO-QUOTA is retired as a human action). Related owners: issues 2966 (closeout predicate unmeasurable from an isolated agent shell) and 2970 (Claude sessions have no native witness). BLOCKED: broker write quota (2054). Once registration succeeds, run the session predicate with this receipt."
+  },
+  "session_worktrees": {
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/chore-fewer-permission-prompts-20261018b",
+    "note": "Three topic branches were squash-merged (worktree-chore-fewer-permission-prompts-20261018b to 3088, fix/closeout-receipt-check-forms-20261018 to 3097, docs/approval-request-audit-20261018 to 3093) and their remote heads were removed on merge. This worktree was reused for the receipt branch and is retained for the sanctioned reaper, not removed by this session."
+  },
+  "not_owned_by_this_session": [
+    "the live checkout ~/Workspace/limen: 4 commits behind origin/main when measured (check-live-checkout.py state=drift); sync-release.sh owns the fast-forward. It already contains this session's merged changes 3088 and 3097.",
+    "installed-runtime lag (check-runtime-lag.py: OK, 6 commits); this session changed no cli/src code, so domus-limen-runtime rotation is not implicated",
+    "the 14 writer leases held by other (Codex) sessions, and open PR 2988 (feat/session-closeout-receipt-producer), which belongs to another session"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "repair scripts/heal-hook-wiring.py to the live modify_ source and extend it, dry-run by default, merged unarmed (causes 1 and 6)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "extend claude-workflow-guard.py audit-transcript to flag menus, re-asks and ceremony plan gates, with fixtures; add the approved-prompt receipt recorder (cause 3 and blind spot)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "check the ai-skills and domus-genoma copies of the closeout skill for the improvised receipt-check commands (cause 4; only the limen copy was checked)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "operator atoms in his-hand-levers.json: L-APPROVAL-USER-ALLOW-WIDENING (operator reads the repaired effector's dry-run diff and decides to arm it) and L-APPROVAL-PLAN-DEFAULT (answered by protocol, awaits the operator's closure); two agent attempts to rewrite their text were denied by the auto-mode classifier, so docs/receipts/approval-request-audit-20261018/README.md records the supersession"},
+    {"owner": "https://github.com/4444J99/limen/issues/2898", "what": "stays open for the keeper reserve_growth verification window; a corroborating comment was added and corrected in place"}
+  ],
+  "not_verified_locally": [
+    "the pytest-cli heavy wave for the 3093 head was never run by this session: host admission denied it (swap-fraction, exit 75) on two attempts and the PR was merged by the operator account before a third. Evidence: context-scoped-3093-exit75-heavy-deferred.txt. The landed tree was then checked by check-his-hand and the pinned-total test at the head recorded in this receipt.",
+    "whether the 26 allowlist entries reduce prompts in a session launched outside a Limen checkout is unobserved; the discriminating test is one fixture command from a session launched in the home directory"
+  ],
+  "local_only_state": "The audit's scratch directory in this worktree (.limen-private/scratch: the extracted event file, 19 batch dossiers quoting operator prompts and tool inputs, a rejected lever-rewrite script, and saved gate outputs) is gitignored, disposable, and regenerable from the transcript window with the committed tooling; no restore copy is claimed. The two reusable helpers are committed under docs/receipts/approval-request-audit-20261018/tooling. Nothing durable exists only locally: every finding is in that receipt or on issue 3091, and every change is merged on origin/main."
+}
