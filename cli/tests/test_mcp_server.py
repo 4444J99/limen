@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import sys
 import types
 from pathlib import Path
@@ -538,3 +539,88 @@ def test_mcp_conduct_tools_forward_the_identical_protocol_models(monkeypatch):
     assert server.conduct_adopt("run-root", "session-a")["status"] == "adopted"
     assert server.conduct_cancel("run-root", "session-a")["status"] == "cancelled"
     assert server.conduct_request_stop("run-root", "session-a")["cooperative"] is True
+
+
+@pytest.fixture
+def lane_broker(monkeypatch):
+    """A mock broker transport that records which bearer each request presents.
+
+    The suite forbids real /api/conduct/ traffic (conftest), so the fixture replaces urlopen itself.
+    """
+    import json
+    import urllib.request
+
+    presented: list[str] = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return json.dumps({"schema_version": "limen.conduct_capabilities.v1"}).encode()
+
+    def urlopen(request, timeout=None):
+        presented.append(request.get_header("Authorization", ""))
+        return Response()
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    return "https://broker.example", presented
+
+
+def _lane_cache(tmp_path, endpoint):
+    cache = tmp_path / "limen.env"
+    cache.write_text(
+        f"LIMEN_CONDUCT_URL={endpoint}\nLIMEN_CONDUCT_TOKEN=generic-legacy\nLIMEN_CONDUCT_TOKEN_OPENCODE=opencode-lane\n",
+        encoding="utf-8",
+    )
+    cache.chmod(0o600)
+    return cache
+
+
+def _clear_conduct_env(monkeypatch):
+    for name in ("LIMEN_CONDUCT_URL", "LIMEN_CONDUCT_TOKEN", "LIMEN_CONDUCT_TOKEN_OPENCODE", "LIMEN_CONDUCT_STATE"):
+        monkeypatch.delenv(name, raising=False)
+
+
+def test_mcp_conduct_client_presents_the_named_lane_bearer_not_the_generic_one(tmp_path, monkeypatch, lane_broker):
+    endpoint, presented = lane_broker
+    _clear_conduct_env(monkeypatch)
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(_lane_cache(tmp_path, endpoint)))
+    monkeypatch.setenv("LIMEN_AGENT", "opencode")
+    server = _load_server()
+
+    assert server._conduct_client().capabilities()["schema_version"] == "limen.conduct_capabilities.v1"
+
+    assert presented == ["Bearer opencode-lane"]
+    assert not [name for name in os.environ if name.startswith("LIMEN_CONDUCT_") and name != "LIMEN_CONDUCT_ENV_FILE"]
+
+
+def test_mcp_and_cli_resolve_the_identical_lane_credential(tmp_path, monkeypatch, lane_broker):
+    from limen.conduct.client import client_from_env
+
+    endpoint, _ = lane_broker
+    _clear_conduct_env(monkeypatch)
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(_lane_cache(tmp_path, endpoint)))
+    monkeypatch.setenv("LIMEN_AGENT", "opencode")
+    server = _load_server()
+
+    mcp_client = server._conduct_client()
+    cli_client = client_from_env(hydrate_cache=True, lane="opencode")
+
+    assert (mcp_client.endpoint, mcp_client.token) == (cli_client.endpoint, cli_client.token)
+
+
+def test_mcp_conduct_client_without_an_explicit_lane_keeps_the_default_resolution(tmp_path, monkeypatch, lane_broker):
+    from limen.conduct.client import BrokerUnavailable
+
+    endpoint, _ = lane_broker
+    _clear_conduct_env(monkeypatch)
+    monkeypatch.delenv("LIMEN_AGENT", raising=False)
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(_lane_cache(tmp_path, endpoint)))
+    server = _load_server()
+
+    with pytest.raises(BrokerUnavailable):
+        server._conduct_client()

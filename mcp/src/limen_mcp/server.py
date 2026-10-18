@@ -266,8 +266,15 @@ def _load_data() -> LimenFile:
 
 
 def _conduct_client() -> Any:
-    """Resolve the authenticated broker for each call; never cache credentials in process state."""
+    """Resolve the authenticated broker for each call; never cache credentials in process state.
 
+    An explicit ``LIMEN_AGENT`` names the lane, so the client authenticates with that lane's own bearer
+    (read from the owned cache, not exported) rather than the generic one that would relabel it ``codex``.
+    """
+
+    lane = os.environ.get("LIMEN_AGENT", "").strip()
+    if lane:
+        return client_from_env(hydrate_cache=True, lane=lane)
     return client_from_env()
 
 
