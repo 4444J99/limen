@@ -1,0 +1,50 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "e3ef1593-8bbd-428b-b7e0-794965689304",
+  "worktree_name": "heal-evolve-opencode-20261018",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-heal-evolve-20261018",
+  "base_head": "0f761c08a77fadae4009853220c4aa64062b4dc1",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/2961",
+  "owned_paths": [
+    "docs/plans/2026-10-17-heal-evolve-opencode-mcp-claim.md",
+    "scripts/insight-cross-vendor-ingest.py",
+    "cli/tests/test_vendor_insights.py"
+  ],
+  "retained_work": [
+    {
+      "owner_url": "https://github.com/4444J99/limen/pull/2976",
+      "paths": [
+        "AGENTS.md"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "head": "50d94d35e12dd02a045fa18e4f80be3900d8fae2",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-heal-evolve-opencode-20261018/verification-cheap-wave.txt",
+      "sha256": "e79876577aecb77a97b1078e4dda715f74606d3c99ceff0bb21396b207fc97fe"
+    },
+    {
+      "head": "9d3ec0037f746edc5643759d1e8011446a2ed64d",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-heal-evolve-opencode-20261018/verification-credential-wall.txt",
+      "sha256": "a7303c329355c400f694a904b67eb6253b680c023e3a9bacdc5a5c9fd8a0debf"
+    },
+    {
+      "purpose": "completion",
+      "head": "50d94d35e12dd02a045fa18e4f80be3900d8fae2",
+      "exit_code": 1,
+      "evidence": "docs/receipts/session-closeout-heal-evolve-opencode-20261018/verification-pytest-cli.txt",
+      "sha256": "2b053c2a0cc9a21fa0bd9e461c83c465a498ee1d774c4e090e71fcea99b21a55",
+      "owner_url": "https://github.com/4444J99/limen/issues/2961"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-heal-evolve-opencode-20261018/custody.json",
+    "sha256": "48b477baf0d989767fe10b7ab63a4003115fa236d17c58d22a33681f12b32120"
+  }
+}
