@@ -64,8 +64,20 @@ VENDOR_REGISTRY = {
     },
     "opencode": {
         "path": HOME / ".local" / "share" / "opencode" / "opencode.db",
+        # 2026-10-17: the store MOVED twice and the legacy path alone reports a
+        # false zero. Live v2 sessions land per-workspace under
+        # <workspace>/.agent-runtime/opencode/data/opencode/opencode.db (observed
+        # 2026-10-17: legacy path held 3 sessions ending 2026-08-09 while the
+        # workspace runtime root held 196 sessions, 27k messages, newest = that
+        # same minute). Legacy = history only; adapters must walk BOTH, exactly
+        # as claude_estate_roots() does for claude. Same shape as the claude
+        # entry above — one resolver, never a hand-resolved caller.
+        "extra_root_globs": [
+            str(HOME / "Workspace" / "*" / ".agent-runtime" / "opencode" / "data" / "opencode"),
+            str(HOME / "limen-lanes" / "*" / ".agent-runtime" / "opencode" / "data" / "opencode"),
+        ],
         "dormant": False,
-        "description": "OpenCode SQLite session store",
+        "description": "OpenCode SQLite session store (legacy ~/.local/share + per-workspace .agent-runtime roots)",
     },
     "copilot": {
         "path": HOME / ".copilot" / "session-store.db",
@@ -92,8 +104,14 @@ VENDOR_REGISTRY = {
         # Added 2026-08-06 — this estate was silent in the registry, violating the
         # "every vendor must appear here" rule above.
         "path": HOME / ".gemini" / "tmp",
+        # 2026-10-17: same relocation as opencode. The legacy tmp root stopped
+        # receiving sessions mid-July while live ones land under the per-workspace
+        # runtime root, so the legacy-only path reported a false zero. Walk both.
+        "extra_root_globs": [
+            str(HOME / "Workspace" / "*" / ".agent-runtime" / "gemini" / "home" / ".gemini" / "tmp"),
+        ],
         "dormant": False,
-        "description": "Gemini CLI session JSONL under ~/.gemini/tmp/<project>/chats/",
+        "description": "Gemini CLI session JSONL under ~/.gemini/tmp/<project>/chats/ + per-workspace .agent-runtime roots",
     },
     "jules": {
         "path": HOME / ".jules",
@@ -192,6 +210,44 @@ def claude_estate_roots() -> list[Path]:
     for pattern in meta.get("extra_root_globs", []):
         roots.extend(Path(p) for p in sorted(_glob.glob(pattern)) if Path(p).is_dir())
     return roots
+
+
+def gemini_estate_roots() -> list[Path]:
+    """Every dir whose children are gemini project slugs holding session JSONL.
+
+    Same migrated-layout contract as claude_estate_roots(): legacy tmp root plus
+    each workspace's .agent-runtime root (extra_root_globs on the registry entry).
+    """
+    import glob as _glob
+
+    meta = VENDOR_REGISTRY["gemini"]
+    roots = [meta["path"]] if meta["path"].is_dir() else []
+    for pattern in meta.get("extra_root_globs", []):
+        roots.extend(Path(p) for p in sorted(_glob.glob(pattern)) if Path(p).is_dir())
+    return roots
+
+
+def opencode_estate_stores() -> list[Path]:
+    """Every opencode.db that exists: the legacy path plus per-workspace roots.
+
+    Single source for the migrated layout, mirroring claude_estate_roots(). Order
+    is stable (legacy first, then sorted globs) so callers can dedupe by session id
+    deterministically. A store is included only if it exists; a missing store is
+    reported by the adapter's notes, never silently treated as zero activity.
+    """
+    import glob as _glob
+
+    meta = VENDOR_REGISTRY["opencode"]
+    stores: list[Path] = []
+    legacy = meta["path"]
+    if legacy.exists():
+        stores.append(legacy)
+    for pattern in meta.get("extra_root_globs", []):
+        for hit in sorted(_glob.glob(pattern)):
+            db = Path(hit) / "opencode.db"
+            if db.exists() and db not in stores:
+                stores.append(db)
+    return stores
 
 
 def _ingest_claude(window_start: datetime) -> dict:

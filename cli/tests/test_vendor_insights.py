@@ -5,6 +5,7 @@ live vendor stores), plus the exit-code honesty of `render` and the codex
 resume-grouping semantics observed live on 2026-08-06 (resumed rollout files share
 the parent session_meta.session_id and must aggregate, not drop)."""
 
+import glob
 import importlib.util
 import json
 import sqlite3
@@ -30,7 +31,39 @@ WINDOW = datetime.now(timezone.utc) - timedelta(days=30)
 
 
 def _fake_mod(**registry) -> types.SimpleNamespace:
-    return types.SimpleNamespace(VENDOR_REGISTRY=registry)
+    """Stand-in for the ingest organ.
+
+    The adapters resolve stores through the ingest module's shared resolvers
+    (opencode_estate_stores / gemini_estate_roots) rather than reading a fixed
+    path, so the fixture models that contract — including the optional
+    extra_root_globs — instead of handing the adapters a bare registry.
+    """
+    mod = types.SimpleNamespace(VENDOR_REGISTRY=registry)
+
+    def gemini_estate_roots() -> list[Path]:
+        meta = registry.get("gemini", {})
+        roots = [meta["path"]] if meta.get("path") is not None and meta["path"].is_dir() else []
+        for extra in meta.get("extra_root_globs", []):
+            hits = sorted(glob.glob(extra))
+            roots.extend(Path(p) for p in hits if Path(p).is_dir())
+        return roots
+
+    def opencode_estate_stores() -> list[Path]:
+        meta = registry.get("opencode", {})
+        stores: list[Path] = []
+        primary = meta.get("path")
+        if primary is not None and Path(primary).exists():
+            stores.append(Path(primary))
+        for extra in meta.get("extra_root_globs", []):
+            for hit in sorted(glob.glob(extra)):
+                db = Path(hit) / "opencode.db"
+                if db.exists() and db not in stores:
+                    stores.append(db)
+        return stores
+
+    mod.gemini_estate_roots = gemini_estate_roots
+    mod.opencode_estate_stores = opencode_estate_stores
+    return mod
 
 
 # ─── registry contract ───────────────────────────────────────────────
