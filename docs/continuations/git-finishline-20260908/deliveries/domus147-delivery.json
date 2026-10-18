@@ -1,0 +1,24 @@
+{
+  "schema": "limen.recovery_intent_delivery.v1",
+  "atom_id": "recovery-67adcb86dcf2ddf63d3f",
+  "repository": "organvm/domus-genoma",
+  "status": "delivered",
+  "default_generation": "5a3b88f0ddab140bc5a93531e38346ec71a5db2d",
+  "implemented_head": "6396ecc4dfb8adf78c0bc3d2f74bc186d2ee25c6",
+  "landing_kind": "merged_pr",
+  "merge_commit": "97b3f2c6169b83a20e0d1a61ef95b6621d0e1533",
+  "reachable_from_default": true,
+  "landing_receipt": {
+    "ref": "docs/continuations/git-finishline-20260908/deliveries/domus147-github.json",
+    "sha256": "3f12734561e43d02e3aac25c7fd2b8e93c1e70bb3cebb9846eb626a512c3d17d"
+  },
+  "predicates": [
+    {
+      "id": "original-pr-all-ci-checks",
+      "receipt": {
+        "ref": "docs/continuations/git-finishline-20260908/deliveries/domus147-ci.json",
+        "sha256": "fb6eb9c13c15020aa8e338be0b54b71e366f3e19db8c62ed4a2b1c726374a8b5"
+      }
+    }
+  ]
+}

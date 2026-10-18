@@ -5,6 +5,7 @@ live vendor stores), plus the exit-code honesty of `render` and the codex
 resume-grouping semantics observed live on 2026-08-06 (resumed rollout files share
 the parent session_meta.session_id and must aggregate, not drop)."""
 
+import base64
 import glob
 import importlib.util
 import json
@@ -210,6 +211,106 @@ def test_codex_cat_concatenates_all_rollouts_of_a_session(tmp_path):
     assert text is not None
     assert text.count("===== rollout file:") == 2
     assert "[tool: shell]" in text
+
+
+# A genuine zstd frame holding one session_meta (id "sid-zst"), one user turn and one assistant turn, so
+# the reader is exercised against real compressed bytes without needing an encoder at test time.
+_ZST_ROLLOUT_B64 = (
+    "KLUv/WCOAPUFAGILIh1wJ2oDgHjVLwnTlqbYEeKzxatKPlEiojnS6vTBBMRahRWgpL7AdA3xb5WQ"
+    "Hou76ObZ438K6wYMiT8iQ7zKGqV7TMzJ2g9jTcKcFQZeY5eUSGDFbXpTD+Uviiobzm+EvGj4qelW"
+    "xFqnyUqAOfYHAAj+8GDFIUeV5qQzwp01MlLx98+Kc2r2DgETAKA2GMounDJ6oGw5ZGS4UszqlQCA"
+    "uWeq9TNGFK+HUMuQvsAU6EthT83GSC3LXKyvTTI="
+)
+
+
+def _write_zst_rollout(dir_: Path, name: str, payload: bytes | None = None):
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_bytes(base64.b64decode(_ZST_ROLLOUT_B64) if payload is None else payload)
+
+
+def _force_decoder(monkeypatch, decoder: str):
+    """Pin which zstd decoder the reader may use. A decoder this interpreter/host lacks is a visible skip,
+    never a silent pass: python needs 3.14+, cli needs the zstd binary, none removes both."""
+    if decoder == "python":
+        if vi._zstd_module() is None:
+            pytest.skip("compression.zstd needs Python 3.14+ (this interpreter predates it)")
+        monkeypatch.setattr(vi, "_zstd_binary", lambda: None)
+    elif decoder == "cli":
+        if vi._zstd_binary() is None:
+            pytest.skip("the zstd binary is not installed on this host")
+        monkeypatch.setattr(vi, "_zstd_module", lambda: None)
+    else:
+        monkeypatch.setattr(vi, "_zstd_module", lambda: None)
+        monkeypatch.setattr(vi, "_zstd_binary", lambda: None)
+
+
+@pytest.mark.parametrize("decoder", ["python", "cli"])
+@pytest.mark.parametrize("named_by_sid", [True, False], ids=["name-carries-sid", "header-match"])
+def test_codex_cat_reads_a_zst_compressed_rollout(tmp_path, monkeypatch, decoder, named_by_sid):
+    # Codex compresses old sessions to rollout-*.jsonl.zst. The reader globbed only *.jsonl, so 8 of 85
+    # indexed codex sessions read as "not found" (limen#3083). A resumed session's file name carries its
+    # own id, so the header-match case must decompress to find the parent session_id.
+    _force_decoder(monkeypatch, decoder)
+    name = (
+        "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst" if named_by_sid else "rollout-2026-10-10T12-48-38-aaa.jsonl.zst"
+    )
+    _write_zst_rollout(tmp_path / "archived_sessions", name)
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+    assert "--- user ---\nwhy was the history reported missing?" in text
+    assert "it was compressed to jsonl.zst" in text
+
+
+@pytest.mark.parametrize("decoder", ["python", "cli"])
+def test_codex_cat_corrupt_zst_fails_loudly_never_renders_empty(tmp_path, monkeypatch, decoder):
+    _force_decoder(monkeypatch, decoder)
+    _write_zst_rollout(
+        tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst", b"this is not a zstd frame"
+    )
+    with pytest.raises(RuntimeError, match="zstd could not decompress"):
+        vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+
+
+def test_codex_cat_zst_without_a_decompressor_fails_loudly(tmp_path, monkeypatch):
+    _force_decoder(monkeypatch, "none")
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst")
+    with pytest.raises(RuntimeError, match="no decompressor is available"):
+        vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+
+
+def test_codex_uninspectable_zst_neighbour_does_not_break_a_plain_session(tmp_path, monkeypatch):
+    # Without a decompressor an unrelated archived file cannot be header-peeked; that must not turn an
+    # ordinary plain-text session into an error.
+    _force_decoder(monkeypatch, "none")
+    _write_rollout(
+        tmp_path / "sessions" / "2026" / "10" / "18", "rollout-2026-10-18T05-00-00-sid-plain.jsonl", "sid-plain"
+    )
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-other.jsonl.zst")
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-plain", 10_000)
+    assert "[tool: shell]" in text
+
+
+def test_codex_not_found_is_an_error_while_a_compressed_rollout_is_uninspectable(tmp_path, monkeypatch):
+    # Reporting "session not found" while blind to a compressed file is the original defect.
+    _force_decoder(monkeypatch, "none")
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-other.jsonl.zst")
+    with pytest.raises(RuntimeError, match="cannot be reported as not found"):
+        vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+
+
+def test_cat_session_exits_1_with_a_named_error_when_the_decompressor_is_missing(tmp_path, monkeypatch, capsys):
+    _force_decoder(monkeypatch, "none")
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst")
+    assert vi.cmd_cat(_codex_mod(tmp_path), "codex", "sid-zst", 10_000) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "ERROR:" in captured.err and "no decompressor is available" in captured.err
+
+
+def test_codex_session_files_ignore_non_rollout_suffixes(tmp_path):
+    (tmp_path / "archived_sessions").mkdir()
+    (tmp_path / "archived_sessions" / "rollout-2026-10-10T12-48-38-sid-zst.jsonl.bak").write_bytes(b"x")
+    assert vi._codex_session_files(_codex_mod(tmp_path), "sid-zst") == []
+    assert vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000) is None
 
 
 def test_codex_cat_omits_harness_injected_context_and_keeps_the_operator_turn(tmp_path):

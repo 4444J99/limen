@@ -186,10 +186,6 @@ def inventory_count(
     leaves = observation.get("leaves")
     if not isinstance(repositories, list) or not isinstance(cursors, list) or not isinstance(leaves, list):
         raise InventoryAdmissionError("inventory_private_full_facts_required")
-    if _integer(report.get("normalized_leaf_count"), "inventory_leaf_count_invalid") != len(leaves) or report.get(
-        "content_sha256"
-    ) != _canonical_sha256(leaves):
-        raise InventoryAdmissionError("inventory_content_changed")
     if observation.get("failures") != []:
         raise InventoryAdmissionError("inventory_partial_or_unknown")
     aliases: dict[str, str] = {}
@@ -212,6 +208,18 @@ def inventory_count(
     cursor_summary = report.get("cursor")
     if not isinstance(cursor_summary, dict):
         raise InventoryAdmissionError("inventory_repository_pagination_incomplete")
+    if (
+        _integer(report.get("normalized_leaf_count"), "inventory_leaf_count_invalid") != len(leaves)
+        or _integer(cursor_summary.get("known_leaf_count"), "inventory_leaf_count_invalid") != len(leaves)
+        or cursor_summary.get("leaf_count_complete") is not True
+    ):
+        raise InventoryAdmissionError("inventory_leaf_count_invalid")
+    try:
+        content_digest = _canonical_sha256(leaves)
+    except (TypeError, ValueError):
+        raise InventoryAdmissionError("inventory_content_digest_invalid") from None
+    if report.get("content_sha256") != content_digest:
+        raise InventoryAdmissionError("inventory_content_digest_invalid")
     repository_cursor = cursor_summary.get("repository")
     if not isinstance(repository_cursor, dict) or repository_cursor.get("exhaustive") is not True:
         raise InventoryAdmissionError("inventory_repository_pagination_incomplete")
