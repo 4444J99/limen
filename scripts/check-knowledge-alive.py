@@ -557,13 +557,29 @@ def leaked_values(text: str, index: dict[str, list[tuple[str, int]]]) -> set[str
 
 
 def root_is_private(path: Path) -> bool:
-    """True when the path is outside every git work tree, or git-ignored inside one."""
-    env = dict(os.environ)
-    inside = run_process(["git", "-C", str(path), "rev-parse", "--show-toplevel"], env=env, timeout=30)
+    """True when the path is outside every git work tree, or git-ignored inside one.
+
+    Only git saying "not a git repository" (exit 128 with that phrase) means outside every work tree. A
+    missing git binary, a permission error, a timeout or any other failure says nothing about the path, so
+    it is an unusable environment rather than a quiet pass.
+    """
+    env = {**os.environ, "LC_ALL": "C"}
+
+    def git(*arguments: str) -> Completed:
+        try:
+            return run_process(["git", *arguments], env=env, timeout=30)
+        except OSError:
+            raise Unusable("git is unavailable") from None
+
+    inside = git("-C", str(path), "rev-parse", "--show-toplevel")
     if inside.returncode != 0:
-        return True
+        if inside.returncode == 128 and "not a git repository" in inside.stderr.lower():
+            return True
+        raise Unusable("git state cannot be read")
     top = Path(inside.stdout.strip())
-    ignored = run_process(["git", "-C", str(top), "check-ignore", "-q", "--", str(path.resolve())], env=env, timeout=30)
+    ignored = git("-C", str(top), "check-ignore", "-q", "--", str(path.resolve()))
+    if ignored.returncode not in (0, 1):
+        raise Unusable("git state cannot be read")
     return ignored.returncode == 0
 
 
@@ -815,7 +831,12 @@ def check_recurring_forms(ctx: Context, state: State) -> CheckResult:
 def collect_private_values(ctx: Context, state: State) -> set[str]:
     values: set[str] = set(state["journal_hashes"])
     for loaded in state["feeds"].values():
-        values.update(hashlib.sha256(str(row.get("text") or "").encode("utf-8")).hexdigest() for row in loaded["rows"])
+        for row in loaded["rows"]:
+            text = str(row.get("text") or "")
+            values.add(hashlib.sha256(text.encode("utf-8")).hexdigest())
+            # The typed text itself. Only an exact copy (after strip) is found, so a public file that rewraps or
+            # edits an ask is a design limit of an exact-value scan; build_leak_index drops the short ones.
+            values.add(text.strip())
     for provider in state["providers"]:
         index_path = index_file(ctx, provider)
         conversations_path = conversations_file(ctx, provider)
@@ -833,21 +854,49 @@ def collect_private_values(ctx: Context, state: State) -> set[str]:
     return values
 
 
-def public_files(ctx: Context) -> list[Path]:
+def is_inside(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def public_files(ctx: Context) -> tuple[list[Path], str | None]:
+    """The tracked public files to scan, or the name of a required one that is missing.
+
+    Three are required: the ideal-forms ledger, the public ledger markdown and the authority seal. The public
+    snapshot defaults to a file inside the private root, where it is not git-tracked and not public, so any
+    candidate that resolves inside the private root is left out of the scan rather than counted as scanned.
+    """
     docs = ctx.repo_root / "docs"
-    candidates = [docs / "IDEAL-FORMS-LEDGER.md", ctx.public_markdown, ctx.public_snapshot, ctx.public_seal]
+    required = [docs / "IDEAL-FORMS-LEDGER.md", ctx.public_markdown, ctx.public_seal]
+    for path in required:
+        if not path.is_file():
+            return [], path.name
+    candidates = [*required, ctx.public_snapshot]
     if (docs / "receipts").is_dir():
         candidates += sorted(path for path in (docs / "receipts").rglob("*") if path.is_file())
     seen: set[Path] = set()
-    return [path for path in candidates if path.is_file() and not (path in seen or seen.add(path))]
+    files = [
+        path
+        for path in candidates
+        if path.is_file() and not is_inside(path, ctx.private_root) and not (path in seen or seen.add(path))
+    ]
+    return files, None
 
 
 def check_privacy(ctx: Context, state: State) -> CheckResult:
     for root in (ctx.store_root, ctx.archive_root):
         if not root_is_private(root):
             return CheckResult(False, "a root is inside a work tree and not git-ignored")
+    files, missing = public_files(ctx)
+    if missing is not None:
+        return CheckResult(False, f"required public file {missing} is missing")
+    if not files:
+        return CheckResult(False, "no public file was scanned")
     index = build_leak_index(collect_private_values(ctx, state))
-    for path in public_files(ctx):
+    for path in files:
         if path.stat().st_size > MAXIMUM_PUBLIC_FILE_BYTES:
             return CheckResult(False, "a public file is too large to scan")
         if leaked_values(path.read_text(encoding="utf-8", errors="replace"), index):
@@ -855,7 +904,8 @@ def check_privacy(ctx: Context, state: State) -> CheckResult:
     homing = ctx.python_tool(ctx.homing_script)
     if homing.returncode != 0:
         return CheckResult(False, "check-atom-homing is not green")
-    return CheckResult(True, f"{sum(len(v) for v in index.values())} values absent from the public files")
+    checked = sum(len(v) for v in index.values())
+    return CheckResult(True, f"{len(files)} public files scanned, {checked} values checked, none found")
 
 
 def receipt_name(state: State, day: str) -> str:
@@ -902,10 +952,9 @@ def check_receipt(ctx: Context, state: State) -> CheckResult:
     if not path.is_file():
         if not ctx.write_receipt:
             return CheckResult(False, "receipt missing, run with --write-receipt")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = path.with_suffix(".json.partial")
-        temporary.write_text(json.dumps(receipt_body(state, day), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        os.replace(temporary, path)
+        # `evaluate` writes it between passes, so the privacy scan sees the same files in every pass.
+        state["receipt_pending"] = (path, receipt_body(state, day))
+        return CheckResult(False, "receipt missing, written after this pass")
     body = read_json(path)
     if body is None or not receipt_is_counts_only(body):
         return CheckResult(False, "the receipt is not counts only")
@@ -950,8 +999,19 @@ def run_pass(ctx: Context) -> tuple[list[str], str | None, State]:
     return lines, failed, state
 
 
+def write_receipt_file(path: Path, body: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".json.partial")
+    temporary.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
 def evaluate(ctx: Context) -> tuple[list[str], int]:
     first_lines, failed, state = run_pass(ctx)
+    pending = state.get("receipt_pending")
+    if failed == "receipt" and pending is not None:
+        write_receipt_file(*pending)
+        first_lines, failed, state = run_pass(ctx)
     if failed is not None:
         return [*first_lines, format_line(10, "determinism", "not run"), f"NOT ALIVE: {failed}"], 1
     second_lines, _failed, _state = run_pass(ctx)

@@ -224,11 +224,13 @@ def option(name):
 feeds = [argv[i + 1] for i, item in enumerate(argv) if item == "--archive-feed"]
 policy = load_policy(Path(option("--root")) / "docs" / "prompt-corpus-policy.json")
 rows = []
+texts = []
 for feed in feeds:
     for line in Path(feed).read_text().splitlines():
         if not line.strip():
             continue
         event = json.loads(line)
+        texts.append(event.get("text", ""))
         occurrence = occurrence_from_event(event)
         atoms = atoms_from_event(occurrence, event, policy)
         occurrence.pop("raw_text", None)
@@ -243,6 +245,8 @@ journal.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in row
 markdown = Path(option("--public-markdown"))
 markdown.parent.mkdir(parents=True, exist_ok=True)
 leaked = rows[0]["occurrence"]["source_locator"].split("#")[0] if rows and "leak" in FAULTS else ""
+if texts and "leak-text" in FAULTS:
+    leaked = texts[0]
 markdown.write_text(f"# Ledger\n\nCounts only: {len(rows)} occurrences. {leaked}\n")
 Path(option("--public-snapshot")).write_text(json.dumps({"occurrences": len(rows)}))
 Path(option("--public-seal")).write_text(json.dumps({"ok": True}))
@@ -436,6 +440,7 @@ FAULT_CASES = [
     ("forms-none", "recurring forms"),
     ("forms-verify-fails", "recurring forms"),
     ("leak", "privacy"),
+    ("leak-text", "privacy"),
     ("homing-fails", "privacy"),
     ("names-flaky", "determinism"),
 ]
@@ -674,14 +679,25 @@ def _patch_registry(monkeypatch, context, tmp_path):
     monkeypatch.setattr(corpus_resolve, "corpus_home", lambda: elsewhere)
 
 
+def _write_public_files(repo: Path) -> None:
+    """The three tracked public files the privacy check requires, with counts-only synthetic content."""
+    (repo / "docs" / "receipts").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "IDEAL-FORMS-LEDGER.md").write_text("# Ideal forms\n\nCounts only.\n", encoding="utf-8")
+    (repo / "docs" / "prompt-atom-ledger.md").write_text("# Ledger\n\nCounts only.\n", encoding="utf-8")
+    (repo / "docs" / "prompt-authority-seal.json").write_text("{}\n", encoding="utf-8")
+
+
 def test_live_mode_writes_then_requires_the_counts_only_receipt(module, stubs, tmp_path, monkeypatch, capsys):
     context = _build_loop(module, stubs, tmp_path, monkeypatch)
     _patch_registry(monkeypatch, context, tmp_path)
     repo = tmp_path / "repo"
-    (repo / "docs" / "receipts").mkdir(parents=True)
+    _write_public_files(repo)
 
     assert module.main(_live_arguments(context, repo)) == 1
-    assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: receipt"
+    first = capsys.readouterr().out.splitlines()
+    assert first[-1] == "NOT ALIVE: receipt"
+    # Three tracked files are scanned. The snapshot lives inside the private root and is not public.
+    assert re.fullmatch(r"check 8 privacy: ok 3 public files scanned, [1-9]\d* values checked, none found", first[7])
 
     assert module.main(_live_arguments(context, repo, "--write-receipt")) == 0
     written = capsys.readouterr().out
@@ -697,9 +713,59 @@ def test_live_mode_writes_then_requires_the_counts_only_receipt(module, stubs, t
     assert module.main(_live_arguments(context, repo)) == 0
     assert capsys.readouterr().out == written
 
-    receipts[0].write_text(json.dumps({**body, "text": SHARED_ASK}))
+    receipts[0].write_text(json.dumps({**body, "note": "an extra key"}))
     assert module.main(_live_arguments(context, repo)) == 1
     assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: receipt"
+
+    # A receipt that carried a typed ask would be caught by the privacy scan before the receipt check.
+    receipts[0].write_text(json.dumps({**body, "text": SHARED_ASK}))
+    assert module.main(_live_arguments(context, repo)) == 1
+    assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: privacy"
+
+
+def test_a_file_inside_the_private_root_is_not_public_but_a_leak_in_docs_is(
+    module, stubs, tmp_path, monkeypatch, capsys
+):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    _patch_registry(monkeypatch, context, tmp_path)
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    # The default public snapshot sits inside the private root: it is excluded from the scan, not flagged.
+    (context.private_dir / "prompt-atom-index.json").write_text(json.dumps({"note": SHARED_ASK}), encoding="utf-8")
+    assert module.main(_live_arguments(context, repo, "--write-receipt")) == 0
+    # The three tracked files plus the receipt this run wrote; the snapshot in the private root is not counted.
+    assert "check 8 privacy: ok 4 public files scanned" in capsys.readouterr().out
+    (repo / "docs" / "receipts" / "note.md").write_text(f"see {SHARED_ASK} here", encoding="utf-8")
+    assert module.main(_live_arguments(context, repo)) == 1
+    assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: privacy"
+
+
+def test_a_missing_required_public_file_is_named(module, stubs, tmp_path, monkeypatch, capsys):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    _patch_registry(monkeypatch, context, tmp_path)
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    (repo / "docs" / "prompt-authority-seal.json").unlink()
+    assert module.main(_live_arguments(context, repo)) == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[7] == "check 8 privacy: FAIL required public file prompt-authority-seal.json is missing"
+    assert out[-1] == "NOT ALIVE: privacy"
+
+
+def test_a_privacy_check_that_scanned_no_file_fails(module, tmp_path):
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    context = SimpleNamespace(
+        store_root=tmp_path,
+        archive_root=tmp_path,
+        repo_root=repo,
+        public_markdown=repo / "docs" / "prompt-atom-ledger.md",
+        public_seal=repo / "docs" / "prompt-authority-seal.json",
+        public_snapshot=repo / "docs" / "prompt-atom-index.json",
+        private_root=repo,  # every candidate resolves inside the private root, so none is public
+    )
+    result = module.check_privacy(context, {})
+    assert not result.ok and result.detail == "no public file was scanned"
 
 
 def test_live_mode_fails_the_registry_check_when_the_store_is_not_declared(
@@ -773,6 +839,41 @@ def test_root_is_private_means_outside_a_work_tree_or_git_ignored(module, tmp_pa
     (work / ".gitignore").write_text("hidden/\n")
     assert module.root_is_private(work / "hidden")
     assert not module.root_is_private(work / "visible")
+
+
+def _git_answers(module, monkeypatch, *answers):
+    replies = iter(answers)
+
+    def answer(argv, *, env, timeout):
+        reply = next(replies)
+        if isinstance(reply, Exception):
+            raise reply
+        return module.Completed(*reply)
+
+    monkeypatch.setattr(module, "run_process", answer)
+
+
+def test_root_is_private_treats_only_not_a_git_repository_as_outside_every_work_tree(module, tmp_path, monkeypatch):
+    _git_answers(module, monkeypatch, (128, "", "fatal: not a git repository (or any of the parent directories): .git"))
+    assert module.root_is_private(tmp_path) is True
+
+
+@pytest.mark.parametrize(
+    "answers",
+    [
+        [(128, "", "fatal: detected dubious ownership in repository")],
+        [(128, "", "fatal: cannot change to a directory")],
+        [(124, "", "timed out")],
+        [(1, "", "")],
+        [FileNotFoundError("git")],
+        [PermissionError("git")],
+        [(0, "/work\n", ""), (128, "", "fatal: unable to read the index")],
+    ],
+)
+def test_root_is_private_is_unusable_when_git_cannot_answer(module, tmp_path, monkeypatch, answers):
+    _git_answers(module, monkeypatch, *answers)
+    with pytest.raises(module.Unusable):
+        module.root_is_private(tmp_path)
 
 
 def test_name_shape_and_activity_day(module, tmp_path):
