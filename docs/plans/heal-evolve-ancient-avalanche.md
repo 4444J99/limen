@@ -1,7 +1,7 @@
 # Heal + evolve: the broker-quota launch block, 2026-10-18 (second pass)
 
 Issue: #2054
-PR: (pending)
+PR: #3114
 
 Successor of `docs/plans/patch-last-login-sun-witty-treasure.md`, whose Limen half landed as #3103
 (`c80d84821`, installed as the current runtime). This plan takes the two follow-ups that plan filed
