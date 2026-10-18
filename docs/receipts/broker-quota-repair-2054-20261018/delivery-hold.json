@@ -1,0 +1,22 @@
+{
+  "owner_url": "https://github.com/4444J99/limen/issues/2054",
+  "session_id": "01a15145-f188-7290-ac5a-5e31aed63887",
+  "implementation_head": "8c2e5175052574414cc2f6c352cc9163c30f7498",
+  "scoped_verification": {
+    "status": "tool_denied",
+    "reason": "swap-fraction",
+    "exit_code": null,
+    "predicate_owner": "AGENTS.md Commands; governance gate registry"
+  },
+  "broker_observation": {
+    "status": 500,
+    "classification": "BrokerQuotaExhausted",
+    "provider_message": "Exceeded allowed rows written in Durable Objects free tier."
+  },
+  "disposition": "draft_pr_handoff",
+  "checkout_disposition": "retain_owned_checkout",
+  "merged": false,
+  "deployed": false,
+  "task_complete": false,
+  "session_released": false
+}
