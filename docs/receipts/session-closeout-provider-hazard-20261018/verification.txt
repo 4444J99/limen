@@ -1,0 +1,41 @@
+Session 3ac18ade-5b6e-4cba-94da-a4428a5ec69c — scoped verification (2026-10-18 UTC)
+Every predicate below was run bare and its own exit code is the one quoted. Where a predicate exited non-zero or could not run, that is stated under NOT RUN / NOT CLAIMED or RE-MEASURED, NOT OWNED; none is counted as green.
+
+SCOPE
+This session picked up session 1ecb794a's closeout after a context clear. It owns one change (PR 3104, docs/architecture/ai-exports-archive.md), re-measured every claim of that closeout and of its own work from live state, and homed what it could not finish. It launched no subagent, team or workflow, and consulted the advisor tool once before acting.
+
+POST-MERGE — run on this receipt's base, origin/main b6a4f208480da3d80005d753ee2a5b09b8b95e0b (which contains PR 3104's merge commit 82fb062759dcb43a5f49fd3541e886eb0d2d8cec)
+- pickup-verify.sh (read-only scratch script that re-measures the 1ecb794a closeout and this session's claims; summarized here): "pickup-verify: 0 FAIL line(s)", exit 0; 42 PASS lines:
+  - the four 1ecb794a Limen merges (PRs 3015, 3025, 3033, 3035) read MERGED as the claimed commits d95e5c07957e, 06fa2287c893, cfed4d86d4a7 and 94a63230e164; each merge commit is an ancestor of origin/main, of local main (the live checkout's branch) and of the installed runtime c80d848219a9
+  - the blobs of scripts/open-knowledge.sh (3eeb27f0), cli/tests/test_limen_knowledge_verb.py (f15636e7), the plan (098509a0) and the Copilot preservation receipt (2b6df289) on origin/main are byte-identical to the blobs 1ecb794a verified; docs/architecture/ai-exports-archive.md differs from that session's blob (4b4493b2) only by PR 3104
+  - engine PR 82 reads MERGED as c46256075a5d, engine main contains it, and the installed cce lists copilot among the archive build providers
+  - PR 3045 reads OPEN at aeffb08679f2 and its publication branch tip on origin is that commit; Limen issues 3010, 3012, 3028, 3032, 3036, 3077 and engine issues 80, 81 are OPEN
+  - PR 3104 reads MERGED as 82fb062759dc, an ancestor of origin/main; docs/architecture/ai-exports-archive.md on origin/main is byte-identical to the verified PR head (blob fca8dd2a) and carries the full-build rule; the three issue comments and engine issue 84 exist
+- scripts/credential-wall.py --check -> all 32 secret atoms registered, exit 0 (this session handled no secret by hand; the broker credentials were read by the CLI tools themselves)
+- env LIMEN_ROOT=<live checkout> scripts/check-live-checkout.py -> state=coherent drift=0 ahead=0 behind=0 dirty=0, exit 0, after scripts/sync-release.sh (the owner organ, run once with the same root) fast-forwarded fdfbe2d -> b6a4f20. The ambient LIMEN_ROOT in the agent shell names a path that is not a checkout (issues 2960 and 3014): the bare predicate read state=unverifiable-here and the bare organ failed open with "not a git repo", so both were run with the explicit root.
+- scripts/check-runtime-lag.py -> OK: scheduled runtime c80d848219a9 is 2 commits behind origin/main, exit 0. The runtime was rotated by other work during the session (06fa2287c893 in the 1ecb794a receipt, 056262dab21c from 17:07:55Z, c80d848219a9 by 18:10Z); this session rotated nothing.
+
+PRE-MERGE — exact-head evidence at the PR head (squash-merged away; this head is NOT an ancestor of the receipt base)
+#3104, head 17e77f102630b864d15639e25ee2c07e163a036b:
+- scripts/verify-scoped.sh -> "Scoped verification passed"; 5 of 5 gates PASS (diff-hygiene, syntax-changed, check-docs-exports, check-docs-manifest, check-note-links); no heavy gate implicated, so the host's refusal of the heavy tier does not touch this change
+- scripts/merge-policy.sh 3104 -> CLEARED (non-deploy, MERGE-MODE direct, required checks 0 failing, 0 pending); scripts/merge-drain.py with that exact head, one submission -> MERGED
+
+OBSERVED — through the installed cce (engine c46256075a5d), synthetic data only (cce archive fixture; the real store was never named; CCE_CORPUS_STORE_ROOT unset for every call)
+- A, full build over a two-provider store: exit 0, 6 conversations, source fingerprint 53f558cdfcb0, verify ok
+- B, the same store with --provider claude: build exit 1; the manifest lists claude alone (4 conversations) with fingerprint 621805a3987e; both provider folders remain on disk; verify exit 1 with 3 problems (analysis row count, graph node count, and site pages 6 against 4, each differing from the manifest)
+- C, the full build again: exit 0, fingerprint 53f558cdfcb0 again, verify ok
+- Source reading agrees: archive_ingest.ingest builds the manifest's providers entry from that one call's report. The Copilot reader opens only SingleFile .html pages saved from copilot.microsoft.com and counts every other suffix without opening it, so --source copilot=<the whole captures folder> is safe. Neither fact was exercised against the live store.
+
+RE-MEASURED, NOT OWNED BY THIS SESSION
+- host admission (host-work-admission.py status --no-probe): allowed false. At 18:01Z swap 0.74 with swap-fraction and vitals-shed; at 18:10Z swap 0.84 with swap-fraction and swap-growth, vitals throttle.
+- domus-limen-runtime verify-heartbeat: exit 1, "heartbeat activation receipt does not bind the runtime". Issue 3028 owns it; the plan was read and the one human step prepared there.
+- conduct broker: HTTP 500 "Exceeded allowed rows written in Durable Objects free tier." This session's registration refresh was rejected at 17:46:13Z (three earlier ones had succeeded), and scripts/no-tasks-on-me.sh run from the installed protocol root against the 1ecb794a receipt exits 2 with BrokerQuotaExhausted at about 18:00Z: unmeasured, never a pass. Issue 2054 (lane:fleet) owns it; a recurrence comment was added there.
+- pid 19861 (a pytest fake engine, working directory under a temporary mutation repo outside this checkout) is still running. The kill was denied by the auto-mode classifier in the earlier context and again in this one, and is not retried; its command line names a pytest-of-4jp directory, recorded in issue 3012.
+
+NOT RUN / NOT CLAIMED
+- The live archive was not rebuilt with Copilot. Host admission refuses the heavy lease (above), and the right command is the full stage-one build with --source copilot=<folder>, never --provider (engine issue 84; Limen issue 3010 carries the command). Merged and installed do not mean the live archive contains copilot: its manifest lists six providers and no copilot key.
+- institutio/governance/corpora.yaml is unchanged on purpose; the copilot-history-memory row waits for that rebuild.
+- The local heavy tier (pytest-cli, pytest-api) was not implicated by a docs-only change and was not run.
+- No subagent, team or workflow ran. The conduct broker cannot take a child reservation while its write allowance is spent, and the charter fails closed on unreserved fan-out, so the research (engine build path, closeout checker, host admission) was read inline.
+- The session-release predicate for this session was not run before this receipt was committed: it cannot be measured while the broker is quota-exhausted (above). It must be run twice, bare, once the allowance has reset (00:00 UTC): bash <protocol root>/scripts/no-tasks-on-me.sh --session-id 3ac18ade-5b6e-4cba-94da-a4428a5ec69c --worktree <this worktree> --receipt docs/receipts/session-closeout-provider-hazard-20261018/session-closeout.json --json, where the protocol root is the "protocol_root" printed by domus-limen-runtime status.
+- The second Copilot copy stays BLOCKED on attaching T7Recovery (issue 3010, lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, issue 688); nothing here changes it.
