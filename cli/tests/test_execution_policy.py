@@ -56,3 +56,36 @@ def test_native_recovery_requires_successful_json_record(tmp_path):
         native_policy_record(record, 1)
     with pytest.raises(ValueError, match="native_record_invalid"):
         native_policy_record(record, 257)
+
+def test_policy_binding_fits_provider_and_preserves_complete_policy():
+    import base64
+    import gzip
+    from limen.execution_policy import encode_policy_binding
+
+    policy = {"mode": "recovery", "dispatch_enabled": False, "approved_priorities": [
+        {"outcome_id": str(i), "owner": "preserved/" * 100, "work_keys": [str(i)]}
+        for i in range(8)
+    ]}
+    payload = encode_policy_binding(policy)
+    assert len(payload.encode("utf-8")) <= 5000
+    envelope = json.loads(payload)
+    assert envelope["encoding"] == "gzip+base64"
+    raw = gzip.decompress(base64.b64decode(envelope["data"], validate=True))
+    assert json.loads(raw) == policy
+    assert canonical_hash(json.loads(raw)) == canonical_hash(policy)
+    assert encode_policy_binding(policy) == payload
+
+
+def test_small_policy_stays_legacy_json_and_large_incompressible_policy_is_rejected():
+    import random
+    from limen.execution_policy import encode_policy_binding
+
+    policy = {"mode": "recovery", "approved_priorities": []}
+    assert json.loads(encode_policy_binding(policy)) == policy
+    assert "encoding" not in json.loads(encode_policy_binding(policy))
+    with pytest.raises(ValueError, match="decoded_too_large"):
+        encode_policy_binding({"data": "x" * 65536})
+    random_source = random.Random(3022)
+    with pytest.raises(ValueError, match="binding_too_large"):
+        encode_policy_binding({"data": "".join(random_source.choices(
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=12000))})
