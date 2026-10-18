@@ -137,3 +137,37 @@ def test_archive_backup_is_verified(monkeypatch, tmp_path):
     archived = archive / "run" / "opencode.db"
     assert archived.exists()
     assert snapshot["archive"]["integrity_check"] == "ok"
+
+
+def test_snapshot_indexes_v2_only_sessions_from_the_superset_table(monkeypatch, tmp_path):
+    """On an OpenCode 2.x store session_v2 is a superset of the frozen session table."""
+    mod = _load("opencode_db_intake_v2_uut")
+    db = tmp_path / "opencode.db"
+    _make_db(db)
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE session_v2 AS SELECT * FROM session")
+    conn.execute(
+        "INSERT INTO session_v2 (id, project_id, slug, directory, title, version, time_created, time_updated, "
+        "agent, model, cost, tokens_input, tokens_output, tokens_reasoning, tokens_cache_read, tokens_cache_write) "
+        "VALUES ('s2', 'p1', 'new-slug', '/private/work', 'New Session', '1', 5000, 6000, 'opencode', 'model-a', "
+        "2.5, 1, 2, 3, 4, 5)"
+    )
+    conn.commit()
+    conn.close()
+    root = tmp_path / "limen"
+    private = root / ".limen-private" / "session-corpus"
+    monkeypatch.setattr(mod, "HOME", tmp_path)
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "DB_PATH", db)
+    monkeypatch.setattr(mod, "PRIVATE_ROOT", private)
+    monkeypatch.setattr(mod, "PRIVATE_BASE", private / "lifecycle" / "opencode-db-intake")
+    monkeypatch.setattr(mod, "ARCHIVE_BASE", tmp_path / "archive")
+
+    snapshot = mod.build_snapshot(archive=False, hash_archive=False, run_id="run")
+
+    index_path = private / "lifecycle" / "opencode-db-intake" / "run" / "session-index.jsonl.gz"
+    with gzip.open(index_path, "rt", encoding="utf-8") as fh:
+        ids = {json.loads(line)["id"] for line in fh}
+    assert ids == {"s1", "s2"}, "the v2-only session must be indexed"
+    assert snapshot["table_counts"]["session_v2"] == 2
+    assert snapshot["session_bounds"]["last_time_updated"] == 6000, "bounds come from the superset table"

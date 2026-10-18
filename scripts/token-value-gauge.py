@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen import harness_paths
-from limen.session_sources import resolve_opencode_db
+from limen.session_sources import opencode_session_table, resolve_opencode_db
 OUT_MD = ROOT / "organs" / "financial" / "token-usage.md"
 OUT_JSON = ROOT / "organs" / "financial" / "token-usage.json"
 
@@ -160,12 +160,13 @@ def scan_opencode() -> tuple[dict, float, float, float]:
         return {}, 0.0, 0.0, 0.0
     con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     try:
-        t_max = con.execute("SELECT COALESCE(MAX(time_created),0) FROM session").fetchone()[0] / 1000.0
+        table = opencode_session_table(con)
+        t_max = con.execute(f"SELECT COALESCE(MAX(time_created),0) FROM {table}").fetchone()[0] / 1000.0
         t_max = t_max // 3600 * 3600  # hour-quantized anchor, same idempotence rationale as scan_claude
         t_cut = t_max - WINDOW_S
-        q = """SELECT model, SUM(tokens_input), SUM(tokens_output), SUM(tokens_cache_read),
+        q = f"""SELECT model, SUM(tokens_input), SUM(tokens_output), SUM(tokens_cache_read),
                       SUM(tokens_cache_write), SUM(cost), COUNT(*), MIN(time_created)
-               FROM session WHERE time_created >= ? AND time_created <= ? GROUP BY model"""
+               FROM {table} WHERE time_created >= ? AND time_created <= ? GROUP BY model"""
         agg: dict[str, list[float]] = {}
         cost = 0.0
         t_min = t_max
