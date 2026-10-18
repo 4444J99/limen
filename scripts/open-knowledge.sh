@@ -30,6 +30,8 @@
 #   enable full-text search. A listener that answers 200 on / but not that ping is a stranger. A
 #   recorded pid is trusted only while `ps` shows it running `archive serve` with --port for this
 #   exact port, so a recycled pid or a pid file left by another port is ignored and never signalled.
+#   Every such lookup is `ps -ww`: procps ps cuts piped output to the terminal width (80 columns
+#   under TERM=dumb) unless told otherwise, which would hide `archive serve` and the port on Linux.
 #
 # STOP AND STATUS NEVER NEED THE BUILT ARCHIVE
 #   The registry is still resolved (a registry without the archive-all row exits 2), but --stop and
@@ -214,7 +216,7 @@ recorded_pid() {
   pid="$(<"$pid_file")"
   [[ "$pid" =~ $number_re ]] || return 1
   # Trust the pid only while it still names an archive server on THIS port, never a recycled number.
-  command_line="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+  command_line="$(ps -ww -p "$pid" -o command= 2>/dev/null || true)"
   [[ "$command_line" == *"archive serve"* ]] || return 1
   port_re="(^|[[:space:]])--port(=|[[:space:]]+)${port}([[:space:]]|\$)"
   [[ "$command_line" =~ $port_re ]] || return 1
@@ -291,7 +293,7 @@ if [[ "$stop_server" -eq 1 ]]; then
   fi
   if ! kill "$pid" 2>/dev/null; then
     # The signal failed: either the process exited since it was looked up, or it cannot be signalled.
-    if [[ -n "$(ps -p "$pid" -o command= 2>/dev/null || true)" ]]; then
+    if [[ -n "$(ps -ww -p "$pid" -o command= 2>/dev/null || true)" ]]; then
       echo "open-knowledge: cannot signal pid $pid" >&2
       exit 1
     fi
@@ -368,7 +370,7 @@ lock_holder_is_dead() {
   local holder command_line
   holder="$(cat "$lock_dir/pid" 2>/dev/null || true)"
   if [[ "$holder" =~ $number_re ]]; then
-    command_line="$(ps -p "$holder" -o command= 2>/dev/null || true)"
+    command_line="$(ps -ww -p "$holder" -o command= 2>/dev/null || true)"
     [[ "$command_line" != *open-knowledge* ]]
     return
   fi

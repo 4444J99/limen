@@ -215,6 +215,16 @@ exec "@REAL@" "$@"
 """
 
 
+# A stand-in for procps `ps`, which cuts output that is not going to a terminal at the terminal width (80
+# columns under TERM=dumb) unless it is given -ww. Here the width is COLUMNS, or 40, and -ww passes through.
+NARROW_PS_SHIM = """#!/bin/sh
+for argument in "$@"; do
+  if [ "$argument" = "-ww" ]; then exec "@REAL@" "$@"; fi
+done
+"@REAL@" "$@" | cut -c1-"${COLUMNS:-40}"
+"""
+
+
 def free_port() -> int:
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
@@ -266,7 +276,8 @@ def wait_dead(pid: int, seconds: float = 3.0) -> bool:
 
 
 def command_of(pid: int) -> str:
-    done = subprocess.run(["ps", "-p", str(pid), "-o", "command="], capture_output=True, text=True, check=False)
+    # -ww: procps ps cuts output that is not going to a terminal at the terminal width without it.
+    done = subprocess.run(["ps", "-ww", "-p", str(pid), "-o", "command="], capture_output=True, text=True, check=False)
     return done.stdout.strip()
 
 
@@ -1579,6 +1590,45 @@ def test_probes_ignore_a_proxy_environment(layout):
     assert again.returncode == 0, again.stdout + again.stderr
     assert f"server already up on port {port}" in again.stdout
     assert [pid for pid, _ in layout["launches"]()] == [engine.pid]
+
+
+def install_narrow_ps(layout) -> None:
+    real = shutil.which("ps", path=os.environ["PATH"])
+    assert real, "these tests need ps"
+    shim = layout["binaries"] / "ps"
+    shim.write_text(NARROW_PS_SHIM.replace("@REAL@", real))
+    shim.chmod(0o755)
+
+
+def test_a_narrow_ps_cannot_hide_a_running_server_from_stop(layout):
+    """procps ps cut `archive serve` and the port off the engine's command line, so on Linux --stop found
+    nothing it trusted and left the server running. A stand-in ps that cuts the same way must not defeat it."""
+    install_narrow_ps(layout)
+    narrow = {"COLUMNS": "40"}
+    started = layout["run"]("--no-open", extra_env=narrow)
+    assert started.returncode == 0, started.stdout + started.stderr
+    recorded = int(layout["pid_file"]().read_text().strip())
+
+    stopped = layout["run"]("--stop", extra_env=narrow)
+    assert stopped.returncode == 0, stopped.stdout + stopped.stderr
+    assert f"stopped the server on port {layout['port']} (pid {recorded})" in stopped.stdout, stopped.stdout
+    assert wait_dead(recorded), "the engine survived --stop"
+
+
+def test_a_narrow_ps_cannot_make_a_live_lock_holder_look_dead(layout):
+    """The same cut hid `open-knowledge` from the holder check, so a live holder's lock was judged dead and
+    taken from it."""
+    install_narrow_ps(layout)
+    port = layout["port"]
+    holder = layout["hold"]("open-knowledge-holder")
+    lock = layout["take_lock"](port, holder.pid)
+    probes = layout["watch_curl"]()
+    waiter = layout["spawn"]("--no-open", extra_env={"COLUMNS": "40"})
+    wait_until(lambda: probes() >= 3, reason="the waiter to poll behind the lock")
+
+    assert waiter.poll() is None, "the waiter stopped waiting behind a live holder"
+    assert lock.exists() and (lock / "pid").read_text().strip() == str(holder.pid), "a live holder's lock was taken"
+    assert layout["launches"]() == [], "the waiter launched an engine behind a live holder"
 
 
 # --- C9: strict mode, the whole --help header, one new environment variable ------------------------
