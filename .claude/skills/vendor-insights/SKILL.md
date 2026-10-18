@@ -14,7 +14,35 @@ Vendors: `codex` · `copilot` · `opencode` · `antigravity` (alias `agy`) · `g
 Store paths live in `scripts/insight-cross-vendor-ingest.py` `VENDOR_REGISTRY` — never
 hand-resolve a store path; if a store moved, fix the registry (fix bases, not outputs).
 
+## Repository context
+
+The skill may be discovered through a link in an agent's global skills directory.
+Before running any command below, resolve the Limen repository root: use `LIMEN_ROOT`
+when set; otherwise resolve this `SKILL.md` symlink and take its fourth parent
+(`vendor-insights` → `skills` → `.claude` → repository). Validate that the root contains
+both `scripts/vendor-insights.py` and `scripts/insight-cross-vendor-ingest.py`, then run
+the commands from that root or use their absolute paths. Do not resolve `scripts/`
+against the requesting agent's current directory. These two companion scripts remain
+Limen dependencies; copying this instruction file alone does not install them.
+
+The registry honors `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while retaining distinct
+legacy stores. `LIMEN_VENDOR_INSIGHTS_DIR` may select a separate private report run;
+keep output under the owning Limen ignored logs directory and preserve prior reports.
+
 ## Steps
+
+Use `record_id` when an index contains several source records with the same native
+session ID. `cat-session --record <record_id> --json` resolves that exact indexed
+source and returns a receipt for the actual bounded text. A native `--session` ID
+that is ambiguous fails closed. Keep `record_id` in its facet; never substitute a
+first matching capture from another root.
+
+The read receipt separates returned text coverage from successful execution.
+`prompt_only`, `tool_only`, `metadata_only`, pruned, or unavailable captures do not
+establish failure, silence, or inactivity. Expanded reads with `reindex_required`
+are not judgment-eligible: reindex with `--capture-max-chars` covering the intended
+read before binding facets. Modification-window selection and selected-session
+lifetime message counts are explicitly named in index metadata.
 
 1. **Index.** `python3 scripts/vendor-insights.py index --vendor <v> [--window-days N] [--max-sessions M]`
    → `logs/vendor-insights/<v>/index.json`. Pick the window from the ask (default 14d; a lane
@@ -25,6 +53,9 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    `coverage_notes` — the shown sample is the newest N by `meta.order_key`, and the narrative
    must never speak as if the sample were the corpus. `meta.notes` carries store-level caveats
    (pruned blobs, responses-not-captured) that belong in `coverage_notes` verbatim.
+   New indexes expose `index_fingerprint` and each session's `source_fingerprint`, derived
+   from indexed metadata plus a bounded captured-text digest (`capture_max_chars`). These
+   bind this captured view, not uncaptured history. Reindex after a session resumes.
 2. **Facet.** For each session worth reading (order by activity; state the sampling cap
    honestly), run `python3 scripts/vendor-insights.py cat-session --vendor <v> --session <id>`
    (bounded; raise `--max-chars` only when needed) and write
@@ -35,16 +66,37 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    brief_summary`. Facets must be PII-clean: no verbatim personal content, no secrets, no
    third-party names — summaries and counts only. Dispatch-lane sessions: the first "user"
    turn is usually an injected AGENTS.md/plan, not a human — read past it before judging goals.
+   Copy the session's current `source_fingerprint` into the facet. `cat-session` prints the
+   binding JSON on stderr separately from captured text and refuses changed captures; if
+   it requests regeneration, reindex and reread before authoring. Never refresh a judgment
+   by copying a new fingerprint onto old prose or touching a file.
 3. **Narrate.** Write `logs/vendor-insights/<v>/narrative.json`:
    `tldr, at_a_glance{whats_working, whats_hindering, quick_wins, ambitious_workflows},
    areas[{name, session_count, description}], interaction_style, friction[{category,
    description, examples[]}], suggestions[{title, detail}], coverage_notes[]`.
+   Include the exact current `index_fingerprint` from index.json. Regenerate the synthesis
+   when that binding changes; do not relabel an older narrative as current. Unbound legacy
+   or mismatched facets/narratives are excluded with explicit regeneration warnings.
    Ground every claim in the index numbers or a read transcript — the Data Grounding rules in
    `CLAUDE.md` apply in full (state denominators: "N of M sessions read"; a window is not the
    corpus; speech acts are not events). **The denominator is `meta.total_in_window`, not
    `len(sessions)`** — a capped index shows a sample, and every aggregate you quote must say
    which of the two it counts. Put every scope limit in `coverage_notes` — the renderer prints
    them and adds the unfaceted count, the index cap, and store notes itself.
+   Friction and satisfaction counts are repeated model-estimated labels from captured text;
+   report their faceted-session base and keep them distinct from unique-session rates or
+   measured user satisfaction.
+
+   **Review current authority before adopting suggestions.** A vendor report is a retrospective
+   proposal, never standing authority. Resolve the requested scope and the owning source or
+   template; verify referenced paths and commands against current disk. Check broker/session
+   ownership through its canonical reader: missing or unreadable evidence means unknown,
+   never a free lease. Consult the existing scoped-verification, custody/retirement and
+   finite-work contracts in `AGENTS.md`, `.agents/skills/closeout/SKILL.md` and
+   `docs/architecture/finite-workspace-recovery.md`; do not replace them with report snippets.
+   Record each accept/revise/reject/defer disposition with current evidence in the existing
+   review owner (Claude snapshot suggestions use `censor/insights-suggestions.jsonl`). Adopted
+   changes go through their canonical source, never a deployed output or duplicate rulebook.
 4. **Render.** `python3 scripts/vendor-insights.py render --vendor <v>` → prints the
    `report-<ts>.html` path. Send that file to the requester (render display). Exit 2 means
    facets/narrative are missing — that is sequencing feedback, not an error to suppress.
@@ -57,3 +109,11 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
   file spelunking against vendor stores.
 - "all" = run the loop per vendor; each vendor gets its own report. Cross-vendor synthesis
   goes in the message, not into a merged file.
+
+### Read receipts and synthesis validation
+
+Include the cat-session JSON receipt as capture_receipt in each facet, omitting only text. Keep capture_fingerprint unchanged. The renderer accepts judgments only for complete, response-bearing reads matching the indexed capture. Expanded reads require reindexing; truncated and prompt-only captures cannot support success or failure judgments. Distinguish quoted historical conversation from the current session, and use unclear when terminal outcome evidence is absent.
+
+Render the facets before writing a narrative. The renderer writes validation.json even when no narrative is accepted. Copy its index_fingerprint, facets_fingerprint, and coverage_summary into a newly authored narrative, then render again. The report derives judgeable totals from validated outcomes and excludes unclear outcomes from that numerator. Record whether reads are fresh or reused verified captures, and preserve original reports when regenerating evidence.
+
+Existing indexes created before capture lengths and structural role checks were added must be regenerated before attaching read receipts. Do not stamp old facets with current fingerprints. Textual role counts are display estimates; source message roles separately gate response eligibility.

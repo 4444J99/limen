@@ -1,0 +1,42 @@
+{
+  "schema": "limen.insights_release_attempt.v1",
+  "session_id": "01a1470a-98ad-7f61-acad-55b65060196f",
+  "observed_at": "2026-10-16T23:59:33Z",
+  "predicate": "installed scripts/no-tasks-on-me.sh with exact native identity, original anchor, published v2 receipt and two explicit topic roots",
+  "exit_code": 2,
+  "status": "unmeasured",
+  "session_released": false,
+  "task_completed": false,
+  "broker_audit": {
+    "retained_state_complete": true,
+    "registration_witness": "observed",
+    "active_lease_count": 0
+  },
+  "blocker": {
+    "owner_url": "https://github.com/4444J99/limen/pull/2888",
+    "canonical_owner": "Limen process_services.service_contracts and Domus native MCP capability lifecycle",
+    "error_type": "PermissionError",
+    "errno": 13,
+    "service_basename": "1password-mcp",
+    "operation": "Path.resolve while deriving service process contracts",
+    "next_action": "Restore authorized native service-path observability through its existing owner; rerun the installed native multi-root predicate against this published receipt. Do not remove or disable the service to manufacture release."
+  },
+  "bootstrap": {
+    "runtime_interpreter": "installed configured Python3.12.13",
+    "responsible_identity": "DomusAgentHost run attempted",
+    "final_result": "same PermissionError; no further unchanged retries"
+  },
+  "retention": "Both topic checkouts and native originals retained; no process signaled or payload deleted.",
+  "separate_completion_gate": {
+    "owner_url": "https://github.com/4444J99/limen/pull/2888",
+    "scoped_exit": 75,
+    "remaining": [
+      "pytest-cli",
+      "pytest-api"
+    ],
+    "host_denials": [
+      "swap-fraction",
+      "vitals-shed"
+    ]
+  }
+}

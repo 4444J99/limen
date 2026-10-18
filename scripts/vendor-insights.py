@@ -41,6 +41,7 @@ All vendor stores are opened STRICTLY read-only (SQLite via file:...?mode=ro).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import importlib.util
 import json
@@ -101,6 +102,24 @@ def _ro_connect(db_path: Path) -> sqlite3.Connection:
     con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=10)
     con.row_factory = sqlite3.Row
     return con
+
+
+def _bounded_text(text: str | None, max_chars: int) -> str | None:
+    """Bound all display characters, including headers and the truncation marker."""
+    if max_chars < 0:
+        raise ValueError("max_chars must be nonnegative")
+    if text is None or len(text) <= max_chars:
+        return text
+    marker = "[... truncated at max-chars ...]\n"
+    if max_chars < len(marker):
+        return marker[:max_chars]
+    return text[: max_chars - len(marker)] + marker
+
+
+def _claude_sources(mod, sid: str) -> list[Path]:
+    if not sid or any(c in sid for c in "/\\*?[]"):
+        return []
+    return sorted({p.resolve() for root in mod.claude_estate_roots() for p in root.glob(f"*/{sid}.jsonl")})
 
 
 # ---------------------------------------------------------------------------
@@ -167,14 +186,16 @@ def _rank(candidates: list[tuple[float, object]], max_sessions: int) -> tuple[li
 
 def _index_claude(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     candidates: list[tuple[float, Path]] = []
+    seen: set[Path] = set()
     for root in mod.claude_estate_roots():
         for proj_dir in root.iterdir():
             if not proj_dir.is_dir():
                 continue
-            mt = _mtime(proj_dir)
-            if mt is None or mt < window_start:
-                continue
             for p in proj_dir.glob("*.jsonl"):
+                resolved = p.resolve()
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
                 fmt = _mtime(p)
                 if fmt is not None and fmt >= window_start:
                     candidates.append((fmt.timestamp(), p))
@@ -209,20 +230,28 @@ def _index_claude(mod, window_start: datetime, max_sessions: int) -> IndexResult
                             for blk in msg.get("content") or []:
                                 if isinstance(blk, dict) and blk.get("type") == "tool_use":
                                     t += 1
-            sessions.append(_mk(p.stem, first_ts, last_ts, cwd, u, a, t, models, p.stat().st_size))
+            sessions.append(_mk(p.stem, first_ts, last_ts, cwd, u, a, t, models, p.stat().st_size, {
+                "record_id": _fingerprint({"vendor": "claude", "source": str(p.resolve())}),
+                "source_ref": {"kind": "claude_jsonl", "path": str(p.resolve())},
+            }))
         except OSError:
             continue
-    return IndexResult(sessions, total, "file mtime")
+    return IndexResult(sessions, total, "file mtime", extra={
+        "population_unit": "source_records",
+        "unique_native_ids_in_window": len({p.stem for _, p in candidates}),
+    })
 
 
-def _cat_claude(mod, sid: str, max_chars: int) -> str | None:
-    match = None
-    for root in mod.claude_estate_roots():
-        found = list(root.glob(f"*/{sid}.jsonl"))
-        if found:
-            match = found[0]
-            break
-    if match is None:
+def _cat_claude(mod, sid: str, max_chars: int, source_ref: dict | None = None) -> str | None:
+    found = _claude_sources(mod, sid)
+    if source_ref is not None:
+        match = Path(source_ref.get("path", "")).resolve()
+        if source_ref.get("kind") != "claude_jsonl" or match not in found:
+            return None
+    elif len(found) == 1:
+        match = found[0]
+    else:
+        # Missing and ambiguous legacy IDs are never resolved by root order.
         return None
     out: list[str] = []
     total = 0
@@ -256,7 +285,7 @@ def _cat_claude(mod, sid: str, max_chars: int) -> str | None:
             if total >= max_chars:
                 out.append("[... truncated at max-chars ...]\n")
                 break
-    return "".join(out) or None
+    return _bounded_text("".join(out) or None, max_chars)
 
 
 # ---------------------------------------------------------------------------
@@ -271,7 +300,7 @@ def _cat_claude(mod, sid: str, max_chars: int) -> str | None:
 def _codex_roots(mod) -> list[Path]:
     meta = mod.VENDOR_REGISTRY["codex"]
     roots = [Path(p) for p in meta.get("sessions_roots", [])]
-    return [r for r in roots if r.is_dir()]
+    return list({r.resolve(): r for r in roots if r.is_dir()}.values())
 
 
 def _codex_scan_file(p: Path) -> dict:
@@ -1161,6 +1190,26 @@ def _agy_scrape_blob(blob: bytes, keys: tuple[str, ...]) -> str | None:
     return None
 
 
+def _agy_prompt_text(mod, sid: str, max_chars: int) -> str:
+    out = []
+    path = _agy_root(mod) / "history.jsonl"
+    if path.exists():
+        with path.open(encoding="utf-8", errors="replace") as stream:
+            total = 0
+            for line in stream:
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if rec.get("conversationId") == sid and isinstance(rec.get("display"), str):
+                    chunk = f"--- user ---\n{rec['display']}\n"
+                    out.append(chunk)
+                    total += len(chunk)
+                    if total >= max_chars:
+                        break
+    return _bounded_text("".join(out), max_chars)
+
+
 def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
     db = _agy_root(mod) / "conversations" / f"{sid}.db"
     if not db.exists():
@@ -1170,7 +1219,7 @@ def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
         summaries, _ = _agy_summaries(mod)
         srow = summaries.get(sid)
         if srow is None:
-            return None
+            return _agy_prompt_text(mod, sid, max_chars) or None
         ws = ""
         try:
             uris = json.loads(srow.get("workspace_uris") or "[]")
@@ -1188,25 +1237,15 @@ def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
         h = hist.get(sid)
         if h:
             lines.append(f"[history.jsonl: {h['count']} user prompts, {h.get('first_ts')} → {h.get('last_ts')}]\n")
-        return "".join(lines)
+        lines.append(_agy_prompt_text(mod, sid, max_chars))
+        return _bounded_text("".join(lines), max_chars)
     hist = _agy_history(mod)
     out: list[str] = []
     h = hist.get(sid)
     if h:
         out.append(f"[history.jsonl: {h['count']} user prompts, {h.get('first_ts')} → {h.get('last_ts')}]\n")
     # Verbatim user prompts for this conversation, from the clean spine.
-    hp = _agy_root(mod) / "history.jsonl"
-    if hp.exists():
-        try:
-            for line in hp.read_text(encoding="utf-8", errors="replace").splitlines():
-                try:
-                    rec = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if rec.get("conversationId") == sid and isinstance(rec.get("display"), str):
-                    out.append(f"--- user ---\n{rec['display']}\n")
-        except OSError:
-            pass
+    out.append(_agy_prompt_text(mod, sid, max_chars))
     total = sum(len(c) for c in out)
     try:
         con = _ro_connect(db)
@@ -1233,7 +1272,7 @@ def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
             out.append(f"[antigravity conversation {sid}: no decodable messages or tool calls; step types {shape}]\n")
     except sqlite3.Error:
         pass
-    return "".join(out) or None
+    return _bounded_text("".join(out) or None, max_chars)
 
 
 # ---------------------------------------------------------------------------
@@ -1426,7 +1465,7 @@ def _cat_gemini(mod, sid: str, max_chars: int) -> str | None:
                 f"[tool: {tc.get('name')}]\n" for tc in rec.get("toolCalls") or [] if isinstance(tc, dict)
             )
             if body or tools:
-                chunk = f"--- gemini ---\n{body}\n{tools}"
+                chunk = f"--- assistant ---\n{body}\n{tools}"
         if chunk:
             out.append(chunk)
             total += len(chunk)
@@ -1880,6 +1919,8 @@ def _aggregate_facets(facets: list[dict]) -> dict:
     }
     for f in facets:
         oc = f.get("outcome") or "unclear"
+        if oc not in {"fully_achieved", "mostly_achieved", "partially_achieved", "not_achieved"}:
+            oc = "unclear"
         agg["outcomes"][oc] = agg["outcomes"].get(oc, 0) + 1
         st = f.get("session_type") or "unknown"
         agg["session_types"][st] = agg["session_types"].get(st, 0) + 1
@@ -1928,6 +1969,11 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         f"{indexed_phrase} · {len(facets)} faceted · "
         f"{user_msgs} user messages · {tool_calls} tool calls · models: {_esc(', '.join(models) or '—')}</p></header>"
     )
+    parts.append(
+        "<p class='notice'><strong>Recommendation status: unreviewed proposals.</strong> "
+        "Review suggestions, quick wins and horizon ideas against current instructions, "
+        "scope and owning sources before adoption. A usage report grants no standing authority.</p>"
+    )
 
     glance = narrative.get("at_a_glance") or {}
     if glance:
@@ -1958,11 +2004,18 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
 
     parts.append(
         sec(
-            "Facet aggregates (deterministic)",
+            "Facet label totals",
+            "<p>Friction and satisfaction are model-estimated label counts. Counts may repeat "
+            "within a session and across labels; they are not unique-session rates or measured "
+            "satisfaction. "
+            f"Denominator: {len(facets)} faceted sessions of {n_sessions} indexed "
+            f"({_esc(imeta.get('total_in_window', 'unknown'))} in-window).</p>"
+            f"<p>Judgeable outcomes: {_coverage_summary(facets)['judgeable_sessions']} of {len(facets)} "
+            "validated facets; unclear outcomes are excluded from that numerator.</p>"
             "<div class='tables'>"
             f"<table><caption>Outcomes</caption>{_dl(agg['outcomes'])}</table>"
-            f"<table><caption>Friction</caption>{_dl(agg['friction_counts'])}</table>"
-            f"<table><caption>Satisfaction</caption>{_dl(agg['satisfaction_counts'])}</table>"
+            f"<table><caption>Friction label counts</caption>{_dl(agg['friction_counts'])}</table>"
+            f"<table><caption>Satisfaction label counts</caption>{_dl(agg['satisfaction_counts'])}</table>"
             f"<table><caption>Goal categories</caption>{_dl(agg['goal_categories'])}</table>"
             "</div>",
         )
@@ -1987,7 +2040,7 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
             f"<div class='area'><h3>{_esc(s.get('title'))}</h3><p>{_esc(s.get('detail'))}</p></div>"
             for s in suggestions
         )
-        parts.append(sec("Suggestions", body))
+        parts.append(sec("Suggestions — unreviewed proposals", body))
 
     # No silent caps: name what was NOT covered.
     missing = [
@@ -2023,6 +2076,7 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         " margin: 0 auto; max-width: 60rem; padding: 2rem 1.25rem; }"
         "header h1 { margin: 0 0 .25rem; font-size: 1.6rem; }"
         ".meta { color: #777; margin: 0 0 1.5rem; }"
+        ".notice { border: 1px solid #8888; border-inline-start-width: .3rem; padding: .75rem; }"
         "section { margin: 1.75rem 0; }"
         "h2 { font-size: 1.15rem; border-bottom: 1px solid #8884; padding-bottom: .3rem; }"
         ".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .75rem; }"
@@ -2050,6 +2104,68 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
 # ---------------------------------------------------------------------------
 
 
+def _fingerprint(value: object) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _bind_capture(session: dict, text: str, max_chars: int) -> None:
+    session["capture_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+    session["capture_max_chars"] = max_chars
+    session["capture_chars"] = len(text)
+    session["source_fingerprint"] = _fingerprint({k: v for k, v in session.items() if k != "source_fingerprint"})
+
+
+def _index_fingerprint(index: dict) -> str:
+    # Touching/reformatting an index cannot renew evidence. Window, population,
+    # metadata and bounded captured content all contribute to this generation.
+    return _fingerprint({k: v for k, v in index.items() if k not in ("generated_at", "index_fingerprint")})
+
+
+def _current_binding(index: dict) -> bool:
+    return index.get("binding_schema") == "limen.vendor_insights.binding.v1" and index.get(
+        "index_fingerprint"
+    ) == _index_fingerprint(index)
+
+
+def _read_session(mod, vendor: str, session: dict, max_chars: int) -> str | None:
+    if vendor == "claude" and session.get("source_ref"):
+        text = _cat_claude(mod, session["id"], max_chars, source_ref=session["source_ref"])
+    else:
+        text = CATTERS[vendor](mod, session["id"], max_chars)
+    return _bounded_text(text, max_chars)
+
+
+def _capture_coverage(text: str | None) -> dict:
+    """Describe the returned text, never infer execution from an absent reply."""
+    counts = {"user": 0, "assistant": 0}
+    if text is not None:
+        blocks = re.split(r"(?m)^--- (user|assistant)[^\n]*---\n", text)
+        for i in range(1, len(blocks) - 1, 2):
+            body = re.sub(r"(?m)^\[.*\]\n?", "", blocks[i + 1]).strip()
+            if body:
+                counts[blocks[i]] += 1
+    if text is None:
+        availability = "unavailable_content"
+    elif text.startswith("[antigravity conversation") and "blob store pruned" in text:
+        availability = "pruned"
+    elif "[coverage: assistant_content_undecodable]" in text:
+        availability = "undecodable"
+    elif counts["assistant"]:
+        availability = "readable_response"
+    elif counts["user"]:
+        availability = "prompt_only"
+    elif "[tool:" in text or "[tool_use:" in text:
+        availability = "tool_only"
+    else:
+        availability = "metadata_only"
+    return {
+        "availability": availability,
+        "readable_user_turns": counts["user"],
+        "readable_assistant_turns": counts["assistant"],
+        "tool_result_coverage": "not_exposed_by_adapter",
+    }
+
+
 def _resolve_vendor(name: str) -> str:
     return VENDOR_ALIASES.get(name, name)
 
@@ -2064,13 +2180,13 @@ def cmd_list(mod) -> int:
     return 0
 
 
-def cmd_index_all(mod, window_days: int, max_sessions: int) -> int:
+def cmd_index_all(mod, window_days: int, max_sessions: int, capture_max_chars: int = DEFAULT_MAX_CHARS) -> int:
     """Refresh every lane's index, continuing past a failing lane (the beat's rung:
     one broken vendor store must not starve the other ten of fresh indexes)."""
     failures = []
     for vendor in sorted(INDEXERS):
         try:
-            rc = cmd_index(mod, vendor, window_days, max_sessions)
+            rc = cmd_index(mod, vendor, window_days, max_sessions, capture_max_chars)
         except Exception as exc:  # noqa: BLE001 — a lane failure is data, not a crash
             print(f"ERROR: index --all: '{vendor}' raised {type(exc).__name__}: {exc}", file=sys.stderr)
             rc = 1
@@ -2081,7 +2197,7 @@ def cmd_index_all(mod, window_days: int, max_sessions: int) -> int:
     return 1 if len(failures) == len(INDEXERS) else 0
 
 
-def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
+def cmd_index(mod, vendor: str, window_days: int, max_sessions: int, capture_max_chars: int = DEFAULT_MAX_CHARS) -> int:
     vendor = _resolve_vendor(vendor)
     if vendor not in INDEXERS:
         print(f"ERROR: no indexer for vendor '{vendor}' (have: {', '.join(sorted(INDEXERS))})", file=sys.stderr)
@@ -2090,12 +2206,25 @@ def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
     result = INDEXERS[vendor](mod, window_start, max_sessions)
     sessions = result.sessions
     sessions.sort(key=lambda s: s.get("started_at") or "", reverse=True)
+    for session in sessions:
+        session.setdefault("record_id", _fingerprint({"vendor": vendor, "native_id": session["id"]}))
+        try:
+            captured = _read_session(mod, vendor, session, capture_max_chars)
+        except (OSError, ValueError, UnicodeError):
+            captured = None
+        session["capture_coverage"] = _capture_coverage(captured)
+        if captured is not None:
+            _bind_capture(session, captured, capture_max_chars)
     meta = {
         "total_in_window": result.total_in_window,
         "shown": len(sessions),
         "capped": result.total_in_window > len(sessions),
         "order_key": result.order_key,
         "notes": list(result.notes),
+        "population_unit": "logical_sessions",
+        "selection_basis": result.order_key,
+        "message_count_basis": "selected_session_lifetime",
+        "indexed_unique_native_ids": len({s["id"] for s in sessions}),
     }
     if result.sources:
         meta["population_sources"] = result.sources
@@ -2108,7 +2237,9 @@ def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
         "max_sessions": max_sessions,
         "meta": meta,
         "sessions": sessions,
+        "binding_schema": "limen.vendor_insights.binding.v1",
     }
+    doc["index_fingerprint"] = _index_fingerprint(doc)
     out = OUT_ROOT / vendor / "index.json"
     _atomic_write(out, json.dumps(doc, indent=2))
     capnote = f" (of {result.total_in_window} in-window — CAPPED)" if meta["capped"] else ""
@@ -2116,17 +2247,109 @@ def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
     return 0
 
 
-def cmd_cat(mod, vendor: str, sid: str, max_chars: int) -> int:
+def cmd_cat(mod, vendor: str, sid: str | None, max_chars: int, *, record_id: str | None = None, json_mode: bool = False) -> int:
     vendor = _resolve_vendor(vendor)
     if vendor not in CATTERS:
         print(f"ERROR: no session reader for vendor '{vendor}'", file=sys.stderr)
         return 1
-    text = CATTERS[vendor](mod, sid, max_chars)
+    try:
+        index = json.loads((OUT_ROOT / vendor / "index.json").read_text())
+        matches = [s for s in index.get("sessions", []) if
+                   (s.get("record_id") == record_id if record_id is not None else s.get("id") == sid)]
+        if len(matches) != 1:
+            if json_mode:
+                print(json.dumps({"availability": "ambiguous_identity" if matches else "missing_identity", "text": None}))
+                return 2
+            raise ValueError("missing or ambiguous source identity; use --record")
+        session = matches[0]
+        if not _current_binding(index) or not session.get("source_fingerprint"):
+            raise ValueError("unbound index")
+        captured = _read_session(mod, vendor, session, session["capture_max_chars"])
+        if captured is None or hashlib.sha256(captured.encode()).hexdigest() != session["capture_sha256"]:
+            raise ValueError("source changed")
+    except (OSError, ValueError, UnicodeError, KeyError, StopIteration):
+        if json_mode:
+            print(json.dumps({"availability": "binding_unavailable_or_changed", "text": None}))
+        print("ERROR: session binding unknown or source changed; regenerate index before faceting", file=sys.stderr)
+        return 2
+    text = _bounded_text(captured, max_chars) if max_chars <= session["capture_max_chars"] else _read_session(mod, vendor, session, max_chars)
     if text is None:
         print(f"ERROR: session '{sid}' not found for vendor '{vendor}'", file=sys.stderr)
         return 2
-    sys.stdout.write(text)
+    receipt = _read_receipt(index, session, text, max_chars)
+    print(json.dumps(receipt), file=sys.stderr)
+    if json_mode:
+        print(json.dumps({**receipt, "text": text}))
+    else:
+        sys.stdout.write(text)
     return 0
+
+
+def _read_receipt(index: dict, session: dict, text: str, max_chars: int) -> dict:
+    coverage = _capture_coverage(text)
+    assistant_msgs = session.get("assistant_msgs")
+    structural_response = type(assistant_msgs) is int and assistant_msgs > 0
+    receipt = {
+        **coverage,
+        "structural_assistant_msgs": assistant_msgs,
+        "record_id": session.get("record_id", session["id"]),
+        "session_id": session["id"],
+        "source_fingerprint": session["source_fingerprint"],
+        "index_fingerprint": index["index_fingerprint"],
+        "capture_max_chars": max_chars,
+        "capture_sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "returned_chars": len(text),
+        "truncated": "truncated at max-chars" in text,
+        "judgment_eligible": (max_chars <= session["capture_max_chars"]
+                              and structural_response
+                              and coverage["availability"] == "readable_response"
+                              and coverage["readable_assistant_turns"] <= assistant_msgs
+                              and "truncated at max-chars" not in text),
+        "reindex_required": max_chars > session["capture_max_chars"],
+    }
+    receipt["capture_fingerprint"] = _fingerprint(receipt)
+    return receipt
+
+
+
+def _valid_facet_read(index: dict, session: dict, facet: dict) -> bool:
+    """An index fingerprint alone does not prove the author read that capture."""
+    receipt = facet.get("capture_receipt")
+    if not isinstance(receipt, dict):
+        return False
+    body = {k: v for k, v in receipt.items() if k != "capture_fingerprint"}
+    limit = receipt.get("capture_max_chars")
+    return (
+        receipt.get("capture_fingerprint") == _fingerprint(body)
+        and receipt.get("record_id") == session.get("record_id", session["id"])
+        and receipt.get("source_fingerprint") == session.get("source_fingerprint")
+        and receipt.get("index_fingerprint") == index.get("index_fingerprint")
+        and receipt.get("capture_sha256") == session.get("capture_sha256")
+        and receipt.get("returned_chars") == session.get("capture_chars")
+        and type(limit) is int and 0 <= limit <= session.get("capture_max_chars", -1)
+        and receipt.get("judgment_eligible") is True
+        and receipt.get("reindex_required") is False
+        and receipt.get("truncated") is False
+        and receipt.get("availability") == "readable_response"
+        and type(session.get("assistant_msgs")) is int and session["assistant_msgs"] > 0
+        and receipt.get("structural_assistant_msgs") == session["assistant_msgs"]
+        and type(receipt.get("readable_assistant_turns")) is int
+        and 0 < receipt["readable_assistant_turns"] <= session["assistant_msgs"]
+    )
+
+
+def _facets_fingerprint(facets: list[dict]) -> str:
+    return _fingerprint(sorted(_fingerprint(facet) for facet in facets))
+
+
+def _coverage_summary(facets: list[dict]) -> dict:
+    outcomes = _aggregate_facets(facets)["outcomes"]
+    return {
+        "faceted_sessions": len(facets),
+        "judgeable_sessions": len(facets) - outcomes.get("unclear", 0),
+        "unclear_sessions": outcomes.get("unclear", 0),
+        "outcomes": outcomes,
+    }
 
 
 def cmd_render(vendor: str) -> int:
@@ -2136,22 +2359,89 @@ def cmd_render(vendor: str) -> int:
     if not index_path.exists():
         print(f"ERROR: {index_path} missing — run `index --vendor {vendor}` first", file=sys.stderr)
         return 2
-    index = json.loads(index_path.read_text())
-    facets = []
+    try:
+        index = json.loads(index_path.read_text())
+    except (OSError, ValueError, UnicodeError):
+        print("ERROR: index unreadable; regenerate index", file=sys.stderr)
+        return 2
+    binding_current = _current_binding(index)
+    validation_notes = []
+    if not binding_current:
+        validation_notes.append(
+            "Index freshness unknown: legacy or altered generation; regenerate index and judgments."
+        )
+    records = [s for s in index.get("sessions", []) if isinstance(s, dict) and isinstance(s.get("id"), str) and s["id"]]
+    indexed_sessions = {s.get("record_id", s["id"]): s for s in records}
+    for session in records:
+        if sum(s["id"] == session["id"] for s in records) == 1:
+            indexed_sessions.setdefault(session["id"], session)
+    indexed_ids = set(indexed_sessions)
+    facets_by_id = {}
+    duplicate_ids = set()
     facets_dir = vdir / "facets"
     if facets_dir.is_dir():
         for p in sorted(facets_dir.glob("*.json")):
             try:
-                facets.append(json.loads(p.read_text()))
-            except (OSError, json.JSONDecodeError):
+                facet = json.loads(p.read_text())
+            except (OSError, ValueError, UnicodeError):
                 print(f"WARN: unreadable facet {p.name}", file=sys.stderr)
+                validation_notes.append("Unreadable facet excluded; regenerate that judgment.")
+                continue
+            sid = (facet.get("record_id") or facet.get("session_id")) if isinstance(facet, dict) else None
+            if not isinstance(sid, str) or not sid or sid not in indexed_ids:
+                print(f"WARN: facet {p.name} has missing or unindexed session identity; excluded", file=sys.stderr)
+                continue
+            sid = indexed_sessions[sid].get("record_id", sid)
+            if sid in facets_by_id or sid in duplicate_ids:
+                # Conflicting files leave this session unfaceted rather than
+                # arbitrarily selecting one model estimate or counting it twice.
+                facets_by_id.pop(sid, None)
+                duplicate_ids.add(sid)
+                print(f"WARN: duplicate facet identity in {p.name}; all copies excluded", file=sys.stderr)
+                continue
+            expected = indexed_sessions[sid].get("source_fingerprint")
+            if not binding_current or not expected or facet.get("source_fingerprint") != expected:
+                print(f"WARN: facet {p.name} freshness unknown or mismatched; excluded; regenerate", file=sys.stderr)
+                validation_notes.append(
+                    "Unbound or stale facet excluded; regenerate against the current captured-source fingerprint."
+                )
+                continue
+            if not _valid_facet_read(index, indexed_sessions[sid], facet):
+                validation_notes.append(
+                    "Facet excluded: a complete, eligible read receipt matching the indexed capture is required."
+                )
+                continue
+            facets_by_id[sid] = facet
+    facets = list(facets_by_id.values())
     narrative = {}
     npath = vdir / "narrative.json"
     if npath.exists():
         try:
             narrative = json.loads(npath.read_text())
-        except (OSError, json.JSONDecodeError):
+        except (OSError, ValueError, UnicodeError):
             print("WARN: narrative.json unreadable — rendering without narrative", file=sys.stderr)
+        if (
+            not isinstance(narrative, dict)
+            or not binding_current
+            or narrative.get("index_fingerprint") != index.get("index_fingerprint")
+            or narrative.get("facets_fingerprint") != _facets_fingerprint(facets)
+            or narrative.get("coverage_summary") != _coverage_summary(facets)
+        ):
+            narrative = {}
+            print("WARN: narrative freshness unknown or mismatched; excluded; regenerate", file=sys.stderr)
+            validation_notes.append(
+                "Narrative excluded: index, validated facets, or derived counts changed; regenerate from validation.json."
+            )
+    _atomic_write(vdir / "validation.json", json.dumps({
+        "index_fingerprint": index.get("index_fingerprint"),
+        "facets_fingerprint": _facets_fingerprint(facets),
+        "coverage_summary": _coverage_summary(facets),
+        "validation_notes": sorted(set(validation_notes)),
+    }, indent=2))
+    if validation_notes:
+        index.setdefault("meta", {}).setdefault("notes", []).extend(sorted(set(validation_notes)))
+        for note in sorted(set(validation_notes)):
+            print(f"WARN: {note}", file=sys.stderr)
     if not facets and not narrative:
         print(f"ERROR: no facets and no narrative under {vdir} — the skill half hasn't run", file=sys.stderr)
         return 2
@@ -2174,10 +2464,14 @@ def main(argv: list[str] | None = None) -> int:
     group.add_argument("--all", action="store_true", help="index every lane, continuing past a failing one")
     p_idx.add_argument("--window-days", type=int, default=DEFAULT_WINDOW_DAYS)
     p_idx.add_argument("--max-sessions", type=int, default=DEFAULT_MAX_SESSIONS)
+    p_idx.add_argument("--capture-max-chars", type=int, default=DEFAULT_MAX_CHARS)
     p_cat = sub.add_parser("cat-session")
     p_cat.add_argument("--vendor", required=True)
-    p_cat.add_argument("--session", required=True)
+    identity = p_cat.add_mutually_exclusive_group(required=True)
+    identity.add_argument("--session")
+    identity.add_argument("--record", dest="record_id")
     p_cat.add_argument("--max-chars", type=int, default=DEFAULT_MAX_CHARS)
+    p_cat.add_argument("--json", action="store_true", dest="json_mode")
     p_r = sub.add_parser("render")
     p_r.add_argument("--vendor", required=True)
     args = ap.parse_args(argv)
@@ -2187,10 +2481,10 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_list(mod)
     if args.cmd == "index":
         if args.all:
-            return cmd_index_all(mod, args.window_days, args.max_sessions)
-        return cmd_index(mod, args.vendor, args.window_days, args.max_sessions)
+            return cmd_index_all(mod, args.window_days, args.max_sessions, args.capture_max_chars)
+        return cmd_index(mod, args.vendor, args.window_days, args.max_sessions, args.capture_max_chars)
     if args.cmd == "cat-session":
-        return cmd_cat(mod, args.vendor, args.session, args.max_chars)
+        return cmd_cat(mod, args.vendor, args.session, args.max_chars, record_id=args.record_id, json_mode=args.json_mode)
     if args.cmd == "render":
         return cmd_render(args.vendor)
     return 1

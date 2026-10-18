@@ -1,0 +1,31 @@
+{
+  "schema": "limen.insights_closeout_followup.v1",
+  "session_id": "01a1470a-98ad-7f61-acad-55b65060196f",
+  "observed_at": "2026-10-17T00:33:09Z",
+  "protocol_source": "explicit validated development checkout",
+  "checked_head": "f247e02444cddc6d1d8f6436080374a6e2d04330",
+  "exit_code": 1,
+  "session_released": false,
+  "task_completed": false,
+  "retirement_authorized": false,
+  "keeper_retained_state_complete": true,
+  "registration_witness": "observed",
+  "process_observation_complete": true,
+  "process_count": 53,
+  "process_counts": {
+    "checker": 8,
+    "owned_survivor": 0,
+    "shared_service": 0,
+    "foreign_session": 0,
+    "unknown": 53,
+    "unmeasured": 0
+  },
+  "findings": [
+    "session scopes have surviving or unattributed processes"
+  ],
+  "permission_error_reproduced": false,
+  "owner_url": "https://github.com/4444J99/limen/pull/2888",
+  "retained_completion_check_exit": 1,
+  "automatic_continuation_stopped": "finite attempt and verification allowance; no unchanged retry or process exemption",
+  "next_predicate": "Complete implicated pytest-cli and pytest-api evidence; reconcile exact process ownership through canonical contracts; then exact-head merge and native multi-root closeout. Retain allthree checkouts."
+}

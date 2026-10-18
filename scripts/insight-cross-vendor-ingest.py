@@ -35,6 +35,8 @@ from pathlib import Path
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 HOME = Path(os.environ.get("HOME", str(Path.home())))
+CLAUDE_CONFIG_ROOT = Path(os.environ.get("CLAUDE_CONFIG_DIR") or HOME / ".claude").expanduser()
+CODEX_CONFIG_ROOT = Path(os.environ.get("CODEX_HOME") or HOME / ".codex").expanduser()
 OUT_DIR = LIMEN_ROOT / "logs" / "insight-cross-vendor"
 
 DEFAULT_WINDOW_DAYS = 30
@@ -43,7 +45,8 @@ DEFAULT_WINDOW_DAYS = 30
 # dormant=True means the estate exists but has no session data worth ingesting.
 VENDOR_REGISTRY = {
     "claude": {
-        "path": HOME / ".claude" / "projects",
+        "path": CLAUDE_CONFIG_ROOT / "projects",
+        "extra_roots": [str(HOME / ".claude" / "projects")],
         # 2026-08: the estate migrated — live transcripts now land per-workspace under
         # <workspace>/.agent-runtime/claude/projects/. The legacy path holds history only;
         # adapters must walk BOTH (observed: legacy dir has zero JSONL newer than the window).
@@ -52,11 +55,13 @@ VENDOR_REGISTRY = {
         "description": "Claude Code session JSONL transcripts (legacy ~/.claude/projects + per-workspace .agent-runtime roots)",
     },
     "codex": {
-        "path": HOME / ".local" / "share" / "codex" / "history.jsonl",
+        "path": CODEX_CONFIG_ROOT / "history.jsonl",
         # Full transcripts live in rollout JSONL files (recon 2026-08-06): one file per
         # session, date-partitioned, plus a flat archive. history.jsonl is only the
         # cross-session user-prompt log. Consumed by scripts/vendor-insights.py.
         "sessions_roots": [
+            str(CODEX_CONFIG_ROOT / "sessions"),
+            str(CODEX_CONFIG_ROOT / "archived_sessions"),
             str(HOME / ".codex" / "sessions"),
             str(HOME / ".codex" / "archived_sessions"),
         ],
@@ -208,9 +213,12 @@ def claude_estate_roots() -> list[Path]:
 
     meta = VENDOR_REGISTRY["claude"]
     roots = [meta["path"]] if meta["path"].is_dir() else []
+    roots.extend(Path(p) for p in meta.get("extra_roots", []) if Path(p).is_dir())
     for pattern in meta.get("extra_root_globs", []):
         roots.extend(Path(p) for p in sorted(_glob.glob(pattern)) if Path(p).is_dir())
-    return roots
+    # Effective roots can also be reached by a legacy link or workspace glob.
+    # Count the physical store once while retaining every distinct history root.
+    return list({root.resolve(): root for root in roots}.values())
 
 
 def gemini_estate_roots() -> list[Path]:
@@ -276,17 +284,10 @@ def _ingest_claude(window_start: datetime) -> dict:
     )
     MAX_SESSIONS = 500  # hard cap to prevent runaway I/O on 1316 project dirs
     # Each project dir contains JSONL files directly.
-    # Fast path: use os.scandir + stat for mtime pre-filter on project dirs.
+    # Appending a transcript does not update its parent directory's mtime.
     project_dirs = [d for r in roots for d in r.iterdir()]
     for proj_dir in project_dirs:
         if not proj_dir.is_dir():
-            continue
-        # Fast pre-filter: skip entire project dir if its own mtime predates window
-        try:
-            dir_mtime = datetime.fromtimestamp(proj_dir.stat().st_mtime, tz=timezone.utc)
-            if dir_mtime < window_start:
-                continue
-        except OSError:
             continue
         for jsonl_path in proj_dir.glob("*.jsonl"):
             if sessions_seen >= MAX_SESSIONS:

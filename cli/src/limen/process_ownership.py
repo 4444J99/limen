@@ -7,11 +7,13 @@ Service authority comes from effective configuration, never a daemon subtree.
 from __future__ import annotations
 
 import ctypes
+import fcntl
 import hashlib
 import json
 import os
 import re
 import shlex
+import stat
 import struct
 import subprocess
 import sys
@@ -160,6 +162,38 @@ def snapshot(root: Path) -> tuple[dict[int, Process], set[int]]:
     return processes, excluded
 
 
+def _native_fd_path(path: Path) -> Path:
+    """Resolve a permission-limited Darwin alias through an identity-checked fd."""
+    if sys.platform != "darwin" or not path.is_absolute():
+        raise ObservationUnavailable("path_resolution_unavailable")
+    descriptor = -1
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError("not a regular executable/script")
+        # Darwin sys/fcntl.h: F_GETPATH=50, MAXPATHLEN=1024. No alias guessing.
+        raw = fcntl.fcntl(descriptor, 50, b"\0" * 1024)
+        if not isinstance(raw, bytes) or b"\0" not in raw:
+            raise ValueError("native path unavailable")
+        reported = Path(os.fsdecode(raw.split(b"\0", 1)[0]))
+        if not reported.is_absolute():
+            raise ValueError("native path is not absolute")
+        observed = reported.stat()
+        after = os.fstat(descriptor)
+        identities = {(row.st_dev, row.st_ino) for row in (before, observed, after)}
+        if len(identities) != 1:
+            raise ObservationUnavailable("path_resolution_unavailable:identity_mismatch")
+        return reported
+    except ObservationUnavailable:
+        raise
+    except (OSError, ValueError):
+        raise ObservationUnavailable("path_resolution_unavailable") from None
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+
+
 def canonical_argv(argv: tuple[str, ...] | list[str]) -> tuple[str, ...]:
     """Resolve executable/script symlinks; never expand arguments or environment."""
     import shutil
@@ -183,11 +217,19 @@ def canonical_argv(argv: tuple[str, ...] | list[str]) -> tuple[str, ...]:
                     if app.is_file():
                         path = app
             result.append(str(path.resolve()) if path.is_absolute() and path.exists() else word)
+        except PermissionError:
+            if sys.platform == "darwin" and path.is_absolute():
+                try:
+                    result.append(str(_native_fd_path(path)))
+                except ObservationUnavailable as exc:
+                    if "identity_mismatch" in str(exc):
+                        raise
+                    result.append(word)
+            else:
+                result.append(word)
         except OSError:
-            # A path this checker cannot traverse (observed: EACCES on /usr/local/bin/1password-mcp, an
-            # argv word of an unrelated host process) cannot be resolved. Keep it literally: the process
-            # is still counted and an unattributed one still blocks release, whereas letting the error
-            # escape made one unreadable word anywhere on the host turn every release check "unmeasured".
+            # Preserve unreadable words literally; missing byte provenance still
+            # prevents them from establishing a service exemption.
             result.append(word)
     return tuple(result)
 
