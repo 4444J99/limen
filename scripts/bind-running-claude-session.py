@@ -69,6 +69,16 @@ def bind_running(root: Path, session_id: str, worktree: Path, environ: Mapping[s
     hook = root / "scripts/hooks/conduct-register.sh"
     if hook.is_symlink() or not hook.is_file():
         raise BindingError("claude-registration-hook-unavailable")
+    client = HttpConductClient(url, token, timeout=15)
+    before = client.capabilities()
+    principal = before.get("authenticated_principal", {})
+    if principal.get("agent") != "claude" or not {"conductor", "executor"}.intersection(principal.get("roles", [])):
+        raise BindingError("claude-lane-principal-unconfirmed")
+    if any(
+        row.get("session_id") == session_id and row.get("identity", {}).get("agent") != "claude"
+        for row in before.get("sessions", [])
+    ):
+        raise BindingError("live-claude-binding-unconfirmed")
     child_env = dict(environ)
     child_env.pop("LIMEN_CONDUCT_TOKEN", None)
     child_env.update(LIMEN_CONDUCT_URL=url, LIMEN_CONDUCT_TOKEN_CLAUDE=token)
@@ -81,7 +91,7 @@ def bind_running(root: Path, session_id: str, worktree: Path, environ: Mapping[s
         check=True,
         timeout=30,
     )
-    sessions = HttpConductClient(url, token, timeout=15).capabilities().get("sessions", [])
+    sessions = client.capabilities().get("sessions", [])
     matches = [row for row in sessions if row.get("session_id") == session_id]
     if len(matches) != 1:
         raise BindingError("live-claude-binding-unconfirmed")

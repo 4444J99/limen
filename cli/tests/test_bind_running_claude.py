@@ -69,6 +69,7 @@ def test_binds_raw_native_id_through_hook_and_checks_live_record(tmp_path, monke
 
         def capabilities(self):
             return {
+                "authenticated_principal": {"agent": "claude", "roles": ["conductor"]},
                 "sessions": [
                     {
                         "session_id": "throwaway-native-id",
@@ -77,7 +78,7 @@ def test_binds_raw_native_id_through_hook_and_checks_live_record(tmp_path, monke
                         "human_protected": True,
                         "healthy": True,
                     }
-                ]
+                ],
             }
 
     monkeypatch.setattr(module, "run_hook", run)
@@ -118,7 +119,7 @@ def test_hook_exit_zero_is_not_live_binding_proof(tmp_path, monkeypatch):
             pass
 
         def capabilities(self):
-            return {"sessions": []}
+            return {"authenticated_principal": {"agent": "claude", "roles": ["conductor"]}, "sessions": []}
 
     monkeypatch.setattr(module, "HttpConductClient", Client)
     with pytest.raises(module.BindingError, match="live-claude-binding-unconfirmed"):
@@ -145,6 +146,7 @@ def test_existing_hook_preserves_raw_id_with_throwaway_cli(tmp_path, monkeypatch
 
         def capabilities(self):
             return {
+                "authenticated_principal": {"agent": "claude", "roles": ["conductor"]},
                 "sessions": [
                     {
                         "session_id": "throwaway-native-id",
@@ -153,7 +155,7 @@ def test_existing_hook_preserves_raw_id_with_throwaway_cli(tmp_path, monkeypatch
                         "human_protected": True,
                         "healthy": True,
                     }
-                ]
+                ],
             }
 
     monkeypatch.setattr(module, "HttpConductClient", Client)
@@ -192,8 +194,25 @@ def test_rejects_wrong_or_unhealthy_live_identity(tmp_path, monkeypatch, field, 
             pass
 
         def capabilities(self):
-            return {"sessions": [record]}
+            return {"authenticated_principal": {"agent": "claude", "roles": ["conductor"]}, "sessions": [record]}
 
     monkeypatch.setattr(module, "HttpConductClient", Client)
     with pytest.raises(module.BindingError, match="live-claude-binding-unconfirmed"):
+        module.bind_running(repo, "throwaway-native-id", worktree, env)
+
+
+def test_wrong_lane_principal_cannot_pin_a_native_session(tmp_path, monkeypatch):
+    module = load_script()
+    repo, worktree, env = fixture_binding(tmp_path)
+    monkeypatch.setattr(module, "run_hook", lambda *a, **k: pytest.fail("wrong principal reached registration"))
+
+    class Client:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def capabilities(self):
+            return {"authenticated_principal": {"agent": "codex", "roles": ["conductor"]}, "sessions": []}
+
+    monkeypatch.setattr(module, "HttpConductClient", Client)
+    with pytest.raises(module.BindingError, match="claude-lane-principal-unconfirmed"):
         module.bind_running(repo, "throwaway-native-id", worktree, env)

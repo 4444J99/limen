@@ -11,7 +11,8 @@ From the actual Claude job, resolve the gate Python interpreter as documented in
 AGENTS.md, then run scripts/bind-running-claude-session.py with --session-id set
 to its exact native session ID and --worktree set to its .claude/worktrees root.
 CLAUDE_JOB_DIR must identify that running job. Never invent a replacement ID.
-The command drives the existing registration hook and requires authenticated live
+The command verifies the Claude principal and its registration role before any hook
+write, then drives the existing registration hook and requires authenticated live
 readback of the same ID, Claude identity, exact worktree and protected healthy
 record. It reads only the Claude lane bearer from the owned 0600 cache or explicit
 lane environment; it refuses the default bearer. Missing or ambiguous evidence
