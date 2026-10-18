@@ -346,3 +346,30 @@ def test_fingerprint_stops_when_deadline_expires_during_input_walk(tmp_path, mon
     (tmp_path / "large.bin").write_bytes(b"x" * (3 * 1024 * 1024))
     with pytest.raises(TimeoutError, match="fingerprint deadline exhausted"):
         module.verification_fingerprint({}, {}, [], deadline=3)
+
+def test_execution_uses_operator_configured_limits():
+    configured = {**POLICY, "execution_limits": {
+        "attempt_seconds": 2400, "verification_seconds": 900, "cumulative_seconds": 9600,
+        "dispatch_concurrency": 3, "recovery_concurrency": 1, "max_root_attempts": 3,
+    }}
+    admission = admit_execution(configured, {"runs": {}}, packet(), NOW)
+    assert admission["reserved_seconds"] == 2400
+    assert admission["verification_seconds"] == 900
+    assert admission["attempt_deadline"] == "2026-09-16T00:40:00+00:00"
+    old = {"status": "failed", "packet": packet(), "parent_run_id": None,
+           "execution_admission": {**admission, "reserved_seconds": 7200}}
+    with pytest.raises(InventoryAdmissionError, match="outcome_budget_exhausted"):
+        admit_execution(
+            {**configured, "execution_limits": {**configured["execution_limits"], "cumulative_seconds": 9500}},
+            {"runs": {"old": old}}, packet(digest="second"), NOW,
+        )
+
+
+@pytest.mark.parametrize("limits", [
+    {"attempt_seconds": 0}, {"attempt_seconds": True}, {"attempt_seconds": "2400"},
+    {"verification_seconds": 1801}, {"cumulative_seconds": 1799},
+    {"dispatch_concurrency": 0}, {"unknown_limit": 1},
+])
+def test_invalid_execution_limits_fail_closed(limits):
+    with pytest.raises(InventoryAdmissionError, match="execution_limits_invalid"):
+        admit_execution({**POLICY, "execution_limits": limits}, {"runs": {}}, packet(), NOW)
