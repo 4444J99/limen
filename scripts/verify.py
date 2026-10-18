@@ -443,6 +443,30 @@ def bounded_seconds(value: str) -> float:
     return seconds
 
 
+DEFAULT_GATE_TIMEOUT_SECONDS = 300.0
+DEFAULT_TOTAL_TIMEOUT_SECONDS = 600.0
+MAX_TOTAL_TIMEOUT_SECONDS = 1800.0
+TOTAL_TIMEOUT_MARGIN_SECONDS = 300.0
+
+
+def gate_budget(row_timeout: object, operator_timeout: float | None) -> float:
+    """Resolve one gate's deadline.
+
+    A registry ``timeout_seconds`` is the gate's declared budget and is the default when the operator
+    set nothing, so a heavy gate is not killed at the generic default. An explicit operator value
+    (flag or env) is a ceiling over it; a gate with no declared budget falls back to the generic default.
+    """
+    if operator_timeout is None:
+        return float(row_timeout) if row_timeout else DEFAULT_GATE_TIMEOUT_SECONDS
+    return min(operator_timeout, float(row_timeout)) if row_timeout else operator_timeout
+
+
+def default_total_timeout(gates: dict, selected: list[str]) -> float:
+    """Whole-run deadline when none was given: wide enough for the largest implicated gate budget."""
+    longest = max((float((gates[g] or {}).get("timeout_seconds") or 0) for g in selected), default=0.0)
+    return min(MAX_TOTAL_TIMEOUT_SECONDS, max(DEFAULT_TOTAL_TIMEOUT_SECONDS, longest + TOTAL_TIMEOUT_MARGIN_SECONDS))
+
+
 def bounded_output_bytes(value: str) -> int:
     try:
         output_bytes = int(value)
@@ -813,19 +837,24 @@ def run_gate_wave(
     changed: list[str],
     *,
     jobs: int,
-    timeout_seconds: float,
+    timeout_seconds: float | None,
     output_limit_bytes: int,
     wave_name: str,
     aggregate_deadline: float | None = None,
 ) -> bool:
-    """Run one independent gate tier concurrently with finite per-gate receipts."""
+    """Run one independent gate tier concurrently with finite per-gate receipts.
+
+    ``timeout_seconds`` is the operator's per-gate ceiling, or ``None`` when none was given (each gate
+    then runs under its registry budget).
+    """
 
     if not gate_ids:
         return True
     worker_count = min(jobs, len(gate_ids))
+    budget_label = "registry-budget" if timeout_seconds is None else f"{timeout_seconds:g}s"
     print(
         f"\nWAVE {wave_name}: START gates={len(gate_ids)} jobs={worker_count} "
-        f"gate_timeout={timeout_seconds:g}s output_limit={output_limit_bytes}B",
+        f"gate_timeout={budget_label} output_limit={output_limit_bytes}B",
         flush=True,
     )
     cancel_event = threading.Event()
@@ -835,8 +864,7 @@ def run_gate_wave(
 
         def execute(gate_id: str) -> tuple[bool, float]:
             started = time.monotonic()
-            row_timeout = (gates[gate_id] or {}).get("timeout_seconds")
-            gate_timeout = min(timeout_seconds, float(row_timeout)) if row_timeout else timeout_seconds
+            gate_timeout = gate_budget((gates[gate_id] or {}).get("timeout_seconds"), timeout_seconds)
             deadline = min(started + gate_timeout, aggregate_deadline or float("inf"))
             if time.monotonic() >= deadline:
                 output_paths[gate_id].write_text("aggregate verification deadline exhausted\n")
@@ -953,14 +981,21 @@ def cmd_changed(
     base: str | None,
     *,
     jobs: int,
-    gate_timeout_seconds: float,
+    gate_timeout_seconds: float | None,
     gate_output_bytes: int,
     require_base: bool = False,
     skip_ci_covered: str | None = None,
     integration: bool = False,
-    total_timeout_seconds: float = 600,
+    total_timeout_seconds: float | None = None,
 ) -> int:
-    aggregate_deadline = time.monotonic() + min(total_timeout_seconds, 1800)
+    # ``None`` means the operator set nothing: each gate runs under its registry budget and the whole-run
+    # deadline is derived from the implicated set once it is known. Explicit values are ceilings.
+    started = time.monotonic()
+    aggregate_deadline = started + min(
+        DEFAULT_TOTAL_TIMEOUT_SECONDS if total_timeout_seconds is None else total_timeout_seconds,
+        MAX_TOTAL_TIMEOUT_SECONDS,
+    )
+    keeper_deadline: float | None = None
     work_key = os.environ.get("LIMEN_WORK_KEY")
     if work_key:
         # The keeper owns the window across child processes and restarts. Reading
@@ -978,7 +1013,8 @@ def cmd_changed(
             ).total_seconds()
             if remaining <= 0:
                 raise ValueError("verification budget exhausted")
-            aggregate_deadline = min(aggregate_deadline, time.monotonic() + remaining)
+            keeper_deadline = time.monotonic() + remaining
+            aggregate_deadline = min(aggregate_deadline, keeper_deadline)
         except Exception as exc:
             print(f"verification admission denied: {type(exc).__name__}", file=sys.stderr)
             return 75
@@ -1053,6 +1089,12 @@ def cmd_changed(
         for gate_id in deferred:
             print(f"deferred: {gate_id} (covered by {gates[gate_id]['ci_job']})")
 
+    if total_timeout_seconds is None:
+        # Widen to the largest implicated registry budget; a keeper-owned window still wins.
+        aggregate_deadline = started + default_total_timeout(gates, selected)
+        if keeper_deadline is not None:
+            aggregate_deadline = min(aggregate_deadline, keeper_deadline)
+
     tiers = {"cheap": [], "heavy": [], "serialized": []}
     for gate_id in selected:
         gate = gates[gate_id]
@@ -1102,8 +1144,11 @@ def cmd_changed(
                 return 1
             if tiers["serialized"]:
                 lock_path = verification_lock_path()
+                lock_wait_seconds = (
+                    DEFAULT_GATE_TIMEOUT_SECONDS if gate_timeout_seconds is None else gate_timeout_seconds
+                )
                 with open(lock_path, "w") as lock:
-                    lock_deadline = min(aggregate_deadline, time.monotonic() + gate_timeout_seconds)
+                    lock_deadline = min(aggregate_deadline, time.monotonic() + lock_wait_seconds)
                     announced_wait = False
                     while True:
                         try:
@@ -1114,7 +1159,7 @@ def cmd_changed(
                             if remaining <= 0:
                                 print(
                                     "serialized-lock-timeout: machine-wide verification "
-                                    f"lock remained held for {gate_timeout_seconds:g}s",
+                                    f"lock remained held for {lock_wait_seconds:g}s",
                                     file=sys.stderr,
                                 )
                                 return 1
@@ -1123,8 +1168,15 @@ def cmd_changed(
                                 announced_wait = True
                             time.sleep(min(0.05, remaining))
                     for index, gate_id in enumerate(tiers["serialized"]):
-                        timeout_seconds = lock_deadline - time.monotonic() if index == 0 else gate_timeout_seconds
-                        if timeout_seconds <= 0:
+                        if gate_timeout_seconds is None:
+                            # No operator ceiling: the gate runs under its registry budget, so the lock
+                            # wait must not eat into it. Only the whole-run deadline can run out here.
+                            timeout_seconds = None
+                            remaining_seconds = aggregate_deadline - time.monotonic()
+                        else:
+                            timeout_seconds = lock_deadline - time.monotonic() if index == 0 else gate_timeout_seconds
+                            remaining_seconds = timeout_seconds
+                        if remaining_seconds <= 0:
                             print(
                                 "serialized-lock-timeout: no gate deadline remained after "
                                 "machine-wide lock acquisition",
@@ -1177,7 +1229,12 @@ def main() -> int:
     mode.add_argument("--full", action="store_true")
     parser.add_argument("--base", default=None)
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--total-timeout-seconds", type=bounded_seconds, default=600)
+    parser.add_argument(
+        "--total-timeout-seconds",
+        type=bounded_seconds,
+        default=None,
+        help="ceiling for the whole run (default: max(600, largest implicated gate budget + 300), capped at 1800)",
+    )
     parser.add_argument(
         "--jobs",
         type=positive_jobs,
@@ -1190,8 +1247,9 @@ def main() -> int:
     parser.add_argument(
         "--gate-timeout-seconds",
         type=bounded_seconds,
-        default=os.environ.get("LIMEN_VERIFY_GATE_TIMEOUT_SECONDS", "300"),
-        help="deadline for each gate in a wave (default: 300; also via LIMEN_VERIFY_GATE_TIMEOUT_SECONDS)",
+        default=os.environ.get("LIMEN_VERIFY_GATE_TIMEOUT_SECONDS"),
+        help="ceiling for each gate in a wave (default: each gate's registry timeout_seconds, else 300; "
+        "also via LIMEN_VERIFY_GATE_TIMEOUT_SECONDS)",
     )
     parser.add_argument(
         "--gate-output-bytes",
