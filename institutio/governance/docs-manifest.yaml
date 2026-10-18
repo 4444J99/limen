@@ -117,6 +117,7 @@ sanctioned:
   - {path: prompt-packet-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py (+4 more)"}
   - {path: prompt-packet-resolution-receipts.json, kind: data, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
   - {path: prompt-priority-map.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/prompt-priority-map.py (+1 more)"}
+  - {path: prompt-control-vocabulary-study.md, kind: doc, owner: governance, why: "study of the operator's post-opener prompts (1,503 turns, 178 sessions) that the prompt-control-vocabulary plan derives the slash-command set from; registry confirmation appended after the Claude baseline scan"}
   - {path: fleet-gate-branch-debt.json, kind: data, owner: fleet, why: "estate debt record for the 942 heal/fleet-gate-* branches — durable owner home per operator directive 2026-08-05 (no unique work reaped without due)"}
   - {path: fleet-gate-branch-debt.txt, kind: data, owner: fleet, why: "enumerated 942 heal/fleet-gate-* branch list backing the fleet-gate-branch-debt.json manifest"}
   - {path: ci-red-disposition-20260810.json, kind: data, owner: fleet, why: "DRAIN-0810-DISPOSITION-CIRED cohort disposition ledger — 89 CI-RED PRs classified into auto-fixable, human-gated, lifecycle buckets"}
