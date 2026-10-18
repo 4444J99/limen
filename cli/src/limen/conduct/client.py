@@ -11,7 +11,13 @@ from pathlib import Path
 from typing import Any
 
 from limen.conduct.broker import ConductBroker, ConductConflict, ConductError
-from limen.conduct.models import ConductorSessionV1, ExecutorAttemptV1, RunReceiptV1, WorkPacketV1
+from limen.conduct.models import (
+    ConductorSessionV1,
+    ExecutorAttemptV1,
+    RunReceiptV1,
+    SessionReleaseRequestV1,
+    WorkPacketV1,
+)
 from limen.conduct.store import SQLiteStateStore
 
 
@@ -147,6 +153,16 @@ class HttpConductClient:
         """Read the authenticated full board from private keeper custody."""
 
         return self._request("GET", "/api/board/private")
+
+    def session_binding(self, session_id: str) -> dict[str, Any]:
+        """Read the owner-only binding generation without refreshing its liveness."""
+        session = urllib.parse.quote(session_id, safe="")
+        return self._request("GET", f"/api/conduct/sessions/{session}/binding")
+
+    def release_session(self, session_id: str, request: SessionReleaseRequestV1) -> dict[str, Any]:
+        """Submit one exact owner-prepared request; never retry or derive authority."""
+        session = urllib.parse.quote(session_id, safe="")
+        return self._request("POST", f"/api/conduct/sessions/{session}/release", request.model_dump(mode="json"))
 
     def session_audit(self, session_id: str) -> dict[str, Any]:
         """Read bounded redacted lifecycle evidence; missing history stays unmeasured."""

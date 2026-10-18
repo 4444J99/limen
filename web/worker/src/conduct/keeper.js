@@ -32,6 +32,7 @@ export function emptyConductState() {
     sessions: {},
     session_principals: {},
     session_principal_roles: {},
+    session_releases: {},
     runs: {},
     leases: {},
     work_index: {},
@@ -225,6 +226,7 @@ function validateLoadedState(input) {
     "sessions",
     "session_principals",
     "session_principal_roles",
+    "session_releases",
     "runs",
     "leases",
     "work_index",
@@ -284,6 +286,9 @@ export class ConductKernel {
           observed_at: accepted.observation.source_report.generated_at, accepted_at: accepted.accepted_at };
       }
       case "register": return this.register(payload.session, payload.principal);
+      case "session_binding": return this.sessionBinding(payload.session_id, payload.principal);
+      case "release_session": return this.releaseSession(payload.session_id, payload.request,
+        payload.principal, payload.replacement_principal, payload.principal_registry_generation);
       case "capabilities": return this.capabilities(payload.principal);
       case "session_audit": return sessionAudit(this.state, payload.session_id);
       case "task_run": return this.taskRun(payload.task_id);
@@ -441,11 +446,101 @@ export class ConductKernel {
     });
   }
 
+  requireSessionOwner(principal) {
+    if (!principal || principal.roles?.length !== 1 || principal.roles[0] !== "session_owner") {
+      throw new ConductError("authenticated isolated session_owner role required", 403);
+    }
+  }
+
+  bindingSnapshot(sessionId) {
+    const session = this.state.sessions[sessionId];
+    if (!session) throw new ConductError("session is released or not registered");
+    const principalId = this.state.session_principals[sessionId];
+    const roles = this.state.session_principal_roles[sessionId];
+    if (!principalId || !Array.isArray(roles) || !roles.length) {
+      throw new ConductError("session principal binding is unmeasured");
+    }
+    return {session: clone(session), principal_id: principalId, principal_roles: [...roles].sort()};
+  }
+
+  bindingOccupancy(sessionId, session) {
+    const heartbeat = asDate(session.heartbeat_at).getTime();
+    if (!Number.isFinite(heartbeat)) throw new ConductError("session liveness is unmeasured");
+    const ownLeases = Object.values(this.state.leases).filter(l => l.executor?.session_id === sessionId);
+    const leaseRuns = new Set(ownLeases.map(l => l.run_id));
+    const runs = Object.values(this.state.runs).filter(run => leaseRuns.has(run.run_id)
+      || [run.executor_session_id, run.conductor_session_id,
+        run.packet?.initiator?.session_id, run.packet?.conductor?.session_id].includes(sessionId));
+    const runIds = new Set(runs.map(run => run.run_id));
+    return {
+      healthy: this.now.getTime() - heartbeat <= this.sessionTtlMs,
+      active_leases: Object.values(this.state.leases).filter(l =>
+        (l.executor?.session_id === sessionId || runIds.has(l.run_id))
+        && ACTIVE_LEASE_STATES.has(l.state)).length,
+      active_runs: runs.filter(run => ["waiting", "reserved", "running", "stop_requested"].includes(run.status)).length,
+      // Unknown provider state remains occupied even on non-Jules adapters.
+      pending_remote_effects: runs.reduce((count, run) => count + (run.attempts || [])
+        .filter(attempt => !["not_started", "terminal"].includes(attempt.provider_state)).length, 0),
+    };
+  }
+
+  async sessionBinding(sessionId, principal) {
+    this.requireSessionOwner(principal);
+    const snapshot = this.bindingSnapshot(sessionId);
+    return {schema_version: "limen.conduct_session_binding.v1", session_id: sessionId,
+      binding_generation: await canonicalHash(snapshot), identity: snapshot.session.identity,
+      principal_id: snapshot.principal_id, human_protected: snapshot.session.human_protected,
+      ...this.bindingOccupancy(sessionId, snapshot.session)};
+  }
+
+  async releaseSession(sessionId, request, principal, replacement, registryGeneration) {
+    this.requireSessionOwner(principal);
+    const snapshot = this.bindingSnapshot(sessionId);
+    const generation = await canonicalHash(snapshot);
+    if (request.expected_binding_generation !== generation
+        || !/^[a-f0-9]{64}$/.test(registryGeneration || "")
+        || request.expected_principal_registry_generation !== registryGeneration) {
+      throw new ConductError("session or principal registry generation changed");
+    }
+    if (!replacement || replacement.principal_id !== request.replacement_principal_id
+        || !replacement.roles?.some(role => ["conductor", "executor"].includes(role))
+        || replacement.principal_id === snapshot.principal_id) {
+      throw new ConductError("named replacement lane principal is invalid", 422);
+    }
+    const occupancy = this.bindingOccupancy(sessionId, snapshot.session);
+    if (occupancy.healthy) throw new ConductError("healthy session cannot be released");
+    if (occupancy.active_leases || occupancy.active_runs) throw new ConductError("session is busy with an active lease or run");
+    if (occupancy.pending_remote_effects) throw new ConductError("session has pending remote effects");
+    const receipt = {
+      schema_version: "limen.conduct_session_release.v1", session_id: sessionId,
+      binding_generation: generation, principal_registry_generation: registryGeneration,
+      released_at: this.timestamp, owner_principal_id: principal.principal_id,
+      reason: request.reason, original_session: snapshot.session,
+      original_principal_id: snapshot.principal_id, original_principal_roles: snapshot.principal_roles,
+      replacement_principal: clone(replacement),
+    };
+    (this.state.session_releases[sessionId] ||= []).push(receipt);
+    delete this.state.sessions[sessionId];
+    delete this.state.session_principals[sessionId];
+    delete this.state.session_principal_roles[sessionId];
+    this.recordEvent("session.released", {session_id: sessionId, binding_generation: generation,
+      owner_principal_id: principal.principal_id, replacement_principal_id: replacement.principal_id});
+    return {schema_version: receipt.schema_version, status: "released", session_id: sessionId,
+      binding_generation: generation, released_at: receipt.released_at,
+      replacement_principal_id: replacement.principal_id};
+  }
+
   register(session, requestedPrincipal = null) {
     const { principal, enforced } = this.principalForIdentity(session.identity, requestedPrincipal);
     this.requireRole(principal, "conductor", "executor");
     session = this.bindSessionIdentity(session, principal);
     const current = this.state.sessions[session.session_id];
+    const release = !current ? this.state.session_releases[session.session_id]?.at(-1) : null;
+    if (release && (principal.principal_id !== release.replacement_principal.principal_id
+        || principal.agent !== release.replacement_principal.agent
+        || principal.surface !== release.replacement_principal.surface)) {
+      throw new ConductError("released session is reserved for its named replacement principal", 403);
+    }
     if (current && !identitiesEqual(current.identity, session.identity)) {
       throw new ConductError("session_id is already registered to another identity");
     }
@@ -482,7 +577,7 @@ export class ConductKernel {
       ...clone(session),
       registered_at: current?.registered_at || this.timestamp,
       heartbeat_at: this.timestamp,
-      human_protected: Boolean(current?.human_protected || session.human_protected),
+      human_protected: Boolean(current?.human_protected || release?.original_session.human_protected || session.human_protected),
       supersedes: null,
     };
     const priorPrincipal = this.state.session_principals[session.session_id];
@@ -492,6 +587,10 @@ export class ConductKernel {
     this.state.sessions[session.session_id] = stored;
     this.state.session_principals[session.session_id] = principal.principal_id;
     this.state.session_principal_roles[session.session_id] = [...principal.roles].sort();
+    if (release) this.recordEvent("session.rebound", {
+      session_id: session.session_id, binding_generation: release.binding_generation,
+      replacement_principal_id: principal.principal_id,
+    });
     this.recordEvent("session.registered", {
       session_id: session.session_id,
       agent: session.identity.agent,

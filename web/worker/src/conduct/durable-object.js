@@ -1,6 +1,7 @@
 import { DependencyCompletionError, submitCompletionHint, readCompletionHints, reconcileCompletionAssessment } from "./dependency-completion.js";
 import {
   authorizeConductRequest,
+  configuredConductPrincipals,
   conductPrincipalRegistryReadback,
   internalConductPrincipal,
 } from "./auth.js";
@@ -24,6 +25,7 @@ import {
   validateExecutorAttempt,
   validateReceipt,
   validateSession,
+  validateSessionRelease,
   validateWorkPacket,
 } from "./schemas.js";
 
@@ -304,7 +306,34 @@ export class ConductKeeperDurableObject {
       return json(await this.service.call("submit_graph", { packets, principal }), 200, this.env);
     }
 
-    let match = path.match(/^\/api\/conduct\/sessions\/([^/]+)\/audit$/);
+    let match = path.match(/^\/api\/conduct\/sessions\/([^/]+)\/(binding|release)$/);
+    if (match) {
+      requireRole(principal, "session_owner");
+      if (match[2] === "binding" && request.method === "GET") {
+        const result = await this.service.call("session_binding", {
+          session_id: decodeIdentifier(match[1], "session_id"), principal,
+        });
+        result.principal_registry_generation = (await conductPrincipalRegistryReadback(this.env)).configuration_fingerprint;
+        const response = json(result, 200, this.env);
+        response.headers.set("cache-control", "no-store");
+        return response;
+      }
+      if (match[2] === "release" && request.method === "POST") {
+        const body = validateSessionRelease(await parseBody(request, 16384));
+        const replacement = configuredConductPrincipals(this.env)
+          .find(entry => entry.principal.principal_id === body.replacement_principal_id)?.principal;
+        const result = await this.service.call("release_session", {
+          session_id: decodeIdentifier(match[1], "session_id"), request: body, principal,
+          replacement_principal: replacement,
+          principal_registry_generation: (await conductPrincipalRegistryReadback(this.env)).configuration_fingerprint,
+        });
+        const response = json(result, 200, this.env);
+        response.headers.set("cache-control", "no-store");
+        return response;
+      }
+      return errorResponse("method not allowed", 405, this.env);
+    }
+    match = path.match(/^\/api\/conduct\/sessions\/([^/]+)\/audit$/);
     if (match && request.method === "GET") {
       requireRole(principal, "observer");
       return json(await this.service.call("session_audit", {

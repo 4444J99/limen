@@ -2,6 +2,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { canonicalize } from "json-canonicalize";
 
+import sessionReleaseSchema from "../../../../spec/contracts/conduct/session-release-request-v1.schema.json" with { type: "json" };
 import conductorSessionSchema from "../../../../spec/contracts/conduct/conductor-session-v1.schema.json" with { type: "json" };
 import executorAttemptSchema from "../../../../spec/contracts/conduct/executor-attempt-v1.schema.json" with { type: "json" };
 import leaseSchema from "../../../../spec/contracts/conduct/lease-v1.schema.json" with { type: "json" };
@@ -22,6 +23,7 @@ addFormats(ajv);
 
 const validators = {
   session: ajv.compile(conductorSessionSchema),
+  sessionRelease: ajv.compile(sessionReleaseSchema),
   attempt: ajv.compile(executorAttemptSchema),
   lease: ajv.compile(leaseSchema),
   receipt: ajv.compile(runReceiptSchema),
@@ -94,6 +96,14 @@ function identityDefaults(identity) {
     provider_identity: null,
     ...identity,
   };
+}
+
+export function validateSessionRelease(payload) {
+  const request = validateSchema("sessionRelease", payload);
+  assertIdentifier(request.replacement_principal_id, "replacement_principal_id");
+  if (request.reason.includes(String.fromCharCode(0)) || !request.reason.trim()) fail("reason must be bounded non-empty text");
+  request.reason = request.reason.trim();
+  return request;
 }
 
 export function validateSession(payload, now = new Date()) {

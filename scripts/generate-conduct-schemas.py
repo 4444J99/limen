@@ -16,6 +16,7 @@ from limen.conduct.models import (  # noqa: E402
     ExecutorAttemptV1,
     LeaseV1,
     RunReceiptV1,
+    SessionReleaseRequestV1,
     WorkPacketV1,
 )
 from limen.fanout import FanoutManifestV1  # noqa: E402
@@ -23,6 +24,7 @@ from limen.fanout import FanoutManifestV1  # noqa: E402
 
 MODELS = {
     "conductor-session-v1.schema.json": ConductorSessionV1,
+    "session-release-request-v1.schema.json": SessionReleaseRequestV1,
     "work-packet-v1.schema.json": WorkPacketV1,
     "lease-v1.schema.json": LeaseV1,
     "executor-attempt-v1.schema.json": ExecutorAttemptV1,

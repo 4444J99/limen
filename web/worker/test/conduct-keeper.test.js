@@ -4280,3 +4280,172 @@ test("HTTP capabilities preserve the authenticated principal for safe native bin
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).authenticated_principal, principal);
 });
+
+async function releaseFixture() {
+  let now = new Date(NOW);
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, {clock: () => now});
+  const oldPrincipal = principalMeta("legacy-codex", "codex", ["conductor", "executor", "observer"]);
+  const owner = principalMeta("operator", "human", ["session_owner"]);
+  const replacement = principalMeta("claude-direct", "claude", ["conductor", "executor", "observer"]);
+  await service.call("register", {session: session("codex", {
+    sessionId: "stale-native-fixture", protectedSession: true, worktree: "/fixture/release",
+  }), principal: oldPrincipal});
+  now = new Date(NOW.getTime() + 6 * 60 * 1000);
+  const binding = () => service.call("session_binding", {session_id: "stale-native-fixture", principal: owner});
+  const request = async () => ({
+    expected_binding_generation: (await binding()).binding_generation,
+    expected_principal_registry_generation: "a".repeat(64),
+    replacement_principal_id: replacement.principal_id,
+    reason: "Correct an authenticated lane binding after stale-session review.",
+  });
+  const release = async (body = null, principal = owner) => service.call("release_session", {
+    session_id: "stale-native-fixture", request: body || await request(), principal,
+    replacement_principal: replacement, principal_registry_generation: "a".repeat(64),
+  });
+  return {store, service, owner, oldPrincipal, replacement, binding, request, release,
+    setNow: value => { now = value; }};
+}
+
+test("owner release fences generations and preserves protected history for the named lane", async () => {
+  const f = await releaseFixture();
+  const before = await f.store.load();
+  const request = await f.request();
+  await assert.rejects(f.release({...request, expected_binding_generation: "b".repeat(64)}), /generation/);
+  await assert.rejects(f.release({...request, expected_principal_registry_generation: "b".repeat(64)}), /generation/);
+  assert.deepEqual(await f.store.load(), before);
+  const released = await f.release(request);
+  assert.equal(released.status, "released");
+  const state = await f.store.load();
+  assert.equal(state.sessions["stale-native-fixture"], undefined);
+  assert.deepEqual(state.session_releases["stale-native-fixture"][0].original_session,
+    before.sessions["stale-native-fixture"]);
+  assert.equal(state.session_releases["stale-native-fixture"][0].original_principal_id, "legacy-codex");
+  assert.equal(state.events.filter(e => e.kind === "session.registered").length, 1);
+  assert.equal(state.events.filter(e => e.kind === "session.released").length, 1);
+  await assert.rejects(f.release(request), /released|not registered/);
+  await assert.rejects(f.service.call("register", {
+    session: session("codex", {sessionId: "stale-native-fixture"}), principal: f.oldPrincipal,
+  }), /replacement/);
+  const fresh = await f.service.call("register", {
+    session: session("claude", {sessionId: "stale-native-fixture"}), principal: f.replacement,
+  });
+  assert.equal(fresh.identity.agent, "claude");
+  assert.equal(fresh.human_protected, true);
+  assert.equal((await f.store.load()).session_releases["stale-native-fixture"].length, 1);
+  const audit = await f.service.call("session_audit", {session_id: "stale-native-fixture"});
+  assert.equal(audit.event_occurrence_counts["session.released"], 1);
+  assert.equal(audit.binding_releases[0].binding_generation, released.binding_generation);
+});
+
+test("owner release refuses healthy, busy, pending and ordinary principals without mutation", async t => {
+  for (const kind of ["ordinary", "healthy", "active-lease", "conductor-run", "pending-remote", "unknown-heartbeat"]) {
+    await t.test(kind, async () => {
+      const f = await releaseFixture();
+      if (kind === "healthy") f.setNow(NOW);
+      if (["active-lease", "conductor-run", "pending-remote", "unknown-heartbeat"].includes(kind)) {
+        const state = await f.store.load();
+        if (kind === "unknown-heartbeat") state.sessions["stale-native-fixture"].heartbeat_at = "invalid";
+        else if (kind === "active-lease") {
+          state.leases.busy = {
+            schema_version: "limen.lease.v1", lease_id: "busy", run_id: "busy-run",
+            executor: identity("codex", "stale-native-fixture"), generation: 1, state: "active",
+            resources: [], capability_token_hash: "fixture", acquired_at: NOW.toISOString(), heartbeat_at: NOW.toISOString(),
+            hard_deadline: new Date(NOW.getTime()+3600000).toISOString(),
+          };
+        } else state.runs.busy = {
+          run_id: "busy", status: kind === "conductor-run" ? "waiting" : "blocked",
+          conductor_session_id: "stale-native-fixture", executor_session_id: "remote-fixture",
+          packet: {}, attempts: kind === "pending-remote" ? [
+            {adapter: "jules-api", provider_state: "running", status: "running"},
+          ] : [],
+        };
+        await f.store.save(state);
+      }
+      const before = await f.store.load();
+      await assert.rejects(f.release(null, kind === "ordinary" ? f.oldPrincipal : f.owner),
+        /owner|healthy|lease|busy|pending|liveness/);
+      assert.deepEqual(await f.store.load(), before);
+    });
+  }
+});
+
+test("HTTP owner release uses isolated owner role, strict body and live registry generation", async () => {
+  const f = await releaseFixture();
+  const ownerToken = "operator-owner-token-at-least-24-characters";
+  const ordinaryToken = "ordinary-token-at-least-24-characters";
+  const env = {LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry(
+    {...f.owner, bearer: ownerToken},
+    {...f.oldPrincipal, bearer: ordinaryToken},
+    {...f.replacement, bearer: "claude-token-at-least-24-characters"},
+  )};
+  const worker = new ConductKeeperDurableObject({storage: new InstrumentedConductStorage()}, env);
+  worker.service = f.service;
+  const url = "https://limen.example/api/conduct/sessions/stale-native-fixture/";
+  const get = token => worker.fetch(new Request(url+"binding", {headers:{authorization:"Bearer "+token}})); // allow-secret: fixture transport parameter
+  assert.equal((await get(ordinaryToken)).status, 403);
+  assert.equal((await get("wrong")).status, 401);
+  const response = await get(ownerToken);
+  assert.equal(response.status, 200);
+  const binding = await response.json();
+  assert.match(binding.principal_registry_generation, /^[a-f0-9]{64}$/);
+  const body = {...await f.request(), expected_principal_registry_generation: binding.principal_registry_generation};
+  const post = (value, token = ownerToken) => worker.fetch(new Request(url+"release", { // allow-secret: fixture bearer parameter
+    method:"POST", headers:{authorization:"Bearer "+token, "content-type":"application/json"},
+    body:JSON.stringify(value),
+  }));
+  assert.equal((await post(body, ordinaryToken)).status,403);
+  assert.equal((await post({...body, principal:f.owner})).status,422);
+  assert.equal((await post({...body, expected_principal_registry_generation:"b".repeat(64)})).status,409);
+  assert.equal((await post({...body, replacement_principal_id:"missing"})).status,422);
+  const accepted = await post(body);
+  assert.equal(accepted.status,200);
+  assert.equal((await accepted.json()).status,"released");
+  const mixedEnv = {LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry(
+    {...f.owner, roles:["session_owner","conductor"], bearer:ownerToken})};
+  assert.equal((await authorizeConductRequest(new Request(url+"binding",
+    {headers:{authorization:"Bearer "+ownerToken}}),mixedEnv)).status,503);
+});
+
+test("owner release retains a durable tombstone across restart and fences changed principal snapshots", async t => {
+  for (const field of ["principal", "roles"]) await t.test(field, async () => {
+    const f = await releaseFixture();
+    const request = await f.request();
+    const state = await f.store.load();
+    if (field === "principal") state.session_principals["stale-native-fixture"] = "changed-binding";
+    else state.session_principal_roles["stale-native-fixture"] = ["executor"];
+    await f.store.save(state);
+    await assert.rejects(f.release(request), /generation/);
+    assert.deepEqual(await f.store.load(), state);
+  });
+  const f = await releaseFixture();
+  const result = await f.release();
+  const storage = new InstrumentedConductStorage();
+  const durable = new DurableConductStore(storage);
+  await durable.save(await f.store.load());
+  const cold = new SerializedConductService(new DurableConductStore(storage), {
+    clock: () => new Date(NOW.getTime() + 7*60*1000),
+  });
+  await assert.rejects(cold.call("register", {
+    session:session("codex",{sessionId:"stale-native-fixture"}),principal:f.oldPrincipal,
+  }), /replacement/);
+  const registered = await cold.call("register", {
+    session:session("claude",{sessionId:"stale-native-fixture"}),principal:f.replacement,
+  });
+  assert.equal(registered.human_protected,true);
+  const audit = await cold.call("session_audit",{session_id:"stale-native-fixture"});
+  assert.equal(audit.binding_releases[0].binding_generation,result.binding_generation);
+  assert.equal(audit.event_occurrence_counts["session.registered"],2);
+});
+
+test("owner release treats unknown non-Jules provider effects as pending", async () => {
+  const f = await releaseFixture();
+  const state = await f.store.load();
+  state.runs.remote = {run_id:"remote",status:"blocked",packet:{},
+    executor_session_id:"stale-native-fixture",
+    attempts:[{adapter:"provider-relay",provider_state:"unknown"}]};
+  await f.store.save(state);
+  const before = await f.store.load();
+  await assert.rejects(f.release(),/pending/);
+  assert.deepEqual(await f.store.load(),before);
+});

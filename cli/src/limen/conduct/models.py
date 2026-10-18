@@ -19,7 +19,7 @@ _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _GIT_OBJECT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
-ConductRole = Literal["observer", "conductor", "executor", "compatibility"]
+ConductRole = Literal["observer", "conductor", "executor", "compatibility", "session_owner"]
 
 
 def utc_now() -> datetime:
@@ -82,6 +82,25 @@ class ConductPrincipalV1(ProtocolModel):
         if not self.roles:
             raise ValueError("conduct principal must have at least one role")
         return self
+
+
+class SessionReleaseRequestV1(ProtocolModel):
+    """Owner-prepared compare-and-swap request; no caller-supplied authority."""
+
+    expected_binding_generation: str = Field(pattern=r"^[a-f0-9]{64}$")
+    expected_principal_registry_generation: str = Field(pattern=r"^[a-f0-9]{64}$")
+    replacement_principal_id: str
+    reason: str = Field(min_length=1, max_length=1024)
+
+    @field_validator("replacement_principal_id")
+    @classmethod
+    def validate_replacement(cls, value: str) -> str:
+        return _identifier(value, "replacement_principal_id")
+
+    @field_validator("reason")
+    @classmethod
+    def validate_reason(cls, value: str) -> str:
+        return _bounded_text(value, "reason")
 
 
 class ConductorSessionV1(ProtocolModel):

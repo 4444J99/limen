@@ -22,7 +22,13 @@ from limen.conduct.campaign_relay import CampaignRelayError
 from limen.conduct.client import HttpConductClient, client_from_env
 from limen.conduct.dependency_completion import consume_completion
 from limen.conduct.liveness import foreign_worktree_occupant
-from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
+from limen.conduct.models import (
+    AgentIdentityV1,
+    ConductorSessionV1,
+    RunReceiptV1,
+    SessionReleaseRequestV1,
+    WorkPacketV1,
+)
 from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
 from limen.resource_envelope import ResourceGraphError, materialize_run_task_graph
 
@@ -87,6 +93,59 @@ def conduct_group() -> None:
 @conduct_group.command("capabilities")
 def capabilities() -> None:
     _emit(client_from_env().capabilities())
+
+
+def _session_owner_client() -> HttpConductClient:
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise click.ClickException("session owner operations require the authenticated remote keeper")
+    return client
+
+
+@conduct_group.command("session-binding")
+@click.argument("session_id")
+def session_binding(session_id: str) -> None:
+    """Read an owner-only binding and registry generation; never mutate it."""
+    try:
+        _emit(_session_owner_client().session_binding(session_id))
+    except (ConductError, ValueError) as exc:
+        raise click.ClickException(_bounded_canary_error(exc)) from exc
+
+
+@conduct_group.command("release-session")
+@click.argument("session_id")
+@click.option("--request", "request_path", required=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--apply", is_flag=True, help="Submit the exact owner-prepared release request.")
+def release_session(session_id: str, request_path: Path, apply: bool) -> None:
+    """Check a stale binding by default; apply requires an isolated owner bearer."""
+    try:
+        request = SessionReleaseRequestV1.model_validate(_read_json(request_path))
+        client = _session_owner_client()
+        if apply:
+            _emit(client.release_session(session_id, request))
+            return
+        binding = client.session_binding(session_id)
+        if (
+            binding.get("binding_generation") != request.expected_binding_generation
+            or binding.get("principal_registry_generation") != request.expected_principal_registry_generation
+        ):
+            raise ValueError("session or principal registry generation changed")
+        if binding.get("healthy") is not False or any(
+            type(binding.get(field)) is not int or binding[field] != 0
+            for field in ("active_leases", "active_runs", "pending_remote_effects")
+        ):
+            raise ValueError("session liveness, leases or pending effects do not permit release")
+        _emit(
+            {
+                "status": "CHECK-PASS",
+                "session_id": session_id,
+                "binding_generation": request.expected_binding_generation,
+                "replacement_principal_id": request.replacement_principal_id,
+                "applied": False,
+            }
+        )
+    except (ConductError, ValueError, OSError) as exc:
+        raise click.ClickException(_bounded_canary_error(exc)) from exc
 
 
 @conduct_group.group("canary")
