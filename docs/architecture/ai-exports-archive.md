@@ -44,15 +44,31 @@ The door follows these rules, all enforced by `scripts/open-knowledge.sh`.
   by something else makes the start path exit 1 without launching anything, and `--status` reports the
   server as down with a note that the port is held by something else.
 - A recorded process id is trusted only when its command line is an `archive serve` for this same port.
-  Otherwise `--stop` drops the stale id file and signals nothing.
+  Otherwise `--stop` drops the stale id file and signals nothing. When the signal fails because the
+  server has already exited, `--stop` says so, removes the id file and exits 0; when the process is
+  still listed but cannot be signalled, it exits 1.
 - Only one start runs at a time per port. A second start waits for the first, then reuses the server
-  that came up. A start that sees no live holder takes over a stale lock, and one that waits too long
-  exits 1.
+  that came up. The lock names the process that holds it. A lock is recovered when that process is
+  gone or is not this script, or when it names no process and is at least 3 seconds old (a start
+  killed between taking the lock and writing its id). One start at a time removes it, after judging it
+  dead a second time. A start waits for a live holder for the start timeout plus 5 seconds, and at
+  least 15, then exits 1. A state directory that cannot be created makes the start exit 1 at once
+  instead of waiting, and so does one that cannot be written, unless a server already answers: that
+  server is reused, since it needs no lock.
 - A start that times out terminates the server process it launched and removes the process id file.
   The default wait is 10 seconds, and `OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS` overrides it with a
   positive integer.
+- `curl` must be on the path. Without it every form exits 127 with one line saying so, because the
+  liveness probe cannot run. `--port` takes a whole number from 1 to 65535 without a leading zero, and
+  anything else exits 2.
 - The status receipt line is bound to the live fingerprint. When receipts exist but none was made for
   the current fingerprint, it names the newest one on disk as stale.
+
+Two narrow limits remain, and the script header names both. A `--stop` that lands in the instant a
+start is launching its engine can drop the id file the start is about to write, and an id file is not
+locked against a concurrent stop of a different start. Separately, a start killed while it was removing
+a dead lock leaves a recovery marker that the next start may remove only once it is a minute old, so
+a start in that minute exits 1 at the lock wait.
 
 ## Where things live
 
