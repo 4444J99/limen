@@ -132,6 +132,7 @@ _SANCTIONED_SCRIPTS = frozenset(
         "agent-state-metabolism.py",
         "dispatch-async.py",
         "host-work-admission.py",
+        "prompt-claude-session.py",
         "reclaim-generated-caches.py",
         "start-worktree-session.sh",
         "worktree-abandonment.py",

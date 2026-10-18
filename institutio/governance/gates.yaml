@@ -1230,6 +1230,19 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: censor
     note: "The /vendor-insights engine's adapter tests plus the cross-vendor health-sensor tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. insight-cadence.py is a path because test_health_packet_is_consumed_by_insight_cadence binds its packet loop to the health packet's declared owner/severity. Cheap tier: two files, hermetic, no xdist."
+  prompt-claude-session-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_prompt_claude_session.py -q"
+    paths:
+      [
+        "scripts/prompt-claude-session.py",
+        "cli/tests/test_prompt_claude_session.py",
+        "cli/src/limen/action_admission.py",
+        "cli/src/limen/host_admission.py",
+        "docs/architecture/prompting-a-claude-session.md",
+      ]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "The cross-lane prompt path's suite. pytest-cli's paths are cli/** plus root registries, so editing scripts/prompt-claude-session.py alone implicated no test — the declared-but-unwired class check-runner-coverage exists to catch (PR #3017 review, P2). action_admission.py is a path because the helper is only reachable from a non-worktree caller while it stays in _SANCTIONED_SCRIPTS; host_admission.py because the helper validates its target with the same worktree_scope() the rail uses. Cheap tier: one hermetic file, no xdist."
   reserved-tier-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_bucket_partition.py cli/tests/test_reserved_tier.py -q"
     paths:
