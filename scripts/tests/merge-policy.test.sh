@@ -85,8 +85,8 @@ CLI_FILES='[{"path":"cli/tests/test_notify_gate_estate.py"},{"path":"cli/src/lim
 # path the deploy job literally builds cannot be website-sensitive while the rail is dormant.
 API_FILES='[{"path":"web/api/main.py"}]'
 
-mkjson() { # state isDraft mss files rollup
-  printf '{"number":1,"title":"t","url":"http://x","state":"%s","isDraft":%s,"mergeStateStatus":"%s","baseRefName":"main","headRefName":"f","headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","files":%s,"statusCheckRollup":%s}\n' \
+mkjson() { # state isDraft mss files rollup  (FIXTURE_URL overrides the PR url; default is not a GitHub URL)
+  printf '{"number":1,"title":"t","url":"'"${FIXTURE_URL:-http://x}"'","state":"%s","isDraft":%s,"mergeStateStatus":"%s","baseRefName":"main","headRefName":"f","headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","files":%s,"statusCheckRollup":%s}\n' \
     "$1" "$2" "$3" "$4" "$5" > "$fixture"
 }
 
@@ -122,6 +122,21 @@ check_output() { # name expected_exit required_substring [forbidden_substring]
   fi
 }
 
+check_bare_output() { # name expected_exit required_substring  (NO --repo: the documented bare form)
+  local name="$1" want="$2" required="$3" got out
+  set +e
+  out=$(PATH="$stubdir:$PATH" bash "$policy" 1 2>&1)
+  got=$?
+  set -e
+  if [ "$got" = "$want" ] && [[ "$out" == *"$required"* ]]; then
+    printf '  ok   %-34s exit=%s\n' "$name" "$got"; pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=%s got=%s required=%q\n' "$name" "$want" "$got" "$required"
+    printf '%s\n' "$out" | sed 's/^/       /'
+    fail=$((fail+1))
+  fi
+}
+
 echo "merge-policy.sh verdict matrix:"
 
 # CLEARED (exit 0) — only genuinely-mergeable, policy-safe states
@@ -132,6 +147,24 @@ mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
 check_output "proven no required: advisory failure" 0 "scope=required failing=0 pending=0"
 mkjson OPEN false UNSTABLE "$WEB_FILES" "$FAILING"
 check "no required still protects live deploy" 2
+# The documented bare form must judge the same policy as --repo: the repository comes from the
+# canonical PR URL. Keying the proof on --repo alone HELD an advisory-red PR the --repo run CLEARED
+# (2026-10-18, #3043 / witness-contract). Absent a derivable repo it must stay cautious.
+FIXTURE_URL=https://github.com/o/r/pull/1
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_bare_output "bare: proven no required clears" 0 "scope=required failing=0 pending=0"
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$FAILING"
+set +e; PATH="$stubdir:$PATH" bash "$policy" 1 >/dev/null 2>&1; bare_web=$?; set -e
+if [ "$bare_web" = 2 ]; then printf '  ok   %-34s exit=%s\n' "bare: live deploy still held" "$bare_web"; pass=$((pass+1))
+else printf '  FAIL %-34s want=2 got=%s\n' "bare: live deploy still held" "$bare_web"; fail=$((fail+1)); fi
+unset FIXTURE_URL
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_bare_output "bare: no derivable repo stays cautious" 2 "scope=all"
+export GH_NO_REQUIRED_POLICY=unknown
+FIXTURE_URL=https://github.com/o/r/pull/1
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_bare_output "bare: unprovable policy stays cautious" 2 "scope=all"
+unset FIXTURE_URL
 export GH_NO_REQUIRED_POLICY=required
 mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
 check "rules require checks: cannot prove absence" 2
