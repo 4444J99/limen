@@ -98,18 +98,24 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    reclassify from `route_pending` to an `application` `preserve-and-link` doorway → `.agent-runtime/aux/grokbot`,
    guarded by `_exact_process_active()`; reconcile the two trees by inspect-then-merge (never delete, never overwrite
    the residue copy). Linking needs the daemon stopped — flag that sequencing constraint; do not kill it.
-   **Status (2026-10-18, later): implemented as domus PR #506 (open, not merged, not applied).** Two corrections to the
+   **Status (2026-10-18, later): domus PR #506 MERGED (`dfd82054` on `origin/main`); live checkout fast-forwarded; the
+   deployed manifest is NOT yet updated and the route is NOT applied.** Two corrections to the
    text above, both from live reads: (a) no grokbot process was running at implementation time and the directory was
    last written hours earlier, so the "daemon must be stopped" constraint was moot then (the guard's active-CWD check
    still enforces it at apply time); (b) the declared `move` was not merely redundant, it was *permanently blocked*
    (`destination already exists`), which `domus-home-guard --check` showed on `main`. The residue copy was **not**
    merged into the live tree: it holds a stale credential and connection file the daemon regenerates, so it stays as
-   custody. Apply is operator-run after merge: `domus-home-guard --apply --plan-hash <fresh --check hash>`.
+   custody. **Apply is blocked on a denial, not on a defect:** the auto-mode classifier denied `chezmoi apply
+   ~/.config/domus/home-surface.yaml` once, with no reason given. `chezmoi diff` for that target shows exactly the
+   `.grokbot` entry and route and nothing else. Not retried and not routed around (the guard apply would be the same
+   change to `$HOME`). Operator sequence: `chezmoi apply ~/.config/domus/home-surface.yaml`, then
+   `domus-home-guard --check --json` (read `plan_hash`), then `domus-home-guard --apply --plan-hash <hash>`, then
+   `domus-home-guard --check` (the three `.grokbot` violations clear; `visual_dashboard.html` is pre-existing).
 2. **Skills (v2 Phase 3) — domus-genoma PR.** Content-hash inventory across the three roots; register survivors in
    `skills-registry.json`; no pruning before Step 8. Close the cross-provider leak seen from Claude's side: two of four
    `claude/skills/*` links resolve into Claude-named paths (`distributions/claude/…`, `limen/.claude/skills/vendor-insights`).
    Canonical home = `ai-skills/` with per-provider fan-out links, never one provider's namespace.
-   **Status (2026-10-18, later): premise corrected by measurement; delivered as domus PR #507 (open, not merged) +
+   **Status (2026-10-18, later): premise corrected by measurement; delivered as domus PR #507 (MERGED, `9e3893a5`) +
    issue #508.** Measured with the new read-only `domus-skills-census`: (a) `~/.agents/skills` and runtime
    `.agents/skills` share **zero** names, so they are complementary sets, not duplicates, and there is nothing to
    dedupe or crown canonical; (b) the "cross-provider leak" is overstated: `distributions/claude` and
@@ -121,16 +127,40 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    branch was cut. Registry registration and pruning stay gated to Step 8.
 3. **`vm_bundles` 11 GB — limen (owner + predicate).** Same class as OpenCode's `opencode.db`: large, monotonic, no
    named prune owner. File `domus-agent-maintain` as owner with a bounded prune predicate; do **not** symlink (Ring 2).
+   **Status (2026-10-18, later): premise wrong for both stores; the real defect is a readers-point-at-the-wrong-file
+   bug, fixed in limen PR #3029 (open, HOLD: 9 required checks running, 0 failing).** `vm_bundles` already has an owner
+   and policy: `home-surface.yaml` `application_objects` names owner `Claude Desktop VM`, adapter
+   `domus-claude-vm-lifecycle` and a retirement policy ("retain until compressed-base identity and native cold-start
+   reconstruction are verified"), so no action. `opencode.db` already has an owner too
+   (`aw-opencode-db-corpus-intake-0709`, gate "never delete outright", in `substrate-storage-pressure.py`) and a
+   preserver (`opencode-db-corpus-intake.py`), but all of them read `~/.local/share/opencode/opencode.db`, a symlink to
+   the frozen 8 MB `legacy-share` copy. The live store is `.agent-runtime/opencode/data/opencode/opencode.db`
+   (3.07 GB, written daily). Eight readers shared that stale path; #3029 gives them one resolver. **Open, owner-routed,
+   not done here:** the intake owner's log was last written Jul 10 and the archive holds two July runs, so the live
+   database has not been preserved since July. Running it copies 3 GB to `/Volumes/Archive4T` under swap pressure
+   (host admission denied heavy work), so it waits for a calm host: `python3 scripts/opencode-db-corpus-intake.py`
+   (never deletes the source). Whether the frozen 8 MB copy is a subset of the live store is unverified.
 4. **`legacy-home` — no action** until Step 8; record its 112 MB `plans/` and 141 MB `file-history` as
    custody-before-retire inputs (v2 §4 pattern).
 5. **Loose files in the runtime root — limen.** `.agent-runtime/` top level holds four OpenCode session exports
    (~1.8 MB), `correction_drafts/`, `scratch/`, `.recode/`. Quota-bound vendor state is the wrong home for transcripts;
    route to `$LIMEN_CUSTODY_STAGING_ROOT` or the transcript corpus with receipts. (The "contain all *files*" half that
    v2 did not cover.)
+   **Status (2026-10-18, later): the four transcripts moved; the other three items have owners and were left alone.**
+   Moved to `$LIMEN_CUSTODY_STAGING_ROOT/runtime-root-loose-files-20261018/` (mode 0700) by same-volume rename: 4 files,
+   1,796,641 bytes, sha256 verified before and after, private `receipt.json` with `mv -n` undo commands (rename, so
+   nothing deleted; originals' mtimes preserved). Left: `.recode/changes.db` is **1.9 GB**, not the small item the
+   plan implied, and domus `docs/runtime-maintenance-lifecycle.md` already lists "shared `.recode`" under *Other
+   storage owners* (classify before moving anything); `correction_drafts/` (2 files, Aug 15) are named for people, so
+   they are person-records: not read, not moved; `scratch/` (2 files, Oct 17) are another lane's PR-body drafts.
 6. **Amend v2 — limen docs PR.** Apply corrections 1–2 above to `2026-10-17-unify-contain-agent-surfaces-v2.md` §5 and
    §7 (append-only: plans are never overwritten, so add a dated "Superseded provisions" block that points here), and
    regenerate the three Codex receipt rollbacks with the rename-aside form. The receipts live under
    `~/.local/state/domus/home-residue/`, outside git — record the corrected commands in a tracked receipt note.
+   **Status (2026-10-18, later): done in this PR.** v2 §8 "Superseded provisions" is appended (the original text is
+   untouched). The live receipt was confirmed to hold the same destructive `rm -rf … && cp -Rc` in all three of
+   `one_command_undo`, `undo_command` and `rollback_cmd`; it lives outside git and was not edited. The corrected
+   rename-aside sequence (with a `shasum -c` verify) is in v2 §8, and the receipt contract now requires it.
 7. **Census ledger — domus-genoma (extends #502 Phase B).** One script emits a tracked ledger: for every provider, each
    physical location with `realpath`, owner, consumers, size, and role; aliases listed separately from copies; scan
    method, depth, prune list and every scan error recorded; a deduplicated physical-directory count. Seed it with the
@@ -139,6 +169,13 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    `~/Workspace/session-meta/codex`, `~/.config/goose/chatgpt_codex`,
    `/Library/Application Support/CodexComputerUseAuthorizationPlugin`. Protected system caches are recorded as
    "not scanned, reason", never silently omitted.
+   **Status (2026-10-18, later): domus PR #509 MERGED (read-only `domus-agent-location-ledger` + committed baseline
+   `docs/receipts/2026-10-18-agent-location-ledger.json`).** It measures 42 declared locations (40 present, 2 absent,
+   0 dangling; 39 unique realpaths, 29 non-nested roots, about 44 GiB), lists aliases apart from copies, sums size over
+   non-nested roots only, records method and limits, and exits 1 only on a scan error. Its depth-1 discovery found **36
+   provider-looking locations no seed row covered** (for example `com.openai.codex` under Application Support, Caches and
+   Logs, `~/.cache/opencode`, `~/.cache/claude`, the Antigravity IDE support dir), which is the exact gap the Codex
+   census had. They are listed, not classified: promoting one to a seed row is an owner decision.
 8. **Antigravity skills visibility — domus-genoma (inside item 2).** `skills.json` targets `~/.agents/skills`, so the 28
    skills in `.agent-runtime/.agents/skills` never reach it; the content-hash reconciliation decides which root is
    canonical before any `skills.json` edit. **Superseded premise (2026-10-18, later):** the census shows the two roots
@@ -167,8 +204,9 @@ Two durable lessons, recorded here because no other surface owns them:
    `origin/main` and `gh` before turning any of it into work. Ancestry alone misleads on squash repos; the PR #2976
    closure shows a closed-unmerged PR can still be fully landed through its successor.
 2. **Item 3 gets a measured size:** the live `opencode.db` is 3.07 GB (the legacy-share copy is 8 MB), modified the same
-   day. That is the same large, same-day-written, no-named-prune-owner class item 3 already names for `vm_bundles`; add
-   `opencode.db` to item 3's scope (owner + bounded prune predicate, no symlink). Growth rate is not yet measured.
+   day. An earlier draft of this lesson called that a "no-named-prune-owner" case and proposed adding it to item 3's
+   scope. **Superseded:** item 3's status above shows `opencode.db` already has an owner and a preserver; the real defect
+   was that they read the frozen legacy file (fixed in #3029). Growth rate is still not measured.
 
 ## Execution rails
 - Writer lease first: `python3 scripts/host-work-admission.py status --no-probe` should report `allowed: true`. It
