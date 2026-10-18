@@ -1,0 +1,71 @@
+{
+  "schema": "limen.session_closeout.v2",
+  "session_id": "01a14e66-dd33-79d2-8b81-fccbda7c8c2d",
+  "session_root_path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+  "receipt_root_id": "repair",
+  "owner_url": "https://github.com/4444J99/limen/pull/3087",
+  "disposition": "handoff",
+  "scope_roots": [
+    {
+      "id": "repair",
+      "kind": "git",
+      "path_sha256": "1800d38a31c4a881ca6c83d171fdeb1a806b506046a21d98ce595319bf0fdc78",
+      "repository": "4444J99/limen",
+      "repository_id": 1255213941,
+      "base_head": "bbcc7cbb98367755aa588236aef0aa5bc0ab99d5",
+      "publication_branch": "fix/codex-hook-closeout-01a14e66",
+      "owned_paths": [
+        "cli/src/limen/action_admission.py",
+        "cli/src/limen/action_admission_runtime.py",
+        "cli/tests/test_codex_host_admission_hook.py",
+        "docs/continuations/prompt-sequence-study-20261018/handoff.json"
+      ],
+      "retained_work": []
+    }
+  ],
+  "verification": [
+    {
+      "root_id": "repair",
+      "command": "hermetic admission and closeout tests (68 passed); scoped Ruff and diff checks; credential-wall --check",
+      "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+    },
+    {
+      "root_id": "repair",
+      "command": "AdmissionController.status(probe=True): require allowed=true",
+      "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
+      "exit_code": 1,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3",
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/pull/3087"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "root_ids": [
+      "repair"
+    ],
+    "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+    "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+  },
+  "external_effects": [
+    {
+      "id": "remaining-prompt-study",
+      "kind": "unfinished-study",
+      "verified": false,
+      "owner_url": "https://github.com/4444J99/limen/issues/3056",
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+    },
+    {
+      "id": "currency-reconciliation",
+      "kind": "deployment-readback",
+      "verified": true,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+    }
+  ]
+}
