@@ -39,6 +39,10 @@ the message that crosses the cap is clipped, then a truncation marker follows. C
 open with harness-injected context (developer blocks, project-doc, AGENTS.md and app-page
 markup); that context is named with its size and omitted so the cap is spent on the conversation.
 
+Archived codex rollouts (`.jsonl.zst`) are read through the stdlib zstd (Python 3.14+) or the zstd
+binary; with neither, or on a corrupt frame, the reader raises instead of rendering an empty
+session (limen#3083).
+
 Exit codes: 0 ok · 1 error · 2 missing prerequisite (e.g. render before facets exist).
 All vendor stores are opened STRICTLY read-only (SQLite via file:...?mode=ro).
 """
@@ -46,11 +50,15 @@ All vendor stores are opened STRICTLY read-only (SQLite via file:...?mode=ro).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import html
 import importlib.util
+import io
 import json
 import re
+import shutil
 import sqlite3
+import subprocess
 import os
 import sys
 from collections import Counter
@@ -418,18 +426,87 @@ def _index_codex(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     )
 
 
+def _zstd_module():
+    """Python 3.14+ ships zstd in the stdlib. Older interpreters (the gate rail prefers 3.13) get None."""
+    try:
+        from compression import zstd
+    except ImportError:
+        return None
+    return zstd
+
+
+def _zstd_binary() -> str | None:
+    return shutil.which("zstd")
+
+
+class _ZstdCliLines:
+    """Lines of a .zst file streamed through the zstd binary. Running to EOF with a non-zero exit is a
+    corrupt frame and raises; the caller stopping early (the char cap) is not an error."""
+
+    def __init__(self, path: Path, exe: str):
+        self.path = path
+        self.proc = subprocess.Popen([exe, "-dc", "--", str(path)], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.text = io.TextIOWrapper(self.proc.stdout, encoding="utf-8", errors="replace")
+
+    def __iter__(self):
+        yield from self.text
+        if self.proc.wait() != 0:
+            raise RuntimeError(f"zstd could not decompress {self.path.name} (exit {self.proc.returncode})")
+
+    def close(self) -> None:
+        self.text.close()
+        self.proc.kill()
+        self.proc.wait()
+
+
+@contextlib.contextmanager
+def _open_rollout(p: Path):
+    """The lines of a codex rollout. A `.jsonl.zst` rollout (codex compresses old sessions into
+    archived_sessions/) streams through a decompressor: the stdlib on Python 3.14+, else the zstd binary.
+    With neither, or on a corrupt frame, this raises RuntimeError - a compressed session must never read
+    as an empty one (limen#3083)."""
+    if not p.name.endswith(".zst"):
+        with p.open(encoding="utf-8", errors="replace") as fh:
+            yield fh
+        return
+    zstd = _zstd_module()
+    if zstd is not None:
+        try:
+            with zstd.open(p, "rt", encoding="utf-8", errors="replace") as fh:
+                yield fh
+        except zstd.ZstdError as exc:
+            raise RuntimeError(f"zstd could not decompress {p.name}: {exc}") from exc
+        return
+    exe = _zstd_binary()
+    if exe is None:
+        raise RuntimeError(
+            f"{p.name} is zstd-compressed and no decompressor is available (need Python 3.14+ or the zstd binary)"
+        )
+    stream = _ZstdCliLines(p, exe)
+    try:
+        yield stream
+    finally:
+        stream.close()
+
+
 def _codex_session_files(mod, sid: str) -> list[Path]:
     """All rollout files of a logical session, oldest first (resumes share the
     parent session_id in session_meta, but each file's NAME carries its own id —
-    so match on the session_meta field, falling back to the filename)."""
+    so match on the session_meta field, falling back to the filename). Compressed
+    `.jsonl.zst` rollouts count: codex archives old sessions that way. If nothing
+    matches while a compressed file could not be inspected, that is an error, never
+    'not found' (limen#3083)."""
     matches: list[Path] = []
+    uninspected: list[Path] = []
     for root in _codex_roots(mod):
-        for p in root.rglob("rollout-*.jsonl"):
+        for p in root.rglob("rollout-*.jsonl*"):
+            if not p.name.endswith((".jsonl", ".jsonl.zst")):
+                continue
             if sid in p.name:
                 matches.append(p)
                 continue
             try:
-                with p.open(encoding="utf-8", errors="replace") as fh:
+                with _open_rollout(p) as fh:
                     for i, line in enumerate(fh):
                         if i > 2:
                             break
@@ -444,6 +521,13 @@ def _codex_session_files(mod, sid: str) -> list[Path]:
                             break
             except OSError:
                 continue
+            except RuntimeError:
+                uninspected.append(p)  # a compressed file whose header we could not read
+    if not matches and uninspected:
+        raise RuntimeError(
+            f"{len(uninspected)} compressed rollout(s) could not be inspected (no zstd decompressor, or a corrupt "
+            f"frame), so session {sid} cannot be reported as not found"
+        )
     return sorted(matches, key=lambda p: p.name)
 
 
@@ -478,7 +562,7 @@ def _cat_codex(mod, sid: str, max_chars: int) -> str | None:
             break
         if len(files) > 1:
             out.append(f"===== rollout file: {match.name} =====\n")
-        with match.open(encoding="utf-8", errors="replace") as fh:
+        with _open_rollout(match) as fh:
             for line in fh:
                 try:
                     rec = json.loads(line)
@@ -2177,7 +2261,11 @@ def cmd_cat(mod, vendor: str, sid: str, max_chars: int) -> int:
     if vendor not in CATTERS:
         print(f"ERROR: no session reader for vendor '{vendor}'", file=sys.stderr)
         return 1
-    text = CATTERS[vendor](mod, sid, max_chars)
+    try:
+        text = CATTERS[vendor](mod, sid, max_chars)
+    except RuntimeError as exc:  # e.g. a compressed rollout with no decompressor: loud, never an empty render
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     if text is None:
         print(f"ERROR: session '{sid}' not found for vendor '{vendor}'", file=sys.stderr)
         return 2
