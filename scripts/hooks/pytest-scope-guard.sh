@@ -60,22 +60,35 @@ cmd = (d.get("tool_input") or {}).get("command") or ""
 cwd = d.get("cwd") or os.getcwd()
 
 # pytest at command position, in any of its shapes:
-#   pytest / .venv/bin/pytest / python[3[.x]] -m pytest / uv run [python -m] pytest,
-# optionally behind `env VAR=… -u VAR …` or bare VAR=… assignments.
+#   pytest[-3[.x]] / .venv/bin/pytest / python[3[.x]] [-u] -m pytest / uv[x] [run] pytest,
+#   [bash|sh] scripts/run-pytest-hermetic.sh (the hermetic wrapper is `exec python3 -m pytest "$@"`,
+#   so a suite root through it is the same full collection),
+# optionally behind time/nohup/exec/nice/timeout N, `env [-u VAR]`, bare VAR=… assignments, and a
+# newline, { ; & | ( or then/do/else/elif/while/until/if as the command head. The token must END at a non-[word . -] char:
+# `pytest-scope-guard.test.sh` and `pytest.ini` are names, not invocations. Single [ \t] runs and
+# separator-free path classes keep the scan linear (no \s*\s* or \S* that can cross a separator).
 PYTEST = re.compile(
-    r"(?:^|[;&|(]\s*|`\s*)\s*(?:command\s+)?"
-    r"(?:env\s+(?:-u\s+\S+\s+|[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)?"
-    r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
-    r"(?:uv\s+run\s+(?:--\S+\s+)*)?"
-    r"(?:\S*python3?(?:\.\d+)?\s+-m\s+)?"
-    r"(?:\S*/)?pytest\b")
+    r"(?:^|[;&|(\n{]|`|\b(?:then|do|else|elif|while|until|if)[ \t])[ \t]*(?:command[ \t]+)?"
+    r"(?:(?:time|nohup|exec|eval|sudo|nice(?:[ \t]+-n[ \t]+\d+)?|timeout[ \t]+(?:-[^\s;&|()`]+[ \t]+)*[0-9][0-9.]*[smhd]?)[ \t]+)*"
+    r"(?:env[ \t]+(?:-u[ \t]+\S+[ \t]+|-i[ \t]+)*)?"
+    r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*[ \t]+)*"
+    r"(?:uvx?[ \t]+(?:run[ \t]+)?(?:-\S+[ \t]+)*)?"
+    r"(?:[^\s;&|()`]*python3?(?:\.\d+)?(?:[ \t]+-[A-Za-z]+)*[ \t]+-m[ \t]+)?"
+    r"(?:(?:[^\s;&|()`]*/)?(?:bash|sh)[ \t]+(?:(?!-n[ \t])-\S+[ \t]+)*)?"
+    r"(?:[^\s;&|()`]*/)?(?:pytest(?:-\d[\d.]*)?|run-pytest-hermetic\.sh)(?![\w.-])")
 
-# Args end at the first shell separator or redirection after the pytest token.
-STOP = re.compile(r"\d*>|<|;|\||&")
+# Args end at the first shell separator, redirection, or closing paren/backtick after the token.
+STOP = re.compile(r"\d*>|<|;|\||&|\)|`")
+
+# pytest prints and exits on these BEFORE collecting, whatever else is on the line (verified:
+# `pytest cli/tests -V` returns in ~0.1 s; --markers likewise) — a diagnostic, never the full-suite harm.
+INFO_FLAGS = {"--version", "-V", "--help", "-h", "--markers"}
 
 # Flags that consume the next token when written space-separated.
-VALUE_FLAGS = {"-k", "-m", "-p", "-o", "-W", "-c", "-n", "--tb", "--maxfail",
-               "--durations", "--ignore", "--deselect", "--rootdir", "--confcutdir"}
+VALUE_FLAGS = {"-k", "-m", "-p", "-o", "-W", "-c", "-n", "-r", "--tb", "--maxfail",
+               "--durations", "--ignore", "--deselect", "--rootdir", "--confcutdir",
+               "--cov", "--cov-report", "--cov-config", "--timeout", "--dist", "--numprocesses",
+               "--basetemp", "--import-mode", "--junitxml", "--log-level", "--color"}
 
 def effective_dir(head):
     """Last cd clause before the pytest token, else the session cwd."""
@@ -112,16 +125,20 @@ for m in PYTEST.finditer(cmd):
     except ValueError:
         continue                                      # unparseable tail — fail open
 
-    path_args, skip = [], False
+    path_args, skip, info = [], False, False
     for tok in tokens:
         if skip:
             skip = False
             continue
         if tok.startswith("-"):
+            if tok in INFO_FLAGS:
+                info = True
             if tok in VALUE_FLAGS:
                 skip = True
             continue
         path_args.append(tok)
+    if info:
+        continue                                      # prints and exits — no collection
 
     if any(".py" in os.path.basename(a.split("::")[0]) or "::" in a for a in path_args):
         continue                                      # file-scoped — the lawful shape

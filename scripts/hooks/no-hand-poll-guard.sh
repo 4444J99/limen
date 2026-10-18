@@ -44,7 +44,40 @@ except Exception:
     sys.exit(0)
 cmd = (d.get("tool_input") or {}).get("command") or ""
 
-if re.search(r"(?:^|\s|/)(?:bash\s+)?(?:\S*/)?await-pr\.sh(?:\s|$)", cmd):
+# The retired waiter is denied as an INVOCATION, best-effort: the filename at a command position
+# (start, newline, ; & | ( {, or after do/then/else/elif/if/while/until/!), optionally behind VAR=val,
+# env/nohup/exec/eval/time/nice/sudo/xargs/timeout-style wrappers (with their options) and a
+# bash/sh/source runner (incl. `bash -c` + a quoted body). A mention (ls, grep, git log, commit or PR
+# text, a quoted or backticked name) is not an invocation and passes. The script exits 64 on its own, so a
+# miss costs one refused call while a false deny blocks real work: the grammar errs permissive. The name
+# must end at whitespace, end of string or ; & | (so a closing quote, paren or backtick means a mention),
+# and `--help`/`-h` and `bash -n` (syntax check) pass. Known misses: ssh/docker/tmux/find -exec/flock/
+# parallel launchers, pipes into a shell, and a quoted VAR=value containing a space. Known false denies:
+# a heredoc or quoted prose line that STARTS with the script path after a separator. Every class is a
+# single [ \t] run or a separator-free path class: linear time (a nested \s* once hung this hook on 200 KB).
+POS = r"(?:^|[;&|(\n{][ \t]*|\b(?:do|then|else|elif|if|while|until)[ \t]+|![ \t]+)"
+WORD = r"[^\s;&|()`\x27\"]"
+WRAP = r"env|nohup|exec|eval|command|time|nice|ionice|setsid|stdbuf|sudo|xargs|watch|caffeinate|unbuffer"
+SHELL = r"bash|sh|zsh|dash|ksh|source|\."
+OPT = (
+    r"(?:-[^\s;&|()`]+(?:[ \t]+(?!(?:" + WRAP + r"|timeout|" + SHELL + r")[ \t])"
+    r"[A-Za-z0-9_.][^\s;&|()`=]*)?[ \t]+)*"
+)
+PRE = (
+    r"(?:[A-Za-z_][A-Za-z0-9_]*=[^\s;&|()`]*[ \t]+"
+    r"|(?:" + WORD + r"*/)?(?:" + WRAP + r")[ \t]+" + OPT +
+    r"|timeout[ \t]+" + OPT + r"[0-9][0-9.]*[smhd]?[ \t]+)*"
+)
+RUN = (
+    r"(?:(?:" + WORD + r"*/)?(?:" + SHELL + r")[ \t]+"
+    r"(?:(?!-n[ \t])(?:-[oO][ \t]+[^\s-]\S*|-\S+)[ \t]+)*[\x27\"]?" + PRE + r")?"
+)
+FILE = (
+    r"[\x27\"]?(?:" + WORD + r"*/)?await-pr\.sh(?=[ \t\n;&|]|$)"
+    r"(?![ \t]+(?:-h|--help)(?:[ \t]|$))"
+)
+WAITER = re.compile(POS + PRE + RUN + FILE)
+if WAITER.search(cmd):
     print("deny")
     sys.exit(0)
 
@@ -70,5 +103,5 @@ if os.environ.get("LIMEN_ALLOW_PR_POLL") != "1" and looping and GH_PROBE.search(
 
 [ "$verdict" = "deny" ] || exit 0
 
-printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"agent/provider PR waiting is forbidden (CLAUDE.md § Merge & Branch Protocol). scripts/await-pr.sh is retired, and hand-rolled PR poll loops are banned. Submit one exact head once with scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA, then return control. LIMEN_ALLOW_PR_POLL=1 applies only to a genuinely non-PR loop misread; it never revives await-pr.sh."}}\n'
+printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"agent/provider PR waiting is forbidden (CLAUDE.md § Merge & Branch Protocol). scripts/await-pr.sh is retired, and hand-rolled PR poll loops are banned. Submit one exact head once with scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA, then return control. LIMEN_ALLOW_PR_POLL=1 applies only to a genuinely non-PR loop misread; it never revives await-pr.sh. If the command only NAMES the retired script (docs, commit or PR text) it was read as an invocation because the name starts a line or follows ; & | and ends at whitespace: put it mid-sentence, quote it, or build the name from parts."}}\n'
 exit 0

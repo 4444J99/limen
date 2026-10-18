@@ -69,9 +69,10 @@ limen dispatch --agent jules         # dry-run preview; add --live to dispatch f
 ```
 ## Session Phase Entry
 
-**A session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
-"plan"`, so every interactive session in this repo starts read-only, in stage SHAPE, and reaches
-BUILD by deciding to — not by default. This is the *entry binding* for the canonical cross-agent
+**A local session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
+"plan"`, so a terminal or Desktop session started without `--permission-mode` opens in plan mode
+(edits blocked), in stage SHAPE, and reaches BUILD by deciding to — not by default; a cloud session
+takes its mode from the session dropdown. This is the *entry binding* for the canonical cross-agent
 lifecycle declared in `~/.config/ai-context/session-phases.yaml` (`explore → plan → branch → code →
 verify → push → wait → review → amend → merge → closeout`), which shipped advisory-only in its
 Phase 1 and named this as its Phase-2 gate. Every other phase in that registry remains advisory;
@@ -203,7 +204,7 @@ correction (censor precedent `PREC-2026-07-04-friction-shallow-first`):
 
 Do **not** declare work "done" or "fully done" until verified end-to-end:
 
-- **Run the real gates locally**, never from memory: `python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva`, `python -m pytest web/api/tests cli/tests -q`, and `scripts/verify-whole.sh`. (The GATES registry is the command's source of truth — `scripts/verify.py --list`.)
+- **Run the real gates locally**, never from memory: `python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva`, `bash scripts/verify-scoped.sh` (file-scoped tests: `bash scripts/run-pytest-hermetic.sh cli/tests/test_<file>.py -q`), and `scripts/verify-whole.sh` (pre-merge, when the diff implicates it). (The GATES registry is the command's source of truth — `scripts/verify.py --list`.)
 - **Read the predicate's OWN exit code, never a pipeline's.** `predicate | tail` reports *tail's* status, so a gate that printed `FAIL` reads as green. Run the predicate bare and filter a saved copy, or use `${PIPESTATUS[0]}`. This is a standing behavioral rule, not a lint — the defect enters through ad-hoc verification shell, where a false green has no second reader (`AGENTS.md` → Session Discipline rule 6 is the source of truth).
 - **Confirm the loop/driver actually runs** — that the entrypoint executes, not merely that files compile.
 - **Check for regressions introduced by merges**: dropped imports, dumped/abandoned lanes, silently overwritten files. After any branch reconcile, diff against the prior green state.
@@ -296,7 +297,7 @@ Concretely, from precedent:
 - **`settings.json` / hook-arming blocked** (self-modification boundary) → stage the exact
   validated file, hand the human the one required copy-paste, and do the surrounding branch,
   commit, rebase, push, PR, and merge work yourself.
-- **A permission prompt recurs** → broaden the allow rule to the whole class of command
+- **A local permission prompt recurs** → broaden the allow rule to the whole class of command
   (root-to-leaf), never re-approve the same literal string one prompt at a time. (Insights
   lineage: a too-narrow allowlist caused 10+ repeat prompts in one session.)
 - **A bridge / connectivity / auth check reports blocked** → attempt the documented bootstrap or
@@ -306,6 +307,12 @@ Concretely, from precedent:
   job that cannot pair with the extension does not fight it — fall back to headless Playwright
   (token/magic-link URLs carry their own identity), dry-run → screenshot → act, verify via the
   server's observed effect (never the acting session's optimistic DOM), and abort on any captcha.
+- **Claude Code cloud session** (`CLAUDE_CODE_REMOTE=true`) → an untrusted workspace loses its project
+  `permissions.allow` at startup (observed 2026-10-18, v2.1.302: `/tmp/claude-code.log`), so more allow
+  rules cannot fix that (the repo's deny hooks still run). GitHub GraphQL is refused (HTTP 403): `gh pr create|merge`,
+  `merge-policy.sh`, `merge-drain.py`, `ship-docs.sh` cannot run — open the PR via
+  `mcp__github__create_pull_request` and leave the merge to a host lane. Detail:
+  [detail doc](docs/architecture/merge-and-branch-protocol-detail.md#claude-code-cloud-sessions).
 - **A genuinely human-gated gate is hit** → state **`BLOCKED: <atom>`** exactly **once**, file the
   atom in its registry owner (a lever in `his-hand-levers.json`; credential atoms → the credential
   organ + Wall #320), then leave it — **never loop on, poll, or re-surface a filed gate** — and

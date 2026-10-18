@@ -83,7 +83,7 @@ allow (or unclassifiable input) is silent: `exit 0`, no output.
 | Guard | Denies | Escape hatch |
 |-------|--------|--------------|
 | `scripts/hooks/pytest-scope-guard.sh` | Full-suite pytest (`cli/tests`, `web/api/tests`, `tests/`, or bare pytest inside a suite parent) — *a directory plus `-k` is still a full collection* | `LIMEN_ALLOW_FULL_PYTEST=1` |
-| `scripts/hooks/no-hand-poll-guard.sh` | loop + `gh` probe + `sleep` in one command; any `await-pr.sh` (retired, exits 64) | `LIMEN_ALLOW_PR_POLL=1` — never revives `await-pr.sh` |
+| `scripts/hooks/no-hand-poll-guard.sh` | loop + `gh` probe + `sleep` in one command; any `await-pr.sh` invocation (retired, exits 64) | `LIMEN_ALLOW_PR_POLL=1` — never revives `await-pr.sh` |
 | `scripts/hooks/worktree-commit-guard.sh` | `git commit` in the **live** checkout while it sits on `main` | `LIMEN_ALLOW_LIVE_COMMIT=1` |
 | `scripts/hooks/outbound-preflight-guard.py` | **Unarmed** — a filed human lever (`his-hand-levers.json`); no lane wires it, so nothing denies you. Sends still need a fresh, target-bound preflight receipt | `LIMEN_ALLOW_UNVERIFIED_OUTBOUND=1` |
 

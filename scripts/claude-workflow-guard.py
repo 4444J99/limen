@@ -41,15 +41,20 @@ FABLE_ACCEPTANCE_RE = re.compile(
 _MUTATION_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 _MUTATING_BASH_RE = re.compile(r"\bgit\s+(add|commit|push|apply|merge|rebase)\b|\bgh\s+pr\s+(create|merge|edit)\b")
 
-# pytest at command position, in any of its shapes (mirrors scripts/hooks/pytest-scope-guard.sh).
+# pytest at command position, in any of its shapes, including the hermetic wrapper (mirrors
+# scripts/hooks/pytest-scope-guard.sh — change the two together).
 _PYTEST_CMD_RE = re.compile(
-    r"(?:^|[;&|(]\s*|`\s*)\s*(?:command\s+)?"
-    r"(?:env\s+(?:-u\s+\S+\s+|[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)?"
-    r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
-    r"(?:uv\s+run\s+(?:--\S+\s+)*)?"
-    r"(?:\S*python3?(?:\.\d+)?\s+-m\s+)?"
-    r"(?:\S*/)?pytest\b"
+    r"(?:^|[;&|(\n{]|`|\b(?:then|do|else|elif|while|until|if)[ \t])[ \t]*(?:command[ \t]+)?"
+    r"(?:(?:time|nohup|exec|eval|sudo|nice(?:[ \t]+-n[ \t]+\d+)?|timeout[ \t]+(?:-[^\s;&|()`]+[ \t]+)*[0-9][0-9.]*[smhd]?)[ \t]+)*"
+    r"(?:env[ \t]+(?:-u[ \t]+\S+[ \t]+|-i[ \t]+)*)?"
+    r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*[ \t]+)*"
+    r"(?:uvx?[ \t]+(?:run[ \t]+)?(?:-\S+[ \t]+)*)?"
+    r"(?:[^\s;&|()`]*python3?(?:\.\d+)?(?:[ \t]+-[A-Za-z]+)*[ \t]+-m[ \t]+)?"
+    r"(?:(?:[^\s;&|()`]*/)?(?:bash|sh)[ \t]+(?:(?!-n[ \t])-\S+[ \t]+)*)?"
+    r"(?:[^\s;&|()`]*/)?(?:pytest(?:-\d[\d.]*)?|run-pytest-hermetic\.sh)(?![\w.-])"
 )
+# pytest prints and exits on these BEFORE collecting, whatever else is on the line.
+_PYTEST_INFO_FLAGS = {"--version", "-V", "--help", "-h", "--markers"}
 _VERIFY_WRAPPER_RE = re.compile(r"verify\.py|verify-scoped\.sh|verify-whole\.sh")
 _PYTEST_SUITE_ROOTS = {"tests", "cli/tests", "web/api/tests"}
 _PYTEST_VALUE_FLAGS = {
@@ -67,6 +72,18 @@ _PYTEST_VALUE_FLAGS = {
     "--deselect",
     "--rootdir",
     "--confcutdir",
+    "-r",
+    "--cov",
+    "--cov-report",
+    "--cov-config",
+    "--timeout",
+    "--dist",
+    "--numprocesses",
+    "--basetemp",
+    "--import-mode",
+    "--junitxml",
+    "--log-level",
+    "--color",
 }
 
 
@@ -80,20 +97,23 @@ def _full_suite_pytest(cmd: str) -> bool:
     if not cmd or "pytest" not in cmd or _VERIFY_WRAPPER_RE.search(cmd):
         return False
     for m in _PYTEST_CMD_RE.finditer(cmd):
-        tail = re.split(r"\d*>|<|;|\||&", cmd[m.end() :], maxsplit=1)[0]
+        tail = re.split(r"\d*>|<|;|\||&|\)|`", cmd[m.end() :], maxsplit=1)[0]
         try:
             tokens = shlex.split(tail)
         except ValueError:
             continue
-        paths, skip = [], False
+        paths, skip, info = [], False, False
         for tok in tokens:
             if skip:
                 skip = False
                 continue
             if tok.startswith("-"):
+                info = info or tok in _PYTEST_INFO_FLAGS
                 skip = tok in _PYTEST_VALUE_FLAGS
                 continue
             paths.append(tok.rstrip("/"))
+        if info:
+            continue
         if any(".py" in os.path.basename(p.split("::")[0]) or "::" in p for p in paths):
             continue
         if not paths:

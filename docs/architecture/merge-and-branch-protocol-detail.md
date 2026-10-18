@@ -128,3 +128,56 @@ block. Every consumer that reads a sensor fact derives it from the registry, not
 (`omega_eligible`, `armed_valve_type`, `args_when`, `cadence`/`timeout`) are read by capability, never
 by sensor id — consumers work unchanged if an id is renamed. See `docs/IDEAL-FORMS-LEDGER.md` →
 IF-SENSOR-REGISTRY.
+
+# Claude Code cloud sessions
+
+This section is observation, not relocated history. It records what the repo's permission configuration
+can and cannot do when a session runs in a Claude Code cloud container (`CLAUDE_CODE_REMOTE=true`).
+Observed 2026-10-18 on Claude Code 2.1.302 by a read-only multi-agent audit and re-checked by hand
+(one container, one session); the Mac, the fleet and other providers need their own evidence.
+
+- **The project allow list is inert until the workspace is trusted.** `/tmp/claude-code.log` (lines
+  45-47 of that session): `Dropped 75 project-scoped permissions.allow entries — workspace not yet
+  trusted`; the only allow rule the log shows being added is the launcher's `Skill` (to `flagSettings`).
+  The launcher's redacted `--allowed-tools` list is a separate source that still applies, minus
+  `Bash(*)`/`Agent(*)`/`Monitor(*)`, which Auto mode strips. `/root/.claude.json` has no `projects` key.
+  Trust needs an interactive accept or `projects["<path>"].hasTrustDialogAccepted`. Seeding it activates
+  every project rule at once (including the Mac-tuned `git push *`, `gh api *`, `npm *`, `npx *`), so it
+  is an operator posture decision, never an agent write. The platform page for session permissions says a
+  single-repo session reads repo allow rules; the runtime observation governs and the omission is upstream's.
+- **The mode is chosen by the dropdown, not `defaultMode`.** Cloud ignores `bypassPermissions` and
+  `dontAsk` from settings files. The observed session ran in Auto: the classifier decides Bash calls,
+  the launcher's `Bash(*)`/`Agent(*)`/`Monitor(*)` arguments are stripped, and the binary honours
+  `autoMode` classifier rules only from user, flag or managed settings — never from the repo.
+- **Project hooks still run.** The repo's PreToolUse deny hooks (`pytest-scope-guard.sh`,
+  `no-hand-poll-guard.sh`, `worktree-commit-guard.sh`) are the one repo-side permission surface that
+  fires in cloud, so their accuracy is the cloud permission experience. 2026-10-18: both guards denied
+  read-only commands that merely *named* their trigger (a `grep` for the retired waiter's filename,
+  `python3 -m pytest --version`, `pytest-scope-guard.test.sh`) while the hermetic pytest wrapper passed a
+  full-suite collection. The poll guard now denies a best-effort grammar of *invocations* (the retired
+  script also exits 64 on its own, so a miss costs one refused call while a false deny blocks real work —
+  it errs permissive). The pytest guard's token must end at a non-word/`.`/`-` character, treats the
+  hermetic wrapper as pytest, and lets `--version`/`-V`/`--help`/`-h`/`--markers` through (pytest exits
+  before collecting; measured ~0.1-0.3 s with a suite root present). `claude-workflow-guard.py` mirrors the
+  pytest side. Both matchers are linear-time: a nested `\s*` once made the poll guard hang on a 200 KB
+  separator run. Residuals: the word pytest between two pipes inside a quoted alternation, and a heredoc or
+  quoted prose line that *starts* with the retired script's path after a separator, are still denied — put
+  such text in a file, not in a Bash command. The poll guard does not recognise ssh/docker/tmux/`find
+  -exec`/flock/parallel launchers or pipes into a shell. Neither guard parses shell quoting.
+- **GitHub GraphQL is refused (HTTP 403).** Every GraphQL-backed `gh` verb fails: `gh pr view|merge|
+  checks|status|list`, `gh issue view|list|comment|close`, `gh label list` (and `gh pr create`, inferred).
+  Working: `gh api repos/<owner>/<repo>/...` (REST), `gh run list`, `gh pr diff`, `mcp__github__*`.
+  `merge-policy.sh`, `merge-drain.py` and `ship-docs.sh` therefore cannot run, and `session-plan.py`'s
+  printed `gh issue create|close` cannot either. In `merge-policy.sh` the 403 matches neither failure
+  regex, so the verdict reads `BLOCKED — cannot read PR; lookup failure cause is unverified` (exit 3),
+  and the 300-byte diagnostic tail shows only the CCR route list, not the head of the message. The 403
+  body names REST "CCR routes" for auto-merge, ready-for-review, convert-to-draft and review threads, and
+  `mcp__github__merge_pull_request` exists: merging is not technically impossible, but the merge decision
+  belongs to `merge-policy.sh`, which cannot evaluate a PR from here — so leave the merge to a host lane.
+  The conduct broker (`LIMEN_CONDUCT_URL`/`LIMEN_CONDUCT_TOKEN`) is also unset, so child reservation
+  (`limen conduct split`) cannot be satisfied there.
+- **`scripts/dialogs-silenced.sh` measures the host it runs on.** It reads `$HOME/.claude/settings.json`;
+  its container exit 1 is not evidence about the Mac's user layer (lever `L-AGENT-BASH-PROMPT`).
+- **Unverified:** the Mac's Claude Code version and whether it reads a top-level `autoMode` as 2.1.302
+  does (`scripts/dialogs-silenced.sh` and `scripts/heal-hook-wiring.py` still use `permissions.autoMode`);
+  whether allow rules pre-approve Bash during plan mode; fleet worktree trust under `dontAsk`.
