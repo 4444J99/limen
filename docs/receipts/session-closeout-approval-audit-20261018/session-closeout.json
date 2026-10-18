@@ -1,0 +1,46 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "20ca0534-92e4-46e8-b3ef-e5e306c3b189",
+  "worktree_name": "chore-fewer-permission-prompts-20261018b",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-approval-audit-20261018",
+  "base_head": "087ecd58f852aca8c29b97972003e2c6ab6b5a0a",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/3091",
+  "owned_paths": [
+    ".claude/settings.json",
+    "docs/plans/purrfect-seeking-alpaca.md",
+    ".agents/skills/closeout/SKILL.md",
+    "docs/receipts/approval-request-audit-20261018/README.md",
+    "docs/receipts/approval-request-audit-20261018/tooling/extract_approvals.py",
+    "docs/receipts/approval-request-audit-20261018/tooling/make_batches.py",
+    "his-hand-levers.json",
+    "cli/tests/test_check_his_hand.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "dbdc5b06aecd951811fdfc1c80d52feb7e42b565",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-approval-audit-20261018/verification-his-hand.txt",
+      "sha256": "6e595d046a93586065049620c886789822ee213065e44dfd9bab5177a740f04b"
+    },
+    {
+      "head": "dbdc5b06aecd951811fdfc1c80d52feb7e42b565",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-approval-audit-20261018/verification-targeted-tests.txt",
+      "sha256": "4a16b45441740c239c525f473af046e98a33055c366a98106c2d746a0554745b"
+    },
+    {
+      "head": "dbdc5b06aecd951811fdfc1c80d52feb7e42b565",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-approval-audit-20261018/verification-credential-wall.txt",
+      "sha256": "a7303c329355c400f694a904b67eb6253b680c023e3a9bacdc5a5c9fd8a0debf"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-approval-audit-20261018/custody.json",
+    "sha256": "d9251fbd06779dbb31b1af9ded8894081d0fd03f52e0c488ec92dc6054b42da2"
+  }
+}

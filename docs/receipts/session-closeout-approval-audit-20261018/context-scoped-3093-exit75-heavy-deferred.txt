@@ -1,0 +1,20 @@
+Changed paths (3):
+  cli/tests/test_check_his_hand.py
+  docs/receipts/approval-request-audit-20261018/README.md
+  his-hand-levers.json
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=2.15s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.19s
+WAVE cheap: FINISH gate=operator-gates status=PASS duration=2.19s
+WAVE cheap: FINISH gate=his-hand-registry-test status=PASS duration=3.22s
+WAVE cheap: FINISH gate=check-root-manifest status=PASS duration=0.68s
+WAVE cheap: FINISH gate=check-params status=PASS duration=2.12s
+WAVE cheap: FINISH gate=check-lifecycle status=PASS duration=3.53s
+WAVE cheap: FINISH gate=check-docs-manifest status=PASS duration=1.85s
+WAVE cheap: FINISH gate=check-test-hygiene status=PASS duration=3.66s
+WAVE cheap: FINISH gate=check-docs-exports status=PASS duration=2.26s
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=0.80s
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=0.89s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=1.32s
+  unclassified (single-token, not gated — see SCOPE): link, redirects, wikilink, wikilinks
+WAVE cheap: PASS
+Host admission denied scoped heavy verification: swap-fraction
