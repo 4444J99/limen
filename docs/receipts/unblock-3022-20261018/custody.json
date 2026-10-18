@@ -7,7 +7,7 @@
     "raw_body_published": false,
     "retained": true
   },
-  "next_action": "Review and explicitly approve preparation.procedure_steps, then execute only when source/device identity, escrow recovery and host admission are measured. Preserve every original and existing worktree. Custody remains unverified until both independent restores and complete required-artifact coverage are accepted.",
+  "next_action": "The custody operation is explicitly approved. Execution stopped before acquisition because a fresh canonical host-admission probe returned allowed=false for swap-fraction. After pressure inputs change and canonical admission passes, run the same approved procedure under its original bounds; no new approval is needed.",
   "owner_url": "https://github.com/4444J99/limen/issues/685",
   "retention": {
     "all_user_owned": true,
@@ -35,7 +35,7 @@
     "source_receipt_commit": "80e5d7084e996534ba93968a57a5ca28c0cd6dff",
     "procedure": "docs/receipts/unblock-3022-20261018/custody.json#preparation.procedure",
     "preparation_only": true,
-    "execution_authorized": false,
+    "execution_authorized": true,
     "custody_verified": false,
     "retirement_authorized": false,
     "scope_root_ids": [
@@ -289,6 +289,72 @@
       "ciphertext mismatch, unsafe archive membership, failed decrypt, missing/extra/mismatched restored file",
       "any operation would move/delete originals, change an existing worktree, deploy or release a protected session"
     ],
-    "operator_approval_text": "Approve the scoped custody backup and two independent restore tests for session 01a14d95-6949-79d1-b836-c39edf9158f4 using encrypted replicas on Archive4T and T7Recovery and the existing ARCA escrow. Preserve all originals, prior partials and existing worktrees; no deployment, credential changes, retirement or deletion."
-  }
+    "operator_approval_text": "Approve the scoped custody backup and two independent restore tests for session 01a14d95-6949-79d1-b836-c39edf9158f4 using encrypted replicas on Archive4T and T7Recovery and the existing ARCA escrow. Preserve all originals, prior partials and existing worktrees; no deployment, credential changes, retirement or deletion.",
+    "authorization": {
+      "source": "direct human instruction in the current native session",
+      "observed_at": "2026-10-18T23:16:45Z",
+      "targets": [
+        "Archive4T",
+        "T7Recovery"
+      ],
+      "existing_ARCA_escrow_only": true,
+      "all_originals_and_existing_worktrees_preserved": true,
+      "deletion_authorized": false,
+      "credential_change_authorized": false,
+      "deployment_authorized": false,
+      "host_admission_override_authorized": false,
+      "budget_reset_authorized": false
+    }
+  },
+  "execution_attempts": [
+    {
+      "schema": "limen.unblock_custody_execution_attempt.v1",
+      "attempted_at": "2026-10-18T23:16:45Z",
+      "stopped_at": "2026-10-18T23:17:31.110365+00:00",
+      "outcome": "not_started_host_admission_denied",
+      "operator_approval_recorded": true,
+      "host_admission": {
+        "operation": "status",
+        "probe": true,
+        "bare_exit_code": 0,
+        "allowed": false,
+        "reasons": [
+          "swap-fraction"
+        ],
+        "pressure": {
+          "observed_at": "2026-10-18T23:17:31.110365+00:00",
+          "swap_fraction": 0.6047937011462636,
+          "swap_used_bytes": 10390276669,
+          "memory_bytes": 17179869184,
+          "vitals_action": "throttle"
+        },
+        "interpretation": "Status is report-only; its exit 0 does not override allowed=false or prove workload admission."
+      },
+      "source_acquisition_executed": false,
+      "replicas_created": 0,
+      "restoration_tests": [
+        {
+          "target": "Archive4T",
+          "executed": false,
+          "bare_exit_code": null
+        },
+        {
+          "target": "T7Recovery",
+          "executed": false,
+          "bare_exit_code": null
+        }
+      ],
+      "escrow_read": false,
+      "credentials_changed": false,
+      "originals_modified": false,
+      "local_worktrees_modified": false,
+      "worktrees_removed": false,
+      "new_directories_created": 0,
+      "provider_children_created": 0,
+      "heavy_workload_started": false,
+      "automatic_retry_scheduled": false,
+      "owner_url": "https://github.com/4444J99/limen/issues/685",
+      "next_action": "After host-pressure inputs change, acquire canonical admission and execute the already-approved bounded procedure. Existing approval persists; no new operator approval is required. Never bypass pressure, stop peers, delete state or reset recovery accounting."
+    }
+  ]
 }
