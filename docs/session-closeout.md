@@ -55,9 +55,15 @@ or exported), the generic `LIMEN_CONDUCT_TOKEN` is never read or used as a fallb
 missing entry raises a named `BrokerUnavailable`; neither message carries a value. The MCP server opts
 in only when `LIMEN_AGENT` names a lane that owns a bearer of its own (`lane_credential_present`:
 environment or safe cache); `workstream-capsule.sh` exports `LIMEN_AGENT` for every native lane, and a lane
-without its own bearer keeps its existing resolution exactly. So an OpenCode upstream needs only `LIMEN_AGENT=opencode` and
-`LIMEN_CONDUCT_ENV_FILE=<absolute path>` in its own environment, never a token. Held by
-`cli/tests/test_conduct_env_cache.py` and `cli/tests/test_mcp_server.py`.
+without its own bearer keeps its existing resolution exactly.
+
+This holds only where one process serves one lane. The ianva gateway is a single endpoint shared by
+Codex, Gemini and OpenCode, so giving its one `limen` upstream a lane variable would relabel every
+client's conduct calls as that lane (issue 2961). A lane variable, with `LIMEN_CONDUCT_ENV_FILE` as a
+path and never a bearer value, belongs only on an upstream process that serves exactly one lane. The
+go-live shape for the shared gateway (a per-lane upstream process or a per-request lane) is
+undesigned, and nothing here is deployed. Held by `cli/tests/test_conduct_env_cache.py` and
+`cli/tests/test_mcp_server.py`.
 
 ## Existing owner receipt
 
