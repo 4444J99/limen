@@ -6,6 +6,9 @@ PR: (pending)
 - **Date**: 2026-10-18
 - **Supersedes nothing.** Reconciles `docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md` (limen) and OpenCode's
   PR #502 plan (`domus-genoma-private`, `.claude/plans/2026-10-17-agent-surface-unification.md`) against **live disk**.
+- **Inputs (2026-10-18)**: four provider sessions answered the same four questions — Claude (this plan's first
+  draft), Codex (with an adversarial review of v2), Antigravity/`agy`, and OpenCode (PR #502). Each claim below was
+  re-read from disk before use; claims taken from a provider's own report are marked *(reported)*.
 - `PR: (pending)` is the PR that will *implement* the remaining items, not the PR that ships this document.
 
 ## Context
@@ -43,6 +46,33 @@ substrate. The deliverable is: **what landed, what remains, who owns it.**
   agents `scan/synth/verify`, 8 repo skills, `settings.local.json`.
 - Precedence: project overrides user for `defaultMode` — which is why sessions here open in plan.
 
+## Cross-provider matrix (Q3: does the agent read `.agent-runtime`?)
+
+| Provider | Instruction path actually loaded | Reads `.agent-runtime`? | Evidence |
+|---|---|---|---|
+| Claude Code | `claude/CLAUDE.md` (imports `~/AGENTS.md`) + `claude/projects/*/memory` | **Yes** — config, memory, history | this session's loaded context |
+| Codex | `codex/AGENTS.md` + memory summary + skill catalog backed by `codex/` | **Yes** — `$CODEX_HOME` *is* the runtime dir; `~/.codex` points straight at it | *(reported)*; `~/.codex` symlink read from `ls -la ~` |
+| Gemini CLI | `gemini/home/.gemini/GEMINI.md` | Yes | manifest row; healthcheck `chezmoi-managed (live)` |
+| Antigravity | `<RULE[user_global]>` from `gemini/legacy-home/config/AGENTS.md`, `mcp_config.json`, `skills.json` via `~/.gemini` | **Partly** — reaches only the `gemini/legacy-home` subtree; its `skills.json` points at `~/.agents/skills`, so the 28 skills in `.agent-runtime/.agents/skills` are invisible to it | *(reported)* |
+| OpenCode | `~/.config/opencode/AGENTS.md` (now live) → `~/AGENTS.md` | **State only** — `opencode/{data,state,cache}`; instructions live under `~/.config` because OpenCode has no config-relocation variable | healthcheck line `~/.config/opencode/AGENTS.md … chezmoi-managed (live)`; launcher source |
+
+Result: four of five agents resolve instructions through `.agent-runtime`; OpenCode is the structural exception, and
+its exception is deliberate, not drift.
+
+## Corrections to v2 (adversarial review of the Codex session, each verified)
+
+v2 is merged (#2925), so these provisions are live on `main` and must be amended, not merely noted.
+
+| # | v2 provision | Finding | Disposition |
+|---|---|---|---|
+| 1 | §5 "APFS clone … immutable … 0 bytes" | A clone is a writable same-volume copy, not immutable and not independent storage custody. It also reclaims nothing: while the clone exists, deleting the source frees no blocks, so "stage then retire" does not relieve quota. | **Accept.** Custody needs a second device plus a checksum manifest; set the staged tree read-only; do not claim reclaimed space until the source is gone *and* a second copy exists elsewhere. |
+| 2 | §7 receipt `undo_command` (`rm -rf <dest> && cp -Rc <backup> <dest>`) | Confirmed in `codex-custody-receipt-20261017.json`: all three recorded rollbacks delete the destination first. A replay after the destination accumulates new history destroys it, and a failed copy leaves nothing. | **Accept.** Rollback = rename destination aside (`.pre-rollback-<ts>`), copy back, verify, never delete. Rewrite the receipt contract and regenerate the three commands. |
+| 3 | "census" claims | Depth-bounded `find` cannot establish an exhaustive inventory; wildcard groups stand in for enumeration. | **Accept.** See item 7: ledger with method, depth, prune list, scan errors, and deduplicated physical count. |
+| 4 | Codex session blocker narrative | A scope denial and a separate admission reading were reported as one cause. | **Accept as process rule** (execution rails): name the denying layer, don't infer it from an unrelated status. |
+| 5 | Codex step 5 "one explicit root cutover" to `~/.local/state/domus/agent-runtime` | The code default (`domus-agent-runtime.py:115-129`) is for *new* installs; it raises unless the legacy root is explicitly selected. Nothing shows a defect on this host that moving the root would fix. | **Reject for now.** No cutover. Reopen only if a measured containment defect needs it, with the references and consumers counted first. |
+| 6 | `agy` session: "delete duplicate `~/.gemini/bin/agy` (181 MB) and the 49 MB temp tarball" | Already rejected in v2 §0 #4 (the Antigravity updater manages that path). The `agy` census also reported v1.4.0 while the banner showed 1.4.2. | **Reject deletion; keep quarantine-first.** Census must read versions live, not copy them from memory. |
+| 7 | `agy` plan written to `.agent-runtime/claude/plans/` | Gitignored, so the plan was never durable — the `s-02-plan` defect v2 Phase 3 already owns. | **Confirmed; no new work.** |
+
 ## Reconciliation of v2 + #502 against live state
 
 | Item | Evidence | Status |
@@ -52,6 +82,8 @@ substrate. The deliverable is: **what landed, what remains, who owns it.**
 | v2 4 eleven home doorways | all present as symlinks in `ls -la ~` | **landed** |
 | #502 defect 2 OpenCode shim | `~/.config/opencode/AGENTS.md` live; healthcheck 42 ok / 0 fail | **landed** |
 | v2 2 Antigravity cutover | `antigravity/` staged; `~/.gemini` still → `legacy-home` | **gated** (rollout Step 8) — no change proposed |
+| v2 plan itself | PR #2925 MERGED 2026-10-17T18:32Z (carries the unsafe provisions above) | **landed, needs amendment** |
+| #502 OpenCode plan | PR #502 MERGED 2026-10-18T00:48Z; its Phase A (apply pending surfaces) is visible in the 28 → 42 healthcheck | **landed**; B–E open |
 | v2 3 skills reconcile | ≥3 roots: `~/.agents/skills` (30), `.agent-runtime/.agents/skills` (31), `shared/skills-catalog` (69 + registry) | **open** |
 | `legacy-home` retirement | 331 MB still behind doorways | **gated** (Step 8) — observe only |
 | home-guard | `FAIL`, 1 violation: `.grokbot` route blocked, destination exists | **open** |
@@ -78,7 +110,23 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    (~1.8 MB), `correction_drafts/`, `scratch/`, `.recode/`. Quota-bound vendor state is the wrong home for transcripts;
    route to `$LIMEN_CUSTODY_STAGING_ROOT` or the transcript corpus with receipts. (The "contain all *files*" half that
    v2 did not cover.)
-6. **Out of scope:** per-repo `.claude/` dirs and worktree copies (v2 disposition #8, separate opt-in track),
+6. **Amend v2 — limen docs PR.** Apply corrections 1–2 above to `2026-10-17-unify-contain-agent-surfaces-v2.md` §5 and
+   §7 (append-only: plans are never overwritten, so add a dated "Superseded provisions" block that points here), and
+   regenerate the three Codex receipt rollbacks with the rename-aside form. The receipts live under
+   `~/.local/state/domus/home-residue/`, outside git — record the corrected commands in a tracked receipt note.
+7. **Census ledger — domus-genoma (extends #502 Phase B).** One script emits a tracked ledger: for every provider, each
+   physical location with `realpath`, owner, consumers, size, and role; aliases listed separately from copies; scan
+   method, depth, prune list and every scan error recorded; a deduplicated physical-directory count. Seed it with the
+   locations the Codex session reported and this plan verified: `/Applications/ChatGPT.app/Contents/Resources/codex-cli`,
+   `~/Library/{Application Support,Caches}/Codex`, `~/.cache/codex-runtimes`, `~/Documents/Codex`,
+   `~/Workspace/session-meta/codex`, `~/.config/goose/chatgpt_codex`,
+   `/Library/Application Support/CodexComputerUseAuthorizationPlugin`. Protected system caches are recorded as
+   "not scanned, reason", never silently omitted.
+8. **Antigravity skills visibility — domus-genoma (inside item 2).** `skills.json` targets `~/.agents/skills`, so the 28
+   skills in `.agent-runtime/.agents/skills` never reach it; the content-hash reconciliation decides which root is
+   canonical before any `skills.json` edit.
+9. **No root cutover** (correction 5): recorded as a decision, not left implicit.
+10. **Out of scope:** per-repo `.claude/` dirs and worktree copies (v2 disposition #8, separate opt-in track),
    Library/Application Support moves, `~/.agents/teamwork`, and #502's human gate (GitHub/Serena/Jupyter MCP vs `ianva`
    for OpenCode) — OpenCode's gate, already filed; not re-raised.
 
@@ -88,6 +136,9 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
   operator override. Implementation items 1–5 do **not** inherit that override.
 - Items 1–2 → one `domus-genoma` worktree PR each; items 3, 5 → one limen docs/predicate PR; one commit per concern.
 - Every move writes a rollback receipt under `~/.local/state/domus/home-residue/` (v2 §7 contract).
+- Name the denying layer. Drafting this plan met three separate layers — the background-isolation guard (rejected
+  writes outside a worktree), the writer-lease reading (`allowed:false`, advisory input to the worktree decision, not a
+  denial), and the auto-mode classifier (rejected one file write). Do not attribute one layer's outcome to another.
 - Do not dump `env`; the guard denies it. The runtime root is known from `domus-agent-runtime check`.
 
 ## Verification (predicates, not prose)
