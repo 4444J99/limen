@@ -1,0 +1,34 @@
+Changed paths (2):
+  cli/tests/test_check_his_hand.py
+  his-hand-levers.json
+WAVE cheap: START gates=11 jobs=4 gate_timeout=registry-budget output_limit=1048576B
+WAVE cheap: START gate=operator-gates
+WAVE cheap: START gate=his-hand-registry-test
+WAVE cheap: START gate=syntax-changed
+WAVE cheap: START gate=diff-hygiene
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=2.14s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.22s
+WAVE cheap: FINISH gate=operator-gates status=PASS duration=2.27s
+WAVE cheap: FINISH gate=his-hand-registry-test status=PASS duration=3.12s
+WAVE cheap: START gate=check-params
+WAVE cheap: START gate=check-test-hygiene
+WAVE cheap: START gate=check-lifecycle
+WAVE cheap: START gate=check-root-manifest
+WAVE cheap: FINISH gate=check-root-manifest status=PASS duration=0.48s
+WAVE cheap: FINISH gate=check-params status=PASS duration=1.96s
+WAVE cheap: START gate=check-note-links
+WAVE cheap: START gate=ruff-lint
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=0.65s
+WAVE cheap: START gate=ruff-format
+WAVE cheap: FINISH gate=check-test-hygiene status=PASS duration=2.91s
+WAVE cheap: FINISH gate=check-lifecycle status=PASS duration=2.86s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=1.58s
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=0.47s
+his-hand: 114 levers, diagnosed=2, violations=0
+ok    every open lever (104) is proven-sovereign or converted to design_debt
+operator-gates: tasks=0 needs_human=0 operator_paused=0 levers_unreadable=0/114 baselined=77 violations=0
+WAVE cheap: PASS
+Host admission denied scoped heavy verification: swap-fraction
+command: bash scripts/verify-scoped.sh (filtered to changed paths, wave lines and result lines; skipped-gate lines omitted)
+head: 075fb8efd82b6565f374e9a07eb0b574189c61dc (PR 3110, squash-merged as 4b2f97df644f3b04ee0709b752aff3fd1cdc688f)
+exit: 75 (cheap wave PASS, 11 gates; the heavy wave was refused, so the pytest-cli gate did not run through the gate. The sixteen registry-reading test files were run directly instead: 30 + 255 passed.)

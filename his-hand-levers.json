@@ -5401,6 +5401,103 @@
         "remaining_human_action": "State the disposition for the three withheld opencode sessions on the owner issue; the agent executes it.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-APPROVAL-USER-ALLOW-WIDENING",
+      "label": "Name the widening: authorize a user-layer permissions.allow block (read-only set plus the exact-head merge and gh pr ready rails) in the Domus runtime settings, then apply it.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-18",
+      "cost": "one sentence naming the widening, then one chezmoi apply after the agent-authored domus-genoma PR merges",
+      "source_task": "https://github.com/4444J99/limen/issues/3091 (cause 1 of the 72h approval-request audit: 24 classifier denials and rejected prompts on read-only or charter-granted commands, because the user-level runtime settings carry no permissions.allow and sessions launched outside a Limen checkout see no project allowlist)",
+      "gate": "The runtime classifier policy treats a new or broadened permissions.allow rule in the dotfiles source as self-modification that takes effect at the next chezmoi apply, so it needs the operator to name the widening. An agent cannot authorize its own widening.",
+      "unlocks": "Sessions launched from the home directory or another repository stop sending read-only commands (jq, shasum, chezmoi status, gh pr view, git rev-parse) and the exact-head merge rail to the auto-mode classifier; the same apply arms the approved-prompt receipt hook and the PreToolUse reroutes for bare env dumps.",
+      "steps": [
+        "(human) State that the widening is authorized: a user-layer allow block limited to read-only commands and the standing-grant rails, excluding gh issue create on public repos.",
+        "(agent) Author the domus-genoma PR for modify_private_settings.json.tmpl, add the check-user-allow-coverage predicate, and show chezmoi diff in the PR body.",
+        "(human) After merge, run chezmoi apply for the runtime settings.json and ~/.local/bin/pretooluse-guard-dispatch.sh.",
+        "(agent) Run the discriminating test (one fixture from a session launched in ~ and one in a Limen checkout) and the 72h audit-transcript readback."
+      ],
+      "note": "Do not widen the user layer before this lever is answered. PR 3088 widened only the project layer and does not reach sessions launched outside a Limen checkout.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "issue": 3091,
+      "diagnosed_at": "2026-10-18T17:20:00Z",
+      "diagnosis_provenance": "approval-request-audit-20261018.forensics",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Once the operator names the widening, author the domus-genoma template change on a branch, prove coverage with a fixture predicate, merge the PR, and leave only the chezmoi apply to the operator.",
+        "rationale": "The deployed user-layer settings have defaultMode auto, five ask rules and no permissions.allow; every command from a session outside a Limen checkout reaches the classifier, which misfired on read-only commands and charter-granted rails. Widening permissions is the one step that requires the operator's own words.",
+        "evidence_refs": [
+          "docs/receipts/approval-request-audit-20261018/README.md",
+          "https://github.com/4444J99/limen/issues/3091"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#standing-autonomy--compliant-gate-reroute",
+          "AGENTS.md#session-discipline"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3091",
+        "acceptance": {
+          "condition": "The user-layer settings carry a permissions.allow block covering the audit fixture commands, and a 72h audit-transcript readback shows zero classifier denials on those commands.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Operator statement naming the widening",
+          "domus-genoma PR for modify_private_settings.json.tmpl"
+        ],
+        "remaining_human_action": "Name the widening in one sentence, then run chezmoi apply after the PR merges.",
+        "historical_gate_requires_verification": "Whether Claude Code consults the classifier even for allowlisted commands is not observable from files; the discriminating test after arming settles it.",
+        "decision_status": "chosen_pending_evidence"
+      }
+    },
+    {
+      "id": "L-APPROVAL-PLAN-DEFAULT",
+      "label": "Decide whether to remove permissions.defaultMode \"plan\" from the project settings so sessions inherit auto and the agent enters plan mode only for a litmus hit.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-18",
+      "cost": "one decision; the agent stages the settings, charter and check-agent-docs change as one PR",
+      "source_task": "https://github.com/4444J99/limen/issues/3091 (cause 2: 16 of 17 ExitPlanMode gates in 72h were ceremony on reversible work, including explicitly requested one-shot tasks)",
+      "gate": "CLAUDE.md Session Phase Entry introduced the plan default and forbids an exemption mechanism, and the classifier treats a defaultMode change as self-modification. Revising a charter decision is the operator's call.",
+      "unlocks": "Interactive sessions in this repo start in auto mode and stop for plan approval only when the plan destroys, sends, spends, leaks, or touches another session's work.",
+      "steps": [
+        "(human) State remove or keep the plan default.",
+        "(agent) If remove: one PR changing .claude/settings.json, the Session Phase Entry paragraph of CLAUDE.md and scripts/check-agent-docs.py together, plus the ceremony metric in claude-workflow-guard.py audit-transcript; merge through merge-policy.sh."
+      ],
+      "note": "Keep the E028-class gate: a plan with custody-then-delete steps or a live config ownership change still warrants approval.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "issue": 3091,
+      "diagnosed_at": "2026-10-18T17:20:00Z",
+      "diagnosis_provenance": "approval-request-audit-20261018.synthesis",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "On remove, stage and merge the coupled settings, charter and docs-check change; on keep, record the decision and close the lever.",
+        "rationale": "Plan mode forced ExitPlanMode on one-line or already-authorized changes; only plans carrying a litmus hit were warranted.",
+        "evidence_refs": [
+          "docs/receipts/approval-request-audit-20261018/README.md",
+          "https://github.com/4444J99/limen/issues/3091"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#session-phase-entry",
+          "CLAUDE.md#engage-the-real-problem-first"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3091",
+        "acceptance": {
+          "condition": "The operator has stated remove or keep, and on remove the settings, charter text and check-agent-docs agree.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Operator decision"
+        ],
+        "remaining_human_action": "State remove or keep the plan default.",
+        "historical_gate_requires_verification": "Whether the charter's plan-first enforcement is worth its ceremony cost for reversible work is a product decision no predicate can derive.",
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }
