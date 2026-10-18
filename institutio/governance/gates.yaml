@@ -565,6 +565,11 @@ gates:
     scoped: false
     owner: verify
     note: "Full-suite-pytest deny matrix (hermetic fixture): the scoped-verification law made mechanical after the 2026-07-15 host-thrash incident (two concurrent full cli suites from one session)."
+  conduct-register-hook-test:
+    command: "bash scripts/tests/conduct-register-hook.test.sh"
+    paths: ["scripts/hooks/conduct-register.sh", "scripts/tests/conduct-register-hook.test.sh", "scripts/lib/workstream-capsule.sh", ".claude/settings.json"]
+    owner: verify
+    note: "Hermetic matrix (fake limen) for the hook that registers a background Claude job with the conduct broker as a human-protected direct session. Without a broker binding scripts/no-tasks-on-me.sh exits 2 and the session can never prove release (2026-10-18). Negative rows are the deliverable: no registration in the shared checkout, outside a background job, or more than once per interval; fail-open; the credential never reaches stdout, log, stamp or argv. settings.json is a path because deleting its entry turns the feature off silently."
   trusted-bash-hook-test:
     command: "bash scripts/tests/allow-trusted-cd-git.test.sh"
     paths: ["scripts/hooks/allow-trusted-cd-git.sh", "scripts/tests/allow-trusted-cd-git.test.sh"]
