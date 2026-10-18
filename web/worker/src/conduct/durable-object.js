@@ -271,7 +271,7 @@ export class ConductKeeperDurableObject {
     }
     if (path === "/api/conduct/capabilities" && request.method === "GET") {
       requireRole(principal, "observer");
-      return json(await this.service.call("capabilities"), 200, this.env);
+      return json(await this.service.call("capabilities", { principal }), 200, this.env);
     }
     if (path === "/api/conduct/notifications/assignments" && request.method === "GET") {
       requireRole(principal, "observer", "conductor");
