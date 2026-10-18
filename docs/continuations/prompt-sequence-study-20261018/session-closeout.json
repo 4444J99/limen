@@ -30,7 +30,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 0,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
     },
     {
       "root_id": "repair",
@@ -38,7 +38,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 1,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3",
+      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017",
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/3087"
     }
@@ -49,7 +49,7 @@
       "repair"
     ],
     "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-    "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+    "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
   },
   "external_effects": [
     {
@@ -58,14 +58,14 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/issues/3056",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
     },
     {
       "id": "currency-reconciliation",
       "kind": "deployment-readback",
       "verified": true,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4477ea07754ae2aafee34eec5f2263a76c7de8d42a08ad8574cb2af8baaf32d3"
+      "sha256": "0fe570a6fb1a11f4d429f61ca92187a9f4e9b309113e1dc6e075104994f56017"
     }
   ]
 }
