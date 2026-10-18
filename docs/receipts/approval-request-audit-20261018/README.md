@@ -48,8 +48,8 @@ audit sees refusals, not the approvals the operator gave.
 | 1 | The user-level runtime settings have `defaultMode: auto`, five `ask` rules and **no `permissions.allow`**; Limen's allow list lives only in each checkout's `.claude/settings.json`, so a session launched from `~` or another repo sends every command to the classifier (24) | `modify_private_settings.json.tmpl` in domus-genoma: an owned `permissions.allow` (read-only set plus the exact-head merge and `gh pr ready` rails) and a standing-grants slot in the autoMode environment | Agent authors the PR; operator names the widening and runs `chezmoi apply` (lever `L-APPROVAL-USER-ALLOW-WIDENING`) |
 | 2 | `permissions.defaultMode: "plan"` in `.claude/settings.json` forces `ExitPlanMode` on every interactive session, including explicitly requested reversible work (16) | Remove the project default; rewrite CLAUDE.md "Session Phase Entry" so the agent enters plan mode only for a litmus hit or another session's work; update `check-agent-docs.py` in the same PR | Product decision the charter owns (lever `L-APPROVAL-PLAN-DEFAULT`) |
 | 3 | Menus and re-asks where the charter or a registry already decides (23) | Extend `scripts/claude-workflow-guard.py audit-transcript` to flag a Recommended option that was accepted, a repeated question, and a menu after delegation | Agent PR; no arming |
-| 4 | `/closeout` improvised `rm`, `python3 -I -c`, `shasum` and a job-tmp wrapper (14) | Closeout SKILL.md copies: probes via `mktemp` outside the worktree, `jq empty` / `shasum` / a checked-in helper, call `scripts/no-tasks-on-me.sh` directly; a grep gate over every copy | Agent PRs (limen, ai-skills, domus-genoma) |
-| 5 | Charter silent on merge-past-red, what "override host" covers, over-cap suites (10) | CLAUDE.md lines plus a `gates.yaml` timeout for `pytest-cli` (#2898) | Agent PR |
+| 4 | `/closeout` improvised `rm`, `python3 -I -c`, `shasum` and a job-tmp wrapper (14) | The skill left receipt checking unspecified. **Landed in #3097** (limen copy): step 2 now names `jq empty`, the committed blob id, and `mktemp -d` probes outside the worktree. The proposed grep gate is not built: the limen skill text never contained those commands. The ai-skills and domus-genoma copies are other repositories and are unchecked | Done for limen; other copies owed |
+| 5 | Charter silent on merge-past-red, what "override host" covers, live-edit overwrite (10) | Not yet changed. The synthesis also proposed raising `pytest-cli`'s timeout; that is **already fixed** (#2965, `f1297a8bf`; the registry budget of 1500s is honored) and #2898 stays open only for the keeper verification window. The remaining lines define the operator's own phrase "override host" and a hold-by-default policy, which are intent choices, and CLAUDE.md has about 600 characters of headroom under its 40,000 cap, so any addition must relocate text | Operator wording needed, then an agent PR |
 | 6 | Leaky or opaque command forms (bare `env`, `~/.ssh` listing, transcript token grep); stops defensible (15) | Domus PreToolUse dispatcher reroutes plus `guard-liveness-check.sh` fixtures | Agent authors; operator arms with the cause-1 apply |
 | 7 | Worktrees carry frozen copies of the project allowlist (38 of 58 live copies are pre-#3006) | Fold durable entries of the shared `settings.local.json` into tracked settings; a drift sensor in `sensors.yaml` | Agent PR (forward risk only) |
 
@@ -74,6 +74,7 @@ base.
 
 ## Next commands
 
-Agent now (limen): the `audit-transcript` extension (cause 3), closeout SKILL text (4), charter lines (5).
+Done: closeout skill text for limen (cause 4, #3097).
+Agent now (limen): the `audit-transcript` extension (cause 3); the cause 5 charter lines once the operator words the two intent choices.
 Agent now (domus-genoma, staged, not applied): the cause 1 and 6 template diff, shown via `chezmoi diff`.
 Operator: the two levers above.
