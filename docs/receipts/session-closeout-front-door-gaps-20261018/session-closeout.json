@@ -1,0 +1,41 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "1ecb794a-0690-4782-a5a1-57c07ddde7fb",
+  "worktree_name": "front-door-gaps-20261018",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-front-door-gaps-20261018",
+  "base_head": "d899a2e5e799fc4597c908669531fff16a087489",
+  "disposition": "complete",
+  "owner_url": "https://github.com/4444J99/limen/issues/3012",
+  "owned_paths": [
+    "scripts/open-knowledge.sh",
+    "cli/tests/test_limen_knowledge_verb.py",
+    "docs/architecture/ai-exports-archive.md",
+    "docs/plans/2026-10-18-close-front-door-verification-gaps.md",
+    "docs/receipts/receipt-custody-copilot-captures-20261018.json"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "completion",
+      "head": "d899a2e5e799fc4597c908669531fff16a087489",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-front-door-gaps-20261018/verification.txt",
+      "sha256": "9df6e4c790beb0996d2c9df8e3a45eb2170d54359764a4473048eb011b9d40d0",
+      "owner_url": "https://github.com/4444J99/limen/issues/3012"
+    },
+    {
+      "purpose": "credential-wall",
+      "head": "d899a2e5e799fc4597c908669531fff16a087489",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-front-door-gaps-20261018/verification.txt",
+      "sha256": "9df6e4c790beb0996d2c9df8e3a45eb2170d54359764a4473048eb011b9d40d0",
+      "owner_url": "https://github.com/4444J99/limen/issues/3012"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-front-door-gaps-20261018/custody.json",
+    "sha256": "f3b16123249f410a8bfa017591b9ba81d3dd1a92f4e2b253021732ac6f52f618"
+  }
+}

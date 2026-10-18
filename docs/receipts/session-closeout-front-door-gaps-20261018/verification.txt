@@ -1,0 +1,48 @@
+Session 1ecb794a-0690-4782-a5a1-57c07ddde7fb — scoped verification (2026-10-18 UTC)
+Every predicate below was run bare and its own exit code is the one quoted. Where a predicate exited non-zero or could not run, that is stated under NOT RUN / NOT CLAIMED; none is counted as green.
+
+POST-MERGE — run on this receipt's base, origin/main d899a2e5e799fc4597c908669531fff16a087489
+(which contains all four session merges: d95e5c07957e6085627db79c103cbb200f9433b4 #3015 plan, 06fa2287c893bfe0317c27d684d5d243d4c7a70b #3025 Copilot preservation receipt, cfed4d86d4a7e667b537f5156f0cad8cbcc128d5 #3033 script and tests, 94a63230e16423df265c7b468b61c525b85d00e4 #3035 docs and plan stamp)
+- run-pytest-hermetic.sh cli/tests/test_limen_knowledge_verb.py -q -> 80 passed, 1 skipped in 97.14 s, exit 0 (the skip is /usr/local/bin/bash, not installed here)
+- ruff check cli/tests/test_limen_knowledge_verb.py -> All checks passed, exit 0
+- ruff format --check cli/tests/test_limen_knowledge_verb.py -> 1 file already formatted, exit 0
+- shellcheck --severity=style scripts/open-knowledge.sh -> no findings, exit 0
+- bash -n scripts/open-knowledge.sh and /bin/bash -n scripts/open-knowledge.sh (bash 3.2) -> exit 0 both
+- scripts/credential-wall.py --check -> all 32 secret atoms registered, exit 0
+- merge-base --is-ancestor of each of the four merge commits above against HEAD -> exit 0 each
+- blob ids at HEAD of the owned paths: scripts/open-knowledge.sh 3eeb27f08366eee051a81a5ecbde682d692bc728, cli/tests/test_limen_knowledge_verb.py f15636e7176f56eee2f3c69eb48612983777b06b, docs/architecture/ai-exports-archive.md 4b4493b2f5cb62fe45bf9b2dedc4d5163ea61581, docs/plans/2026-10-18-close-front-door-verification-gaps.md 098509a0215e7c1d098f0d7406860ff77a04ad53, docs/receipts/receipt-custody-copilot-captures-20261018.json 2b6df289cd47a845beb2f83f6765a221a922bba5; the first four are byte-identical to the verified PR heads
+- gh pr view 3015, 3025, 3033, 3035 -> state MERGED, merge commits as above
+- scripts/check-live-checkout.py (LIMEN_ROOT = the live checkout) -> state=coherent, drift=0 ahead=0 behind=0 dirty=0, exit 0
+- scripts/check-runtime-lag.py -> OK: scheduled runtime 06fa2287c893 is 6 commits behind origin/main (bound 25), exit 0
+
+OBSERVED — through the installed ~/.local/bin/limen (runtime 06fa2287c893) with LIMEN_ROOT=/Users/4jp/Workspace/limen (the live checkout), on a throwaway port so the operator's server on 8472 was never touched
+- limen knowledge --port 8599 --no-open -> "server started on port 8599 (pid 82420 ...)"; a second identical call -> "server already up on port 8599"
+- limen knowledge --port 8599 --status -> server up, real fingerprint e3adf81a..., 5958 conversations / 106725 messages, the fingerprint-bound alive receipt
+- curl /api/ping on 8599 -> {"ok": true}; / -> HTTP 200 text/html, 2184 bytes
+- limen knowledge --port 8599 --stop -> "stopped the server on port 8599 (pid 82420)"; a following --status -> server down
+- limen knowledge --port 65536 --status -> exit 2 "must be a number from 1 to 65535"
+- limen knowledge --status (default port) -> server up on 8472 (pid 14937); ps shows the same process still running, started before this session's merges, never signalled
+- Before the merge, the same lifecycle was run against the PR branch worktree (pid 64000): identical results.
+- Before the runtime rotation the installed CLI had no `knowledge` command at all ("No such command"); the rotation is domus-limen-runtime install --sha 06fa2287c893bfe0317c27d684d5d243d4c7a70b, receipt installed_at 2026-10-18T06:38:16+00:00.
+
+PRE-MERGE — exact-head evidence at each PR head (squash-merged away; these heads are NOT ancestors of the receipt base)
+#3033, final head 3366021d5ca32d2d9e2e51e27b95f801e88342a6:
+- local run-pytest-hermetic.sh on the owned test file: 80 passed, 1 skipped in 98.45 s, exit 0
+- acceptance probe in soak mode: 18/18 scenarios under bash 5 and 18/18 under /bin/bash 3.2, exit 0 each; deterministic interleavings (throwaway hooked copy): 11/11 under bash 5 and 11/11 under bash 3.2, exit 0 each
+- mutation testing of the owned test file: 44 distinct mutations of the script, 43 killed and 1 survived (release-leaves-mutex, SIGTERM while a recoverer holds the recovery mutex, no test: item 12 of #3032). Whole-PR A/B against the parent blob 970313a46e35d26859815abcf6038e3da74141eb (measured at f99a8399, 79 tests): 49 fail on the parent script, 29 pass, 1 skipped
+- the tests added for each review or CI finding were run against the script blob before its fix and failed there for the reason they name (1 of 1, 6 of 6, 2 of 2)
+- local scripts/verify-scoped.sh, cheap wave: PASS, 8 of 8 gates (syntax-changed, diff-hygiene, direct-main-writer-contract, check-params, check-test-hygiene, check-note-links, ruff-lint, ruff-format), measured at the earlier head 8caedac1 because the heavy tier then stopped the run
+- remote pr-gate on a Linux runner (verify.py --changed, run 39110497936, https://github.com/4444J99/limen/actions/runs/39110497936): cheap wave 8/8 PASS; pytest-cli PASS (9220 passed, 72 skipped, 10 subtests passed, 941.67 s); pytest-api PASS (52 passed); "Scoped verification passed"
+- the first Linux run at head f99a83994 (run 39108119956): pytest-cli 1 failed, 9199 passed. The failure was real: procps ps cuts output not going to a terminal at the terminal width unless given -ww, which macOS never does. Fixed at 3366021d with ps -ww and two tests
+- independent reviewers: an Opus-class protocol reviewer proved the start-lock design (18 scenarios x 2 bash, 120 soak iterations, 11 deterministic interleavings); a second Opus-class adversary reviewed the whole script (no blocker; 1 major, 3 minor, 5 nits: fixed with tests, reworded, or filed in #3032); a docs checker found 7 imprecisions, all applied
+#3035, head cc97ee81f7f74810b8f17b953e26396cc408fea0:
+- local scripts/verify-scoped.sh (LIMEN_VERIFY_JOBS=1): "Scoped verification passed"; 6 of 6 gates PASS (syntax-changed, diff-hygiene, session-phase, check-plan-decisions, check-docs-exports, check-note-links); no heavy gate implicated; remote pr-gate pass in 28 s
+#3015 (plan) and #3025 (Copilot preservation receipt): verified earlier in this session; the #3025 digest was reproduced by a third independent method (openssl dgst).
+
+NOT RUN / NOT CLAIMED
+- The local heavy tier (pytest-cli, pytest-api) did not run on this host: scripts/verify-scoped.sh exited 75 (EX_TEMPFAIL, "Host admission denied scoped heavy verification") twice, reasons swap-fraction (0.24 to 0.44 of RAM against a 0.25 threshold) and heavy-lease-held (another session's lease). It is reported as not run, not green. The same gates ran on the exact merged head remotely and passed (above); the repository requires no checks on pull requests, so the merges rested on that evidence plus merge-policy.sh CLEARED.
+- Not exercised: Linux beyond the CI run; a live lock holder owned by another user; SIGTERM while the recovery mutex is held; /usr/local/bin/bash. Residual lock-protocol windows are owned in #3032.
+- Not performed: re-activation of the one-shot heartbeat after the runtime rotation (a LaunchAgent edit; human-gated, #3028); closing any issue (#3012 and every follow-up stay open for the operator).
+- Not done: the Copilot second copy and the CCE reader for the saved chat pages (#3010, blocked on attaching T7Recovery, lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, #688).
+- The five memory lessons were queued as tickets, but the memory lane is dark (LIMEN_MEMORIA=0) and could not drain once armed (#3036); they are queued, not folded.
+- One leftover test process (pid 19861, a fake engine from a pre-fix mutation run) was not stopped: the auto-mode classifier denied the kill. It is harmless and outside the subject checkout.
