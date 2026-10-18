@@ -1,5 +1,8 @@
 # Plan v2: Unify and Contain All Agent Directories & Files (Provider-Agnostic)
 
+> **Recovery correction — 2026-10-18:** The APFS immutability, independent-custody and zero-byte claims in section 5 and destructive rollback guidance in section 7 are superseded by [revision 4](2026-10-18-codex-census-safe-containment-v4.md). Do not replay delete-then-copy rollback commands. Retain the explicitly selected runtime root; the fresh-install default is not a migration recommendation. Historical text below is preserved as evidence.
+
+
 Issue: #2848
 PR: #2925
 
