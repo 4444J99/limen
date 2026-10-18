@@ -320,8 +320,6 @@ import os, sys
 sys.exit(1 if "homing-fails" in os.environ.get("STUB_FAULT", "").split(",") else 0)
 """
 
-STUB_CORPORA = "import sys\nsys.exit(0)\n"
-
 
 def _write_tool(directory: Path, name: str, body: str) -> Path:
     path = directory / name
@@ -338,7 +336,8 @@ def stubs(tmp_path_factory):
         ledger=_write_tool(directory, "stub-ledger", STUB_LEDGER),
         forms=_write_tool(directory, "stub-forms", STUB_FORMS),
         homing=_write_tool(directory, "stub-homing", STUB_HOMING),
-        corpora=_write_tool(directory, "stub-corpora", STUB_CORPORA),
+        # Check 3 imports check-corpora's own checks, so the real script is used, never a stub.
+        corpora=SCRIPTS / "check-corpora.py",
         counter=directory / "counter",
     )
 
@@ -680,13 +679,17 @@ def _live_arguments(context, repo, *extra):
     ]  # fmt: skip
 
 
-def _patch_registry(monkeypatch, context, tmp_path):
+def _registry_document(root) -> dict:
+    return {
+        "stores": {"limen-private-archive": {"root": str(root)}},
+        "corpora": {"archive-all": {"store": "limen-private-archive", "kind": "normalized-archive"}},
+    }
+
+
+def _patch_registry(monkeypatch, context, tmp_path, registry=None):
     import corpus_resolve
 
-    registry = {
-        "stores": {"limen-private-archive": {"root": str(context.store_root)}},
-        "corpora": {"archive-all": {"store": "limen-private-archive"}},
-    }
+    registry = registry or _registry_document(context.store_root)
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.setattr(corpus_resolve, "load_registry", lambda: registry)
@@ -880,6 +883,98 @@ def test_a_feed_subfolder_in_the_archive_fails_the_names_check(module, stubs, tm
     assert lines[1] == "check 2 names: FAIL the engine rejects a name under the archive"
 
 
+def test_drift_in_an_unrelated_store_is_counted_but_does_not_fail_check_three(
+    module, stubs, tmp_path, monkeypatch, capsys
+):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    # A git-backed store whose root exists but is not a worktree: check-corpora's check B fails for it.
+    unrelated = tmp_path / "unrelated-store"
+    unrelated.mkdir()
+    registry = {
+        "stores": {
+            "session-meta": {"root": str(unrelated), "git": True},
+            "limen-private-archive": {"root": str(context.store_root)},
+        },
+        "corpora": {
+            "session-transcripts": {"store": "session-meta", "kind": "raw-archive"},
+            "archive-all": {"store": "limen-private-archive", "kind": "normalized-archive"},
+        },
+    }
+    _patch_registry(monkeypatch, context, tmp_path, registry)
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    assert module.main(_live_arguments(context, repo, "--write-receipt")) == 0
+    out = capsys.readouterr().out.splitlines()
+    assert out[2] == "check 3 registry: ok store limen-private-archive bound; registry drifts elsewhere: 1"
+    assert re.fullmatch(r"ALIVE [0-9a-f]{16}", out[-1])
+    assert str(unrelated) not in "\n".join(out)
+
+
+def test_the_archive_store_drifting_fails_check_three(module, stubs, tmp_path, monkeypatch, capsys):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    # A directory beside archive-all that has no row fails; the engine's own state directory does not. The name
+    # starts with a listed kind so that check 2 passes and the failure is check 3's.
+    (context.store_root / "state").mkdir(exist_ok=True)
+    _patch_registry(monkeypatch, context, tmp_path)
+    assert module.main(_live_arguments(context, repo, "--write-receipt")) == 0
+    capsys.readouterr()
+    (context.store_root / "report-notes").mkdir()
+    assert module.main(_live_arguments(context, repo)) == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[2] == "check 3 registry: FAIL a directory has no row"
+    assert out[-1] == "NOT ALIVE: registry"
+
+
+def test_the_registered_root_missing_fails_check_three(module, stubs, tmp_path, monkeypatch, capsys):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    _patch_registry(monkeypatch, context, tmp_path, _registry_document(tmp_path / "gone"))
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    assert module.main(_live_arguments(context, repo)) == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[2] == "check 3 registry: FAIL the registered store is not the store under check"
+    assert out[-1] == "NOT ALIVE: registry"
+
+
+def test_check_corpora_checks_b_and_c_run_for_the_archive_store_alone(module, tmp_path):
+    corpora = module.load_corpora_checks(SCRIPTS / "check-corpora.py")
+    store = tmp_path / "archive-store"
+    (store / "archive-all").mkdir(parents=True)
+    unrelated = tmp_path / "unrelated"
+    unrelated.mkdir()
+    registry = {
+        "stores": {"other": {"root": str(unrelated), "git": True}, "limen-private-archive": {"root": str(store)}},
+        "corpora": {
+            "other-row": {"store": "other", "kind": "raw-archive"},
+            "archive-all": {"store": "limen-private-archive", "kind": "normalized-archive"},
+        },
+    }
+    assert module.corpora_drifts(corpora, registry) == ([], 1)
+
+    (store / "state").mkdir()  # the engine's own directory is exempt in check C
+    assert module.corpora_drifts(corpora, registry) == ([], 1)
+
+    (store / "scratchpad").mkdir()  # any other unknown directory is a drift in this store
+    own, elsewhere = module.corpora_drifts(corpora, registry)
+    assert [drift.split(":", 1)[0] for drift in own] == ["C"] and elsewhere == 1
+
+    (store / "scratchpad").rmdir()
+    registry["corpora"]["archive-gone"] = {"store": "limen-private-archive", "kind": "normalized-archive"}
+    own, elsewhere = module.corpora_drifts(corpora, registry)  # a declared row with no directory
+    assert [drift.split(":", 1)[0] for drift in own] == ["C"] and elsewhere == 1
+
+
+def test_a_corpora_script_without_the_single_store_checks_is_unusable(module, tmp_path):
+    script = tmp_path / "check-corpora.py"
+    script.write_text("FAILURES = []\n", encoding="utf-8")
+    with pytest.raises(module.Unusable):
+        module.load_corpora_checks(script)
+    with pytest.raises(module.Unusable):
+        module.load_corpora_checks(tmp_path / "absent.py")
+
+
 def test_a_file_inside_the_private_root_is_not_public_but_a_leak_in_docs_is(
     module, stubs, tmp_path, monkeypatch, capsys
 ):
@@ -954,10 +1049,9 @@ def test_live_mode_requires_the_registry_to_name_the_store_under_check(
     import corpus_resolve
 
     root = tmp_path / "another-store" if which == "store" else context.store_root
-    row = {"store": "limen-private-archive"}
+    registry = _registry_document(root)
     if which == "archive":
-        row["path"] = "somewhere-else"
-    registry = {"stores": {"limen-private-archive": {"root": str(root)}}, "corpora": {"archive-all": row}}
+        registry["corpora"]["archive-all"]["path"] = "somewhere-else"
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.setattr(corpus_resolve, "load_registry", lambda: registry)
@@ -1055,14 +1149,23 @@ def test_registry_problems(module, tmp_path):
     store = tmp_path / "store"
     (store / "archive-all").mkdir(parents=True)
     home = tmp_path / "home"
+    archive_row = {"store": "limen-private-archive", "kind": "normalized-archive"}
     good = {
-        "stores": {"limen-private-archive": {"root": str(store)}},
-        "corpora": {"archive-all": {"store": "limen-private-archive"}, "other": {"store": "another-store"}},
+        "stores": {"session-store": {"root": "x"}, "limen-private-archive": {"root": str(store)}},
+        "corpora": {"archive-all": archive_row, "other": {"store": "session-store", "kind": "session-memory"}},
     }
     assert module.registry_problems(good, store, home) == []
     assert "store is not declared" in module.registry_problems({**good, "stores": {}}, store, home)
-    renamed = {**good, "corpora": {"archive": {"store": "limen-private-archive"}}}
+    renamed = {**good, "corpora": {"archive": archive_row}}
     assert "a row key is not a directory name" in module.registry_problems(renamed, store, home)
+    wrong_kind = {**good, "corpora": {**good["corpora"], "archive-all": {**archive_row, "kind": "session-memory"}}}
+    assert "the archive row is not declared as a normalized archive" in module.registry_problems(
+        wrong_kind, store, home
+    )
+    declared_first = {**good, "stores": {"limen-private-archive": {"root": str(store)}, "session-store": {"root": "x"}}}
+    assert "the store is declared before a store holding other kinds" in module.registry_problems(
+        declared_first, store, home
+    )
     (store / "state").mkdir()  # the engine's own directory is not a corpus and needs no row
     assert module.registry_problems(good, store, home) == []
     (store / "corpus-chatgpt-archive").mkdir()

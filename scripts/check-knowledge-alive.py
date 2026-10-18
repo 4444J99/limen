@@ -23,7 +23,9 @@ The ten checks:
 
    1 tools            engine command found and its naming version meets the pinned minimum
    2 names            the engine accepts every name under the archive; each store directory starts with a kind
-   3 registry         (live) check-corpora is green, every row key is a directory name, store is not the home
+   3 registry         (live) the archive store is bound: declared last with its normalized-archive row, its
+                      registered root is the store under check, check-corpora's own checks B and C pass for
+                      that store alone, and it is not the corpus home. Drift in other stores is only counted
    4 archive          the engine verifies the archive and at least two providers are ok
    5 feed receipts    every feed has exactly one receipt bound to the manifest fingerprint and the feed bytes
    6 ledger binding   every feed row is an unknown-authority occurrence in the ledger; no operator authority
@@ -42,7 +44,7 @@ Tool table (resolved in one place, `build_context`; each override is read from t
   KNOWLEDGE_ALIVE_LEDGER_SCRIPT   default scripts/prompt-atom-ledger.py
   KNOWLEDGE_ALIVE_FORMS_SCRIPT    default scripts/prompt-recurring-forms.py
   KNOWLEDGE_ALIVE_HOMING_SCRIPT   default scripts/check-atom-homing.py
-  KNOWLEDGE_ALIVE_CORPORA_SCRIPT  default scripts/check-corpora.py
+  KNOWLEDGE_ALIVE_CORPORA_SCRIPT  default scripts/check-corpora.py (imported, not run: check 3 calls its checks)
 
 Engine commands used (the engine owns the naming contract; nothing here copies its kind table):
 
@@ -67,6 +69,7 @@ import argparse
 import contextlib
 import datetime as dt
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -97,6 +100,7 @@ from limen.prompt_corpus import (  # noqa: E402
 MINIMUM_NAMING_VERSION = 1
 STORE_IDENTIFIER = "limen-private-archive"
 ARCHIVE_DIRECTORY_NAME = "archive-all"
+NORMALIZED_ARCHIVE_KIND = "normalized-archive"
 MANIFEST_FILE_NAME = "manifest-all.json"
 FORMS_INDEX_FILE_NAME = "index-all-patterns.jsonl"
 FORMS_REPORT_FILE_NAME = "report-all-patterns.json"
@@ -532,6 +536,24 @@ def registry_problems(registry: dict[str, Any], store_root: Path, home: Path) ->
     )
     if not keys:
         problems.append("store has no declared rows")
+    archive_row = (registry.get("corpora") or {}).get(ARCHIVE_DIRECTORY_NAME)
+    if not (
+        isinstance(archive_row, dict)
+        and archive_row.get("store") == STORE_IDENTIFIER
+        and archive_row.get("kind") == NORMALIZED_ARCHIVE_KIND
+    ):
+        problems.append("the archive row is not declared as a normalized archive")
+    # Declared last, so it never becomes the corpus home: every store holding other kinds comes first.
+    order = list(stores)
+    if STORE_IDENTIFIER in order:
+        position = order.index(STORE_IDENTIFIER)
+        holders = {
+            row.get("store")
+            for row in (registry.get("corpora") or {}).values()
+            if isinstance(row, dict) and row.get("kind") != NORMALIZED_ARCHIVE_KIND
+        }
+        if any(name in holders for name in order[position + 1 :]):
+            problems.append("the store is declared before a store holding other kinds")
     names = store_directory_names(store_root)
     for key in keys:
         if key not in names:
@@ -657,15 +679,56 @@ def check_names(ctx: Context, state: State) -> CheckResult:
     return CheckResult(True, f"{len(directories)} store directories")
 
 
+def load_corpora_checks(script: Path) -> Any:
+    """Import check-corpora.py so its own checks B and C can be run against one store."""
+    if not script.is_file():
+        raise Unusable("corpora script missing")
+    spec = importlib.util.spec_from_file_location("check_corpora_under_knowledge_alive", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception:  # noqa: BLE001 - any import failure means the script cannot be used here
+        raise Unusable("corpora script cannot be loaded") from None
+    if not all(hasattr(module, name) for name in ("check_b_roots", "check_c_disk_parity", "FAILURES")):
+        raise Unusable("corpora script lacks the single store checks")
+    return module
+
+
+def corpora_drifts(module: Any, registry: dict[str, Any]) -> tuple[list[str], int]:
+    """check-corpora's own checks B (roots) and C (disk parity), once for the archive store and once for all.
+
+    Returns the drifts that belong to the archive store and the count of drifts in every other store. The
+    store check runs on a registry document cut down to the archive store and its rows, so another store's
+    drift cannot reach it. Only the check letter of a drift is ever reported, never a path.
+    """
+    stores = registry.get("stores") or {}
+    rows = {
+        key: row for key, row in (registry.get("corpora") or {}).items() if (row or {}).get("store") == STORE_IDENTIFIER
+    }
+    own_document = {"stores": {STORE_IDENTIFIER: stores.get(STORE_IDENTIFIER) or {}}, "corpora": rows}
+
+    def drifts(document: dict[str, Any]) -> list[str]:
+        module.FAILURES.clear()
+        try:
+            module.check_c_disk_parity(document, module.check_b_roots(document))
+            return list(module.FAILURES)
+        finally:
+            module.FAILURES.clear()
+            getattr(module, "ADVISORIES", []).clear()
+
+    own = drifts(own_document)
+    own_set = set(own)
+    return own, sum(1 for drift in drifts(registry) if drift not in own_set)
+
+
 def check_registry(ctx: Context, state: State) -> CheckResult:
     if not ctx.is_live:
         return CheckResult(True, "(live mode only)", skipped=True)
     import corpus_resolve
 
-    corpora = ctx.python_tool(ctx.corpora_script)
-    if corpora.returncode != 0:
-        return CheckResult(False, "check-corpora is not green")
-    problems = registry_problems(corpus_resolve.load_registry(), ctx.store_root, corpus_resolve.corpus_home())
+    registry = corpus_resolve.load_registry()
+    problems = registry_problems(registry, ctx.store_root, corpus_resolve.corpus_home())
     if problems:
         return CheckResult(False, problems[0])
     # The registry must name the very store under check, not another one that happens to look alike.
@@ -674,7 +737,11 @@ def check_registry(ctx: Context, state: State) -> CheckResult:
     registered_archive = corpus_resolve.corpus_root(ARCHIVE_DIRECTORY_NAME)
     if registered_archive is None or registered_archive.resolve() != ctx.archive_root.resolve():
         return CheckResult(False, "the registered archive is not the archive under check")
-    return CheckResult(True, "registry matches the store")
+    own, elsewhere = corpora_drifts(load_corpora_checks(ctx.corpora_script), registry)
+    if own:
+        return CheckResult(False, f"check-corpora {own[0].split(':', 1)[0]} finds a drift in the archive store")
+    # Drift in other stores is information, not failure: the registry's own gate owns global health.
+    return CheckResult(True, f"store {STORE_IDENTIFIER} bound; registry drifts elsewhere: {elsewhere}")
 
 
 def check_archive(ctx: Context, state: State) -> CheckResult:
