@@ -63,6 +63,7 @@
     "the antigravity decoder gap (184 sessions), owned by issue 3084"
   ],
   "open_after_this_session": [
+    "the session-bound predicate (scripts/no-tasks-on-me.sh) exited 2, unmeasured: the broker answered BrokerQuotaExhausted (HTTP 500, Durable Objects free-tier rows written) on the session audit read, and the conduct-register hook failed the same way when moving this session's binding to this worktree. Owner: issue 2054. After the quota clears, rerun the predicate bare with this receipt; until it exits 0 this session is not released",
     "issue 3108: three withheld opencode sessions (operator decision), nine registry vendors with no enumerator or index (backlog unknown, not zero), Claude sessions written since the last tranche",
     "issue 3084: antigravity decoder recovers no messages for 184 of 199 indexed sessions",
     "issue 3101: the python-typecheck gate selects web/api paths its command never checks",

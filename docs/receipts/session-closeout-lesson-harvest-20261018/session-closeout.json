@@ -55,6 +55,6 @@
   "custody": {
     "verified": true,
     "evidence": "docs/receipts/session-closeout-lesson-harvest-20261018/custody.json",
-    "sha256": "96d74dbf32abc236d3bf6f4e8de6145a351fed81b49247914b77d6c7d06d4ef1"
+    "sha256": "12c0e251713671c34117bd7ca8a988f05c1ce953e68815f88dce8a3aebfa8fb0"
   }
 }
