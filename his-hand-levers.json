@@ -5320,10 +5320,10 @@
       "gate": "Whether closed-unmerged work was abandoned on purpose or lost is a statement of intent that no predicate can derive. #2756 is NOT superseded: the merged successors #2759 and #2761 came from a separate -v2 branch and neither merge commit contains the #2756 tip.",
       "unlocks": "Retiring or relanding each branch, after which the preservation gate (scripts/check-branch-parity.py) can treat the ref as accounted for instead of carrying it as an open finding.",
       "steps": [
-        "(human) For each PR, state one of: retire (abandoned on purpose), reland (cut a fresh branch from main and port the patches), or keep parked with a reason.",
-        "(agent) Execute the stated disposition on the normal PR rail; delete no ref until the landing proof for it is positive and repository-qualified."
+        "(human, done 2026-10-18) For each PR, state one of: retire (abandoned on purpose), reland (cut a fresh branch from main and port the patches), or keep parked with a reason. Stated: reland all three.",
+        "(agent, done 2026-10-18) Execute the stated disposition on the normal PR rail; delete no ref until the landing proof for it is positive and repository-qualified. Executed: #2682 already landed (#2762); #2756 -> #3090; #2576 -> #3094 and #3096. No ref deleted."
       ],
-      "note": "The decision is the human part; reland work is ordinary engineering once chosen. Do not retire a ref on the grounds that an unrelated PR number looks like a successor.",
+      "note": "DECIDED 2026-10-18: reland all three. OUTCOME: #2682 needed no reland - it already landed as #2762, which states it supersedes #2682 (four files byte-identical on main; three test fixtures that main has since evolved). #2756 relanded as #3090 (a historical receipt; the live capsule is the -v2 one). #2576 relanded in two parts: the unlanded hardening as #3094 (nine files; with main's source 25 of 416 touched tests fail, with the change none) and the recovery evidence as #3096 (23 files, landed as one unit; the campaign acceptance command still exits 1 FAIL). Deliberately not relanded: dispatch.py serial-claim custody (main's later design forbids what the PR's variant does) and six test/fixture files main has evolved past. The 148/157/129 'unlanded patch' counts in source_task measured each branch's old-lineage history, not the PR's own change. All three restored refs are retained and nothing was deleted. Only the human closes this lever.",
       "sovereignty": {
         "reason": "governance_choice"
       },
@@ -5347,12 +5347,12 @@
         "acceptance": {
           "condition": "Each of #2682, #2576 and #2756 has a recorded disposition (retire, reland, or parked with a reason) and any retired ref has positive landing proof.",
           "predicate": null,
-          "status": "not_currently_verified"
+          "status": "observed_pass_requires_live_recheck"
         },
         "dependencies": [
-          "Operator statement of intent per PR"
+          "Operator statement of intent per PR (given 2026-10-18: reland all three)"
         ],
-        "remaining_human_action": "State retire, reland, or keep parked for each of the three PRs.",
+        "remaining_human_action": "None outstanding. Close this lever when satisfied with the recorded dispositions; the three restored refs are retained and may be reaped only on a positive, repository-qualified landing proof.",
         "historical_gate_requires_verification": "Whether closed-unmerged work was abandoned on purpose or lost is a statement of intent that no predicate can derive.",
         "decision_status": "chosen_pending_evidence"
       }
