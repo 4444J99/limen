@@ -14,7 +14,7 @@ fingerprints while allowing bounded transport compression.
 2. Add a versioned gzip/base64 envelope with SHA-256 of its decoded UTF-8 JSON,
    a declared decoded length, a 64 KiB decoded cap, strict fields, and a bounded
    transport size. Legacy object JSON remains supported.
-3. Resolve one policy snapshot before constructing the keeper service; reuse that
+3. Resolve one policy snapshot before permitting keeper service execution; reuse that
    snapshot for authenticated fingerprint/private readback. Invalid storage yields
    an empty fail-closed execution policy and a 409 readback without provider data.
 4. Encode policy bindings with the Python standard library. Keep small policies

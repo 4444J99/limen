@@ -10,7 +10,7 @@ function object(value) {
 
 export async function readExecutionPolicy(binding) {
   try {
-    const raw = binding ?? "{}";
+    const raw = binding === "" ? "{}" : binding ?? "{}";
     if (typeof raw !== "string" || encoder.encode(raw).length > MAX_POLICY_BYTES) throw new Error();
     const value = JSON.parse(raw);
     if (!object(value)) throw new Error();
