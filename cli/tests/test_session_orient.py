@@ -149,3 +149,21 @@ def test_missing_claude_hook_evidence_has_explicit_bind_path(tmp_path, monkeypat
 def test_claude_hook_warning_is_not_emitted_for_other_lanes(tmp_path, monkeypatch):
     monkeypatch.delenv("CLAUDE_JOB_DIR", raising=False)
     assert _load(monkeypatch, tmp_path).section_claude_registration() == ""
+
+
+def test_section_phase_names_the_cloud_mode_source(tmp_path, monkeypatch):
+    # The settings default says plan, but a cloud session takes its mode from the dropdown: the
+    # orientation must not assert "opens in PLAN" there, and must be unchanged everywhere else.
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "settings.json").write_text(json.dumps({"permissions": {"defaultMode": "plan"}}))
+    module = _load(monkeypatch, tmp_path)
+
+    monkeypatch.setenv("CLAUDE_CODE_REMOTE", "true")
+    cloud = module.section_phase()
+    monkeypatch.delenv("CLAUDE_CODE_REMOTE")
+    local = module.section_phase()
+
+    assert "takes its mode from the dropdown" in cloud
+    assert "opens in PLAN" not in cloud
+    assert "opens in PLAN" in local
+    assert "takes its mode from the dropdown" not in local

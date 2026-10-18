@@ -129,15 +129,18 @@ block. Every consumer that reads a sensor fact derives it from the registry, not
 by sensor id — consumers work unchanged if an id is renamed. See `docs/IDEAL-FORMS-LEDGER.md` →
 IF-SENSOR-REGISTRY.
 
-## Claude Code cloud sessions
+# Claude Code cloud sessions
 
-What the repo's permission configuration can and cannot do when a session runs in a Claude Code cloud
-container (`CLAUDE_CODE_REMOTE=true`). Observed 2026-10-18 on Claude Code 2.1.302 by a read-only
-multi-agent audit and re-checked by hand; the Mac, the fleet and other providers need their own evidence.
+This section is observation, not relocated history. It records what the repo's permission configuration
+can and cannot do when a session runs in a Claude Code cloud container (`CLAUDE_CODE_REMOTE=true`).
+Observed 2026-10-18 on Claude Code 2.1.302 by a read-only multi-agent audit and re-checked by hand
+(one container, one session); the Mac, the fleet and other providers need their own evidence.
 
 - **The project allow list is inert until the workspace is trusted.** `/tmp/claude-code.log` (lines
   45-47 of that session): `Dropped 75 project-scoped permissions.allow entries — workspace not yet
-  trusted`; only the launcher's `Skill` rule applied, and `/root/.claude.json` has no `projects` key.
+  trusted`; the only allow rule the log shows being added is the launcher's `Skill` (to `flagSettings`).
+  The launcher's redacted `--allowed-tools` list is a separate source that still applies, minus
+  `Bash(*)`/`Agent(*)`/`Monitor(*)`, which Auto mode strips. `/root/.claude.json` has no `projects` key.
   Trust needs an interactive accept or `projects["<path>"].hasTrustDialogAccepted`. Seeding it activates
   every project rule at once (including the Mac-tuned `git push *`, `gh api *`, `npm *`, `npx *`), so it
   is an operator posture decision, never an agent write. The platform page for session permissions says a
@@ -155,9 +158,16 @@ multi-agent audit and re-checked by hand; the Mac, the fleet and other providers
   pytest token. Residual, by design of the regex: the word pytest between two pipes inside a quoted
   grep alternation still reads as a command separator and is denied — put such text in a file, not in a
   Bash command.
-- **GitHub GraphQL is refused (HTTP 403).** REST and `mcp__github__*` work. `gh pr view|create|merge`,
-  `gh issue view|list`, `merge-policy.sh`, `merge-drain.py` and `ship-docs.sh` therefore cannot run; the
-  403 reads in `merge-policy.sh` as a generic `BLOCKED — cannot read PR`, not as a refusal of the PR.
+- **GitHub GraphQL is refused (HTTP 403).** Every GraphQL-backed `gh` verb fails: `gh pr view|merge|
+  checks|status|list`, `gh issue view|list|comment|close`, `gh label list` (and `gh pr create`, inferred).
+  Working: `gh api repos/<owner>/<repo>/...` (REST), `gh run list`, `gh pr diff`, `mcp__github__*`.
+  `merge-policy.sh`, `merge-drain.py` and `ship-docs.sh` therefore cannot run, and `session-plan.py`'s
+  printed `gh issue create|close` cannot either. In `merge-policy.sh` the 403 matches neither failure
+  regex, so the verdict reads `BLOCKED — cannot read PR; lookup failure cause is unverified` (exit 3),
+  and the 300-byte diagnostic tail shows only the CCR route list, not the head of the message. The 403
+  body names REST "CCR routes" for auto-merge, ready-for-review, convert-to-draft and review threads, and
+  `mcp__github__merge_pull_request` exists: merging is not technically impossible, but the merge decision
+  belongs to `merge-policy.sh`, which cannot evaluate a PR from here — so leave the merge to a host lane.
   The conduct broker (`LIMEN_CONDUCT_URL`/`LIMEN_CONDUCT_TOKEN`) is also unset, so child reservation
   (`limen conduct split`) cannot be satisfied there.
 - **`scripts/dialogs-silenced.sh` measures the host it runs on.** It reads `$HOME/.claude/settings.json`;

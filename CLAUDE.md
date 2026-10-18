@@ -69,7 +69,7 @@ limen dispatch --agent jules         # dry-run preview; add --live to dispatch f
 ```
 ## Session Phase Entry
 
-**A session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
+**A local session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
 "plan"`, so a terminal or Desktop session started without `--permission-mode` opens in plan mode
 (edits blocked), in stage SHAPE, and reaches BUILD by deciding to — not by default; a cloud session
 takes its mode from the session dropdown. This is the *entry binding* for the canonical cross-agent
@@ -297,7 +297,7 @@ Concretely, from precedent:
 - **`settings.json` / hook-arming blocked** (self-modification boundary) → stage the exact
   validated file, hand the human the one required copy-paste, and do the surrounding branch,
   commit, rebase, push, PR, and merge work yourself.
-- **A permission prompt recurs** → broaden the allow rule to the whole class of command
+- **A local permission prompt recurs** → broaden the allow rule to the whole class of command
   (root-to-leaf), never re-approve the same literal string one prompt at a time. (Insights
   lineage: a too-narrow allowlist caused 10+ repeat prompts in one session.)
 - **A bridge / connectivity / auth check reports blocked** → attempt the documented bootstrap or
@@ -308,8 +308,8 @@ Concretely, from precedent:
   (token/magic-link URLs carry their own identity), dry-run → screenshot → act, verify via the
   server's observed effect (never the acting session's optimistic DOM), and abort on any captcha.
 - **Claude Code cloud session** (`CLAUDE_CODE_REMOTE=true`) → an untrusted workspace loses its project
-  `permissions.allow` at startup (`/tmp/claude-code.log`), so more allow rules cannot fix cloud friction
-  (the repo's deny hooks still run). GitHub GraphQL is refused (HTTP 403): `gh pr create|merge`,
+  `permissions.allow` at startup (observed 2026-10-18, v2.1.302: `/tmp/claude-code.log`), so more allow
+  rules cannot fix that (the repo's deny hooks still run). GitHub GraphQL is refused (HTTP 403): `gh pr create|merge`,
   `merge-policy.sh`, `merge-drain.py`, `ship-docs.sh` cannot run — open the PR via
   `mcp__github__create_pull_request` and leave the merge to a host lane. Detail:
   [detail doc](docs/architecture/merge-and-branch-protocol-detail.md#claude-code-cloud-sessions).
