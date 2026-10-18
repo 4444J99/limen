@@ -481,3 +481,15 @@ def test_release_session_check_refuses_changed_generation_without_write(monkeypa
     result = CliRunner().invoke(conduct_group, ["release-session", "native", "--request", str(prepared)])
     assert result.exit_code != 0
     assert calls == ["GET"]
+
+
+def test_release_session_validation_does_not_echo_private_values(monkeypatch, tmp_path):
+    client = HttpConductClient("https://limen-runtime.example", "fixture-owner-token")
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    payload = _release_request()
+    payload["unexpected_field"] = "private-marker-fixture"
+    prepared = tmp_path / "release.json"
+    prepared.write_text(json.dumps(payload))
+    result = CliRunner().invoke(conduct_group, ["release-session", "native", "--request", str(prepared)])
+    assert result.exit_code != 0
+    assert "private-marker-fixture" not in result.output

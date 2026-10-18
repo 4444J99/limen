@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import click
+from pydantic import ValidationError
 
 from limen.conduct.broker import ConductError
 from limen.conduct.canary import run_full_mesh_canary
@@ -119,7 +120,10 @@ def session_binding(session_id: str) -> None:
 def release_session(session_id: str, request_path: Path, apply: bool) -> None:
     """Check a stale binding by default; apply requires an isolated owner bearer."""
     try:
-        request = SessionReleaseRequestV1.model_validate(_read_json(request_path))
+        try:
+            request = SessionReleaseRequestV1.model_validate(_read_json(request_path))
+        except ValidationError as exc:
+            raise click.ClickException("invalid session release request") from exc
         client = _session_owner_client()
         if apply:
             _emit(client.release_session(session_id, request))
