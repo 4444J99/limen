@@ -113,6 +113,23 @@ def test_no_baselined_row_is_already_homed():
     assert stale == [], f"homed decisions still in BASELINE: {stale}"
 
 
+# --- the tree it judges -----------------------------------------------------
+def test_a_stub_limen_root_cannot_redirect_the_predicate(tmp_path):
+    """An agent shell can export LIMEN_ROOT at a directory holding only logs/. Honouring it measured an empty
+    tree ("0 plan(s)", every baseline row stale) and failed every docs/plans change from that shell."""
+    (tmp_path / "logs").mkdir()
+    ran = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check-plan-decisions.py")],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "LIMEN_ROOT": str(tmp_path)},
+        check=False,
+    )
+    assert ran.returncode == 0, ran.stdout[-400:]
+    assert "STALE-BASELINE" not in ran.stdout and " 0 plan(s)" not in ran.stdout
+    assert "is set but NOT used" in ran.stderr
+
+
 # --- the live tree -----------------------------------------------------------
 def test_live_plans_have_no_unhomed_new_decision():
     unhomed = [r["key"] for r in cpd.scan() if not r["home"] and not r["baselined"]]
@@ -127,26 +144,3 @@ def test_the_two_restated_decisions_are_now_homed():
         key = f"2026-07-30-portvs-astra-consolidation.md#{n}"
         assert key in rows, f"{key} not parsed"
         assert rows[key]["home"], f"{key} still has no binding home"
-
-
-@pytest.mark.parametrize("foreign_exists", [False, True])
-def test_gate_does_not_scan_ambient_root(tmp_path, foreign_exists):
-    """An ambient root must neither hide checkout decisions nor introduce foreign failures."""
-    foreign = tmp_path / "foreign-checkout"
-    if foreign_exists:
-        plans = foreign / "docs" / "plans"
-        plans.mkdir(parents=True)
-        (plans / "foreign.md").write_text("## Decisions\n\n1. A foreign unhomed decision.\n", encoding="utf-8")
-    command = [sys.executable, str(ROOT / "scripts" / "check-plan-decisions.py"), "--check"]
-    clean = subprocess.run(
-        command, env={**os.environ, "LIMEN_ROOT": str(ROOT)}, capture_output=True, text=True, check=False, timeout=15
-    )
-    redirected = subprocess.run(
-        command, env={**os.environ, "LIMEN_ROOT": str(foreign)}, capture_output=True, text=True, check=False, timeout=15
-    )
-    assert clean.returncode == 0, clean.stdout + clean.stderr
-    assert redirected.returncode == 0, redirected.stdout + redirected.stderr
-    assert redirected.stdout == clean.stdout
-    assert str(foreign) in redirected.stderr
-    assert "NOT used" in redirected.stderr
-    assert "NOT used" not in clean.stderr

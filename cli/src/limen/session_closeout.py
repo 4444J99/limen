@@ -17,6 +17,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Literal, overload
 from urllib.parse import quote, urlsplit
 
+from limen.conduct.client import BrokerUnavailable
+
 SCHEMA = "limen.session_closeout.v1"
 SCHEMA_V2 = "limen.session_closeout.v2"
 SHA = re.compile(r"[0-9a-f]{40}")
@@ -91,30 +93,26 @@ def owner_readback(url: str) -> dict:
     return value
 
 
-def published(root: Path, revision: str, branch: str) -> bool:
-    if not SHA.fullmatch(revision) or not branch or branch.startswith("-"):
-        return False
-    ref = f"refs/heads/{branch}"
-    slug = github_repository_slug(git(root, "remote", "get-url", "origin"))
-    if slug is not None:
-        # GitHub publication uses the authenticated exact-ref API. Ambient SSH
-        # ControlPersist otherwise creates a detached master during this read,
-        # which the same predicate correctly rejects as an unattributed process.
-        # Never turn that self-created state into an SSH ownership exemption.
-        value = json.loads(
-            run(["gh", "api", "--method", "GET", f"repos/{slug}/git/ref/heads/{quote(branch, safe='')}"])
-        )
-        if not isinstance(value, dict) or not isinstance(value.get("object"), dict):
-            raise Unmeasured("GitHub publication ref readback is malformed")
-        if value["object"].get("type") != "commit":
-            raise Unmeasured("GitHub publication ref is not a commit")
-        tip, remote_ref = value["object"].get("sha"), value.get("ref")
-    else:
-        # Preserve non-GitHub/local transport support and its exact live-ref proof.
-        rows = git(root, "ls-remote", "--exit-code", "origin", ref).splitlines()
-        if len(rows) != 1:
-            return False
-        tip, remote_ref = rows[0].split()
+def github_ref(slug: str, path: str) -> dict | None:
+    """Exact-ref readback through the authenticated API.
+
+    None only when GitHub reports the ref absent (HTTP 404); every other failure propagates, so an
+    authentication or transport fault never reads as "not published" or falls back to SSH.
+    """
+    try:
+        value = json.loads(run(["gh", "api", "--method", "GET", f"repos/{slug}/git/ref/{path}"]))
+    except subprocess.CalledProcessError as exc:
+        if b"HTTP 404" in (exc.stderr or b""):
+            return None
+        raise
+    if not isinstance(value, dict) or not isinstance(value.get("object"), dict):
+        raise Unmeasured("GitHub publication ref readback is malformed")
+    if value["object"].get("type") != "commit":
+        raise Unmeasured("GitHub publication ref is not a commit")
+    return value
+
+
+def tip_covers(root: Path, revision: str, ref: str, remote_ref: object, tip: object) -> bool:
     if remote_ref != ref or not isinstance(tip, str) or not SHA.fullmatch(tip):
         return False
     # A moving remote never makes a cached origin/* ref publication evidence.
@@ -125,6 +123,107 @@ def published(root: Path, revision: str, branch: str) -> bool:
     except subprocess.CalledProcessError:
         return False
     return True
+
+
+def squash_published(root: Path, slug: str, revision: str, branch: str) -> bool:
+    """Publication proof once a squash merge deleted the branch: the merged PR's pull ref.
+
+    GitHub keeps refs/pull/N/head at the PR's final head after the branch is gone, so the same exact-ref
+    proof holds. N comes from the merged same-repository PR recorded for this branch name; a fork, an
+    unmerged PR or a pull ref that no longer covers the revision never counts.
+    """
+    rows = json.loads(
+        run(
+            [
+                "gh",
+                "api",
+                "--method",
+                "GET",
+                f"repos/{slug}/pulls",
+                "-f",
+                "state=all",
+                "-f",
+                f"head={slug.split('/')[0]}:{branch}",
+            ]
+        )
+    )
+    if not isinstance(rows, list):
+        raise Unmeasured("GitHub pull request lookup is malformed")
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("merged_at") or type(row.get("number")) is not int:
+            continue
+        head_repo = (row.get("head") or {}).get("repo") if isinstance(row.get("head"), dict) else None
+        if not isinstance(head_repo, dict) or head_repo.get("full_name") != slug:
+            continue
+        number = row["number"]
+        value = github_ref(slug, f"pull/{number}/head")
+        if value is not None and tip_covers(
+            root, revision, f"refs/pull/{number}/head", value.get("ref"), value["object"].get("sha")
+        ):
+            return True
+    return False
+
+
+def published(root: Path, revision: str, branch: str) -> bool:
+    if not SHA.fullmatch(revision) or not branch or branch.startswith("-"):
+        return False
+    ref = f"refs/heads/{branch}"
+    slug = github_repository_slug(git(root, "remote", "get-url", "origin"))
+    if slug is not None:
+        # GitHub publication uses the authenticated exact-ref API. Ambient SSH
+        # ControlPersist otherwise creates a detached master during this read,
+        # which the same predicate correctly rejects as an unattributed process.
+        # Never turn that self-created state into an SSH ownership exemption.
+        value = github_ref(slug, f"heads/{quote(branch, safe='')}")
+        if value is None:
+            # delete_branch_on_merge removes the head ref after a squash merge; the pull ref remains.
+            return squash_published(root, slug, revision, branch)
+        tip, remote_ref = value["object"].get("sha"), value.get("ref")
+    else:
+        # Preserve non-GitHub/local transport support and its exact live-ref proof.
+        rows = git(root, "ls-remote", "--exit-code", "origin", ref).splitlines()
+        if len(rows) != 1:
+            return False
+        tip, remote_ref = rows[0].split()
+    return tip_covers(root, revision, ref, remote_ref, tip)
+
+
+def verified_head_landed(root: Path, revision: str, head: str) -> None:
+    """The verified revision is the inspected head's ancestor, or the final head of a PR squashed into it.
+
+    A squash commit is not a descendant of the PR head it replaced, so ancestry alone makes every
+    squash-merged session unmeasurable. The exact-head tie is kept: the merged PR's head must be this
+    revision and its merge commit must be an ancestor of the inspected head.
+    """
+    try:
+        git(root, "merge-base", "--is-ancestor", revision, head)
+        return
+    except subprocess.CalledProcessError as exc:
+        if exc.returncode != 1:
+            raise Unmeasured("verification revision is not available locally") from None
+    slug = github_repository_slug(git(root, "remote", "get-url", "origin"))
+    if slug is not None:
+        rows = json.loads(run(["gh", "api", "--method", "GET", f"repos/{slug}/commits/{revision}/pulls"]))
+        if not isinstance(rows, list):
+            raise Unmeasured("GitHub pull request lookup is malformed")
+        for row in rows:
+            if not isinstance(row, dict) or not row.get("merged_at"):
+                continue
+            raw_head = row.get("head")
+            row_head: dict = raw_head if isinstance(raw_head, dict) else {}
+            raw_repo = row_head.get("repo")
+            row_repo: dict = raw_repo if isinstance(raw_repo, dict) else {}
+            merge = row.get("merge_commit_sha")
+            if row_head.get("sha") != revision or row_repo.get("full_name") != slug or not isinstance(merge, str):
+                continue
+            if not SHA.fullmatch(merge):
+                continue
+            try:
+                git(root, "merge-base", "--is-ancestor", merge, head)
+            except subprocess.CalledProcessError:
+                continue
+            return
+    raise Unmeasured("verification head is neither an ancestor of the inspected head nor a squash-merged PR head")
 
 
 def process_observation(root: Path, session_id: str, *, evidence: list[dict] | tuple[dict, ...] = ()) -> dict:
@@ -264,7 +363,7 @@ def evaluate(
                 notes.append({"owner_url": receipt["owner_url"], "completion_check_exit": check["exit_code"]})
             else:
                 findings.append("required scoped predicate has no passing exact-head receipt")
-        git(root, "merge-base", "--is-ancestor", revision, head)
+        verified_head_landed(root, revision, head)
         evidence_path = safe_path(check.get("evidence"))
         evidence_paths.add(evidence_path)
         payload = git(receipt_root, "show", f"{receipt_head}:{evidence_path}", raw=True)
@@ -724,7 +823,7 @@ def evaluate_scoped(
             revision = check.get("head", "")
             if not isinstance(revision, str) or not SHA.fullmatch(revision):
                 raise Unmeasured("verification revision is required")
-            git(root, "merge-base", "--is-ancestor", revision, head)
+            verified_head_landed(root, revision, head)
             if own and git(root, "diff", "--name-only", revision, head, "--", *own):
                 findings.append(f"{identifier}: owned implementation changed since verification")
         if own and not checks_by_root[identifier]:
@@ -791,7 +890,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from limen.conduct.client import client_from_env
 
-        client = client_from_env()
+        # An isolated agent shell cannot source the organ-owned credential cache (issue 2966).
+        client = client_from_env(hydrate_cache=True)
         audit = client.session_audit(args.session_id)
         sessions = client.capabilities().get("sessions", [])
         binding = next((row for row in sessions if row.get("session_id") == args.session_id), None)
@@ -833,6 +933,9 @@ def main(argv: list[str] | None = None) -> int:
             "error_type": type(exc).__name__,
         }
         if isinstance(exc, Unmeasured):
+            result["reason"] = str(exc)
+        elif isinstance(exc, BrokerUnavailable):
+            # Fixed, secret-free messages that name the missing broker configuration or credential cache.
             result["reason"] = str(exc)
         code = 2
     print(

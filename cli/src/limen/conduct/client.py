@@ -367,9 +367,19 @@ class LocalConductClient:
         return self.broker.request_stop(run_id, session_id)
 
 
-def client_from_env():
+def client_from_env(*, hydrate_cache: bool = False):
+    """Broker client from the environment.
+
+    ``hydrate_cache`` additionally fills a missing URL/token from the organ-owned credential cache, for
+    callers that run in an isolated shell that cannot source it. It is opt-in so no other caller, and no
+    test, silently picks up this host's real credentials.
+    """
     endpoint = os.environ.get("LIMEN_CONDUCT_URL", "").strip()
     token = os.environ.get("LIMEN_CONDUCT_TOKEN", "").strip()
+    if hydrate_cache and not (endpoint and token) and not os.environ.get("LIMEN_CONDUCT_STATE", "").strip():
+        from limen.conduct.env_cache import complete_from_cache
+
+        endpoint, token = complete_from_cache(endpoint, token)  # allow-secret: call result, no literal
     if endpoint:
         return HttpConductClient(endpoint, token)
     local_state = os.environ.get("LIMEN_CONDUCT_STATE", "").strip()
