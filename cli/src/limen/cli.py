@@ -970,6 +970,12 @@ def harvest(agent):
     help="Open a login shell in the worktree after creating the packet.",
 )
 @click.option(
+    "--destination",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Absolute worktree path; preserves target-volume admission.",
+)
+@click.option(
     "--from",
     "from_ref",
     default=None,
@@ -1020,6 +1026,7 @@ def workstream(
     launch_reasoning_effort,
     launch_sandbox,
     launch_shell,
+    destination,
     from_ref,
     prompt_text,
     prompt_file,
@@ -1052,6 +1059,8 @@ def workstream(
         args.extend(["--sandbox", launch_sandbox])
     if launch_shell:
         args.append("--shell")
+    if destination is not None:
+        args.extend(["--destination", str(destination)])
     if from_ref:
         args.extend(["--from", from_ref])
     if prompt_text:

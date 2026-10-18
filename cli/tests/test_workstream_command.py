@@ -3190,3 +3190,55 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
     assert launching.returncode == 0, launch_stdout + launch_stderr
     assert launched_capture.exists()
     assert (capsule / ".capsule.lock").is_file()
+
+
+def _destination_repo(tmp_path):
+    repo = tmp_path / "destination-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "fixture@example.invalid", cwd=repo)
+    _git("config", "user.name", "Fixture", cwd=repo)
+    (repo / "README.md").write_text("fixture\n")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "fixture", cwd=repo)
+    return repo
+
+
+def test_explicit_destination_uses_same_admission_and_reuses_exact_worktree(tmp_path, monkeypatch):
+    repo = _destination_repo(tmp_path)
+    destination = tmp_path / "external" / "worktree"
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    args = ["workstream", "--no-readme", "--destination", str(destination), str(repo), "external-route"]
+    result = CliRunner().invoke(main, args)
+    assert result.exit_code == 0, result.output
+    assert "created worktree: " + str(destination) in result.output
+    assert not (repo / ".worktrees").exists()
+    assert _git("branch", "--show-current", cwd=destination).stdout.strip() == "work/external-route"
+    second = CliRunner().invoke(main, args)
+    assert second.exit_code == 0, second.output
+    assert "reused worktree: " + str(destination) in second.output
+
+
+@pytest.mark.parametrize("kind", ["relative", "symlink", "foreign"])
+def test_explicit_destination_refuses_ambiguous_targets(tmp_path, monkeypatch, kind):
+    repo = _destination_repo(tmp_path)
+    if kind == "relative":
+        destination = Path("relative-target")
+    elif kind == "symlink":
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+        link.symlink_to(real, target_is_directory=True)
+        destination = link / "target"
+    else:
+        foreign = tmp_path / "foreign"
+        foreign.mkdir()
+        _git("init", "-q", "-b", "main", cwd=foreign)
+        destination = foreign
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    result = CliRunner().invoke(
+        main, ["workstream", "--no-readme", "--destination", str(destination), str(repo), "bad-route"]
+    )
+    assert result.exit_code != 0
+    assert not (repo / ".worktrees").exists()
+    assert not _git("branch", "--list", "work/bad-route", cwd=repo).stdout.strip()
