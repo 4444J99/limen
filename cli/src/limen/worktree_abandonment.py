@@ -28,6 +28,9 @@ RootPrepare = Callable[[Path], None]
 ContentProbe = Callable[[Path], None]
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 OBJECT_ID_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
+# A release is proven by an exact-tip match on a durable origin ref: a branch, or the pull ref GitHub keeps
+# after a squash merge deletes the branch.
+RELEASE_PROOF_REF_RE = re.compile(r"^refs/(?:heads/.+|pull/[0-9]+/head)$")
 
 
 @dataclass(frozen=True)
@@ -323,7 +326,7 @@ def retire_released_worktree(
     """
     if not target.exists() and not target.is_symlink():
         return {"state": "already-absent", "refs_deleted": 0}
-    if not OBJECT_ID_RE.fullmatch(expected_head) or not remote_ref.startswith("refs/heads/"):
+    if not OBJECT_ID_RE.fullmatch(expected_head) or not RELEASE_PROOF_REF_RE.fullmatch(remote_ref):
         return {"state": "retained", "reason": "invalid-release-proof"}
 
     def checked(*args: str) -> str:
