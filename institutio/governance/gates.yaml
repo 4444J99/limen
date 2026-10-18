@@ -395,6 +395,12 @@ gates:
     tier: cheap
     owner: ianva
     note: "Direct tunnel launch requires local unauthenticated rejection; a force flag cannot publish an open endpoint."
+  ianva-unit-test:
+    command: "bash -c 'PYTHONPATH=ianva/src python3 -m unittest discover -s ianva/tests'"
+    paths: ["ianva/src/**", "ianva/tests/**", "ianva/scripts/ianva-serve.sh", "ianva/pyproject.toml"]
+    tier: cheap
+    owner: ianva
+    note: "ianva/tests had no runner anywhere: pytest-cli names ianva/** in its paths but runs cli/tests only, and ci.yml/pr-gate run only ruff, mypy and py_compile over ianva. The suite pins the credential-isolation contract (no ~/.limen.env key, including a lane bearer such as LIMEN_CONDUCT_TOKEN_OPENCODE, reaches the long-lived gateway backend, and the launchd supervisor never sources the cache), so a regression there was invisible to every gate. Found 2026-10-18 while landing #3043, whose ianva assertion was hand-run. ianva is stdlib-only, so plain unittest on any python3 is the hermetic form."
   sensitive-history-receipt-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_sensitive_history_removal.py -q"
     paths: ["scripts/check-sensitive-history-removal.py", "cli/tests/test_sensitive_history_removal.py"]
