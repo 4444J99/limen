@@ -5356,6 +5356,51 @@
         "historical_gate_requires_verification": "Whether closed-unmerged work was abandoned on purpose or lost is a statement of intent that no predicate can derive.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-LESSON-HARVEST-WITHHELD-SESSIONS",
+      "label": "Decide how the three FERPA-withheld opencode sessions are processed: read by you, redacted first and then read, or recorded as permanently withheld (about 5 minutes).",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-18",
+      "cost": "one decision; the three sessions stay unprocessed in the lesson-harvest cursor and are counted in the backlog meanwhile, so nothing is lost or guessed",
+      "source_task": "https://github.com/4444J99/limen/issues/3108 (item 1); measured 2026-10-18 with scripts/lesson-harvest.py --check: opencode has 3 unprocessed and 56 processed sessions, and all three were withheld from any model read because their rendered content is education-record class",
+      "gate": "Whether education-record-class content may be read by a model, read only after redaction, or never is a handling decision about third-party records that no predicate can derive. Marking the sessions none-found on text nobody read would be a false processed claim.",
+      "unlocks": "Closing the opencode row of the lesson-harvest backlog (python3 scripts/lesson-harvest.py --check), and any lesson in those three sessions reaching a durable owner.",
+      "steps": [
+        "(human) State one of: read them yourself and name the lessons; approve a redaction pass and then a model read; or record them as permanently withheld with a reason.",
+        "(agent, after the decision) Execute it with python3 scripts/lesson-harvest.py --mark on the exact session ids from --queue --vendor opencode. A permanent withhold is recorded against an existing owner reference, never as none-found."
+      ],
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "issue": 3108,
+      "diagnosed_at": "2026-10-18T18:15:00Z",
+      "diagnosis_provenance": "lesson-harvest.check.opencode-withheld",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Once the operator states a disposition, mark the three withheld opencode sessions through scripts/lesson-harvest.py --mark with the owner that disposition names.",
+        "rationale": "The organ withholds rather than guesses: an unread session marked none-found would report a lesson-free session that nobody checked. The cost of waiting is three counted, unprocessed rows.",
+        "evidence_refs": [
+          "https://github.com/4444J99/limen/issues/3108",
+          "censor/precedents.jsonl#PREC-2026-10-18-unreadable-is-unknown-not-none-found"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#full-lifecycle-closure",
+          ".claude/skills/lesson-harvest/SKILL.md"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3108",
+        "acceptance": {
+          "condition": "The three withheld opencode sessions each carry a recorded disposition in censor/lesson-harvest.jsonl, and python3 scripts/lesson-harvest.py --check shows opencode with zero unprocessed.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Operator decision on handling of the three withheld sessions"
+        ],
+        "remaining_human_action": "State the disposition for the three withheld opencode sessions on the owner issue; the agent executes it.",
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }
