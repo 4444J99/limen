@@ -32,7 +32,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 0,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
+      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
     },
     {
       "root_id": "repair",
@@ -40,7 +40,7 @@
       "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
       "exit_code": 1,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517",
+      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1",
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/3087"
     }
@@ -51,7 +51,7 @@
       "repair"
     ],
     "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-    "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
+    "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
   },
   "external_effects": [
     {
@@ -60,14 +60,14 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/issues/3056",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
+      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
     },
     {
       "id": "currency-reconciliation",
       "kind": "deployment-readback",
       "verified": true,
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
+      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
     },
     {
       "id": "process-source-repair",
@@ -75,7 +75,7 @@
       "verified": false,
       "owner_url": "https://github.com/4444J99/limen/pull/3087",
       "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
-      "sha256": "4bbc810afdf0ef0ec0907c877a27c19b3f8201a808f3c9b041ff7c9cbe4e0517"
+      "sha256": "a369560f9f39d65822fad5467abb61519d26301b1f12b1d647f1b709cb23a4e1"
     }
   ]
 }

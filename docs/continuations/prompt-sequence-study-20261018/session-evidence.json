@@ -111,6 +111,22 @@
       "exit_code": 2,
       "session_released": false,
       "reason": "process ownership observation unavailable or invalid"
+    },
+    {
+      "attempt": 2,
+      "receipt_publication_head": "c9a436aaee2a5d1c9a393ab71b461033b928020c",
+      "exit_code": 2,
+      "session_released": false,
+      "error_type": "BrokerQuotaExhausted",
+      "reason": "Authenticated broker evidence could not be measured"
+    },
+    {
+      "attempt": 3,
+      "receipt_publication_head": "c9a436aaee2a5d1c9a393ab71b461033b928020c",
+      "exit_code": 2,
+      "session_released": false,
+      "error_type": "BrokerQuotaExhausted",
+      "reason": "Second unchanged native-anchor closeout run; no session release"
     }
   ],
   "process_diagnosis": {
@@ -147,5 +163,9 @@
       "vitals-shed"
     ],
     "observed_at": "2026-10-18T18:01:15.312597+00:00"
+  },
+  "publication_update": {
+    "pr_description_updated": false,
+    "reason": "Host command policy denied metadata update; committed receipt is the durable owner evidence"
   }
 }
