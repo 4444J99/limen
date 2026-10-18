@@ -55,8 +55,9 @@
 #
 # ERRORS THAT DO NOT WAIT
 #   If the state directory cannot be created, or the lock cannot be taken because the state
-#   directory is not writable, the start exits 1 at once with a message naming the directory. A
-#   host without curl exits 127 before any probe, for --stop, --status and the start path alike.
+#   directory is not writable, the start exits 1 at once with a message naming the directory; a
+#   server that already answers is reused instead, since it needs no lock. A host without curl
+#   exits 127 before any probe, for --stop, --status and the start path alike.
 #   --port must be a decimal number from 1 to 65535 without leading zeros; anything else exits 2.
 #
 # --STOP
@@ -386,6 +387,11 @@ acquire_start_lock() {
         return 0
       fi
     elif [[ ! -d "$lock_dir" && ! -w "$state_dir" ]]; then
+      # A server that answers needs no lock, so it is reused even when this directory cannot be
+      # written; only a start that would have to launch an engine fails here.
+      if server_answers; then
+        return 10
+      fi
       echo "open-knowledge: cannot take the start lock; the state directory is not writable: $state_dir" >&2
       exit 1
     fi

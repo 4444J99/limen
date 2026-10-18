@@ -1196,6 +1196,26 @@ def test_an_unwritable_state_directory_fails_the_start_at_once(layout):
     assert layout["launches"]() == []
 
 
+def test_a_running_server_is_reused_even_when_the_state_directory_is_unwritable(layout):
+    """A server that answers needs no lock, so an unwritable state directory must not break its reuse."""
+    if os.geteuid() == 0:
+        pytest.skip("root can write into a mode 555 directory, so the unwritable state cannot be built")
+    state = layout["state"]
+    state.mkdir(parents=True)
+    engine = layout["serve_engine"](layout["port"])
+    state.chmod(0o555)
+    try:
+        if os.access(state, os.W_OK):
+            pytest.skip("this file system ignores directory modes, so the unwritable state cannot be built")
+        result = layout["run"]("--no-open", timeout=45)
+    finally:
+        state.chmod(0o755)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"server already up on port {layout['port']}" in result.stdout
+    assert [pid for pid, _ in layout["launches"]()] == [engine.pid], "a second engine was launched"
+
+
 # --- C14: curl is required --------------------------------------------------------------------------
 
 
