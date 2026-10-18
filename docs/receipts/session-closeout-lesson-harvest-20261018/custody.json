@@ -1,0 +1,75 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "7213f6b6-98a3-4aa8-88ee-d5bdbebb0251",
+  "scope": "custody accounting only: no independent native-transcript restore was performed and none is claimed",
+  "base_head_note": "base_head is the published main tip this receipt branch was cut from (it contains every merged PR below); the session's own start revision predates it",
+  "merged": [
+    "4444J99/limen#3061 first harvest tranche: 3 cursor records, 3 memory tickets, issue 3060",
+    "4444J99/limen#3076 Claude backlog drained by a read-only worker team: 90 cursor records, 2 precedents, 5 memory tickets, issues 3060 3071 3074 3075, credential-exposure note on the wall (#320, ids only)",
+    "4444J99/limen#3080 lesson-harvest enumerates antigravity, codex, copilot, gemini and opencode from the vendor-insights index",
+    "4444J99/limen#3085 and #3086 vendor-insights reader fixes: a real --max-chars bound, codex injected context, opencode v2 operator turns",
+    "4444J99/limen#3089 non-Claude tranche: 142 cursor records, 1 precedent, 5 memory tickets",
+    "4444J99/limen#3100 codex .jsonl.zst rollouts readable, closes #3083 (merge 562d2e4bd4503d0d8bde67dd6ca6d480fa9b5494)",
+    "4444J99/limen#3105 non-Claude tranche B: 22 cursor records, codex drained (merge b6a4f208480da3d80005d753ee2a5b09b8b95e0b)",
+    "4444J99/limen#3110 lever L-LESSON-HARVEST-WITHHELD-SESSIONS plus the registry-total pin 113 to 114 (merge 4b2f97df644f3b04ee0709b752aff3fd1cdc688f)"
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/3108",
+    "https://github.com/4444J99/limen/issues/3084",
+    "https://github.com/4444J99/limen/issues/3101",
+    "https://github.com/4444J99/limen/issues/3074",
+    "https://github.com/4444J99/limen/issues/3060",
+    "https://github.com/4444J99/limen/issues/3071",
+    "https://github.com/4444J99/limen/issues/3075"
+  ],
+  "closed_with_pointer": [
+    "https://github.com/4444J99/limen/issues/3083 was closed by the merge of #3100, which carries the fix it asked for"
+  ],
+  "durable_records": {
+    "cursor": "censor/lesson-harvest.jsonl: 257 records appended by this session (3 + 90 + 142 + 22), first-write-wins; every mark was written through the PRs listed above",
+    "precedents": [
+      "PREC-2026-10-18-refused-heavy-wave-is-disclosed-not-green",
+      "PREC-2026-10-18-stale-core-deferral-has-one-bounded-remedy",
+      "PREC-2026-10-18-unreadable-is-unknown-not-none-found"
+    ],
+    "lever": "L-LESSON-HARVEST-WITHHELD-SESSIONS in his-hand-levers.json, owned by issue 3108",
+    "memory_tickets": "submitted through scripts/memory-ticket.py: 3 (#3061), 5 (#3076), 5 (#3089); folding them into the keeper-owned memory tree is TABVLARIVS's and was not observed by this session",
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/3074 items 9 to 13",
+      "https://github.com/4444J99/limen/issues/3083",
+      "https://github.com/4444J99/limen/issues/320 rotation review for secrets seen in vendor transcripts, ids only"
+    ],
+    "broker_registration": "bound earlier in the job with scripts/bind-running-claude-session.py; the conduct-register hook has since moved the binding to this worktree (the coupling recorded in #3095), and the session predicate reads the binding that exists now"
+  },
+  "session_worktrees": {
+    "created_and_removed": [],
+    "retained": [
+      "~/Workspace/limen/.claude/worktrees/lesson-harvest-20261018 (receipt worktree)"
+    ],
+    "branches": "the topic branches of the merged PRs above are squash-merged, so ancestry cannot prove them landed; whether they are reaped is the receipt-backed reap's, and its online proof is unmeasured here (owner: issue 3041)"
+  },
+  "external_effects": [
+    "GitHub issues created and commented as listed above; the PRs merged are this session's own, and no force-push was made",
+    "no email, message or payment was sent from the lesson-harvest stretch of this session",
+    "worker fan-out: read-only scan-tier agents (rolling window of at most five) read vendor transcripts and returned structured candidates. The #3076 team ran without a broker split reservation because the keeper has no approved priority for this work (an owner act), disclosed in that PR; later batches used the same read-only protocol and no reservation is claimed for them"
+  ],
+  "sensitive_material": {
+    "credentials": "no credential value was written to any tracked file, issue, comment or this receipt. One transcript carried three live tokens from a bare environment dump (#3076) and secrets were also seen in three vendor transcripts; rotation review is filed on the credential wall (#320) by id only. The credential wall check passes.",
+    "education_records": "three opencode sessions were not read by any model because their rendered content is education-record class; the decision on them is the operator's (lever L-LESSON-HARVEST-WITHHELD-SESSIONS, issue 3108) and their ids are not repeated here"
+  },
+  "not_owned_by_this_session": [
+    "#3072, a concurrent lesson-harvest tranche run by another Claude session, and the closeout receipts of other sessions (for example #3095)",
+    "the lessons of Claude sessions still being written; marking is first-write-wins, so live sessions are left to their own tranche",
+    "the antigravity decoder gap (184 sessions), owned by issue 3084"
+  ],
+  "open_after_this_session": [
+    "the session-bound predicate (scripts/no-tasks-on-me.sh) exited 2, unmeasured: the broker answered BrokerQuotaExhausted (HTTP 500, Durable Objects free-tier rows written) on the session audit read, and the conduct-register hook failed the same way when moving this session's binding to this worktree. Owner: issue 2054. After the quota clears, rerun the predicate bare with this receipt; until it exits 0 this session is not released",
+    "issue 3108: three withheld opencode sessions (operator decision), nine registry vendors with no enumerator or index (backlog unknown, not zero), Claude sessions written since the last tranche",
+    "issue 3084: antigravity decoder recovers no messages for 184 of 199 indexed sessions",
+    "issue 3101: the python-typecheck gate selects web/api paths its command never checks",
+    "issue 3041: reap-branches.py enumerates PRs with a POST, so squash-merged branches are never proven landed",
+    "the pytest-cli heavy gate did not run through verify-scoped.sh for any code PR of this session: host admission refused the heavy wave (exit 75, swap-fraction). The owned test files were run directly instead",
+    "the live checkout and installed runtime follow main through sync-release.sh and the Domus runtime install; this receipt does not claim either is current"
+  ],
+  "local_only_state": "raw transcript renderings written by the worker batches were deleted after use. What remains in the job scratch directory is verdict copies and logs, disposable and not claimed as a restore copy; the verdict lines that matter are committed as the verification text files beside this note."
+}

@@ -64,6 +64,22 @@ reset
 run S1 "$FIX/repo"
 check "shared checkout (no worktree) -> claims nothing" "$(ok is_zero "$(calls)" 0)"
 check "shared checkout -> exit 0" "$(ok exited_ok)"
+check "shared checkout -> silent stdout (SessionStart stdout is model context)" "$(ok silent)"
+check "shared checkout -> logs a 'skipped' line naming the session (issue 3102)" \
+  "$(ok grep -q 'skipped session=S1' "$CLAUDE_JOB_DIR/tmp/conduct-register.log")"
+run S1 "$FIX/repo"; run S1 "$FIX/repo"
+check "shared checkout -> the skip is logged once per session, not once per tool call" \
+  "$(ok is_zero "$(grep -c 'skipped session=S1' "$CLAUDE_JOB_DIR/tmp/conduct-register.log")" 1)"
+run S2 "$FIX/repo"
+check "shared checkout -> a different session logs its own skip" \
+  "$(ok grep -q 'skipped session=S2' "$CLAUDE_JOB_DIR/tmp/conduct-register.log")"
+check "shared checkout -> the skip line says how to become claimable" \
+  "$(ok grep -q 'EnterWorktree' "$CLAUDE_JOB_DIR/tmp/conduct-register.log")"
+check "shared checkout -> still claims nothing after the skips" "$(ok is_zero "$(calls)" 0)"
+
+reset; unset CLAUDE_JOB_DIR
+run S1 "$FIX/repo"
+check "shared checkout outside a background job -> writes no log" "$(ok test ! -e "$FIX/job/tmp/conduct-register.log")"
 
 reset
 printf 'not json' > "$FIX/payload.json"; OUT="$("$HOOK" < "$FIX/payload.json" 2>/dev/null)"; RC=$?
