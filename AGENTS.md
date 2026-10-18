@@ -16,9 +16,6 @@ report results. How it relates to `CLAUDE.md`, `GEMINI.md`, and the ecosystem `O
 - **Dispatch mode:** if launched by the scheduler, `limen dispatch`, MCP task tooling, or an explicit
   "take the next task" request, follow the startup checklist and session rituals below.
 
-The dispatch ritual never overrides a direct human request or a higher-priority system / developer /
-runtime constraint.
-
 ## Working in This Repo
 
 No root `pyproject.toml`, no root `package.json`, and **no pytest config anywhere**. Each package
@@ -45,8 +42,9 @@ carries its own manifest; the gate registry owns the commands.
   one, preferring yaml+pytest+ruff (`pip install -e 'cli[test]'`); override `LIMEN_GATE_PYTHON`.
   `bash scripts/verify-scoped.sh` calls it for you. Never hardcode a `.venv` path — `.venv/` is
   gitignored, so a fresh clone has none.
-- **`limen` on PATH is not your checkout** — it is a Domus shim execing a SHA-pinned runtime. Use
-  `source scripts/lib/gate-python.sh && PYTHONPATH=cli/src "$(limen_gate_python)" -m limen …`.
+- **`limen` on PATH is not your checkout** — it is a Domus shim execing a SHA-pinned runtime. Run
+  yours as `PYTHONPATH=cli/src "$LIMEN_GATE_PYTHON" -m limen …`; that interpreter needs
+  `pip install -e 'cli[test]'` (the resolver's PyYAML-only fallback cannot run the CLI).
 - Standard env: `LIMEN_ROOT=$PWD LIMEN_TASKS=$PWD/tasks.yaml PYTHONPATH=$PWD/cli/src`.
 - `tasks.yaml` is a **public aggregate projection** (`tasks: []`); the real board is remote.
 
@@ -56,20 +54,22 @@ carries its own manifest; the gate registry owns the commands.
 # THE push gate — runs exactly the gates your diff implicates. Bare command, no && chains.
 bash scripts/verify-scoped.sh
 
-# Selection only, no execution. Mutually exclusive mode: never combine with --changed.
-scripts/verify.py --explain <path>...   # or --list; needs the resolved interpreter above
+# Selection only; never combine with --changed (verify-scoped.sh hard-wires it). verify.py's
+# shebang is a bare python3, so call it through a PyYAML interpreter:
+"$LIMEN_GATE_PYTHON" scripts/verify.py --explain <path>...   # or --list
 bash scripts/verify-whole.sh                            # whole-system; there is no --fast flag
 
-# Lint / typecheck (as ci.yml)
+# Lint / typecheck (as ci.yml, which also runs mypy as two steps)
 python3 -m ruff check cli/src cli/tests web/api mcp ianva
 python3 -m ruff format --diff cli/src cli/tests web/api mcp ianva
-(cd cli && python3 -m mypy src/limen/) && python3 -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/
-(cd web/app && npx tsc --noEmit -p tsconfig.json)
+python3 -m mypy --config-file cli/pyproject.toml cli/src/limen/
+python3 -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/
+# web/app: CI runs `npx --yes -p typescript tsc --noEmit -p tsconfig.json` in web/app; registry gate `web-build`.
 
 # Tests — the hermetic wrapper is mandatory
 bash scripts/run-pytest-hermetic.sh cli/tests/test_<file>.py -q
-(cd web/worker && npm run check)      # node --check + node --test
-(cd moneta && npm test)               # vitest + tsc --noEmit
+npm --prefix web/worker run check     # node --check + node --test
+npm --prefix moneta test              # vitest + tsc --noEmit
 ```
 
 `scripts/run-pytest-hermetic.sh` scrubs every `LIMEN_*` var, neutralizes git/XDG config, pins
@@ -77,7 +77,8 @@ bash scripts/run-pytest-hermetic.sh cli/tests/test_<file>.py -q
 
 ### Hooks that mechanically deny shell commands
 
-One JSON object on stdout, `exit 0` — the exit code is never the channel.
+A **denial** is one JSON object on stdout, `exit 0` — the exit code is never the channel. An
+allow (or unclassifiable input) is silent: `exit 0`, no output.
 
 | Guard | Denies | Escape hatch |
 |-------|--------|--------------|
@@ -105,8 +106,6 @@ tools or accept a broker-assigned `WorkPacketV1` (both reserve the same lease an
 **5.** verify before reporting `done` · **6.** close out — report the receipt, harvest children, and
 release any reservation that never started.
 
-Each step is detailed below.
-
 ## Precedence
 
 When instructions conflict, the higher rule wins:
@@ -118,9 +117,7 @@ When instructions conflict, the higher rule wins:
 5. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) — per-agent behavior
 6. General repository docs (`README.md`, `docs/**`)
 
-TABVLARIVS is authoritative for *state* and `tasks.yaml` is its cache/projection; `AGENTS.md` is
-authoritative for *protocol*. Where a tool charter restates a rule from this file, this file is the
-source of truth.
+Where a tool charter restates a rule from this file, this file is the source of truth.
 
 **Directory-scoped `AGENTS.md`.** A component may carry its own. It sits at rung 4 beside this file
 and is *more specific*, not higher: it adds what only that component knows and may never contradict
@@ -128,9 +125,8 @@ this file or a tool charter. **Read the closest one to the files you are editing
 is not derivable from the code — a component's verification belongs in a `gates.yaml` entry, where
 every agent and CI get it without reading anything.
 
-Harnesses that cannot read `AGENTS.md` natively meet it at their own conventional path via a thin
-**pointer** — [`.github/copilot-instructions.md`](.github/copilot-instructions.md) today. A pointer
-names where the rules are; it never restates them, so it cannot become a competing rulebook.
+Harnesses that cannot read `AGENTS.md` natively get a thin pointer
+([`.github/copilot-instructions.md`](.github/copilot-instructions.md)), never a second rulebook.
 
 ## Peer Conductor Contract
 
@@ -163,7 +159,7 @@ priority, ownership, evidence, cadence, or acceptance criteria before closing, u
 durable surface future siblings actually read:
 
 - Cross-agent behavior → update `AGENTS.md` or the owning instruction standard, then run
-  `python3 scripts/check-agent-docs.py` (the drift predicate).
+  `bash scripts/verify-scoped.sh` (selects the `agent-docs` drift predicate).
 - Creates or changes work → submit a TABVLARIVS ticket/task packet, never an ad-hoc board edit.
 - Changes acceptance criteria → update the task, packet, PR body, or receipt target.
 - Cannot be applied now → record a blocker with owner, missing gate, and next command.
@@ -413,7 +409,7 @@ identity when the executor is a different lane.
 
 ### 3. Find Available Tasks
 
-Keep only tasks matching ALL of `target_agent == "<your_name>" OR "any"`, `status == "open"`, and
+Keep only tasks matching ALL of `target_agent == "<your_name>" OR target_agent == "any"`, `status == "open"`, and
 `budget_cost <= remaining_daily_budget`; sort `critical > high > medium > low > backlog`. If nothing
 matches, report "No pending tasks in limen for `<your_name>`" and exit.
 
@@ -546,7 +542,7 @@ keeper commits accepted projections remotely with SHA compare-and-swap.
 | Heartbeat lease | `limen conduct heartbeat <lease>` |
 | Report result | `limen conduct report <lease> --receipt <file>` |
 | Harvest graph | `limen conduct harvest <root-run>` |
-| Merge predicate | `scripts/merge-policy.sh` → `CLEARED` (0) · `HOLD` (2) · `BLOCKED` (3) |
+| Merge predicate | `bash scripts/merge-policy.sh <PR#>` → `CLEARED` (0) · `HOLD` (2) · `BLOCKED` (3) |
 | Submit one exact head, return control | `python3 scripts/merge-drain.py --repo OWNER/NAME --pr N --expected-head SHA` |
 | Show board / progress | `limen status` · `limen progress` (`--view`, `--scope`, `--all`, `--json-output`) |
 | Dispatch / harvest dispatches | `limen dispatch --agent <name> --live` · `limen harvest --agent <name>` |
