@@ -1,0 +1,29 @@
+Session session_018jhoZqSVB9xFWAW5kWFJea — scoped verification (2026-10-18 UTC)
+Every predicate below was run bare; the runner reports a non-zero exit explicitly, and none was reported.
+
+POST-MERGE — run on this receipt's base, origin/main f1297a8bf25084f91b7dfe73251b087129b25a62
+(which contains both session merges: 953c0904a5b6eb83b5a1bf674c85326128fb2a81 and f1297a8bf25084f91b7dfe73251b087129b25a62)
+- run-pytest-hermetic.sh cli/tests/test_verify_host_admission.py cli/tests/test_recovery_execution_limits.py -q -> 40 passed, exit 0
+- ruff check scripts/verify.py scripts/worktree-abandonment.py cli/src/limen/worktree_abandonment.py cli/tests/test_verify_host_admission.py cli/tests/test_recovery_execution_limits.py -> All checks passed, exit 0
+- ruff format --check (same five files) -> 5 files already formatted, exit 0
+- scripts/tests/verify-parallel.test.sh -> 17 of 17 scheduling fixtures ok (incl. gate-timeout, timeout-process-group, serialized-lock-timeout), exit 0
+- merge-base --is-ancestor 953c0904a5b6eb83b5a1bf674c85326128fb2a81 HEAD -> exit 0
+- merge-base --is-ancestor f1297a8bf25084f91b7dfe73251b087129b25a62 HEAD -> exit 0
+- gh pr view 2963 and 2965 -> state MERGED, merge commits as above
+
+PRE-MERGE — exact-tree scoped verification at each PR head (these heads are squash-merged away and are NOT ancestors of the receipt base)
+Lane 1, PR #2965, head 75a6defca9022e047252612faaa108650f13f269, bare verify-scoped.sh with NO timeout flags:
+- cheap wave PASS (18 gates incl. verify-parallel-test, verify-resolver-test, verify-ci-hardening-test, check-plan-decisions, ruff-lint, ruff-format); wave header gate_timeout=registry-budget
+- pytest-cli PASS: 8832 passed, 58 skipped, 0 failed in 701.08 s (the old code kills this gate at 300 s)
+- pytest-api PASS: 52 passed
+- "Scoped verification passed"
+Lane 2, PR #2963, head fbfcba37eb802309ae003f94ded0ec19d20b190e, verify-scoped.sh --total-timeout-seconds 1800 --gate-timeout-seconds 1500 (the registry-timeout fix was not yet merged):
+- cheap wave PASS (11 gates incl. python-typecheck, ruff-lint, ruff-format, check-effectors)
+- pytest-cli PASS: 8836 passed, 58 skipped, 0 failed in 1086.62 s
+- pytest-api PASS: 52 passed
+- "Scoped verification passed"
+Both gate runs used LIMEN_ROOT pinned to the tree under test and a private venv carrying mypy and rfc8785 (see issues 2960 and 2964). Unredacted logs are disposable job-directory scratch; this file is the committed extract.
+
+NOT RUN / NOT CLAIMED
+- Not live: neither merge has been installed into the running runtime, and the live checkout was not fast-forwarded (it carries an unrelated uncommitted AGENTS.md edit).
+- The session closeout predicate itself was not measured when this file was written; see issues 2966 and 2970 for why an isolated agent shell and a squash-merge workflow cannot reach a measured verdict on their own.

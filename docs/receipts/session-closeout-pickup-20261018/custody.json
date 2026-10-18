@@ -1,0 +1,44 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "session_018jhoZqSVB9xFWAW5kWFJea",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 2963, "merge_commit": "953c0904a5b6eb83b5a1bf674c85326128fb2a81", "closes_defect": "https://github.com/4444J99/limen/issues/2928"},
+    {"repository": "4444J99/limen", "pr": 2965, "merge_commit": "f1297a8bf25084f91b7dfe73251b087129b25a62", "closes_defect": "https://github.com/4444J99/limen/issues/2898"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2898",
+    "https://github.com/4444J99/limen/issues/2928",
+    "https://github.com/4444J99/limen/issues/2960",
+    "https://github.com/4444J99/limen/issues/2964",
+    "https://github.com/4444J99/limen/issues/2966",
+    "https://github.com/4444J99/limen/issues/2970"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2898#issuecomment-6244292772",
+      "https://github.com/4444J99/limen/issues/2928#issuecomment-6244293054",
+      "https://github.com/4444J99/limen/issues/2966#issuecomment-6244512853"
+    ],
+    "broker_registration": "none at the time of writing: this direct Claude session was never registered with the conduct broker (no hook registers sessions, and the agent shell cannot reach the broker env). The operator registers it, bound to the receipt worktree, before running the check; see the PR description."
+  },
+  "session_worktrees": {
+    "retained_for_the_sanctioned_reaper": [
+      "~/Workspace/limen/.claude/worktrees/fix-verify-registry-timeouts-20261018 (PR 2965, merged, branch auto-deleted)",
+      "~/Workspace/limen/.claude/worktrees/fix-release-proof-pull-ref-20261018 (PR 2963, merged, branch auto-deleted)"
+    ],
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/session-closeout-pickup-20261018"
+  },
+  "not_owned_by_this_session": [
+    "the uncommitted AGENTS.md rewrite (317 insertions, 364 deletions) in the live checkout ~/Workspace/limen: present before this session started, never touched by it, provenance unknown",
+    "the five codex-worktree-write leases and the other sessions' worktrees listed by git worktree list",
+    "the twelve worktrees from the previous TMB session: the sanctioned reclaim plan owns them, and three of them are refused for ignored-payload-custody-unproven, which this session left alone"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/2898", "what": "keeper-owned verification window for LIMEN_WORK_KEY lanes is unchecked; the registry-timeout fix itself is merged"},
+    {"owner": "https://github.com/4444J99/limen/issues/2966", "what": "closeout predicate unmeasurable from an isolated agent shell"},
+    {"owner": "https://github.com/4444J99/limen/issues/2970", "what": "closeout publication and verification proofs cannot recognise squash-merged work"},
+    {"owner": "https://github.com/4444J99/limen/issues/2960", "what": "ambient LIMEN_ROOT makes gates judge another checkout"},
+    {"owner": "https://github.com/4444J99/limen/issues/2964", "what": "gate-python.sh toolchain probe omits mypy and rfc8785"}
+  ],
+  "local_only_state": "A private gate venv and the unredacted gate logs live under the session job directory (jobs/d3c48349/tmp); they are disposable scratch and no restore copy is claimed. Nothing durable exists only locally: every code change is merged on origin/main and every finding is a filed issue."
+}
