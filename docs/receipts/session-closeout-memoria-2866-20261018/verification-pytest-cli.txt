@@ -1,0 +1,68 @@
+# pytest-cli (heavy gate), PR #2869 head f75dce740c8b87d8c1de7e642611650ccb0c3964
+# gate result: FAIL (verify-scoped exit 1). Recorded as a completion check under handoff; not hidden.
+# attribution: failures are load or pre-existing on origin/main; none in the 5 files this branch changes.
+# pre-existing owners: issue 2933, issue 2941. See PR comment trail on #2869.
+
+## full gate run
+WAVE serialized:pytest-cli: START gates=1 jobs=1 gate_timeout=589.55s output_limit=1048576B
+WAVE serialized:pytest-cli: START gate=pytest-cli
+WAVE serialized:pytest-cli: FINISH gate=pytest-cli status=FAIL duration=226.53s
+FAILED cli/tests/test_closeout_runtime_python.py::test_installed_closeout_uses_its_runtime_python
+FAILED cli/tests/test_campaign_relay_effector.py::test_full_relay_exec_proof_closes_while_keepalive_remains_live
+FAILED cli/tests/test_host_admission.py::test_symlink_or_open_permissions_state_root_is_rejected
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[301]
+FAILED cli/tests/test_gh_app_token.py::test_app_token_resolves_exact_installation_and_scopes_one_numeric_repository
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[404]
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[500]
+FAILED cli/tests/test_cells.py::test_scoped_conductor_registers_with_canonical_broker_without_cell_board[1.2]
+FAILED cli/tests/test_campaign_relay_effector.py::test_exec_failure_channel_prevents_false_readiness
+FAILED cli/tests/test_gh_app_token.py::test_required_secrets_write_checks_grant_without_expanding_permission[]
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[000]
+FAILED cli/tests/test_cells.py::test_failed_cell_registration_emits_terminal_receipt
+FAILED cli/tests/test_plan_handoff.py::test_plan_only_agent_output_becomes_receipt_only_when_worktree_is_clean
+FAILED cli/tests/test_cells.py::test_cell_stop_requests_cooperative_broker_stop_for_owned_run_without_local_signal
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[401]
+FAILED cli/tests/test_cells.py::test_cell_stop_gracefully_terms_only_exact_owned_registration_loop
+FAILED cli/tests/test_cells.py::test_cell_stop_refuses_human_protected_registration
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[403]
+FAILED cli/tests/test_provider_health.py::test_opencode_run_checkpoints_transient_failure_without_unadmitted_retry
+FAILED cli/tests/test_gh_app_token.py::test_pinned_installation_must_equal_exact_repository_installation
+FAILED cli/tests/test_campaign_relay_effector.py::test_ready_publication_failure_rolls_broker_back_to_dormant
+FAILED cli/tests/test_protected_tcc_audit.py::test_external_native_job_waits_for_result_and_verified_completion
+FAILED cli/tests/test_gh_app_token.py::test_repository_identity_mismatch_fails_closed_before_token_mint
+FAILED cli/tests/test_protected_tcc_audit.py::test_native_output_limit_remains_a_visible_failure_and_cleans_host
+FAILED cli/tests/test_campaign_relay_effector.py::test_expired_startup_deadline_bounds_activation_rollback_and_terminalization
+FAILED cli/tests/test_protected_tcc_audit.py::test_requester_cancellation_stops_only_its_owned_native_job
+FAILED cli/tests/test_gh_app_token.py::test_app_token_request_failure_never_broadens_to_pat
+FAILED cli/tests/test_protected_tcc_audit.py::test_requester_loss_cannot_leave_the_native_worker_running
+FAILED cli/tests/test_protected_tcc_audit.py::test_forged_claim_cannot_signal_a_foreign_process
+FAILED cli/tests/test_protected_tcc_audit.py::test_native_import_hang_is_owned_and_cancelled_before_probe_work
+FAILED cli/tests/test_gh_app_token.py::test_numeric_repository_token_failure_never_emits_bootstrap_token_or_broadens_to_pat
+31 failed, 6730 passed, 8 subtests passed in 226.03s (0:03:46)
+WAVE serialized:pytest-cli: FAIL
+
+## clean origin/main 1df15fa1b, 4 files, serial
+FAILED cli/tests/test_closeout_runtime_python.py::test_installed_closeout_uses_its_runtime_python
+FAILED cli/tests/test_protected_tcc_audit.py::test_forged_claim_cannot_signal_a_foreign_process
+FAILED cli/tests/test_protected_tcc_audit.py::test_native_import_hang_is_owned_and_cancelled_before_probe_work
+3 failed, 61 passed in 126.11s (0:02:06)
+
+## PR head f75dce740, same 4 files, serial
+FAILED cli/tests/test_closeout_runtime_python.py::test_installed_closeout_uses_its_runtime_python
+FAILED cli/tests/test_protected_tcc_audit.py::test_forged_claim_cannot_signal_a_foreign_process
+FAILED cli/tests/test_protected_tcc_audit.py::test_native_import_hang_is_owned_and_cancelled_before_probe_work
+3 failed, 61 passed in 80.32s (0:01:20)
+
+## PR head, 9 failing files rerun serially (first attempt)
+FAILED cli/tests/test_closeout_runtime_python.py::test_installed_closeout_uses_its_runtime_python
+FAILED cli/tests/test_campaign_relay_effector.py::test_full_relay_exec_proof_closes_while_keepalive_remains_live
+FAILED cli/tests/test_campaign_relay_effector.py::test_activation_serializes_a_delayed_accepting_confirmation_with_keepalive
+FAILED cli/tests/test_campaign_relay_effector.py::test_startup_stream_read_error_after_partial_bytes_fails_closed
+FAILED cli/tests/test_campaign_relay_effector.py::test_ready_publication_failure_rolls_broker_back_to_dormant
+FAILED cli/tests/test_campaign_relay_effector.py::test_uncertain_accepted_ready_push_refuses_to_adopt_a_terminated_provider
+FAILED cli/tests/test_campaign_relay_effector.py::test_uncertain_absent_ready_push_rolls_back_after_owned_provider_termination
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[401]
+FAILED cli/tests/test_ianva_tunnel.py::test_tunnel_launch_requires_unauthenticated_rejection[403]
+FAILED cli/tests/test_protected_tcc_audit.py::test_forged_claim_cannot_signal_a_foreign_process
+FAILED cli/tests/test_protected_tcc_audit.py::test_native_import_hang_is_owned_and_cancelled_before_probe_work
+11 failed, 181 passed in 284.97s (0:04:44)

@@ -1,0 +1,34 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "session_0117ah7dyS3PujRZVW5e1qDG",
+  "merged": [],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/pull/2869",
+    "https://github.com/4444J99/limen/issues/2933",
+    "https://github.com/4444J99/limen/issues/2941"
+  ],
+  "durable_records": {
+    "pr_comments": [
+      "https://github.com/4444J99/limen/pull/2869#issuecomment-6243064869",
+      "https://github.com/4444J99/limen/pull/2869#issuecomment-6243391914",
+      "https://github.com/4444J99/limen/pull/2869#issuecomment-6243445901",
+      "https://github.com/4444J99/limen/pull/2869#issuecomment-6243549975"
+    ],
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2933#issuecomment-6243459375",
+      "https://github.com/4444J99/limen/issues/2941#issuecomment-6243459907"
+    ],
+    "memory_ticket": "20261017T235956_877307Z-3736c5b1-227fc76c (queued with the record keeper)",
+    "broker_registration": "session_0117ah7dyS3PujRZVW5e1qDG (direct, human_protected, not accepting work)"
+  },
+  "session_worktrees": {
+    "created_and_removed": [
+      "~/Workspace/limen/.worktrees/baseline-main-2869"
+    ],
+    "receipt_worktree": "~/Workspace/limen/.worktrees/session-closeout-memoria-2866-20261018"
+  },
+  "not_owned_by_this_session": [
+    "content of PR #2869 (scripts/organ-health.py, scripts/tabularius-organ.py, three cli tests, docs/receipts/memoria-keeper-drain-2866) is retained work owned by the open PR; this session committed nothing to it"
+  ],
+  "local_only_state": "private verification logs under .limen-private/custody-staging/verify-2869-* hold the unredacted gate output; redacted extracts are committed beside this note and the same results are recorded on the PR. Job-directory scratch scripts and logs are disposable. No restore copy is claimed for the private logs."
+}
