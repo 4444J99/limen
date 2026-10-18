@@ -57,3 +57,47 @@ def reconcile_policy(source: dict, live: dict, *, outcome: str, work_key: str, o
         )
     )
     return result
+
+
+# Emit at most 5,000 bytes, leaving margin within the provider's 5 KB limit.
+POLICY_BINDING_BYTES = 5000
+POLICY_DECODED_BYTES = 65536
+POLICY_STORAGE_SCHEMA = "limen.execution_policy_storage.v1"
+
+
+def encode_policy_binding(policy: dict) -> str:
+    """Preserve policy values while bounding the single secret's transport size."""
+    import base64
+    import gzip
+    import hashlib
+
+    if not isinstance(policy, dict) or str(policy.get("schema_version", "")).startswith(
+        "limen.execution_policy_storage."
+    ):
+        raise ValueError("execution_policy_invalid")
+    raw = json.dumps(policy, separators=(",", ":"), ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")
+    if len(raw) > POLICY_DECODED_BYTES:
+        raise ValueError("execution_policy_decoded_too_large")
+    if len(raw) <= POLICY_BINDING_BYTES:
+        return raw.decode("utf-8")
+    envelope = {
+        "schema_version": POLICY_STORAGE_SCHEMA,
+        "encoding": "gzip+base64",
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "uncompressed_bytes": len(raw),
+        "data": base64.b64encode(gzip.compress(raw, compresslevel=9, mtime=0)).decode("ascii"),
+    }
+    binding = json.dumps(envelope, separators=(",", ":"))
+    if len(binding.encode("utf-8")) > POLICY_BINDING_BYTES:
+        raise ValueError("execution_policy_binding_too_large")
+    return binding
+
+
+def policy_binding_for_runtime(policy: dict, live: dict) -> str:
+    """Refuse compressed installation until authenticated readback proves support."""
+    binding = encode_policy_binding(policy)
+    if json.loads(binding).get("schema_version") == POLICY_STORAGE_SCHEMA and "gzip+base64" not in live.get(
+        "supported_storage_encodings", []
+    ):
+        raise ValueError("execution_policy_storage_reader_not_deployed")
+    return binding
