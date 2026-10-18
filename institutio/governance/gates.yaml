@@ -566,6 +566,13 @@ gates:
     tier: cheap
     owner: lifecycle
     note: "Directly-run entrypoints resolve their interpreter through scripts/lib/gate-python.sh, never a bare PATH python3. verify.py shims python3 for GATES, so a gate run hides this class: the break appears only when closeout step 6, ship-docs.sh or session-plan.py run from a shell whose PATH puts Homebrew's newest python (no PyYAML, no rfc8785) first. Every test therefore fixes PATH itself. Out of scope by decision: the legacy no-argument estate block of no-tasks-on-me.sh, which runs under the verify shim/beat. Also holds the session-plan doubled-date slug and failed-ship stub-cleanup regressions (handoff #3046, 2026-10-18)."
+  branch-preservation:
+    command: "python3 scripts/check-branch-parity.py --ledgers && bash scripts/run-pytest-hermetic.sh cli/tests/test_check_branch_parity.py -q"
+    paths: ["scripts/check-branch-parity.py", "cli/tests/test_check_branch_parity.py", "docs/receipts/session-closeout-parity-t2-deletion-correction-20261018/**"]
+    scoped: true
+    tier: cheap
+    owner: lifecycle
+    note: "BRANCH-PRESERVATION predicate (handoff #3046, 2026-10-18). CI proves two things only: (1) the parity T2 correction receipts are well-formed (19 restored / 70 recovered rows, 40-hex OIDs, restored is a subset of recovery, digests of present files match) and (2) the classifier encodes the four defects that produced the withdrawn 'complete parity' claim - D1 a self-upstream is not evidence, D2 every git status is read, D3 full OIDs only, D4 state is re-read at use - plus the vacuum rule (reading nothing is exit 2, never green). A green run here is NOT a parity claim about any branch: a CI checkout has no local branches. The actual drift measurement is `python3 scripts/check-branch-parity.py --live`, a closeout-time call run against the real estate (first run 2026-10-18: 131 local branches, 37 UNPRESERVED, 19/19 restored refs at their recorded OIDs; UNPRESERVED is a finding, not proof of loss - a squash-merged multi-commit branch reads as one, and deliberate quarantine is indistinguishable from an accident until a retention registry exists); evidence-sha256.txt names gitignored private files CI cannot see and reports them UNVERIFIABLE-IN-CI rather than passing them."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
     paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]

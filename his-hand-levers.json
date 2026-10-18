@@ -5308,6 +5308,26 @@
         "historical_gate_requires_verification": "default-branch history rewrite requires an owner force-push of every branch (banned for agents; explicit owner exception only) plus a GitHub Support purge of refs/pull/* and cached objects; rewrites every SHA pinned downstream (simvltanea PR #28 provenance, all TMB receipts, limen #2904)",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-PARITY-UNLANDED-PRS",
+      "label": "Decide retire-or-reland for three closed-unmerged PRs whose content is not on main: #2682, #2576, #2756.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-18",
+      "cost": "one decision per PR; each ref is restored and retained, so nothing is at risk of loss while it is pending",
+      "source_task": "https://github.com/4444J99/limen/issues/3046 (item 4); measured 2026-10-18 with a checked git cherry: #2682 fix/jules-rolling-observation-20260918 has 148 unlanded patches, #2576 work/recovery-isolation-20260908 has 157, #2756 work/spine-closeout-successor-20260926 has 129",
+      "gate": "Whether closed-unmerged work was abandoned on purpose or lost is a statement of intent that no predicate can derive. #2756 is NOT superseded: the merged successors #2759 and #2761 came from a separate -v2 branch and neither merge commit contains the #2756 tip.",
+      "unlocks": "Retiring or relanding each branch, after which the preservation gate (scripts/check-branch-parity.py) can treat the ref as accounted for instead of carrying it as an open finding.",
+      "steps": [
+        "(human) For each PR, state one of: retire (abandoned on purpose), reland (cut a fresh branch from main and port the patches), or keep parked with a reason.",
+        "(agent) Execute the stated disposition on the normal PR rail; delete no ref until the landing proof for it is positive and repository-qualified."
+      ],
+      "note": "The decision is the human part; reland work is ordinary engineering once chosen. Do not retire a ref on the grounds that an unrelated PR number looks like a successor.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "issue": 3046
     }
   ]
 }
