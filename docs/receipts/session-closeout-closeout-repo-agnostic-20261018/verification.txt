@@ -1,0 +1,35 @@
+Session 01Tnc5CcYKt8w5M6JdYfxAU8 — scoped verification (2026-10-18 UTC)
+Every predicate below was run bare and its own exit code read; none was piped.
+
+POST-MERGE — run on this receipt's base, origin/main c6f0bf74a8fc8e32b51a05af34706e647aa5bff2
+(which contains this session's one Limen merge: PR 2996, the plan for issue 2995)
+- LIMEN_ROOT pinned to the tree under test: python3 scripts/check-session-phase.py -> "PASS — 34 plans held to the chain, all declare issue + PR state", exit 0
+- git merge-base --is-ancestor c6f0bf74a8fc8e32b51a05af34706e647aa5bff2 HEAD -> exit 0
+- gh pr view 505 --repo 4444J99/domus-genoma-private -> MERGED, merge commit 8498484e512fa8c20c575af48d1b029fb8f612db
+- gh pr view 50 --repo 4444J99/a-i--skills -> OPEN, reviewDecision CHANGES_REQUESTED, head 1705e67505207c07c60c6e3a25552ba6273e62a6 (NOT merged)
+
+PRE-MERGE — exact-tree evidence at each PR head (squash-merged away; NOT ancestors of the base)
+Limen PR 2996, head 2cae2d0b54c863e425401526271610d303a6f186:
+- scripts/verify-scoped.sh with LIMEN_ROOT pinned to the tree: cheap wave PASS (session-phase, check-plan-decisions 41 decisions in 53 plans, check-docs-exports, check-note-links, syntax-changed, diff-hygiene); "Scoped verification passed"
+- the same run WITHOUT the pin failed check-plan-decisions (0 plans, nine STALE-BASELINE rows): ambient LIMEN_ROOT named a path that is not a checkout; filed on issue 2960
+- scripts/merge-policy.sh 2996 -> CLEARED, direct; squash merged with --match-head-commit as c6f0bf74
+domus-genoma-private PR 505, head da379a49e7ff9bf8e8263fc9d9e377ed9c6a8ce2:
+- chezmoi cat of the deployed target rendered with no unresolved variable
+- pytest tests/test_closeout_protocol_bundle.py -> 6 passed
+- scripts/merge-policy.sh 505 --repo 4444J99/domus-genoma-private --expected-head da379a49e7ff9bf8e8263fc9d9e377ed9c6a8ce2 -> CLEARED, single-owner fast lane (remote checks advisory: private repo, Actions billing-locked, an existing operator fact); squash merged with --match-head-commit as 8498484e
+- after merge: git merge-base --is-ancestor 8498484e512fa8c20c575af48d1b029fb8f612db origin/main -> exit 0; git diff of the template between da379a49 and origin/main -> empty
+LIVE for the Domus entry:
+- chezmoi apply of the one target ~/.agents/skills/closeout/SKILL.md after a reviewed chezmoi diff; chezmoi diff afterwards -> empty
+- OBSERVED: env -u LIMEN_ROOT python3 tests/check_closeout_discovery.py --codex-only -> status PASS, the deployed path resolved from three working directories, model_turns 0, exit 0
+a-i--skills PR 50 (not merged; live head at pickup 62214d3d, read via gh pr view), local gates at head d1bef973 then dd954eb:
+- validate_skills.py --collection example --unique --check-links -> "Validated 167 skills", exit 0 (both heads)
+- refresh_skill_collections.py then validate_generated_dirs.py -> in sync, exit 0 (both heads)
+- skill_health_check.py --skill closeout -> healthy, 0 issues
+- python3 -m pytest tests -> 158 passed (at d1bef973 only; not re-run at dd954eb)
+- six CodeRabbit findings dispositioned (all accepted) and fixed in dd954eb; a concurrent writer's fix for one of them (4c97602) was kept where it was better
+
+NOT RUN / NOT CLAIMED
+- NOT SHIPPED: a-i--skills PR 50 is open; the closeout skill Claude loads is still the old installed copy. Owner: issue 2995.
+- NOT LIVE for Limen: the live checkout is 11 commits behind origin/main (check-live-checkout with LIMEN_ROOT=/Users/4jp/Workspace/limen -> state=drift, owner scripts/sync-release.sh) and the scheduled runtime is 28 commits behind (check-runtime-lag exit 1; rotation line domus-limen-runtime install --sha c6f0bf74a8fc8e32b51a05af34706e647aa5bff2 was NOT run: it would install other lanes' commits on the host, and this session's merged change is a plan document with no runtime effect).
+- The session closeout predicate was NOT measured to a verdict. Probe results: without the broker bootstrap, exit 2 BrokerUnavailable; after the documented bootstrap (run as a script file), exit 2 FileNotFoundError for the then-missing receipt. Whether this session is registered with the conduct broker is unmeasured. See issues 2966 and 2970.
+- Not claimed: any status above the evidence. merged for Limen 2996 and Domus 505; live and observed for Domus 505 only; nothing for a-i--skills 50.
