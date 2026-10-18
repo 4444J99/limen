@@ -1243,6 +1243,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: censor
     note: "The /vendor-insights engine's adapter tests plus the cross-vendor health-sensor tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. insight-cadence.py is a path because test_health_packet_is_consumed_by_insight_cadence binds its packet loop to the health packet's declared owner/severity. Cheap tier: two files, hermetic, no xdist."
+  prompt-sequence-study-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_prompt_sequence_study.py -q"
+    paths: ["scripts/prompt-sequence-study.py", "scripts/tests/test_prompt_sequence_study.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: censor
+    note: "Synthetic fixtures preserve quoted instructions and repeated commands, and reject cache corruption against source-prefix replay. No private corpus is read."
   reserved-tier-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_bucket_partition.py cli/tests/test_reserved_tier.py -q"
     paths:

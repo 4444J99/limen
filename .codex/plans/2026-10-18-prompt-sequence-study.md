@@ -28,3 +28,22 @@ Validation: sequence integrity, JavaScript render logic, Python lint and diff ch
 Scoped verification was denied by host admission: swap-fraction. Owner: this PR / Codex.
 Next action: run the repository scoped verifier after host admission permits it.
 No merge or full session release is claimed. Retain the worktree for the private review cache.
+
+
+Verification follow-up:
+- The first integrity-only check missed two extraction bugs; targeted fixtures reproduced them.
+- Parser fixes preserve surrounding quoted text and stop echo pairing across assistant responses.
+- Source-prefix replay, full HTML-data comparison and corruption tests replace the weaker cache check.
+- Original-prefix replay yields 1,718 records; the new capture has 1,737 (1,576 follow-ups).
+- Original cache preserved; corrected private view lives in prompt-sequence-study-v2.
+- Original request remains partial: source completeness, all-turn contextual coding, and held-out
+  semantic substitution review have not been completed. No whole-study completion claim is valid.
+- This draft PR remains the durable owner for those acceptance items and the admission-blocked gate.
+
+
+Fresh checks for this revision: 13 targeted regression tests passed; source-prefix replay of 181 files,
+full embedded HTML data, coverage and count reconciliation passed; lint, format and diff checks passed.
+The gate-registry predicate passed (180 gates, with its existing unjustified deploy-trigger note).
+JavaScript render logic passed: 131 columns, six-file filter, and all 11 example turns retained.
+The updated source contains another file mentioning the example ID; search correctly returns both.
+Visual inspection and the host-admission-blocked scoped gate remain unverified.
