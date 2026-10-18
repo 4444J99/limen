@@ -429,7 +429,7 @@ def section_phase() -> str:
     )
     try:
         out = subprocess.run(
-            ["python3", str(ROOT / "scripts" / "session-plan.py"), "audit", "--json"],
+            [sys.executable, str(ROOT / "scripts" / "session-plan.py"), "audit", "--json"],
             cwd=str(ROOT),
             capture_output=True,
             text=True,

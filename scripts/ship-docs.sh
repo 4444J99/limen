@@ -36,6 +36,14 @@ for f in "$@"; do
   [ -f "$root/$f" ] || die "no such file in checkout: $f"
 done
 
+# Resolve the interpreter BEFORE anything is reserved or created: the admission and release organs below
+# need PyYAML, and a bare `python3` is whatever the caller's PATH puts first. Failing here leaves no
+# reserved resource, branch, or retained worktree behind.
+[ -f "$root/scripts/lib/gate-python.sh" ] || die "missing $root/scripts/lib/gate-python.sh — cannot resolve a gate interpreter"
+# shellcheck source=lib/gate-python.sh
+source "$root/scripts/lib/gate-python.sh"
+py="$(limen_gate_python)" || die "no usable gate interpreter (see the gate-python message above)"
+
 git -C "$root" fetch origin main --quiet
 br="docs/${slug}-$(date -u +%Y%m%d%H%M%S)"
 if [ -n "${LIMEN_WORKTREES:-}" ]; then
@@ -50,7 +58,7 @@ tmp="$wt_root/ship-docs-${slug}-$(date -u +%Y%m%d%H%M%S)-$$"
 pushed_head=""
 cleanup() {
   if [ -n "$pushed_head" ]; then
-    python3 "$root/scripts/worktree-abandonment.py" --apply release \
+    "$py" "$root/scripts/worktree-abandonment.py" --apply release \
       --superproject "$root" --target "$tmp" --expected-head "$pushed_head" \
       --remote-ref "refs/heads/$br" || echo "ship-docs: release needs reclaimer retry"
     return
@@ -61,8 +69,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-python3 "$root/scripts/dispatch-admission.py" --reserve-resource worktree --resource-identity "$tmp"
-python3 "$root/scripts/dispatch-admission.py" --reserve-resource branch --resource-identity "$root:$br"
+"$py" "$root/scripts/dispatch-admission.py" --reserve-resource worktree --resource-identity "$tmp"
+"$py" "$root/scripts/dispatch-admission.py" --reserve-resource branch --resource-identity "$root:$br"
 git -C "$root" worktree add --quiet -b "$br" "$tmp" origin/main
 # `worktree add` can exit 0 having checked out NOTHING, leaving an unborn HEAD — set -e cannot catch
 # a command that lies about succeeding. Everything downstream then works perfectly on the wrong base:
