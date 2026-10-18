@@ -178,6 +178,58 @@ The six-session September 30 reconciliation belongs to Limen #2763, with the exi
 per-session owners retained. Domus #403 owns installed discovery. A receipt must separate
 source/merge, installed adoption, scoped session release and genuine custody blockers.
 
+## Producer
+
+`scripts/session-closeout-receipt.py` produces the `limen.session_closeout.v2` receipt the checker
+above only judges (limen issue 2977). It imports the checker's own helpers and its real
+`evaluate_scoped`, so the two cannot drift, and it derives every value from a named source. Run it
+under an interpreter with `pydantic` and `PyYAML` (the cli venv). It never registers a session,
+stages, commits, pushes, merges, creates a continuation owner or deletes anything.
+
+Flow, each verb read-only except where it names the one file set it creates (create-only, mode 0644,
+under the existing continuation directory):
+
+1. `plan --manifest M` gathers git, `gh`, the broker audit and registration and the process census,
+   and prints every gap. Candidate ownership paths appear only under "unattributed, NOT written".
+2. `attest --manifest M --scope ID --label L --gate GATE` runs one registry-declared gate (or the
+   verify-scoped wrapper) in the scope root, in its own process group with a deadline, a scrubbed
+   environment and `check=False`, and records the real exit code, exact head and output digest. It
+   refuses a dirty tree, a gate that mutates git or the broker, and any command that is not declared.
+3. `build --manifest M` re-derives everything, refuses on any gap, writes evidence then the receipt,
+   runs the real checker as a labelled dry run (`non_evidence`: uncommitted bytes are overlaid and only
+   the receipt root's publication is simulated) and removes the files it created if that finds anything.
+   It prints the exact `git add -- <paths>` list; the operator stages and commits it and pushes through
+   the normal PR rail.
+4. `check --manifest M` runs the real checker in-process. `--expect-unpublished` is the dry run for the
+   window between the receipt commit and its push (exit 3, never a pass); a branch never pushed makes
+   `published()` raise, which the checker reports as exit 2, so the dry run names it
+   `ref_absent_on_remote`. `--recheck-heads` reports which scope moved after the receipt bound its
+   `subject_head`. Only a bare `check` after the push is evidence; run it twice for the fixed point.
+
+What it derives: path hashes, `subject_head`, `repository` and numeric `repository_id`, the publication
+branch (from `branch.<b>.remote/merge`, never the branch name), `base_head` (fork point of the GitHub
+default branch, or an explicit revision that may not be later than it), `nested_in`, verification
+`head`/`exit_code`/`sha256`, `custody.root_ids`, effect readbacks, and the disposition.
+
+What it refuses, with an actionable `gap: <code>: <message>`: unknown ownership (`owned_paths` and
+`retained_work` come only from the manifest, each retained owner must be a live-open foreign owner),
+a missing or unverifiable `owner_url`, dirty or unattributed paths, an empty verification list, an
+unpublished or absent remote ref, an empty attribution window (a fork point equal to HEAD), custody that
+is not a scope-bound `limen.custody_receipt.v2` bundle or a provable absence (a sealed-custody tracked
+receipt binds no session or scope), effects without a non-empty `expect` or an explicit
+`external_effects_enumerated` attestation, an active lease, a nonterminal run, `complete` when anything
+is retained, unverified or failing, a symlink anywhere in the evidence path, and any committed byte that
+matches a secret shape, an absolute private path, or a declared scope path.
+
+`plan` also reports the census by category (no pids, no paths) and the exact broker anchor-binding
+mismatch class. A session anchored at a shared directory such as HOME cannot reach a zero census while
+other agents run, because every process whose cwd is exactly the anchor is counted: anchor the session
+at a dedicated quiet directory. Residual risk: `path_sha256` and `session_root_path_sha256` of
+well-known private paths are brute-forceable; the checker mandates them, so only opaque ids appear
+anywhere else. Deliberately not done: `prune`, `--use-installed` (the checker module hash is reported
+and compared with `--canonical-checker` instead), deriving the session start from broker run receipts,
+candidate PR/ref discovery for effects, and retirement or lineage packets.
+
 ## September 30 implementation receipt
 
 Owner: [Limen #2763](https://github.com/4444J99/limen/issues/2763).
