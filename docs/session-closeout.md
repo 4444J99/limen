@@ -47,6 +47,18 @@ back to the default `LIMEN_CONDUCT_TOKEN` (legacy `codex-direct-legacy`), which 
 Codex permanently. Never probe registration against the real broker with a real session id; use a
 throwaway id and read the broker record back first. Held by `conduct-register-hook-test`.
 
+**Lane credential resolution (issue 2961).** Python callers get the same rule through
+`client_from_env(hydrate_cache=True, lane="<lane>")`: the token is the lane's own
+`LIMEN_CONDUCT_TOKEN_<LANE>` from the environment or the owned mode-600 cache (parsed, never sourced
+or exported), the generic `LIMEN_CONDUCT_TOKEN` is never read or used as a fallback, and
+`LIMEN_CONDUCT_STATE` is never authority for a lane. A lane id outside `[a-z][a-z0-9_-]{0,31}` or a
+missing entry raises a named `BrokerUnavailable`; neither message carries a value. The MCP server opts
+in only when `LIMEN_AGENT` names a lane that owns a bearer of its own (`lane_credential_present`:
+environment or safe cache); `workstream-capsule.sh` exports `LIMEN_AGENT` for every native lane, and a lane
+without its own bearer keeps its existing resolution exactly. So an OpenCode upstream needs only `LIMEN_AGENT=opencode` and
+`LIMEN_CONDUCT_ENV_FILE=<absolute path>` in its own environment, never a token. Held by
+`cli/tests/test_conduct_env_cache.py` and `cli/tests/test_mcp_server.py`.
+
 ## Existing owner receipt
 
 Store `limen.session_closeout.v1` in the existing continuation's `session-closeout.json`.

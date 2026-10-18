@@ -18,12 +18,14 @@ class BackendEnvironmentTests(unittest.TestCase):
             "PORT": "7666",
             "MCPHUB_SETTING_PATH": "/tmp/mcp_settings.json",
             "LIMEN_CONDUCT_TOKEN_CODEX": "sentinel-conduct-token",
+            "LIMEN_CONDUCT_TOKEN_OPENCODE": "sentinel-lane-token",
             "LIMEN_NON_SECRET_FLAG": "1",
             "CLAUDE_CODE_OAUTH_TOKEN": "sentinel-oauth-token",
             "UNRELATED_SETTING": "retained",
         }
         cache = {
             "LIMEN_CONDUCT_TOKEN_CODEX": "sentinel-conduct-token",
+            "LIMEN_CONDUCT_TOKEN_OPENCODE": "sentinel-lane-token",
             "LIMEN_NON_SECRET_FLAG": "1",
         }
 
@@ -31,6 +33,7 @@ class BackendEnvironmentTests(unittest.TestCase):
             result = creds.sanitize_backend_env(base)
 
         self.assertNotIn("LIMEN_CONDUCT_TOKEN_CODEX", result)
+        self.assertNotIn("LIMEN_CONDUCT_TOKEN_OPENCODE", result)
         self.assertNotIn("LIMEN_NON_SECRET_FLAG", result)
         self.assertNotIn("CLAUDE_CODE_OAUTH_TOKEN", result)
         self.assertEqual(result["UNRELATED_SETTING"], "retained")

@@ -367,13 +367,31 @@ class LocalConductClient:
         return self.broker.request_stop(run_id, session_id)
 
 
-def client_from_env(*, hydrate_cache: bool = False):
+def client_from_env(*, hydrate_cache: bool = False, lane: str | None = None):
     """Broker client from the environment.
 
     ``hydrate_cache`` additionally fills a missing URL/token from the organ-owned credential cache, for
     callers that run in an isolated shell that cannot source it. It is opt-in so no other caller, and no
     test, silently picks up this host's real credentials.
+
+    ``lane`` names the caller's own bearer (``LIMEN_CONDUCT_TOKEN_<LANE>``). A laned client never reads the
+    generic ``LIMEN_CONDUCT_TOKEN`` (the legacy ``codex-direct-legacy`` principal would relabel the lane),
+    never falls back to it, and is always a broker client: ``LIMEN_CONDUCT_STATE`` is a test adapter and is
+    not production authority for a named lane.
     """
+    if lane is not None:
+        from limen.conduct.env_cache import complete_from_cache, lane_token_key
+
+        token_key = lane_token_key(lane)
+        endpoint = os.environ.get("LIMEN_CONDUCT_URL", "").strip()
+        token = os.environ.get(token_key, "").strip()  # allow-secret: runtime lookup of the lane credential
+        if hydrate_cache and not (endpoint and token):
+            endpoint, token = complete_from_cache(endpoint, token, lane=lane)  # allow-secret: call result
+        if not (endpoint and token):
+            raise BrokerUnavailable(
+                f"conduct broker is not configured for lane {lane}; set LIMEN_CONDUCT_URL and {token_key}"
+            )
+        return HttpConductClient(endpoint, token)
     endpoint = os.environ.get("LIMEN_CONDUCT_URL", "").strip()
     token = os.environ.get("LIMEN_CONDUCT_TOKEN", "").strip()
     if hydrate_cache and not (endpoint and token) and not os.environ.get("LIMEN_CONDUCT_STATE", "").strip():

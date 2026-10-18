@@ -24,7 +24,13 @@ LIMEN_SELF_HEAL=1
 
 @pytest.fixture
 def clean_env(monkeypatch):
-    for name in ("LIMEN_CONDUCT_URL", "LIMEN_CONDUCT_TOKEN", "LIMEN_CONDUCT_STATE", "LIMEN_CONDUCT_ENV_FILE"):
+    for name in (
+        "LIMEN_CONDUCT_URL",
+        "LIMEN_CONDUCT_TOKEN",
+        "LIMEN_CONDUCT_TOKEN_OPENCODE",
+        "LIMEN_CONDUCT_STATE",
+        "LIMEN_CONDUCT_ENV_FILE",
+    ):
         monkeypatch.delenv(name, raising=False)
     return monkeypatch
 
@@ -127,6 +133,118 @@ def test_explicit_local_state_adapter_bypasses_the_cache(clean_env, tmp_path):
     clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", mode=0o644)))
     clean_env.setenv("LIMEN_CONDUCT_STATE", str(tmp_path / "state.db"))
     assert type(client_from_env(hydrate_cache=True)).__name__ == "LocalConductClient"
+
+
+LANE_CACHE = CACHE + "LIMEN_CONDUCT_TOKEN_OPENCODE=opencode-lane-token\n"
+
+
+def lane_environ(path: Path) -> dict[str, str]:
+    return {"LIMEN_CONDUCT_ENV_FILE": str(path)}
+
+
+@pytest.mark.parametrize(
+    ("lane", "key"),
+    [
+        ("opencode", "LIMEN_CONDUCT_TOKEN_OPENCODE"),
+        ("claude", "LIMEN_CONDUCT_TOKEN_CLAUDE"),
+        ("github_actions", "LIMEN_CONDUCT_TOKEN_GITHUB_ACTIONS"),
+        ("codex-cloud", "LIMEN_CONDUCT_TOKEN_CODEX_CLOUD"),
+    ],
+)
+def test_lane_names_its_own_cache_key(lane, key):
+    assert env_cache.lane_token_key(lane) == key
+
+
+@pytest.mark.parametrize("lane", ["", "OpenCode", "open code", "../x", "opencode\n", "-opencode", "a" * 33, "1abc"])
+def test_a_lane_that_is_not_a_lane_id_selects_no_key(lane):
+    with pytest.raises(BrokerUnavailable, match=re.escape(env_cache.LANE_INVALID)):
+        env_cache.lane_token_key(lane)
+
+
+def test_lane_read_returns_the_lane_token_never_the_generic_one(tmp_path):
+    cache = write_cache(tmp_path / "limen.env", LANE_CACHE)
+    assert env_cache.read_conduct_credentials(lane_environ(cache), lane="opencode") == (URL, "opencode-lane-token")
+    assert env_cache.read_conduct_credentials(lane_environ(cache), lane="claude") == (URL, "lane-token")
+    assert env_cache.read_conduct_credentials(lane_environ(cache)) == (URL, "tok en")
+
+
+def test_lane_without_its_own_entry_is_a_named_blocker_not_the_generic_bearer(tmp_path):
+    cache = write_cache(tmp_path / "limen.env")
+    with pytest.raises(BrokerUnavailable, match="LIMEN_CONDUCT_TOKEN_OPENCODE") as raised:
+        env_cache.read_conduct_credentials(lane_environ(cache), lane="opencode")
+    assert "tok en" not in str(raised.value)
+
+
+def test_laned_client_hydrates_its_lane_without_touching_the_environment(clean_env, tmp_path):
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", LANE_CACHE)))
+    client = client_from_env(hydrate_cache=True, lane="opencode")
+    assert isinstance(client, HttpConductClient)
+    assert (client.endpoint, client.token) == (URL, "opencode-lane-token")
+    assert not [name for name in os.environ if name.startswith("LIMEN_CONDUCT_") and name != "LIMEN_CONDUCT_ENV_FILE"]
+
+
+def test_laned_client_ignores_the_generic_environment_bearer(clean_env):
+    clean_env.setenv("LIMEN_CONDUCT_URL", URL)
+    clean_env.setenv("LIMEN_CONDUCT_TOKEN", "legacy-generic")
+    with pytest.raises(BrokerUnavailable, match="LIMEN_CONDUCT_TOKEN_OPENCODE") as raised:
+        client_from_env(lane="opencode")
+    assert "legacy-generic" not in str(raised.value)
+
+
+def test_laned_client_does_not_fall_back_to_the_generic_cache_entry(clean_env, tmp_path):
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env")))
+    with pytest.raises(BrokerUnavailable, match="LIMEN_CONDUCT_TOKEN_OPENCODE") as raised:
+        client_from_env(hydrate_cache=True, lane="opencode")
+    assert "tok en" not in str(raised.value)
+
+
+def test_explicit_lane_environment_outranks_the_cache(clean_env, tmp_path):
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", LANE_CACHE)))
+    clean_env.setenv("LIMEN_CONDUCT_TOKEN_OPENCODE", "explicit-lane")
+    client = client_from_env(hydrate_cache=True, lane="opencode")
+    assert (client.endpoint, client.token) == (URL, "explicit-lane")
+
+
+def test_unsafe_cache_blocks_a_laned_client_by_name(clean_env, tmp_path):
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", LANE_CACHE, mode=0o644)))
+    with pytest.raises(BrokerUnavailable, match=re.escape(env_cache.UNSAFE)):
+        client_from_env(hydrate_cache=True, lane="opencode")
+
+
+def test_local_state_adapter_is_never_production_authority_for_a_lane(clean_env, tmp_path):
+    clean_env.setenv("LIMEN_CONDUCT_STATE", str(tmp_path / "state.db"))
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", LANE_CACHE)))
+    assert isinstance(client_from_env(hydrate_cache=True, lane="opencode"), HttpConductClient)
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "bare.env", CACHE)))
+    with pytest.raises(BrokerUnavailable, match="LIMEN_CONDUCT_TOKEN_OPENCODE"):
+        client_from_env(hydrate_cache=True, lane="opencode")
+
+
+def test_lane_credential_present_reports_only_a_lane_that_owns_a_bearer(tmp_path):
+    cache = write_cache(tmp_path / "limen.env", LANE_CACHE)
+    environ = lane_environ(cache)
+    assert env_cache.lane_credential_present("opencode", environ) is True
+    assert env_cache.lane_credential_present("claude", environ) is True
+    assert env_cache.lane_credential_present("codex", environ) is False
+    assert env_cache.lane_credential_present("gemini", {"LIMEN_CONDUCT_TOKEN_GEMINI": "g", **environ}) is True
+    assert env_cache.lane_credential_present("gemini", {"LIMEN_CONDUCT_TOKEN_GEMINI": "  ", **environ}) is False
+
+
+def test_lane_credential_present_never_raises_and_never_trusts_an_unsafe_cache(tmp_path):
+    loose = write_cache(tmp_path / "loose.env", LANE_CACHE, mode=0o644)
+    absent = {"LIMEN_CONDUCT_ENV_FILE": str(tmp_path / "absent.env")}
+    assert env_cache.lane_credential_present("opencode", lane_environ(loose)) is False
+    assert env_cache.lane_credential_present("opencode", absent) is False
+    for lane in ("", "OpenCode", "../x", "open code"):
+        assert (
+            env_cache.lane_credential_present(lane, lane_environ(write_cache(tmp_path / "ok.env", LANE_CACHE))) is False
+        )
+
+
+def test_a_malformed_lane_never_reaches_the_cache(clean_env, tmp_path):
+    clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", LANE_CACHE)))
+    with pytest.raises(BrokerUnavailable, match=re.escape(env_cache.LANE_INVALID)):
+        client_from_env(hydrate_cache=True, lane="../opencode")
 
 
 def test_closeout_reports_a_named_blocker_not_a_traceback(clean_env, tmp_path, capsys):

@@ -1748,6 +1748,12 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Conduct bearer bound to the claude-direct principal. scripts/hooks/conduct-register.sh registers background Claude jobs with it and ONLY it: the broker labels a session by its bearer's principal and pins a session id to its first identity, so the default LIMEN_CONDUCT_TOKEN (legacy codex-direct-legacy) would label a Claude job codex permanently. Absent, the hook refuses and logs; it never falls back. The value stays private."
+  LIMEN_CONDUCT_TOKEN_OPENCODE:
+    default: ""
+    env: LIMEN_CONDUCT_TOKEN_OPENCODE
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Conduct bearer bound to the opencode-direct principal. The MCP server and CLI resolve it through client_from_env(lane=...) from the environment or the owned mode-600 cache, and ONLY it: a laned client never reads or falls back to the default LIMEN_CONDUCT_TOKEN (legacy codex-direct-legacy), which would label an OpenCode job codex. Absent, the client raises a named BrokerUnavailable. The value stays private."
   LIMEN_CONDUCT_REGISTER_INTERVAL_SECS:
     default: "120"
     env: LIMEN_CONDUCT_REGISTER_INTERVAL_SECS
