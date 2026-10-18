@@ -84,7 +84,10 @@ def layout(tmp_path):
     )
     manifest = {"source_fingerprint": FINGERPRINT, "totals": {"conversations": 7, "messages": 21, "words": 99}}
     (store / "archive-all" / "manifest-all.json").write_text(json.dumps(manifest))
-    for name in ("receipt-knowledge-alive-1111111111111111-20261001.json", "receipt-knowledge-alive-2222222222222222-20261017.json"):
+    for name in (
+        "receipt-knowledge-alive-1111111111111111-20261001.json",
+        "receipt-knowledge-alive-2222222222222222-20261017.json",
+    ):
         (repo / "docs" / "receipts" / name).write_text("{}")
 
     binaries = tmp_path / "bin"
