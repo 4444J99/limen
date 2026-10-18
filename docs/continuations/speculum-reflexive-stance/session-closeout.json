@@ -1,0 +1,33 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "021beb60-af9f-4f19-9d56-3288157ea588",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/speculum-session-closeout",
+  "owner_url": "https://github.com/4444J99/limen/pull/2990",
+  "disposition": "complete",
+  "worktree_name": "docs-reflexive-observation",
+  "base_head": "ccfdcc1c5688cb34e08fd5823eb6c9c447b66945",
+  "owned_paths": [
+    "docs/agent-instruction-standard.md",
+    "docs/architecture/bounded-composition.md",
+    "docs/architecture/reflexive-observation.md",
+    "docs/plans/2026-10-17-speculum-reflexive-stance.md",
+    "institutio/governance/gates.yaml",
+    "scripts/check-agent-docs.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "b6c078051513c05b92dd325cd91b11cfc28144c7",
+      "exit_code": 0,
+      "command": "python3 scripts/check-agent-docs.py; python3 scripts/credential-wall.py --check; scoped verify-scoped.sh batches on each exact PR tree",
+      "evidence": "docs/continuations/speculum-reflexive-stance/session-evidence.json",
+      "sha256": "c1a7c4fdc1c703a9ed9cb5c904c9d267ea3705d1101c6198c7ef266916ae3c61"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/speculum-reflexive-stance/session-evidence.json",
+    "sha256": "c1a7c4fdc1c703a9ed9cb5c904c9d267ea3705d1101c6198c7ef266916ae3c61"
+  }
+}
