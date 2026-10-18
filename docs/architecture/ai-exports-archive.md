@@ -24,8 +24,8 @@ answering, and opens the site in the browser. The site is the static pages under
 full-text search over every conversation added by the server. The Obsidian vault in `vault-all/` is
 opened as well when Obsidian is installed, and skipped without error when it is not. The server listens
 on the loopback interface only, so nothing here leaves the machine. The command is `scripts/open-knowledge.sh`
-and is safe to run again: a server that already answers is reused. If the archive has not been built, it
-stops with one line and exit code 2.
+and is safe to run again: a server that already answers is reused. If the archive has not been built, the
+start path stops with one line and exit code 2.
 
 ```bash
 limen knowledge            # start the server if needed and open the site
@@ -36,15 +36,45 @@ limen knowledge --stop     # stop the server this command started
 `--port` picks another port from the default of 8472, and `--no-open` starts the server and prints the
 address without opening a browser. The server's log and process id file sit under `<store>/state/`.
 
+The door follows these rules, all enforced by `scripts/open-knowledge.sh`.
+
+- `--stop` and `--status` work without a built archive. Without one, `--status` says the archive is
+  not built on this host and prints no fingerprint, vault or receipt line.
+- A listener counts as the archive server only when `/api/ping` answers with `"ok": true`. A port held
+  by something else makes the start path exit 1 without launching anything, and `--status` reports the
+  server as down with a note that the port is held by something else.
+- A recorded process id is trusted only when its command line is an `archive serve` for this same port.
+  Otherwise `--stop` drops the stale id file and signals nothing.
+- Only one start runs at a time per port. A second start waits for the first, then reuses the server
+  that came up. A start that sees no live holder takes over a stale lock, and one that waits too long
+  exits 1.
+- A start that times out terminates the server process it launched and removes the process id file.
+  The default wait is 10 seconds, and `OPEN_KNOWLEDGE_START_TIMEOUT_SECONDS` overrides it with a
+  positive integer.
+- The status receipt line is bound to the live fingerprint. When receipts exist but none was made for
+  the current fingerprint, it names the newest one on disk as stale.
+
 ## Where things live
+
+Shell variables used below:
+
+```bash
+STORE=~/Workspace/limen/.limen-private/session-corpus/archive    # the archive store
+DELTA=<path to the ChatGPT delta file>                            # a placeholder: point it at the file
+PRIVATE=~/Workspace/limen/.limen-private/session-corpus          # the parent of prompt-atoms/
+```
+
+`PRIVATE` is the parent folder. `prompt-atom-ledger.py` and `check-knowledge-alive.py` both append
+`prompt-atoms/` themselves, so passing the `prompt-atoms/` folder as `--private-root` makes the ledger
+read as missing.
 
 | What | Location | In Git |
 |---|---|---|
-| Raw exports: chatgpt, claude, gemini, grok, perplexity | `/Volumes/Scratch/ai-exports/<provider>` | no |
+| Raw exports: chatgpt, claude, gemini, grok, perplexity, and notebooklm, whose raw export nests under gemini | `/Volumes/Scratch/ai-exports/<provider>`, and `/Volumes/Scratch/ai-exports/gemini/NotebookLM` | no |
 | ChatGPT delta file (conversations newer than the account export) | Archive4T custody replica, for example `chatgpt-bodies-20261017-delta.json` | no |
 | Archive store, also the engine project root | `~/Workspace/limen/.limen-private/session-corpus/archive` | no |
 | Derived folder; feeds and receipts sit flat beside `manifest-all.json` | `<store>/archive-all/` | no |
-| Private ledger and form index | `~/Workspace/limen/.limen-private/session-corpus/prompt-atoms/` | no |
+| Private ledger and form index | `<PRIVATE>/prompt-atoms/` | no |
 | Registry rows | `institutio/governance/corpora.yaml` | yes |
 | Alive receipt | `docs/receipts/receipt-knowledge-alive-<16hex>-<yyyymmdd>.json` | yes |
 
@@ -187,13 +217,39 @@ The fixture gate and the live run answer different questions. Gate `check-knowle
 remote job because it needs an engine, and `bash scripts/verify-scoped.sh` selects it by path. The
 live run is by hand at closeout and is the only proof about the real archive.
 
-## Custody gap (carried over from the earlier draft, not re-checked)
+## Custody
 
-- The claude, gemini, grok and perplexity raw exports exist only on Scratch, and can be regenerated
-  only by requesting new exports. Scratch shares a disk container with Archive4T, so it is not an
-  independent copy, and both are unencrypted. Time Machine retention is unverified.
-- A staged second copy onto an independent disk was drafted and never run. It is additive: dry run
-  first, checksum afterward, ChatGPT excluded because its account export is already replicated.
+The committed receipt `docs/receipts/receipt-custody-ai-exports-second-copy-20261018.json` owns the
+numbers and states what the second-copy run claims.
+
+- It covers the providers claude, gemini, grok and perplexity, copied from the Scratch volume to the
+  volume T7Recovery on a different physical device, with a sha256 manifest of every file on both sides
+  compared byte for byte.
+- It excludes chatgpt. The receipt states that the account export is already replicated on two
+  independent devices; that is the receipt's statement and is not re-checked here.
+- NotebookLM's raw export sits at `/Volumes/Scratch/ai-exports/gemini/NotebookLM`, inside the gemini
+  folder, so the gemini copy very likely covers it. That is not verified.
+- T7Recovery was not attached on 2026-10-18, so the destination was not re-verified after the run.
+  Re-verify it whenever it is attached.
+- The receipt does not document how its `manifest_sha256` was built, so that digest cannot be
+  reproduced from the receipt alone.
+
+Archive4T, Ingress, Scratch and the Time Machine volume TM-Mac are volumes of one APFS container on one
+physical disk, so none of them is an independent copy of Scratch, and FileVault is off on all four
+(`diskutil apfs list`, 2026-10-18). Only the T7Recovery copy is independent, and only while that volume
+is attached and has been re-read. Time Machine retention is unverified here.
+
+## Providers not in the archive
+
+Microsoft Copilot is not in the normalized archive. Its sources are held outside the archive store as
+a single copy, in `/Volumes/Archive4T/workspace-backup/session-meta/data/session-transcripts/copilot-captures-2026-03/`,
+and the archive reader does not parse them into turns, so no Copilot provider exists in the archive
+manifest. The registry lists the captures as a harvest source of the `session-atoms` stream; whether
+anything there reads them beyond opaque blobs is not verified here. The registry row
+`copilot-history-memory` in `institutio/governance/corpora.yaml` records that vacuum. The preservation
+receipt is `docs/receipts/receipt-custody-copilot-captures-20261018.json`, and the follow-up is issue
+#3010, which is blocked on attaching T7Recovery for the second copy. GitHub Copilot CLI history under
+`~/.copilot/session-state` is a different product and is not part of this.
 
 ## Engine dependency
 
