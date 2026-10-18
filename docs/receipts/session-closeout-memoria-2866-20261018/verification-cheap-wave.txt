@@ -1,0 +1,17 @@
+# Cheap wave, scoped verification of PR #2869 head f75dce740c8b87d8c1de7e642611650ccb0c3964
+# source: verify-scoped.sh --gate-timeout-seconds 600 --total-timeout-seconds 600 (private log retained in custody staging)
+# result: WAVE cheap PASS
+WAVE cheap: START gates=12 jobs=4 gate_timeout=600s output_limit=1048576B
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=1.56s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.03s
+WAVE cheap: FINISH gate=direct-main-writer-contract status=PASS duration=2.39s
+WAVE cheap: FINISH gate=check-params status=PASS duration=1.27s
+WAVE cheap: FINISH gate=check-docs-exports status=PASS duration=0.79s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=0.90s
+WAVE cheap: FINISH gate=check-test-hygiene status=PASS duration=1.76s
+WAVE cheap: FINISH gate=check-board-consumers status=PASS duration=0.98s
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=0.52s
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=0.35s
+WAVE cheap: FINISH gate=merge-queue-contract-test status=PASS duration=6.71s
+WAVE cheap: FINISH gate=check-effectors status=PASS duration=3.76s
+WAVE cheap: PASS
