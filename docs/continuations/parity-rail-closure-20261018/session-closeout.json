@@ -25,37 +25,37 @@
   "retained_work": [],
   "verification": [
     {
-      "head": "54845126809385f6156cf51e198b0faf4d2be3c9",
+      "head": "b6ea6301848ce2ff0e014267604f6e46508434c5",
       "exit_code": 0,
       "command": "direct-run-interpreter-test: bash scripts/run-pytest-hermetic.sh cli/tests/test_closeout_runtime_python.py cli/tests/test_ship_docs_interpreter.py cli/tests/test_session_plan_slug.py -q",
       "evidence": "docs/continuations/parity-rail-closure-20261018/session-evidence.json",
-      "sha256": "12220f3990a24c08a52f791ad8d68a61883c99b49691895aade9d5f31ac940f1"
+      "sha256": "8e63ad913631abc3cf750c39e6d83bfaf42d52114dc32e3fabd2472ae7e6f7f9"
     },
     {
-      "head": "54845126809385f6156cf51e198b0faf4d2be3c9",
+      "head": "b6ea6301848ce2ff0e014267604f6e46508434c5",
       "exit_code": 0,
       "command": "branch-preservation: python3 scripts/check-branch-parity.py --ledgers, plus cli/tests/test_check_branch_parity.py",
       "evidence": "docs/continuations/parity-rail-closure-20261018/session-evidence.json",
-      "sha256": "12220f3990a24c08a52f791ad8d68a61883c99b49691895aade9d5f31ac940f1"
+      "sha256": "8e63ad913631abc3cf750c39e6d83bfaf42d52114dc32e3fabd2472ae7e6f7f9"
     },
     {
-      "head": "54845126809385f6156cf51e198b0faf4d2be3c9",
+      "head": "b6ea6301848ce2ff0e014267604f6e46508434c5",
       "exit_code": 0,
       "command": "his-hand-registry-test and check-gates: check-his-hand.py --check, lever-classify.py --check, check-gates.py, registry pytest files",
       "evidence": "docs/continuations/parity-rail-closure-20261018/session-evidence.json",
-      "sha256": "12220f3990a24c08a52f791ad8d68a61883c99b49691895aade9d5f31ac940f1"
+      "sha256": "8e63ad913631abc3cf750c39e6d83bfaf42d52114dc32e3fabd2472ae7e6f7f9"
     },
     {
-      "head": "54845126809385f6156cf51e198b0faf4d2be3c9",
+      "head": "b6ea6301848ce2ff0e014267604f6e46508434c5",
       "exit_code": 0,
       "command": "credential-wall.py --check",
       "evidence": "docs/continuations/parity-rail-closure-20261018/session-evidence.json",
-      "sha256": "12220f3990a24c08a52f791ad8d68a61883c99b49691895aade9d5f31ac940f1"
+      "sha256": "8e63ad913631abc3cf750c39e6d83bfaf42d52114dc32e3fabd2472ae7e6f7f9"
     }
   ],
   "custody": {
     "verified": true,
     "evidence": "docs/continuations/parity-rail-closure-20261018/session-evidence.json",
-    "sha256": "12220f3990a24c08a52f791ad8d68a61883c99b49691895aade9d5f31ac940f1"
+    "sha256": "8e63ad913631abc3cf750c39e6d83bfaf42d52114dc32e3fabd2472ae7e6f7f9"
   }
 }

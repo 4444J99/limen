@@ -1,6 +1,7 @@
 {
   "session_id": "18a829b9-471d-4c8e-bceb-e7ad35260529",
-  "verified_head": "54845126809385f6156cf51e198b0faf4d2be3c9",
+  "verified_head": "b6ea6301848ce2ff0e014267604f6e46508434c5",
+  "verified_head_note": "The first publication of this receipt cited 548451268 (the merged tip of PR 3068). The closeout predicate correctly reported 'owned implementation changed since verification' because that commit also stamped the owned envelope's PR line. Every command below was therefore re-run at b6ea630, which contains the stamp; it differs from 548451268 only by the envelope stamp, the receipt and this evidence file.",
   "owner": "https://github.com/4444J99/limen/issues/3046",
   "scope": "Pickup of the parity-rail handoff envelope: Gap 1 (interpreter rail, PR 3059) and Gap 3 (branch-preservation predicate, PR 3068) built and merged; Gap 2 and Gap 4 homed, not decided.",
   "baseline_note": "base_head in the receipt is the fork point of the publication branch (the merged tip of PR 3068), not the session's first main revision (1b789784c). From that revision to this tip, other lanes merged unrelated paths; counting them would require declaring them as retained work this session does not own. PR 3059 and PR 3068, this session's implementation, are verified below and listed in owned_paths.",
