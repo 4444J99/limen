@@ -30,7 +30,7 @@ carries its own manifest; the gate registry owns the commands.
 | `web/worker/` | Cloudflare Worker — **the live runtime**. DO `ConductKeeperDurableObject`; `npm run check` = `node --check` + `node --test`. |
 | `web/api/` | FastAPI. Deploy rail **dormant** (no `GCP_SA_KEY`); `web/api/**` and `cli/**` are non-deploy. |
 | `scripts/` | ~670 operational scripts **and the whole gate rail**; `scripts/verify-scoped.sh` is the push gate. |
-| `institutio/governance/gates.yaml` | **The GATES registry is the command list** (175 gates). Consumers derive from it; never hardcode a gate into one. |
+| `institutio/governance/gates.yaml` | **The GATES registry is the command list**. Consumers derive from it; never hardcode a gate into one. |
 | `organs/` | 17 institutional pillars — records, mostly **data, not code**; only 8 ship a `validate-<organ>.py`. |
 | `spec/contracts/` | Portable JSON Schemas (conduct receipts, leases, prima-materia). |
 | `moneta/`, `apps/` | `moneta` is a standalone TS package (`vitest`); `apps/danse` a retired pointer. |
@@ -42,9 +42,9 @@ carries its own manifest; the gate registry owns the commands.
   one, preferring yaml+pytest+ruff (`pip install -e 'cli[test]'`); override `LIMEN_GATE_PYTHON`.
   `bash scripts/verify-scoped.sh` calls it for you. Never hardcode a `.venv` path — `.venv/` is
   gitignored, so a fresh clone has none.
-- **`limen` on PATH is not your checkout** — it is a Domus shim execing a SHA-pinned runtime. Run
-  yours as `PYTHONPATH=cli/src "$LIMEN_GATE_PYTHON" -m limen …`; that interpreter needs
-  `pip install -e 'cli[test]'` (the resolver's PyYAML-only fallback cannot run the CLI).
+- **`limen` on PATH is not your checkout** — it is a Domus shim execing a SHA-pinned runtime.
+  Checkout CLI execution needs `pip install -e 'cli[test]'` in its interpreter; the resolver's
+  PyYAML-only fallback cannot run it.
 - Standard env: `LIMEN_ROOT=$PWD LIMEN_TASKS=$PWD/tasks.yaml PYTHONPATH=$PWD/cli/src`.
 - `tasks.yaml` is a **public aggregate projection** (`tasks: []`); the real board is remote.
 
@@ -54,9 +54,8 @@ carries its own manifest; the gate registry owns the commands.
 # THE push gate — runs exactly the gates your diff implicates. Bare command, no && chains.
 bash scripts/verify-scoped.sh
 
-# Selection only; never combine with --changed (verify-scoped.sh hard-wires it). verify.py's
-# shebang is a bare python3, so call it through a PyYAML interpreter:
-"$LIMEN_GATE_PYTHON" scripts/verify.py --explain <path>...   # or --list
+# Selection only; this wrapper resolves Python without injecting --changed.
+bash scripts/verify-select.sh --explain AGENTS.md       # or --list
 bash scripts/verify-whole.sh                            # whole-system; there is no --fast flag
 
 # Lint / typecheck (as ci.yml, which also runs mypy as two steps)

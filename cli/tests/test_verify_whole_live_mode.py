@@ -19,6 +19,9 @@ class VerifyWholeLiveModeTests(unittest.TestCase):
             (fixture / "bin").mkdir()
             verifier = fixture / "scripts/verify-whole.sh"
             verifier.write_text((ROOT / "scripts/verify-whole.sh").read_text())
+            (fixture / "scripts/lib/gate-python.sh").write_text(
+                (ROOT / "scripts/lib/gate-python.sh").read_text()
+            )
             (fixture / "scripts/lib/host-admission.sh").write_text(
                 "host_admission_acquire() { :; }\nhost_admission_exit_trap() { :; }\n"
             )
