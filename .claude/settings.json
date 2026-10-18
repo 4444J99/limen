@@ -57,7 +57,27 @@
       "mcp__claude_ai_Gmail__list_drafts",
       "mcp__claude_ai_Gmail__list_labels",
       "mcp__claude-in-chrome__read_page",
-      "mcp__claude-in-chrome__find"
+      "mcp__claude-in-chrome__find",
+      "Bash(python3 scripts/host-work-admission.py status *)",
+      "Bash(python3 scripts/host-work-admission.py status)",
+      "Bash(python3 scripts/host-work-admission.py capabilities)",
+      "Bash(python3 scripts/host-work-admission.py --help)",
+      "mcp__claude-in-chrome__list_connected_browsers",
+      "Bash(chezmoi diff *)",
+      "Bash(shasum *)",
+      "Bash(bash scripts/run-pytest-hermetic.sh *)",
+      "Bash(bash /Users/4jp/Workspace/limen/scripts/merge-policy.sh *)",
+      "Bash(claude --version)",
+      "Bash(claude plugin list *)",
+      "Bash(chezmoi source-path *)",
+      "Bash(chezmoi managed *)",
+      "Bash(/Users/4jp/.local/bin/domus-limen-runtime verify-heartbeat *)",
+      "Bash(/Users/4jp/.local/bin/domus-limen-runtime plan-heartbeat *)",
+      "Bash(/Users/4jp/.local/bin/domus-limen-runtime status *)",
+      "Bash(scripts/verify-scoped.sh *)",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__ccd_session_mgmt__list_sessions",
+      "mcp__ccd_pr__get_status"
     ]
   },
   "hooks": {
@@ -68,6 +88,11 @@
           {
             "type": "command",
             "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/session-orient.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/session-orient.sh\" || true"
+          },
+          {
+            "type": "command",
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" ] && \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" || true",
+            "timeout": 15
           }
         ]
       }
@@ -98,6 +123,16 @@
           {
             "type": "command",
             "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/lint-edited-file.sh\" ] && LIMEN_ROOT=\"$PROJECT_ROOT\" \"$PROJECT_ROOT/scripts/hooks/lint-edited-file.sh\" || true"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" ] && \"$PROJECT_ROOT/scripts/hooks/conduct-register.sh\" || true",
+            "timeout": 15
           }
         ]
       }

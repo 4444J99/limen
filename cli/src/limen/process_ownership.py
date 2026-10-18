@@ -183,7 +183,7 @@ def _native_fd_path(path: Path) -> Path:
         after = os.fstat(descriptor)
         identities = {(row.st_dev, row.st_ino) for row in (before, observed, after)}
         if len(identities) != 1:
-            raise ValueError("native path identity mismatch")
+            raise ObservationUnavailable("path_resolution_unavailable:identity_mismatch")
         return reported
     except (OSError, ValueError):
         raise ObservationUnavailable("path_resolution_unavailable") from None
@@ -198,11 +198,11 @@ def canonical_argv(argv: tuple[str, ...] | list[str]) -> tuple[str, ...]:
 
     result = []
     for index, word in enumerate(argv):
-        path = Path(word)
-        if index == 0 and not path.is_absolute():
-            word = shutil.which(word) or word
-            path = Path(word)
         try:
+            path = Path(word)
+            if index == 0 and not path.is_absolute():
+                word = shutil.which(word) or word
+                path = Path(word)
             if index == 0 and path.is_file():
                 resolved = path.resolve()
                 # Homebrew's framework stub execs this app binary in the SAME framework.
@@ -216,7 +216,19 @@ def canonical_argv(argv: tuple[str, ...] | list[str]) -> tuple[str, ...]:
                         path = app
             result.append(str(path.resolve()) if path.is_absolute() and path.exists() else word)
         except PermissionError:
-            result.append(str(_native_fd_path(path)))
+            if sys.platform == "darwin" and path.is_absolute():
+                try:
+                    result.append(str(_native_fd_path(path)))
+                except ObservationUnavailable as exc:
+                    if "identity_mismatch" in str(exc):
+                        raise
+                    result.append(word)
+            else:
+                result.append(word)
+        except OSError:
+            # Preserve unreadable words literally; missing byte provenance still
+            # prevents them from establishing a service exemption.
+            result.append(word)
     return tuple(result)
 
 
@@ -254,7 +266,8 @@ def transcript_witness(path: Path) -> dict:
     parent = (
         parent.get("subagent", {}).get("thread_spawn", {}).get("parent_thread_id") if isinstance(parent, dict) else None
     )
-    if session != thread and (not parent or payload.get("forked_from_id") != parent):
+    forked_from = payload.get("forked_from_id")
+    if session != thread and (not parent or (forked_from is not None and forked_from != parent)):
         raise ObservationUnavailable("native_ancestry_invalid")
     return {"thread_id": thread, "session_id": session, "parent_thread_id": parent, "cwd": payload.get("cwd")}
 

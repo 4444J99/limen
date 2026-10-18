@@ -584,3 +584,65 @@ def test_readable_nonexecutable_policy_runs_through_bash(tmp_path, monkeypatch):
     policy.chmod(0o644)
     monkeypatch.setattr(mod, "POLICY", policy)
     assert mod._merge_policy("example/project", 1, "a" * 40) == "direct"
+
+
+# --- issue #2895 defect A: the policy exited 127 under the drain, with its verdict hidden ---
+
+
+def test_policy_path_is_the_sibling_script_not_the_limen_root_state_dir(monkeypatch, tmp_path):
+    """A stale/relocated $LIMEN_ROOT (state root holding only logs/) made `bash <missing>` exit 127."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    mod = _load()
+    assert mod.ROOT == tmp_path
+    assert mod.POLICY == SCRIPT.parent / "merge-policy.sh"
+    assert mod.POLICY.is_file()
+
+
+def test_missing_policy_is_named_not_exit_127(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    monkeypatch.setattr(mod, "POLICY", tmp_path / "absent" / "merge-policy.sh")
+    monkeypatch.setattr(
+        mod.subprocess, "run", lambda *a, **kw: (_ for _ in ()).throw(AssertionError("must not launch"))
+    )
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    assert capsys.readouterr().out == "MERGE-DIAGNOSTIC: stage=policy reason=policy-missing\n"
+
+
+def test_unrunnable_policy_exit_is_labelled(monkeypatch, capsys):
+    mod = _load()
+    monkeypatch.setattr(
+        mod.subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=127, stdout="", stderr="not found")
+    )
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    out = capsys.readouterr().out
+    assert out == "MERGE-DIAGNOSTIC: stage=policy exit=127 verdict=unknown reason=command-not-runnable\n"
+
+
+def test_policy_verdict_on_stderr_is_surfaced(monkeypatch, capsys):
+    """The policy's GitHub lookup-failure verdicts go to stderr; the drain must still report them."""
+    mod = _load()
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *a, **kw: SimpleNamespace(
+            returncode=3, stdout="", stderr="VERDICT: BLOCKED — cannot read PR; secret-detail\n"
+        ),
+    )
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    assert capsys.readouterr().out == "MERGE-DIAGNOSTIC: stage=policy exit=3 verdict=BLOCKED\n"
+
+
+def test_real_policy_under_minimal_path_and_stale_limen_root_surfaces_its_verdict(monkeypatch, tmp_path, capsys):
+    """End to end through the real merge-policy.sh with a stale $LIMEN_ROOT and PATH=stub:/usr/bin:/bin."""
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    gh_stub = stub / "gh"
+    gh_stub.write_text("#!/bin/bash\necho 'boom: not a transport error' >&2\nexit 1\n")
+    gh_stub.chmod(0o755)
+    stale_root = tmp_path / "stale-limen-root"
+    (stale_root / "logs").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_ROOT", str(stale_root))
+    monkeypatch.setenv("PATH", f"{stub}:/usr/bin:/bin")
+    mod = _load()
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    assert capsys.readouterr().out == "MERGE-DIAGNOSTIC: stage=policy exit=3 verdict=BLOCKED\n"

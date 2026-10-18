@@ -1,0 +1,28 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "session_01KXY7SaQq5irHdMKsbyBfwQ",
+  "worktree_name": "chore-fewer-permission-prompts-20261018",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-fewer-permission-prompts-20261018",
+  "base_head": "d95e5c07957e6085627db79c103cbb200f9433b4",
+  "disposition": "complete",
+  "owner_url": "https://github.com/4444J99/limen/pull/3006",
+  "owned_paths": [
+    ".claude/settings.json",
+    "docs/plans/humming-floating-donut.md"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "d95e5c07957e6085627db79c103cbb200f9433b4",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-fewer-permission-prompts-20261018/verification.txt",
+      "sha256": "a17786cf8669ea70c879549a4c5fe1ea582c35c1d59cdd745d9bfcd66c0d663e"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-fewer-permission-prompts-20261018/custody.json",
+    "sha256": "863b46647b5f945b4b4c909516eb1dff6ef0d2a81081f218ff5716499edc2cd6"
+  }
+}

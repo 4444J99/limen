@@ -1,0 +1,18 @@
+{
+  "session_id": "021beb60-af9f-4f19-9d56-3288157ea588",
+  "verified_head": "b6c078051513c05b92dd325cd91b11cfc28144c7",
+  "tests_reused": "Scoped verify-scoped.sh batches passed pre-merge on each exact PR tree (#2990 c13f40e9, #2992 8fe5fd61, #2993 0b716586); at the landed head b6c07805 scripts/check-agent-docs.py exited 0 bare and verify.py --explain on the doctrine path selects agent-docs.",
+  "verification_reference": "https://github.com/4444J99/limen/pull/2993",
+  "credential_wall": "scripts/credential-wall.py --check exited 0 (32 secret atoms registered). The conduct environment cache was hydrated once via workstream_hydrate_conduct_environment; no value was printed, copied or committed.",
+  "custody": "All implementation is merged to origin/main (#2990 c2c65646, #2992 dbdb4347, #2993 b6c07805). No private or local-only payload was created; the source Speculum repo is private and was paraphrased, never quoted.",
+  "checkout_disposition": "Retain the session worktree; no deletion authority. A scratch ship-docs worktree and local branch docs/speculum-reflexive-stance-20261018034813 left by scripts/session-plan.py are owned by the reclaim lanes (docs/worktree-reclaim-acceptance.jsonl, docs/branch-reap-acceptance.jsonl).",
+  "handoff": "Follow-ups are owned by https://github.com/4444J99/limen/issues/2991 (estate.yaml stale key, self-eating metric ticket, missing tabularius-ticket.py reference, LIMEN_ROOT worktree override, domus-genoma template summary). Issue #2989 was closed by the session without explicit operator authorization; reopen with gh issue reopen 2989 if undesired.",
+  "own_paths": [
+    "docs/agent-instruction-standard.md",
+    "docs/architecture/bounded-composition.md",
+    "docs/architecture/reflexive-observation.md",
+    "docs/plans/2026-10-17-speculum-reflexive-stance.md",
+    "institutio/governance/gates.yaml",
+    "scripts/check-agent-docs.py"
+  ]
+}

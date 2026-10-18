@@ -1,0 +1,30 @@
+{
+  "blocked_on": {
+    "atom": "attach T7Recovery",
+    "issue": 688,
+    "lever": "L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
+    "observed": "T7Recovery was absent from diskutil list external on 2026-10-18"
+  },
+  "by_extension": {
+    "docx": 20,
+    "html": 8,
+    "txt": 1
+  },
+  "bytes": 42047235,
+  "copy_count_after": 1,
+  "date": "20261018",
+  "files": 29,
+  "github_remote_has_captures": false,
+  "independent_physical_devices": false,
+  "kind": "receipt",
+  "manifest_format": "Ascending-sorted lowercase hex per-file SHA-256 values, newline-joined with a final newline, then SHA-256; names never recorded, so the manifest binds content only: a rename leaves it unchanged and a byte-identical duplicate adds one line.",
+  "manifest_sha256": "29eed2c3da1b8c3810816bc8c6d2185ee3d0d99fd2b6f1cf094a738b4791ee05",
+  "owner_issue": 3010,
+  "source": {
+    "kind": "backup",
+    "path_under_volume": "workspace-backup/session-meta/data/session-transcripts/copilot-captures-2026-03",
+    "volume": "/Volumes/Archive4T"
+  },
+  "subject": "custody-copilot-captures-preservation",
+  "verification": "Two independent digest methods (hashlib streaming and shasum) agreed on every file, and a third (openssl dgst) reproduced manifest_sha256 independently; sources were read only."
+}

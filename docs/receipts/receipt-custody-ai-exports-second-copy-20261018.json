@@ -1,0 +1,24 @@
+{
+  "copy_count_after": 2,
+  "date": "20261018",
+  "destination_device": "disk9",
+  "destination_volume": "/Volumes/T7Recovery",
+  "excluded": {
+    "chatgpt": "account export already replicated on two independent devices"
+  },
+  "files": 3547,
+  "independent_physical_devices": true,
+  "kilobytes": 3467404,
+  "kind": "receipt",
+  "manifest_sha256": "65f4e4b240216b5f07a5754ad8cea546372c593e9f294f07bc49c971c65f2eac",
+  "providers": [
+    "claude",
+    "gemini",
+    "grok",
+    "perplexity"
+  ],
+  "source_device": "disk7",
+  "source_volume": "/Volumes/Scratch",
+  "subject": "custody-ai-exports-second-copy",
+  "verification": "sha256 manifest of every file on both sides compared byte for byte"
+}

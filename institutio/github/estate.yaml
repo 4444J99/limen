@@ -694,6 +694,7 @@ classes:
     visibility: private
     branch_protection: exempt
     required_checks: []                    # private-repo Actions are billed; CI posture is per-repo judgment
+    single_owner_fast_lane: true           # 2026-10-17 operator fact: private-repo Actions are billing-locked, so remote checks never run and are never evidence; exact-head local verification is the admission
     app_installed: optional
     secret_hygiene: enforced
     stale_branch_grace_min: null
@@ -706,6 +707,7 @@ classes:
     visibility: private
     branch_protection: required
     required_checks: []                    # private-repo Actions are billed; CI posture is per-repo judgment
+    single_owner_fast_lane: true           # 2026-10-17 operator fact: private-repo Actions are billing-locked, so remote checks never run and are never evidence; exact-head local verification is the admission
     app_installed: required
     secret_hygiene: enforced
     stale_branch_grace_min: 1440
@@ -731,6 +733,7 @@ classes:
     visibility: private                    # safe holding posture — matches current state, ZERO flip demand
     branch_protection: exempt
     required_checks: []
+    single_owner_fast_lane: true           # 2026-10-17 operator fact: private-repo Actions are billing-locked, so remote checks never run and are never evidence; exact-head local verification is the admission
     app_installed: optional
     secret_hygiene: enforced
     stale_branch_grace_min: null

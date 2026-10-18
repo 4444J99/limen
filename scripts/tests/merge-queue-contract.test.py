@@ -83,6 +83,16 @@ def test_targeted_ruleset_and_classic_protection_contract() -> None:
     module = load_setup_module()
     assert module.checks_for_repo("4444J99/limen") == []
     assert module.single_owner_fast_lane_for_repo("4444J99/limen") is True
+    # 2026-10-17 operator fact: private-repo Actions are billing-locked, so remote checks are never
+    # evidence. Every private class is a fast lane (override-resolved, so no GitHub facts are needed);
+    # a public governed repo is not.
+    assert module.single_owner_fast_lane_for_repo("4444J99/domus-genoma-private") is True
+    assert module.single_owner_fast_lane_for_repo("4444j99/DOMUS-GENOMA-PRIVATE") is True
+    estate = module._load_estate()["classes"]
+    for private_class in ("operation_private", "vault_private", "private_unreviewed"):
+        assert estate[private_class]["single_owner_fast_lane"] is True, private_class
+    for public_class in ("portal_public", "shelf_public", "governed_public"):
+        assert estate[public_class].get("single_owner_fast_lane", False) is False, public_class
 
     protection = module.classic_protection_body([])
     assert protection["required_status_checks"] is None

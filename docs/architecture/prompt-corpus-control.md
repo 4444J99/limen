@@ -132,6 +132,87 @@ file alone cannot prove whether its body is an operator instruction, quoted thir
 tool input, so it must not become prompt truth until an adapter binds it to the canonical parent event
 and derives authority from that lineage.
 
+## Vendor archive feed
+
+Asks the person made inside vendor chat apps (ChatGPT, Claude, Gemini, and the rest) reach the ledger
+through a prompt feed written by the conversation corpus engine, never by reading the raw exports here.
+The engine writes `feed-<provider>-prompts.jsonl` and, beside it,
+`receipt-<provider>-prompts-<16 hex of the manifest fingerprint>-<yyyymmdd>.json`.
+
+Decision, route: the feed enters through the provider-neutral events path (`--archive-feed`, repeatable),
+with a receipt check and an authority guard, and not as a new native source family. A native family would
+add an adapter rule and a record schema to `prompt_sources.py`, and every such change alters the adapter
+contract digest, which invalidates every stored source-scan receipt and forces a full re-attested scan of
+the estate. That cost buys nothing here, because the engine already owns discovery, custody and
+normalization of the vendor files. A native family stays deferred until a vendor source needs the
+scanner's change tracking; the ledger would then adopt the adapter in one reviewed contract change.
+
+What `--archive-feed` checks before a single row reaches the ledger:
+
+- The file is named `feed-<provider>-prompts.jsonl`, and exactly one sibling receipt names the feed's
+  exact bytes (sha256). A receipt for older bytes, another provider, or a malformed name is ignored; two
+  receipts for the same bytes are refused as ambiguous.
+- The receipt's file name carries the first 16 hex characters of the SHA-256 of its own
+  `source_fingerprint` string (the engine's naming rule for hashed identities), and the
+  receipt's `rows` equals the number of rows read.
+- Every row has `source` equal to `archive-<provider>-messages` and `provenance` equal to
+  `unknown_user_input`. Any other value, including operator provenance, rejects the whole feed. An
+  event reference repeated within a feed rejects it too.
+- A row carries exactly the frozen key list `body_kind`, `event_index`, `event_ref`, `provenance`,
+  `session_ref`, `source`, `source_locator`, `text`, `text_index` and `timestamp`, plus the optional
+  `branch`. A row with any other key, a missing required key, or a `text` that is not a string rejects the
+  whole feed. The allowlist matters because a feed row becomes a ledger event, and keys such as
+  `existing_occurrence_id`, `atoms`, `task_body` or `duplicate_of` would otherwise let a feed edit stored
+  operator records.
+- A feed that is not valid UTF-8 is refused with a fixed message that names the file only.
+- A feed with zero rows is legitimate (a provider whose export holds no typed asks). Its receipt must say
+  `rows: 0` and carry the sha256 of the empty string; the feed is verified, nothing is ingested, and the
+  ledger script reports `0 row(s)`.
+
+Error messages name the file and line, and at most a key name, never a row value or a byte position.
+
+A failure exits 2 and writes nothing. A dry run (no `--write`) verifies the feed as well. `--events-jsonl`
+is unchanged and still carries operator rows for the sources that are allowed to have them.
+
+Decision, authority guard: a feed file cannot be trusted to label itself, and `--events-jsonl` has no
+receipt, so the ledger update itself refuses operator provenance for a source family that is never
+operator-authored. Today the declared set is every source starting with `archive-`
+(`NON_OPERATOR_SOURCE_PREFIXES` in `prompt_corpus.py`). The check runs on the proposed occurrence and
+again on the resolved one, so a classification revision cannot copy operator provenance onto a stored
+archive occurrence by naming it with `existing_occurrence_id` and a different source label. Replaying an
+already-stored row is checked as well. A rejected row raises, and the whole update is refused.
+
+The guard is deliberately keyed on the family being declared ineligible, not on an allowlist of
+eligible families. An allowlist would also have to enumerate every other source that legitimately
+carries operator provenance through the events path today (the test fixtures, Codex, Gemini and the
+rest), and would silently drop their rows if one were missing. The Claude project main-session rule
+(`operator_eligible` in `prompt_sources.py`) stays the only scanner-side operator grant; widening the
+guard to an allowlist is a later, separate contract change. The source label is matched after strip and
+casefold, so padding or capital letters in a label (` Archive-chatgpt-messages`) cannot step around the
+declared prefix.
+
+Decision, recurrence measure: the recurrence dimension measures how many separate times an ask was made.
+It counts distinct occurrences per lineage, not atoms, because one prompt that fragments into several
+atoms is still one repetition. It is scaled as `log1p(n) / log1p(max_n)`, so the single largest lineage
+cannot flatten every other lineage toward 0; with a linear scale the vendor archive feeds (27,204
+occurrences becoming 240,390 atoms) pushed every operator atom's recurrence close to 0 and the public
+ranking flipped from recurrence-driven to emphasis-driven. Archive occurrences count by default: an ask
+that recurs across ChatGPT, Claude and Gemini is exactly the signal this dimension exists to carry. A
+lineage with no counted occurrence scores 0.
+
+Decision, recurrence authorities: the policy key `recurrence_authorities` (in `docs/prompt-corpus-policy.json`) names
+which authority classes (`operator`, `unknown`, `derived`) are counted. Its default, used whenever the
+key is absent, is all three, which is the behaviour from before the key existed. Recommendation: once
+vendor feeds are ingested, set it to `["operator"]` so the score measures how often the person repeated
+an ask, not how often a vendor archive holds one. With that setting a lineage that has no operator
+member scores 0 for recurrence, and an archive atom that shares a lineage with operator asks takes the
+operator count.
+
+The key is deliberately not added to the shipped policy file or to `DEFAULT_POLICY`: the policy digest
+hashes the whole loaded policy, so a new default key would change the digest recorded in every existing
+snapshot and seal. Setting it is therefore an explicit policy edit, rewritten through the normal
+`--write` path, and is not part of this change.
+
 ## Evidence dispositions
 
 Atom dispositions are analytic and remain separate from Limen task states:
@@ -208,6 +289,9 @@ python3 scripts/prompt-atom-ledger.py --scan --write
 
 # Bounded all-history drain. Continue until pending/errors are zero; explicit gaps remain owner-routed.
 python3 scripts/prompt-atom-ledger.py --scan --all --write
+
+# Ingest a verified vendor archive prompt feed (repeat the option for each provider; see "Vendor archive feed").
+python3 scripts/prompt-atom-ledger.py --archive-feed <store>/feed-<provider>-prompts.jsonl --write
 
 # Verify journals, cursor, evidence rules, redaction projection, semantic digest, and full scope.
 python3 scripts/prompt-atom-ledger.py --check --require-scope all

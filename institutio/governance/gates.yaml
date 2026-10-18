@@ -546,6 +546,13 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Hand-rolled PR poll-loop deny matrix (G6, 2026-08-06): the charter's `for … gh pr … sleep … done` ban made mechanical — deny requires loop+gh-probe+sleep co-occurring in ONE command string; the sanctioned waiter, bounded retries, build sleeps, and multi-PR iteration all pass (the negative cases are the deliverable). Wired into .claude/settings.json AND .codex/hooks.json — covenant, not Claude rule. Escape hatch LIMEN_ALLOW_PR_POLL."
+  codex-host-admission-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_hook_admission_boundary.py cli/tests/test_codex_host_admission_hook.py cli/tests/test_closeout_action_admission.py cli/tests/test_closeout_runtime_python.py cli/tests/test_action_admission_text.py -q"
+    paths: ["scripts/hooks/codex-host-admission.py", "scripts/hooks/codex-hook-runner.sh", "scripts/no-tasks-on-me.sh", ".codex/hooks.json", "cli/tests/test_hook_admission_boundary.py", "cli/tests/test_codex_host_admission_hook.py", "cli/tests/test_closeout_action_admission.py", "cli/tests/test_closeout_runtime_python.py", "cli/tests/test_action_admission_text.py", "cli/src/limen/action_admission.py", "cli/src/limen/action_admission_runtime.py", "cli/src/limen/bounded_subprocess.py"]
+    scoped: true
+    tier: cheap
+    owner: lifecycle
+    note: "Mandatory admission input, delegation verdict, process-group and event-registration regressions; fixtures do not establish native interception or live enforcement."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
     paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]
@@ -558,6 +565,11 @@ gates:
     scoped: false
     owner: verify
     note: "Full-suite-pytest deny matrix (hermetic fixture): the scoped-verification law made mechanical after the 2026-07-15 host-thrash incident (two concurrent full cli suites from one session)."
+  conduct-register-hook-test:
+    command: "bash scripts/tests/conduct-register-hook.test.sh"
+    paths: ["scripts/hooks/conduct-register.sh", "scripts/tests/conduct-register-hook.test.sh", "scripts/lib/workstream-capsule.sh", ".claude/settings.json"]
+    owner: verify
+    note: "Hermetic matrix (fake limen) for the hook that registers a background Claude job with the conduct broker as a human-protected direct session. Without a broker binding scripts/no-tasks-on-me.sh exits 2 and the session can never prove release (2026-10-18). Negative rows are the deliverable: no registration in the shared checkout, outside a background job, or more than once per interval; fail-open; the credential never reaches stdout, log, stamp or argv. settings.json is a path because deleting its entry turns the feature off silently."
   trusted-bash-hook-test:
     command: "bash scripts/tests/allow-trusted-cd-git.test.sh"
     paths: ["scripts/hooks/allow-trusted-cd-git.sh", "scripts/tests/allow-trusted-cd-git.test.sh"]
@@ -610,7 +622,7 @@ gates:
     note: "Identity-bound, read-only session release with remote custody and sibling isolation."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".agents/skills/closeout/SKILL.md", "docs/architecture/continuation-capsules.md", "docs/session-closeout.md", ".github/copilot-instructions.md"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".agents/skills/closeout/SKILL.md", "docs/architecture/continuation-capsules.md", "docs/architecture/reflexive-observation.md", "docs/architecture/bounded-composition.md", "docs/session-closeout.md", ".github/copilot-instructions.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   github-estate-census-custody-test:
@@ -1142,6 +1154,11 @@ gates:
     paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh", "scripts/check-arca-escrow.py", "scripts/tests/test-arca-escrow.py"]
     owner: continuity
     note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
+  sealed-custody-test:
+    command: "bash scripts/tests/sealed-custody.test.sh"
+    paths: ["scripts/sealed-custody.py", "scripts/tests/sealed-custody.test.sh", "scripts/arca.sh", "cli/src/limen/agent_state/crypto.py"]
+    owner: continuity
+    note: "Hermetic contract for the reusable sealed-custody tool: private bundles are arca-sealed onto two replicas on DISTINCT physical devices (test-only device-id override); `verify` is KEY-LESS (ciphertext sha256/bytes vs manifest, never touches a key source) and detects a one-byte corruption; `restore` unseals into a 0700 scratch under the staging root, checks every member sha256, and leaves no plaintext behind, via the Keychain key AND via the op escrow key (ARCA_KEY_SOURCE=op, proving the escrow copy alone restores the bundle); `receipt` emits a validated CustodyReceiptV1 plus a redacted tracked receipt with no device ids, absolute paths, or member digests, and refuses unrestored replicas or one device used twice. PATH-stubbed `security` and `op` with a throwaway key — never the real Keychain or 1Password."
   sync-marketplace-config-test:
     command: "bash scripts/tests/sync-marketplace-config.test.sh"
     paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]
@@ -1247,6 +1264,28 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: continuity
     note: "The disposability predicate, the census it consults, and the litter sensor — none of which anything scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/verify-hot-cache.sh implicated no test at all, the same declared-but-unwired class check-runner-coverage exists to catch. These tests drive the SHIPPED script (bash scripts/verify-hot-cache.sh under a tmp LIMEN_ROOT and a narrowed PATH), never an extracted copy of a rung, because the defects they pin are rungs that reported GREEN: R6 derived its verdict from parsed BREACH lines, so a census that died any other way named nothing and PASSED; R5 printed '0 clone(s) clean, pushed, stash-free' for a walk that never happened; and a failed `cd $ROOT` still reached DISPOSABLE. An extracted-copy test is what let the previous 'bidirectional proof' pass against a file it had already diverged from. mise.toml is a path because R4 asserts every tool THIS repo declares is in force — a mise query answers for the config merged from the CWD upward, so a declaration change must re-run the rung that reads it. Cheap tier: three files, hermetic, no xdist."
+  check-knowledge-alive:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_check_knowledge_alive.py cli/tests/test_corpus_resolve_archive.py cli/tests/test_prompt_recurring_forms.py cli/tests/test_prompt_atom_ledger_archive_feed.py -q && python3 scripts/check-knowledge-alive.py --fixture"
+    paths:
+      [
+        "scripts/check-knowledge-alive.py",
+        "cli/tests/test_check_knowledge_alive.py",
+        "cli/tests/test_corpus_resolve_archive.py",
+        "cli/tests/test_prompt_recurring_forms.py",
+        "cli/tests/test_prompt_atom_ledger_archive_feed.py",
+        "institutio/governance/corpora.yaml",
+        "scripts/check-corpora.py",
+        "scripts/check-atom-homing.py",
+        "scripts/corpus_resolve.py",
+        "scripts/prompt-recurring-forms.py",
+        "scripts/prompt-atom-ledger.py",
+        "cli/src/limen/prompt_corpus.py",
+        "cli/src/limen/prompt_sources.py",
+      ]
+    tier: cheap
+    timeout_seconds: 600
+    owner: governance
+    note: "Proves the private knowledge archive loop is alive end to end on synthetic data only: the engine's own fixture exports are built into a throwaway store, projected to the prompt feed with receipts, ingested into a throwaway ledger through --archive-feed, and grouped into the recurring-form index, then ten fixed-order checks (tools, names, archive, feed receipts, ledger binding with no operator authority for any archive source, recurring forms, privacy, determinism) must all hold. The tests drive the same script with stub tools broken one fault at a time, and the archive feed, resolver and recurring-form suites run first. The engine is the first candidate (environment override, then cce on PATH, then each known checkout) that passes an archive names probe. It needs an engine that has the archive names and fixture commands: set KNOWLEDGE_ALIVE_ENGINE to an engine checkout, or have a current cce on PATH; an engine that lacks them is NOT ALIVE or UNUSABLE, never a silent skip. The live mode (--live) reads the real private store and ledger, so it cannot run in CI and is run by hand at closeout; this gate never reads private data. No ci_job: the fixture needs the engine, which CI does not have."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]

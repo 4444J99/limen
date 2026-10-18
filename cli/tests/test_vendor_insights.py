@@ -5,6 +5,7 @@ live vendor stores), plus the exit-code honesty of `render` and the codex
 resume-grouping semantics observed live on 2026-08-06 (resumed rollout files share
 the parent session_meta.session_id and must aggregate, not drop)."""
 
+import glob
 import importlib.util
 import json
 import sqlite3
@@ -12,6 +13,8 @@ import sys
 import types
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import pytest
 
 _SCRIPTS = Path(__file__).resolve().parent.parent.parent / "scripts"
 
@@ -28,7 +31,39 @@ WINDOW = datetime.now(timezone.utc) - timedelta(days=30)
 
 
 def _fake_mod(**registry) -> types.SimpleNamespace:
-    return types.SimpleNamespace(VENDOR_REGISTRY=registry)
+    """Stand-in for the ingest organ.
+
+    The adapters resolve stores through the ingest module's shared resolvers
+    (opencode_estate_stores / gemini_estate_roots) rather than reading a fixed
+    path, so the fixture models that contract — including the optional
+    extra_root_globs — instead of handing the adapters a bare registry.
+    """
+    mod = types.SimpleNamespace(VENDOR_REGISTRY=registry)
+
+    def gemini_estate_roots() -> list[Path]:
+        meta = registry.get("gemini", {})
+        roots = [meta["path"]] if meta.get("path") is not None and meta["path"].is_dir() else []
+        for extra in meta.get("extra_root_globs", []):
+            hits = sorted(glob.glob(extra))
+            roots.extend(Path(p) for p in hits if Path(p).is_dir())
+        return roots
+
+    def opencode_estate_stores() -> list[Path]:
+        meta = registry.get("opencode", {})
+        stores: list[Path] = []
+        primary = meta.get("path")
+        if primary is not None and Path(primary).exists():
+            stores.append(Path(primary))
+        for extra in meta.get("extra_root_globs", []):
+            for hit in sorted(glob.glob(extra)):
+                db = Path(hit) / "opencode.db"
+                if db.exists() and db not in stores:
+                    stores.append(db)
+        return stores
+
+    mod.gemini_estate_roots = gemini_estate_roots
+    mod.opencode_estate_stores = opencode_estate_stores
+    return mod
 
 
 # ─── registry contract ───────────────────────────────────────────────
@@ -212,6 +247,62 @@ def test_copilot_cat_reports_stub_sessions_honestly(tmp_path):
     assert "stub session" in text
 
 
+def _copilot_session(tmp_path: Path, sid: str, events: list[dict]) -> None:
+    sdir = tmp_path / "session-state" / sid
+    sdir.mkdir(parents=True)
+    now = datetime.now(timezone.utc).isoformat()
+    (sdir / "workspace.yaml").write_text(f"id: {sid}\ncwd: /w\ncreated_at: '{now}'\nupdated_at: '{now}'\n")
+    (sdir / "events.jsonl").write_text("\n".join(json.dumps(e) for e in events))
+
+
+def test_copilot_quota_failure_is_counted_and_rendered(tmp_path):
+    now = datetime.now(timezone.utc).isoformat()
+    _copilot_session(
+        tmp_path,
+        "sid-quota",
+        [
+            {"type": "session.start", "timestamp": now, "data": {}},
+            {"type": "user.message", "timestamp": now, "data": {"content": "status please"}},
+            {"type": "model.model_call_failure", "timestamp": now, "data": {"modelCall": {"status": 402}}},
+            {
+                "type": "session.error",
+                "timestamp": now,
+                "data": {
+                    "errorType": "quota",
+                    "statusCode": 402,
+                    "errorCode": "quota_exceeded",
+                    "message": "quota (Request ID: SECRET-ID)",
+                },
+            },
+            {"type": "session.shutdown", "timestamp": now, "data": {}},
+        ],
+    )
+    mod = _copilot_mod(tmp_path)
+    s = vi._index_copilot(mod, WINDOW, 10).sessions[0]
+    assert (s["user_msgs"], s["assistant_msgs"], s["errors"], s["error_codes"]) == (1, 0, 1, ["quota_exceeded"])
+    text = vi._cat_copilot(mod, "sid-quota", 10_000)
+    assert "status please" in text
+    assert "errorType=quota, statusCode=402, errorCode=quota_exceeded" in text
+    assert "SECRET-ID" not in text  # free-text message (request ids) is never echoed
+
+
+def test_copilot_lifecycle_only_session_is_not_reported_missing(tmp_path):
+    now = datetime.now(timezone.utc).isoformat()
+    _copilot_session(
+        tmp_path,
+        "sid-empty",
+        [
+            {"type": "session.start", "timestamp": now, "data": {}},
+            {"type": "session.mode_changed", "timestamp": now, "data": {}},
+            {"type": "session.shutdown", "timestamp": now, "data": {}},
+        ],
+    )
+    text = vi._cat_copilot(_copilot_mod(tmp_path), "sid-empty", 10_000)
+    assert text is not None
+    assert "lifecycle-only session" in text
+    assert "session.mode_changed×1, session.shutdown×1, session.start×1" in text
+
+
 # ─── opencode adapter (sqlite, read-only) ────────────────────────────
 
 
@@ -292,6 +383,19 @@ def test_gemini_index_and_cat(tmp_path):
     assert "[tool: read_file]" in text
 
 
+def test_gemini_window_uses_header_time_not_file_mtime(tmp_path):
+    # A freshly touched file holding an old conversation must stay out of the window.
+    _write_gemini_session(tmp_path / "proj-slug", "gsid-old")
+    path = tmp_path / "proj-slug" / "chats" / "session-gsid-old.jsonl"
+    lines = path.read_text().splitlines()
+    header = json.loads(lines[0])
+    header["startTime"] = header["lastUpdated"] = OLD.isoformat()
+    path.write_text("\n".join([json.dumps(header), *lines[1:]]))
+    result = vi._index_gemini(_fake_mod(gemini={"path": tmp_path}), WINDOW, 10)
+    assert result.sessions == []
+    assert result.total_in_window == 0
+
+
 # ─── antigravity adapter ─────────────────────────────────────────────
 
 
@@ -333,6 +437,75 @@ def test_antigravity_index_and_cat(tmp_path):
     assert "please do it" in text
     assert "final answer" in text
     assert "[tool: view_file]" in text
+
+
+def _pb_len(field_no: int, payload: bytes) -> bytes:
+    """Encode one length-delimited protobuf field (enough wire format for fixtures)."""
+
+    def varint(n: int) -> bytes:
+        out = bytearray()
+        while True:
+            b = n & 0x7F
+            n >>= 7
+            out.append(b | (0x80 if n else 0))
+            if not n:
+                return bytes(out)
+
+    return varint(field_no << 3 | 2) + varint(len(payload)) + payload
+
+
+def _agy_call(name: str, args: dict) -> bytes:
+    # Measured 2026-10-17 shape of a type-132 step: field 5 → 4 (1 id, 2 name, 3 JSON args),
+    # plus an unrelated sibling (field 140) that the decoder must ignore.
+    header = _pb_len(1, b"call-01") + _pb_len(2, name.encode()) + _pb_len(3, json.dumps(args).encode())
+    return b"\x08\x01" + _pb_len(5, _pb_len(4, header)) + _pb_len(140, b"\x0a\x03abc")
+
+
+def test_antigravity_decodes_type_132_as_tool_calls_not_messages(tmp_path):
+    root = tmp_path / "antigravity-cli"
+    conv = root / "conversations"
+    conv.mkdir(parents=True)
+    con = sqlite3.connect(conv / "cid-pb.db")
+    con.execute(
+        "CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INT, status INT, step_payload BLOB, metadata BLOB)"
+    )
+    run = _agy_call("run_command", {"CommandLine": "ls", "toolSummary": "List   the\nrepo", "toolAction": "x"})
+    say = _agy_call("send_message", {"Message": "all done", "Recipient": "user", "toolSummary": "s"})
+    con.execute("INSERT INTO steps VALUES (1, 132, 3, ?, ?)", (run, b""))
+    con.execute("INSERT INTO steps VALUES (2, 132, 3, ?, ?)", (say, b""))
+    con.execute("INSERT INTO steps VALUES (3, 15, 3, ?, ?)", (b"wrapper", b""))
+    con.commit()
+    con.close()
+    mod = _fake_mod(antigravity={"path": root})
+    s = vi._index_antigravity(mod, WINDOW, 10).sessions[0]
+    assert (s["assistant_msgs"], s["tool_calls"], s["other_steps"]) == (1, 1, 1)
+    text = vi._cat_antigravity(mod, "cid-pb", 10_000)
+    assert "[tool: run_command — List the repo]" in text  # summary collapsed to one line
+    assert "--- assistant (send_message) ---\nall done" in text
+    assert "CommandLine" not in text  # args other than the summary never leak into the excerpt
+
+
+def test_antigravity_undecodable_blob_reports_shape_not_missing(tmp_path):
+    root = tmp_path / "antigravity-cli"
+    conv = root / "conversations"
+    conv.mkdir(parents=True)
+    con = sqlite3.connect(conv / "cid-opaque.db")
+    con.execute(
+        "CREATE TABLE steps (idx INTEGER PRIMARY KEY, step_type INT, status INT, step_payload BLOB, metadata BLOB)"
+    )
+    con.execute("INSERT INTO steps VALUES (1, 15, 3, ?, ?)", (b"\xff\xfe", b""))
+    con.execute("INSERT INTO steps VALUES (2, 101, 3, ?, ?)", (b"\x00", b""))
+    con.commit()
+    con.close()
+    text = vi._cat_antigravity(_fake_mod(antigravity={"path": root}), "cid-opaque", 10_000)
+    assert text is not None
+    assert "no decodable messages or tool calls" in text
+    assert "15×1, 101×1" in text
+
+
+def test_pb_fields_rejects_truncated_input():
+    with pytest.raises(ValueError):
+        list(vi._pb_fields(b"\x2a\x10abc"))  # field 5, claims 16 bytes, has 3
 
 
 # ─── render: exit-code honesty + section rendering ───────────────────
@@ -662,6 +835,124 @@ def test_opencode_window_includes_sessions_updated_in_window(tmp_path):
     result = vi._index_opencode(_fake_mod(opencode={"path": db}), WINDOW, 10)
     assert [s["id"] for s in result.sessions] == ["s-old-active"]
     assert result.total_in_window == 1
+
+
+# ─── opencode health-sensor ingest (insight-cross-vendor-ingest) ─────
+# The cross-vendor health packet must read the SAME stores vendor-insights does: the frozen
+# legacy-share copy alone reports a live lane as silent (sessions_seen=0).
+
+_NOW_MS = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+
+def _ingest_legacy_store(path: Path, sessions: dict[str, int]):
+    """Legacy-schema store: {session_id: cost}."""
+    con = sqlite3.connect(path)
+    con.execute(
+        "CREATE TABLE session (id TEXT, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute("CREATE TABLE message (id TEXT, session_id TEXT, data TEXT, time_created INT)")
+    con.execute("CREATE TABLE part (id TEXT, message_id TEXT, session_id TEXT, data TEXT, time_created INT)")
+    for sid, cost in sessions.items():
+        con.execute(
+            "INSERT INTO session VALUES (?, '/r', 't', 'm-legacy', ?, 5, 5, ?, ?)",
+            (sid, cost, _NOW_MS, _NOW_MS + 90_000),
+        )
+        con.execute("INSERT INTO message VALUES (?, ?, '{}', ?)", (f"lm-{sid}", sid, _NOW_MS))
+    con.commit()
+    con.close()
+
+
+def _ingest_v2_store(path: Path, sessions: dict[str, int], error_blocks: int = 0):
+    """v2-schema store: {session_id: cost}; error_blocks tool errors are attached to the first session."""
+    con = sqlite3.connect(path)
+    con.execute(
+        "CREATE TABLE session_v2 (id TEXT PRIMARY KEY, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute(
+        "CREATE TABLE session_message (id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INT, "
+        "time_created INT, time_updated INT, data TEXT)"
+    )
+    for i, (sid, cost) in enumerate(sessions.items()):
+        con.execute(
+            "INSERT INTO session_v2 VALUES (?, '/r', 't', 'm-v2', ?, 5, 5, ?, ?)",
+            (sid, cost, _NOW_MS, _NOW_MS + 90_000),
+        )
+        blocks = [{"type": "text", "text": "an error was mentioned in prose only"}]
+        if i == 0:
+            blocks += [{"type": "tool", "name": "shell", "state": {"status": "error"}}] * error_blocks
+            blocks.append({"type": "tool", "name": "read", "state": {"status": "completed"}})
+        con.execute(
+            "INSERT INTO session_message VALUES (?, ?, 'assistant', 1, ?, ?, ?)",
+            (f"m-{sid}", sid, _NOW_MS, _NOW_MS, json.dumps({"content": blocks})),
+        )
+    con.commit()
+    con.close()
+
+
+def _point_ingest_at(monkeypatch, legacy: Path, live_dir: Path | None = None):
+    entry = dict(ingest.VENDOR_REGISTRY["opencode"])
+    entry["path"] = legacy
+    entry["extra_root_globs"] = [str(live_dir)] if live_dir else []
+    monkeypatch.setitem(ingest.VENDOR_REGISTRY, "opencode", entry)
+
+
+def test_ingest_opencode_v2_counts_tool_errors_not_prose(tmp_path, monkeypatch):
+    live = tmp_path / "live"
+    live.mkdir()
+    _ingest_v2_store(live / "opencode.db", {"s1": 0, "s2": 1.5}, error_blocks=2)
+    _point_ingest_at(monkeypatch, tmp_path / "absent.db", live)
+    packet = ingest._ingest_opencode(WINDOW)
+    signals = {s["signal"]: s["count"] for s in packet["friction_signals"]}
+    assert packet["sessions_seen"] == 2
+    # 2 tool blocks finished with status=error; the word 'error' in prose must not count
+    assert signals["error_parts"] == 2
+    assert signals["zero_cost_sessions"] == 1
+
+
+def test_ingest_opencode_counts_a_session_once_across_legacy_and_live_stores(tmp_path, monkeypatch):
+    legacy, live = tmp_path / "legacy.db", tmp_path / "live"
+    live.mkdir()
+    # s0 exists only in the frozen legacy store, s1 in both (v2 is a superset), s2 only in live
+    _ingest_legacy_store(legacy, {"s0": 1.0, "s1": 1.0})
+    _ingest_v2_store(live / "opencode.db", {"s1": 1.0, "s2": 1.0})
+    _point_ingest_at(monkeypatch, legacy, live)
+    packet = ingest._ingest_opencode(WINDOW)
+    assert packet["sessions_seen"] == 3
+
+
+def test_ingest_opencode_legacy_only_host_still_reads(tmp_path, monkeypatch):
+    legacy = tmp_path / "legacy.db"
+    _ingest_legacy_store(legacy, {"s0": 0})
+    _point_ingest_at(monkeypatch, legacy)
+    packet = ingest._ingest_opencode(WINDOW)
+    assert packet["sessions_seen"] == 1
+    assert {s["signal"] for s in packet["friction_signals"]} == {"zero_cost_sessions"}
+
+
+def test_ingest_opencode_no_store_reports_not_found(tmp_path, monkeypatch):
+    _point_ingest_at(monkeypatch, tmp_path / "absent.db")
+    packet = ingest._ingest_opencode(WINDOW)
+    assert packet["sessions_seen"] == 0
+    assert "opencode.db not found" in packet["data_quality_notes"]
+
+
+def test_oldest_opencode_spans_every_store(tmp_path, monkeypatch):
+    legacy, live = tmp_path / "legacy.db", tmp_path / "live"
+    live.mkdir()
+    _ingest_legacy_store(legacy, {"s0": 1.0})
+    _ingest_v2_store(live / "opencode.db", {"s1": 1.0})
+    # age the live store's only session so it is the oldest record anywhere
+    con = sqlite3.connect(live / "opencode.db")
+    old_ms = int(OLD.timestamp() * 1000)
+    con.execute("UPDATE session_v2 SET time_created = ?", (old_ms,))
+    con.commit()
+    con.close()
+    _point_ingest_at(monkeypatch, legacy, live)
+    assert ingest._oldest_opencode() == ingest._iso(datetime.fromtimestamp(old_ms / 1000, tz=timezone.utc))
+    _point_ingest_at(monkeypatch, tmp_path / "absent.db")
+    assert ingest._oldest_opencode() is None
 
 
 # ─── antigravity three-source union (R4) ─────────────────────────────

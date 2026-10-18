@@ -104,6 +104,51 @@ def registry_store_roots(doc: dict | None = None) -> list[Path]:
     return roots
 
 
+NORMALIZED_ARCHIVE_KIND = "normalized-archive"
+
+
+def archive_only_store_roots(doc: dict | None = None) -> set[Path]:
+    """Roots of stores whose declared rows are ALL `normalized-archive`.
+
+    Such a store holds the engine's normalized archive and its projections, not the
+    per-provider session-memory corpora that `corpus_home()` exists to find. A store
+    with no declared rows is not archive-only: nothing says what it holds.
+    """
+    reg = doc if doc is not None else load_registry()
+    kinds: dict[str, set[str]] = {}
+    for row in (reg.get("corpora") or {}).values():
+        row = row or {}
+        kinds.setdefault(str(row.get("store")), set()).add(str(row.get("kind")))
+    roots: set[Path] = set()
+    for name, store in (reg.get("stores") or {}).items():
+        root = (store or {}).get("root")
+        if root and kinds.get(str(name)) == {NORMALIZED_ARCHIVE_KIND}:
+            roots.add(Path(str(root)).expanduser())
+    return roots
+
+
+def corpus_root(corpus_id: str, doc: dict | None = None) -> Path | None:
+    """The directory a declared corpus lives in, by registry id: store root / id.
+
+    A row carrying `path` is located at store root / path instead, and a `cce_id`
+    alias resolves to the same row as its directory id. Returns None when the id is
+    not declared or its store is unknown. The directory is NOT required to exist:
+    this names where the registry says the corpus lives, so a caller can report an
+    absent copy by name rather than guess a location.
+    """
+    reg = doc if doc is not None else load_registry()
+    stores = reg.get("stores") or {}
+    for cid, row in (reg.get("corpora") or {}).items():
+        row = row or {}
+        if corpus_id not in (cid, row.get("cce_id")):
+            continue
+        root = (stores.get(row.get("store")) or {}).get("root")
+        if not root:
+            return None
+        return Path(str(root)).expanduser() / str(row.get("path") or cid)
+    return None
+
+
 def _is_repo_checkout(path: Path) -> bool:
     """True when `path` is the limen checkout rather than a corpus store."""
     return sum(1 for name in REPO_MARKER_DIRS if (path / name).is_dir()) >= 2
@@ -123,15 +168,23 @@ def live_root() -> Path:
     return Path(result.stdout.strip()).parent
 
 
+def _explicit_home() -> Path | None:
+    """The corpus home named by the environment, if any."""
+    env = os.environ.get("LIMEN_CORPUS_ROOT") or os.environ.get("CCE_SOURCE_DROP_ROOT")
+    if not env:
+        return None
+    env_path = Path(env).expanduser()
+    # CCE_SOURCE_DROP_ROOT names the drop dir; its PARENT holds the corpora.
+    return env_path.parent if env_path.name == "source-drop" else env_path
+
+
 def corpus_home_candidates() -> list[Path]:
     """Ordered places the per-corpus directories may live, most-specific first."""
     candidates: list[Path] = []
 
-    env = os.environ.get("LIMEN_CORPUS_ROOT") or os.environ.get("CCE_SOURCE_DROP_ROOT")
-    if env:
-        env_path = Path(env).expanduser()
-        # CCE_SOURCE_DROP_ROOT names the drop dir; its PARENT holds the corpora.
-        candidates.append(env_path.parent if env_path.name == "source-drop" else env_path)
+    explicit = _explicit_home()
+    if explicit is not None:
+        candidates.append(explicit)
 
     # Registry-declared store roots outrank the conventions below them: relocating
     # a store is a `corpora.yaml` edit, not a code change.
@@ -157,9 +210,17 @@ def corpus_home() -> Path:
     When nothing resolves, fall back to the last candidate ITSELF: a path that
     does not exist, so every sweep below stays empty while callers still have a
     concrete location to name in the error.
+
+    A store holding only `normalized-archive` rows is never the home: it is the
+    engine's archive, not a place per-provider corpora live, and its populated
+    state must not displace the session-memory stores declared before it. An
+    explicit LIMEN_CORPUS_ROOT is the caller's own choice and is never skipped.
     """
+    archive_only = archive_only_store_roots()
     for candidate in corpus_home_candidates():
         if _is_repo_checkout(candidate):
+            continue
+        if candidate in archive_only and candidate != _explicit_home():
             continue
         if candidate.is_dir() and any(p.is_dir() for p in candidate.iterdir()):
             return candidate

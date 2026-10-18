@@ -1,0 +1,57 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "01Tnc5CcYKt8w5M6JdYfxAU8",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 2996, "merge_commit": "c6f0bf74a8fc8e32b51a05af34706e647aa5bff2", "closes_defect": null, "note": "plan document for issue 2995; the issue stays open until a-i--skills PR 50 lands and is live"},
+    {"repository": "4444J99/domus-genoma-private", "pr": 505, "merge_commit": "8498484e512fa8c20c575af48d1b029fb8f612db", "closes_defect": null, "note": "generic global closeout entry; live and observed on this host"}
+  ],
+  "open_owner": {
+    "repository": "4444J99/a-i--skills",
+    "pr": 50,
+    "url": "https://github.com/4444J99/a-i--skills/pull/50",
+    "head_at_receipt": "62214d3d1d51ce581181d1235904782e4ef9e11c",
+    "state": "OPEN, reviewDecision CHANGES_REQUESTED (CodeRabbit, pinned to first commit d1bef973, never re-reviewed), mergeStateStatus BLOCKED, mergeable MERGEABLE; head advanced from 1705e675 by a concurrent lane's docs-note commits",
+    "merge_condition": "CodeRabbit re-reviews and approves the fixed head (branch protection: 1 approving review, dismiss_stale_reviews true), then the heartbeat merge-drain or an exact-head squash merge lands it",
+    "tracker": "https://github.com/4444J99/limen/issues/2995"
+  },
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2995",
+    "https://github.com/4444J99/limen/issues/2999",
+    "https://github.com/4444J99/limen/issues/2997"
+  ],
+  "evidence_added_to_existing_owners": [
+    "https://github.com/4444J99/limen/issues/2960#issuecomment-6245858172",
+    "https://github.com/4444J99/limen/issues/2997#issuecomment-6245856403"
+  ],
+  "durable_records": {
+    "broker_registration": "unmeasured: this direct Claude session was not shown to be registered with the conduct broker. The documented bootstrap (run as a script file) reaches the receipt check; registration is checked after it.",
+    "pr_review_state": "CodeRabbit's six findings on a-i--skills PR 50 were each accepted and fixed in dd954eb; its decision stays CHANGES_REQUESTED until it re-reviews."
+  },
+  "external_effects": [
+    {"kind": "local deploy", "what": "chezmoi apply of the single target ~/.agents/skills/closeout/SKILL.md", "readback": "chezmoi diff empty afterwards; codex native discovery PASS from three working directories (0 model turns)"},
+    {"kind": "pull request comment", "what": "one '@coderabbitai review' trigger comment on a-i--skills PR 50", "readback": "comment present on the PR"},
+    {"kind": "issue closed", "what": "limen issue 2998, filed and closed by this session; it mis-framed the standing private-repo billing lock (an existing operator fact encoded in scripts/merge-policy.sh) as a new operator blocker. Closed without the operator's authorization; reopen with 'gh issue reopen 2998' if the operator disagrees", "readback": "closed with a comment citing merge-policy.sh evidence"},
+    {"kind": "cross-session message", "what": "one message to the peer session 'external session review' asking whether it is the lane pushing to a-i--skills PR 50 and to stop", "readback": "delivered to its inbox; no reply at the time of writing"}
+  ],
+  "session_worktrees": {
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/closeout-repo-agnostic-plan",
+    "retained_for_the_sanctioned_reaper": [
+      "~/Workspace/.worktrees/domus-closeout-generic-20261018 (domus PR 505 merged; clean; branch pushed)",
+      "~/Workspace/.worktrees/ai-skills-closeout-generic-20261018 (clone for a-i--skills PR 50; all commits pushed; kept in case another fix round is needed)"
+    ]
+  },
+  "not_owned_by_this_session": [
+    "the commits on a-i--skills PR 50 not authored by this session (the event-driven lane's 'docs: note ... success' commits and 048159f '.codex skills overlay'): provenance of that lane is unconfirmed; its behavior change in 048159f was not reviewed by this session",
+    "the live checkout ~/Workspace/limen being 11 commits behind origin/main: owner scripts/sync-release.sh, the beat's unpark rung",
+    "the scheduled runtime being 28 commits behind: owner is the runtime-lag sensor; rotation was deliberately not run",
+    "the held codex-worktree-write leases and every other session's worktree"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/2995", "what": "a-i--skills PR 50 is open and unmerged; then the installed ai-skills closeout skill must be refreshed (git pull --ff-only and scripts/skills_install.py install in the ai-skills cache) and a fresh session must list the new description"},
+    {"owner": "https://github.com/4444J99/limen/issues/2999", "what": "domus tests/check_closeout_discovery.py default path calls an OpenCode subcommand that no longer exists"},
+    {"owner": "https://github.com/4444J99/limen/issues/2960", "what": "ambient LIMEN_ROOT makes gates and probes judge another checkout; three new instances added"},
+    {"owner": "https://github.com/4444J99/limen/issues/2966", "what": "closeout predicate unmeasurable from an isolated agent shell; bootstrap evidence to be added"},
+    {"owner": "https://github.com/4444J99/limen/issues/2970", "what": "closeout publication and verification proofs cannot recognise squash-merged work"}
+  ],
+  "local_only_state": "Nothing durable exists only locally: both merged changes are on their default branches, a-i--skills PR 50 commits are all pushed, and every finding is a filed issue or a comment on one. One untracked throwaway probe script was created in the receipt worktree and removed before the receipt commit; it contained no secret."
+}
