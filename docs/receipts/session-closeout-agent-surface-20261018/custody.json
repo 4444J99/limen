@@ -1,0 +1,104 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "87d23735-6e99-4131-818d-b9e3133b66e7",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3026, "head": "39f3ffde2af32e14875f75eaab11301036805f5e", "merge_commit": "d7723c8dba967074985446cb1044333dec0211c2", "what": "agent-surface reconciliation plan v3 and the v2 superseded-provisions section"},
+    {"repository": "4444J99/limen", "pr": 3029, "head": "a09a3cee47a767626400c47013ce728952285388", "merge_commit": "d899a2e5e799fc4597c908669531fff16a087489", "what": "one resolver so every OpenCode reader opens the live database instead of the frozen legacy copy (authored here; merged by a sibling session on the operator's instruction, per its merge message)"},
+    {"repository": "4444J99/limen", "pr": 3081, "head": "907c871eee497a04495ad5c71ef28d8aa7c6cbfe", "merge_commit": "056262dab21cf83c899f20a1979b067c027f7564", "what": "agent ecosystem unity research report, evidence bundle and method"},
+    {"repository": "4444J99/domus-genoma-private", "pr": 506, "head": "a7fcc52978b7fea2090ec58b5bed18ab8514e256", "merge_commit": "dfd8205413ac799f7148c6252f6683f91dbc9be3", "what": "route .grokbot through an aux doorway instead of a blocked move"},
+    {"repository": "4444J99/domus-genoma-private", "pr": 507, "head": "9fd50ab94eb7cd0cf03c4a85f415cfb0d6db351b", "merge_commit": "9e3893a5fed93521ec17f1f71b6b806e7f254f3f", "what": "read-only census of every agent skills root"},
+    {"repository": "4444J99/domus-genoma-private", "pr": 509, "head": "9909846b7678c09eb24040e1f9e02eadc7c6cee5", "merge_commit": "47d444e4959f2b78b3cb4c6f7a748d4848d31ae1", "what": "read-only ledger of every physical agent tooling location"}
+  ],
+  "private_payload": {
+    "staging": "three per-run directories under the custody staging root, mode 0700, untracked, listed below by opaque id only",
+    "independent_copy": {
+      "medium": "a second physical volume (external), a different device from the staging root",
+      "directory_mode": "0700",
+      "method": "cp -Rp of each payload directory; diff -r of each source against its copy exited 0 three times; SHA-256 of every copy was read back from the second volume and is recorded below",
+      "is_not": ["encrypted", "remote", "registered with the sealed-custody lane"]
+    },
+    "limits": [
+      "A plain byte-identical copy, not sealed custody. The sealed capture tool reads a keychain secret and pushes encrypted content to a private GitHub remote; that outward-facing effect was not authorized in this session and remains optional strengthening under limen#2848.",
+      "Both copies live on one machine under one owner.",
+      "The OpenCode live database itself was archived by its owner on 2026-10-18 (limen#3038); this session did not touch it and does not claim that archive covers the staged exports."
+    ],
+    "payloads": [
+      {
+        "id": "P1",
+        "role": "a stray file moved out of the home directory at the operator's instruction, plus the move receipt",
+        "files": [
+          {"id": "P1-1", "bytes": 874, "sha256": "b7f5207a1ec2f2749cf78c15a0000768e2022b3173d6f1da865bf6ecc078f12e", "tracked": false},
+          {"id": "P1-2", "bytes": 4814, "sha256": "c0593e943dc38b41625abd96cadb1aae40022647566c403bd8c7bf5000652908", "tracked": false}
+        ]
+      },
+      {
+        "id": "P2",
+        "role": "four private OpenCode session text exports moved out of the runtime root, plus the move receipt",
+        "files": [
+          {"id": "P2-1", "bytes": 841597, "sha256": "f02bd47eb5ffc04e9edf14b9c29d67ec195479b4e8a145ef4bf2704ba59db5ef", "tracked": false},
+          {"id": "P2-2", "bytes": 109205, "sha256": "e24dd6f79ce993f357799110738ba2116522d33f451be5d18327ab64e129f381", "tracked": false},
+          {"id": "P2-3", "bytes": 2380, "sha256": "fcbe666798602559d0f46b9fa0e7fe6556059024ff997e669b319eb28756b67c", "tracked": false},
+          {"id": "P2-4", "bytes": 220041, "sha256": "3d9b719db764f94bbc8fd7dd642c79fff43a897a71dbe194650413ff5d190fda", "tracked": false},
+          {"id": "P2-5", "bytes": 625798, "sha256": "6fa542537acf6cf19a64f3729d5eefca028b02b2799595aea5a52b12446a25d5", "tracked": false}
+        ]
+      },
+      {
+        "id": "P3",
+        "role": "staging of the agent-ecosystem research run: the owner catalog copy, the raw run files and the prepare outputs",
+        "files": [
+          {"id": "P3-1", "bytes": 9030, "sha256": "01a714dde73bde80a55ea8e66e8ec05aa99a621ac60c66f6c8f2248742601bb9", "tracked": false, "note": "copy of the owner catalog fetched through an authenticated API; re-fetchable from its owner"},
+          {"id": "P3-2", "bytes": 113677, "sha256": "9076fa0f84751d58103676ac85f74b1d1d8577e1e712951c1c756b180ca4d3a9", "tracked": true, "git_blob": "0bc4be75e2f69f5a8649626b8e1c86d7b4541fef"},
+          {"id": "P3-3", "bytes": 45827, "sha256": "e8724466ebfa8324119f3bf473ce28ca323bcbd81936fcb0fb11da3f48df9d78", "tracked": true, "git_blob": "f47be16ba233fdcb74ebda685868487daca73b20"},
+          {"id": "P3-4", "bytes": 2359, "sha256": "9544444858c3f773ff7222d9d4b3fd330a397d7096de4d7dce2c2b9a29ebe14b", "tracked": true, "git_blob": "03bcb558096b47eb633225bdce5e969d560793b0"},
+          {"id": "P3-5", "bytes": 537, "sha256": "02b56cc69dd0d70deeb6e94937af4768d035b41cfcdb5c2e67c3f55101940fc3", "tracked": true, "git_blob": "ea0ecd25ff8af5db17f88a56e2d751a7adf86ae1"},
+          {"id": "P3-6", "bytes": 16512, "sha256": "98080c941bd155544010f81654cafcba72d2ce69272f87ba9ccc85a9ffa70013", "tracked": true, "git_blob": "708d18b97a87c3679e2fc92f6139fa5b2ea546ff"},
+          {"id": "P3-7", "bytes": 21044, "sha256": "630df54007b38b7a10688df065c79748f25470a1dd3dfd02ee1eb06b91dcacbb", "tracked": true, "git_blob": "27f63f9f0f7abc0592cc0067163623be6941d4c0"},
+          {"id": "P3-8", "bytes": 1717, "sha256": "eb4b4379d6d59d1671e48e50b50432fae98a4dbfadba58bbca474f5178ba223c", "tracked": true, "git_blob": "993af343e97392ad358b606e6239ea639c708507", "note": "tracked as report.receipt.blocked.json"},
+          {"id": "P3-9", "bytes": 3148, "sha256": "d7942ea272386c8b9314e86522968d7a571af3f92ca6cc9f7bc1e708c2d37086", "tracked": false, "git_blob": "36b86bde332a800fa60dec7d589fdf6ce84f2eb8", "note": "the generated BlockedReceipt; its hash is quoted in the merged plan, the bytes are not tracked"}
+        ]
+      }
+    ],
+    "totals": {"files": 16, "bytes": 2018560}
+  },
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2848",
+    "https://github.com/4444J99/limen/issues/2054",
+    "https://github.com/4444J99/limen/issues/3038",
+    "https://github.com/4444J99/limen/issues/3040",
+    "https://github.com/4444J99/limen/issues/3078",
+    "https://github.com/4444J99/limen/issues/3079",
+    "https://github.com/4444J99/praxis-perpetua/issues/57",
+    "https://github.com/4444J99/domus-genoma-private/issues/508"
+  ],
+  "durable_records": {
+    "plan": "docs/plans/2026-10-18-agent-surface-reconciliation-v3.md (item statuses, research digest, Step-8 candidates including the Gemini lane tier decision)",
+    "research": "docs/research/agent-ecosystem-unity/",
+    "broker_registration": "registered by scripts/hooks/conduct-register.sh as a protected direct claude session on tool activity from 2026-10-18T07:50:50Z through 17:42:57Z; every refresh since 17:48:06Z was rejected by the broker (BrokerQuotaExhausted, limen#2054). The broker audit (retained runs, active leases, registration) is therefore unmeasured at closeout. The body of PR 3081 records that this session reserved no broker children."
+  },
+  "session_worktrees": {
+    "native_checkout": "docs-agent-surface-v3-20261018 (this checkout). Its original branch ref, worktree-docs-agent-surface-v3-20261018, is retained at PR 3026's final head for the sanctioned reaper; this receipt branch was cut from main in the same checkout.",
+    "retained_disposable_checkouts": [
+      "agent-ecosystem-unity-research-20261018: landed, its tip equals PR 3081's final head; retained, not retired (cross-checkout git is outside this isolated session, so it was not inspected for uncommitted files)",
+      "local branch ref fix/opencode-live-db-resolver-20261018: landed with PR 3029, no worktree; retained for the reaper, whose offline check cannot prove squash-merged branches"
+    ],
+    "not_touched": "every other session's checkout and every other session's writer lease"
+  },
+  "not_owned_by_this_session": [
+    "the sibling session that merged PR 3029 and archived the live OpenCode database (limen#3038)",
+    "domus-genoma-private pull request 510 and every other open domus change",
+    "the codex-worktree-write leases and every other session's worktree in git worktree list"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/2054", "what": "The conduct broker's persistence write quota is exhausted, so this session's closeout predicate cannot measure (exit 2, unmeasured). After the daily reset or an engineering fix, run it twice and quote both bare exit codes: bash scripts/no-tasks-on-me.sh --session-id 87d23735-6e99-4131-818d-b9e3133b66e7 --worktree <this checkout> --receipt docs/receipts/session-closeout-agent-surface-20261018/session-closeout.json --json. The pull request that carries this receipt stays a draft until both exit 0."},
+    {"owner": "https://github.com/4444J99/limen/issues/2848", "what": "Remaining plan v3 work: the Step 8 candidates (repoint or retire the Claude doorways, repoint ~/.local/share/opencode, export COPILOT_HOME) and the Gemini lane tier decision; optional sealed custody of the staged private payload."},
+    {"owner": "https://github.com/4444J99/limen/issues/3038", "what": "OpenCode retention decision, compaction, and subset verification of the frozen 8 MB copy, left open by the owner after its 2026-10-18T08:26Z archive."},
+    {"owner": "https://github.com/4444J99/limen/issues/3040", "what": "v2-table coverage for the switched OpenCode readers (199 of 333 sessions are invisible to them)."},
+    {"owner": "https://github.com/4444J99/limen/issues/3078", "what": "research prepare and ingest crash with a raw HTTPError instead of a BlockedReceipt when the default catalog is unreachable."},
+    {"owner": "https://github.com/4444J99/limen/issues/3079", "what": "workflow fan-out hygiene: no reservation path for read-only in-harness subagents; advisor and Bash reachable from Explore agents."},
+    {"owner": "https://github.com/4444J99/praxis-perpetua/issues/57", "what": "no research catalog profile an agent-run workflow can satisfy; the default catalog URL returns 404 unauthenticated."},
+    {"owner": "https://github.com/4444J99/domus-genoma-private/issues/508", "what": "the closeout skill diverges: Claude, Codex and OpenCode load the older catalog copy, not the Domus copy; the skills census exits 1 on it until it resolves."},
+    {"owner": "his-hand-levers.json L-CARTRIDGE-REPOINT", "what": "the whole-source chezmoi apply (24 scripts, two removals, about 30 files) stays human-gated; path-scoped applies are the safe unit."}
+  ],
+  "local_only_state": "The three private payloads exist in the custody staging root and, byte-identically, on a second physical volume; the seven P3 files marked tracked also exist in git. Nothing else durable exists only locally. Scratch under the job directory is disposable. No credential value was read into any file, comment or log by this closeout.",
+  "host_effects": "At the operator's instruction: the .grokbot doorway was applied by domus-home-guard (guard receipts in its local routing log) and two Domus executables were installed by the operator's own targeted chezmoi apply; a stray home file and four OpenCode session exports were moved into custody staging (same-volume renames, hash-verified, receipts inside the staged directories); this closeout created one 0700 directory on a second volume for the independent copy. The session's worktree was created under an explicit operator override of the host writer lease. No settings file, hook, LaunchAgent, uv tool, gateway, keychain item or secret store was changed."
+}

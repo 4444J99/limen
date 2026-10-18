@@ -1,0 +1,61 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "87d23735-6e99-4131-818d-b9e3133b66e7",
+  "worktree_name": "docs-agent-surface-v3-20261018",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-agent-surface-20261018",
+  "base_head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "owned_paths": [],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "release",
+      "head": "39f3ffde2af32e14875f75eaab11301036805f5e",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-agent-surface-20261018/verification.txt",
+      "sha256": "c3483385e61f3a74079b7a868c4323bee9eacb227daefd36922f9c979687a8b4"
+    },
+    {
+      "purpose": "release",
+      "head": "a09a3cee47a767626400c47013ce728952285388",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-agent-surface-20261018/verification.txt",
+      "sha256": "c3483385e61f3a74079b7a868c4323bee9eacb227daefd36922f9c979687a8b4"
+    },
+    {
+      "purpose": "release",
+      "head": "907c871eee497a04495ad5c71ef28d8aa7c6cbfe",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-agent-surface-20261018/verification.txt",
+      "sha256": "c3483385e61f3a74079b7a868c4323bee9eacb227daefd36922f9c979687a8b4"
+    },
+    {
+      "purpose": "release",
+      "head": "fdfbe2da44d5cc84a5b8663918a9f2d97ea30bf0",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-agent-surface-20261018/verification.txt",
+      "sha256": "c3483385e61f3a74079b7a868c4323bee9eacb227daefd36922f9c979687a8b4"
+    },
+    {
+      "purpose": "release",
+      "head": "056262dab21cf83c899f20a1979b067c027f7564",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-agent-surface-20261018/verification.txt",
+      "sha256": "c3483385e61f3a74079b7a868c4323bee9eacb227daefd36922f9c979687a8b4"
+    },
+    {
+      "purpose": "release",
+      "head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-agent-surface-20261018/verification.txt",
+      "sha256": "c3483385e61f3a74079b7a868c4323bee9eacb227daefd36922f9c979687a8b4"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-agent-surface-20261018/custody.json",
+    "sha256": "7fb3278793974b65b9cddd3ca8752e96ae9c5916914eebbf97af1c042d2a7cd2"
+  }
+}
