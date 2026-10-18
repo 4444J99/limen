@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -665,13 +666,70 @@ def test_operator_only_knob_changes_the_operator_score_when_the_vendor_lineage_d
 
     default_snapshot = corpus.update_ledger(corpus.LedgerPaths.for_root(tmp_path / "default"), events=events)
     default_scores = _recurrence_by_text(corpus, default_snapshot)
-    assert default_scores[("operator", "Ship the synthetic owner receipt.")] == 0.25
+    # Log scale: log1p(1) / log1p(4), where a linear scale would have given 0.25.
+    assert default_scores[("operator", "Ship the synthetic owner receipt.")] == pytest.approx(
+        math.log1p(1) / math.log1p(4), abs=1e-6
+    )
 
     knob_paths = corpus.LedgerPaths.for_root(tmp_path / "knob")
     knob_paths.policy.parent.mkdir(parents=True, exist_ok=True)
     knob_paths.policy.write_text(json.dumps({"recurrence_authorities": ["operator"]}), encoding="utf-8")
     knob_scores = _recurrence_by_text(corpus, corpus.update_ledger(knob_paths, events=events))
     assert knob_scores[("operator", "Ship the synthetic owner receipt.")] == 1.0
+
+
+def _lineage_atoms(
+    lineage: str, occurrences: int, *, atoms_per_occurrence: int = 1, authority: str = "operator"
+) -> list[dict]:
+    return [
+        {
+            "atom_id": f"atom-{lineage}-{occurrence}-{fragment}",
+            "occurrence_id": f"occurrence-{lineage}-{occurrence}",
+            "lineage_id": f"lineage-{lineage}",
+            "authority": authority,
+            "kind": "ask",
+        }
+        for occurrence in range(occurrences)
+        for fragment in range(atoms_per_occurrence)
+    ]
+
+
+def _recurrence_by_lineage(corpus, atoms: list[dict], policy: dict | None = None) -> dict[str, float]:
+    snapshot = corpus.build_snapshot([], atoms, [], policy or corpus.DEFAULT_POLICY, {})
+    return {atom["lineage_id"]: atom["dimensions"]["recurrence"] for atom in snapshot["atoms"]}
+
+
+def test_an_occurrence_that_fragments_into_many_atoms_counts_once():
+    corpus = _load()
+    atoms = _lineage_atoms("fragmented", 1, atoms_per_occurrence=9) + _lineage_atoms("repeated", 2)
+    scores = _recurrence_by_lineage(corpus, atoms)
+    # Counting atoms would give the fragmented lineage 9 and the maximum score; counting occurrences gives 1 of 2.
+    assert scores["lineage-fragmented"] == pytest.approx(math.log1p(1) / math.log1p(2), abs=1e-6)
+    assert scores["lineage-repeated"] == 1.0
+
+
+def test_recurrence_is_log_scaled_so_one_giant_lineage_does_not_flatten_the_rest():
+    corpus = _load()
+    atoms = _lineage_atoms("giant", 1000) + _lineage_atoms("small", 3)
+    scores = _recurrence_by_lineage(corpus, atoms)
+    assert scores["lineage-giant"] == 1.0
+    assert scores["lineage-small"] == pytest.approx(math.log1p(3) / math.log1p(1000), abs=1e-6)
+    assert scores["lineage-small"] >= 0.2  # a linear scale would give 0.003
+
+
+def test_recurrence_authorities_filter_still_excludes_an_authority(tmp_path: Path):
+    corpus = _load()
+    atoms = _lineage_atoms("operator-ask", 3) + _lineage_atoms("vendor-ask", 1000, authority="unknown")
+    policy_file = tmp_path / "policy.json"
+    policy_file.write_text(json.dumps({"recurrence_authorities": ["operator"]}), encoding="utf-8")
+    scores = _recurrence_by_lineage(corpus, atoms, corpus.load_policy(policy_file))
+    # The vendor lineage is not counted, so the operator lineage is the maximum and the vendor lineage scores 0.
+    assert scores["lineage-operator-ask"] == 1.0
+    assert scores["lineage-vendor-ask"] == 0.0
+
+    default_scores = _recurrence_by_lineage(corpus, atoms)
+    assert default_scores["lineage-vendor-ask"] == 1.0
+    assert default_scores["lineage-operator-ask"] < 1.0
 
 
 @pytest.mark.parametrize(

@@ -16,6 +16,26 @@ raw exports (/Volumes/Scratch/ai-exports/<provider>) + the ChatGPT delta file fr
   -> check-knowledge-alive.py --live --write-receipt       -> a counts-only receipt in docs/receipts/
 ```
 
+## The front door
+
+`limen knowledge` opens the archive, so nobody has to know the store path or the server flags. It
+derives both from the corpora registry, starts the engine's server on a fixed local port if nothing is
+answering, and opens the site in the browser. The site is the static pages under `site-all/` with
+full-text search over every conversation added by the server. The Obsidian vault in `vault-all/` is
+opened as well when Obsidian is installed, and skipped without error when it is not. The server listens
+on the loopback interface only, so nothing here leaves the machine. The command is `scripts/open-knowledge.sh`
+and is safe to run again: a server that already answers is reused. If the archive has not been built, it
+stops with one line and exit code 2.
+
+```bash
+limen knowledge            # start the server if needed and open the site
+limen knowledge --status   # server state, address, archive fingerprint, newest alive receipt
+limen knowledge --stop     # stop the server this command started
+```
+
+`--port` picks another port from the default of 8472, and `--no-open` starts the server and prints the
+address without opening a browser. The server's log and process id file sit under `<store>/state/`.
+
 ## Where things live
 
 | What | Location | In Git |

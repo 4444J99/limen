@@ -1,0 +1,47 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "e3ef1593-8bbd-428b-b7e0-794965689304",
+  "scope": "custody accounting only: no independent native-transcript restore was performed and none is claimed",
+  "merged": [
+    "4444J99/limen#2949 vendor-insights store resolution (a1249584a)",
+    "4444J99/limen#2962 session plan, issue #2961 (149627685)",
+    "4444J99/limen#2967 OpenCode health sensor, supersedes #2951 (9d3ec0037; direct squash merge authorised by the operator, pr-gate still running at merge)",
+    "4444J99/domus-genoma-private#503 liturgy reconciliation, plan on trunk, healthcheck legs (914e14b3)",
+    "4444J99/domus-genoma-private#504 domus-hooks V2 plugin port (520e3d6a)"
+  ],
+  "merged_off_trunk": [
+    "4444J99/domus-genoma-private#502 merged to the dead master line (1374b478), not main; its document landed on main through #503"
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2961",
+    "https://github.com/4444J99/limen/pull/2976"
+  ],
+  "closed_with_pointer": [
+    "https://github.com/4444J99/limen/pull/2951 superseded by https://github.com/4444J99/limen/pull/2967"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6244110173",
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6244773331",
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6244789112",
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6244813675",
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6244826326",
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6244841425"
+    ],
+    "effector_receipts": "host state under ~/.local/state/domus/shared-context: attempts opencode-shim-20261018-a2 and opencode-shim-20261018-a3-realpath, each deployed and verified 14/14",
+    "memory_ticket": "none submitted by this session",
+    "broker_registration": "none: direct human-directed session, conduct broker unreachable (BrokerUnavailable)"
+  },
+  "session_worktrees": {
+    "created_and_removed": [
+      "~/Workspace/.worktrees/domus-v2-plugin-verify-20261018",
+      "~/Workspace/.worktrees/domus-opencode-claim-20261018"
+    ],
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/heal-evolve-opencode-20261018"
+  },
+  "not_owned_by_this_session": [
+    "docs/agent-docs-repo-map-fixes (commit 3b346f600) was authored in another worktree; this session pushed it and opened PR #2976 at the operator's request and made no edits to it",
+    "the remote branch docs/opencode-mcp-claim-reconcile-20261018 is landed (squash) and left for the receipt-backed reap"
+  ],
+  "local_only_state": "the operator's uncommitted .serena/project.yml change is held only in a local stash in the Domus checkout, entry 875c4bcca6bac9ce073a871493ae2bf23d6389e0 (restore by applying that SHA); the OS temp plan, receipt and signature files for both deploy attempts are disposable copies of the effector receipts named above; job-directory task output is disposable. No restore copy is claimed for any of these."
+}

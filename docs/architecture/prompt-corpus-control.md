@@ -191,9 +191,16 @@ guard to an allowlist is a later, separate contract change. The source label is 
 casefold, so padding or capital letters in a label (` Archive-chatgpt-messages`) cannot step around the
 declared prefix.
 
-Decision, recurrence: the recurrence dimension is the count of atoms sharing a lineage, divided by the
-largest such count. Thousands of vendor asks would raise that maximum and shrink every operator atom's
-recurrence score. The policy key `recurrence_authorities` (in `docs/prompt-corpus-policy.json`) names
+Decision, recurrence measure: the recurrence dimension measures how many separate times an ask was made.
+It counts distinct occurrences per lineage, not atoms, because one prompt that fragments into several
+atoms is still one repetition. It is scaled as `log1p(n) / log1p(max_n)`, so the single largest lineage
+cannot flatten every other lineage toward 0; with a linear scale the vendor archive feeds (27,204
+occurrences becoming 240,390 atoms) pushed every operator atom's recurrence close to 0 and the public
+ranking flipped from recurrence-driven to emphasis-driven. Archive occurrences count by default: an ask
+that recurs across ChatGPT, Claude and Gemini is exactly the signal this dimension exists to carry. A
+lineage with no counted occurrence scores 0.
+
+Decision, recurrence authorities: the policy key `recurrence_authorities` (in `docs/prompt-corpus-policy.json`) names
 which authority classes (`operator`, `unknown`, `derived`) are counted. Its default, used whenever the
 key is absent, is all three, which is the behaviour from before the key existed. Recommendation: once
 vendor feeds are ingested, set it to `["operator"]` so the score measures how often the person repeated
