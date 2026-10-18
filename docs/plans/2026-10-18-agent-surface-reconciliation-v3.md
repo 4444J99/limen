@@ -98,10 +98,27 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    reclassify from `route_pending` to an `application` `preserve-and-link` doorway → `.agent-runtime/aux/grokbot`,
    guarded by `_exact_process_active()`; reconcile the two trees by inspect-then-merge (never delete, never overwrite
    the residue copy). Linking needs the daemon stopped — flag that sequencing constraint; do not kill it.
+   **Status (2026-10-18, later): implemented as domus PR #506 (open, not merged, not applied).** Two corrections to the
+   text above, both from live reads: (a) no grokbot process was running at implementation time and the directory was
+   last written hours earlier, so the "daemon must be stopped" constraint was moot then (the guard's active-CWD check
+   still enforces it at apply time); (b) the declared `move` was not merely redundant, it was *permanently blocked*
+   (`destination already exists`), which `domus-home-guard --check` showed on `main`. The residue copy was **not**
+   merged into the live tree: it holds a stale credential and connection file the daemon regenerates, so it stays as
+   custody. Apply is operator-run after merge: `domus-home-guard --apply --plan-hash <fresh --check hash>`.
 2. **Skills (v2 Phase 3) — domus-genoma PR.** Content-hash inventory across the three roots; register survivors in
    `skills-registry.json`; no pruning before Step 8. Close the cross-provider leak seen from Claude's side: two of four
    `claude/skills/*` links resolve into Claude-named paths (`distributions/claude/…`, `limen/.claude/skills/vendor-insights`).
    Canonical home = `ai-skills/` with per-provider fan-out links, never one provider's namespace.
+   **Status (2026-10-18, later): premise corrected by measurement; delivered as domus PR #507 (open, not merged) +
+   issue #508.** Measured with the new read-only `domus-skills-census`: (a) `~/.agents/skills` and runtime
+   `.agents/skills` share **zero** names, so they are complementary sets, not duplicates, and there is nothing to
+   dedupe or crown canonical; (b) the "cross-provider leak" is overstated: `distributions/claude` and
+   `distributions/codex` are complete copies inside the catalog, and the three Codex links into the claude flavor are
+   byte-identical (a naming/coupling concern, not a content leak); only `vendor-insights` crosses into the limen repo,
+   and #456 documents that as deliberate; (c) the real defect is `closeout` having two contents: the Domus copy (#505,
+   Oct 18) is newer than the Oct 16 catalog copy that Claude, Codex and OpenCode load, filed as #508. The connector,
+   allowlist and consolidation work is owned by five open PRs (#435, #456, #436, #443, #414), so no competing skills
+   branch was cut. Registry registration and pruning stay gated to Step 8.
 3. **`vm_bundles` 11 GB — limen (owner + predicate).** Same class as OpenCode's `opencode.db`: large, monotonic, no
    named prune owner. File `domus-agent-maintain` as owner with a bounded prune predicate; do **not** symlink (Ring 2).
 4. **`legacy-home` — no action** until Step 8; record its 112 MB `plans/` and 141 MB `file-history` as
@@ -124,7 +141,9 @@ Caveat: "landed" rests on filesystem reads, not receipts; closeout re-proves eac
    "not scanned, reason", never silently omitted.
 8. **Antigravity skills visibility — domus-genoma (inside item 2).** `skills.json` targets `~/.agents/skills`, so the 28
    skills in `.agent-runtime/.agents/skills` never reach it; the content-hash reconciliation decides which root is
-   canonical before any `skills.json` edit.
+   canonical before any `skills.json` edit. **Superseded premise (2026-10-18, later):** the census shows the two roots
+   are disjoint, so no root is "canonical" over the other; the open question is only which consumers should read which
+   root, which is still gated on the skills lane (#435/#456/#436) and Step 8, not on a hash reconciliation.
 9. **No root cutover** (correction 5): recorded as a decision, not left implicit.
 10. **Out of scope:** per-repo `.claude/` dirs and worktree copies (v2 disposition #8, separate opt-in track),
    Library/Application Support moves, `~/.agents/teamwork`, and #502's human gate (GitHub/Serena/Jupyter MCP vs `ianva`
@@ -167,5 +186,11 @@ Two durable lessons, recorded here because no other surface owns them:
 - `domus-agent-runtime check` stays `ok`, 0 unauthorized legacy roots.
 - `agent-surface-healthcheck` stays ≥ 42 ok / 0 fail. Per #502 defect 4 it cannot see directories/globs/symlink
   targets, so green is not proof for skills — add a skills-root census check as part of item 2.
+- `domus-skills-census` (domus PR #507) exits 0. **Currently exits 1 on this host**: one same-name collision,
+  `closeout`, owned by issue #508. That is the predicate working, not a regression; do not wire it into a gate until
+  #508 resolves.
+- `domus-home-guard --check` against the #506 manifest shows `.grokbot` as a non-blocked `preserve-and-link` (on `main`
+  it is a blocked `move`). It stays non-zero until the route is applied; `visual_dashboard.html` is a pre-existing,
+  unrelated `undeclared_home_entry`.
 - `scripts/check-session-phase.py` exits 0 for this plan (Issue + PR lines present).
 - Re-run the 8-consumer matrix (v2 §6) rows for Claude Code, Claude Desktop, and OpenCode after items 1–2.
