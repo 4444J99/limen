@@ -113,6 +113,22 @@ RECURRENCE_AUTHORITIES_DEFAULT = AUTHORITY_CLASSES
 NON_OPERATOR_SOURCE_PREFIXES = ("archive-",)
 ARCHIVE_SOURCE_PREFIX = "archive-"
 ARCHIVE_FEED_PROVENANCE = "unknown_user_input"
+# The frozen feed row contract. A feed row reaches update_ledger as an event, and an event key such as
+# existing_occurrence_id, atoms, task_body or duplicate_of can alter stored operator records, so a row
+# may carry exactly these keys and no others.
+ARCHIVE_FEED_REQUIRED_KEYS = (
+    "body_kind",
+    "event_index",
+    "event_ref",
+    "provenance",
+    "session_ref",
+    "source",
+    "source_locator",
+    "text",
+    "text_index",
+    "timestamp",
+)
+ARCHIVE_FEED_OPTIONAL_KEYS = ("branch",)
 _ARCHIVE_FEED_NAME = re.compile(r"^feed-([a-z0-9]+)-prompts\.jsonl$")
 _ARCHIVE_RECEIPT_NAME = re.compile(r"^receipt-([a-z0-9]+)-prompts-([0-9a-f]{16})-([0-9]{8})\.json$")
 
@@ -307,9 +323,15 @@ def load_archive_feed(feed: Path) -> list[dict[str, Any]]:
     except OSError as exc:
         raise ValueError(f"archive feed is unreadable: {feed.name} ({exc.__class__.__name__})") from exc
     receipt = _archive_feed_receipt(feed, provider, hashlib.sha256(content).hexdigest())
+    try:
+        decoded = content.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        # The decoder's own message carries a byte value and position, so it is never chained.
+        raise ValueError(f"archive feed is not valid UTF-8: {feed.name}") from None
     rows: list[dict[str, Any]] = []
     expected_source = f"{ARCHIVE_SOURCE_PREFIX}{provider}-messages"
-    for line_number, line in enumerate(content.decode("utf-8", errors="strict").split("\n"), start=1):
+    allowed_keys = {*ARCHIVE_FEED_REQUIRED_KEYS, *ARCHIVE_FEED_OPTIONAL_KEYS}
+    for line_number, line in enumerate(decoded.split("\n"), start=1):
         if not line:
             continue
         try:
@@ -324,6 +346,18 @@ def load_archive_feed(feed: Path) -> list[dict[str, Any]]:
             raise ValueError(
                 f"archive feed row provenance must be {ARCHIVE_FEED_PROVENANCE}: {feed.name}:{line_number}"
             )
+        # Only key names are ever reported, never a value, and a name is bounded.
+        for key in sorted(row):
+            if key not in allowed_keys:
+                raise ValueError(
+                    f"archive feed row carries the key {key[:64]!r} outside the feed contract: "
+                    f"{feed.name}:{line_number}"
+                )
+        for key in ARCHIVE_FEED_REQUIRED_KEYS:
+            if key not in row:
+                raise ValueError(f"archive feed row is missing the key {key!r}: {feed.name}:{line_number}")
+        if not isinstance(row["text"], str):
+            raise ValueError(f"archive feed row text is not a string: {feed.name}:{line_number}")
         rows.append(row)
     if len({(row.get("session_ref"), row.get("event_ref")) for row in rows}) != len(rows):
         raise ValueError(f"archive feed repeats an event reference: {feed.name}")
@@ -570,9 +604,14 @@ def recurrence_authorities(policy: dict[str, Any]) -> tuple[str, ...]:
 
 
 def source_family_operator_eligible(source: str) -> bool:
-    """True unless the source family is declared as never operator-authored."""
+    """True unless the source family is declared as never operator-authored.
 
-    return not any(str(source).startswith(prefix) for prefix in NON_OPERATOR_SOURCE_PREFIXES)
+    The label is matched after strip and casefold, so padding or capital letters in a feed's own source
+    label cannot step around the declared prefixes.
+    """
+
+    normalized = str(source).strip().casefold()
+    return not any(normalized.startswith(prefix) for prefix in NON_OPERATOR_SOURCE_PREFIXES)
 
 
 def _reject_operator_authority_for_ineligible_source(occurrence: dict[str, Any]) -> None:

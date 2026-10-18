@@ -262,6 +262,104 @@ def test_malformed_and_non_object_rows_reject_the_feed(tmp_path: Path):
             corpus.load_archive_feed(feed)
 
 
+def _write_raw_feed(directory: Path, content: bytes, *, rows: int) -> Path:
+    """A feed whose exact bytes the test controls, with a receipt that names them."""
+
+    directory.mkdir(parents=True, exist_ok=True)
+    feed = directory / f"feed-{PROVIDER}-prompts.jsonl"
+    feed.write_bytes(content)
+    (directory / f"receipt-{PROVIDER}-prompts-{FINGERPRINT_NAME}-{DAY}.json").write_text(
+        json.dumps(
+            {"feed_sha256": hashlib.sha256(content).hexdigest(), "rows": rows, "source_fingerprint": FINGERPRINT}
+        ),
+        encoding="utf-8",
+    )
+    return feed
+
+
+# ---------------------------------------------------------------------------
+# The frozen row key list: nothing outside it reaches the ledger events
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("key", ["existing_occurrence_id", "atoms", "task_body", "duplicate_of", "authority"])
+def test_row_with_a_key_outside_the_contract_rejects_the_feed(tmp_path: Path, key: str):
+    corpus = _load()
+    sentinel = "synthetic-sentinel-value-that-must-not-leak"
+    rows = [_row(0, "First synthetic ask."), _row(1, "Second synthetic ask.", **{key: sentinel})]
+    with pytest.raises(ValueError) as caught:
+        corpus.load_archive_feed(_write_feed(tmp_path, rows))
+    message = str(caught.value)
+    assert repr(key) in message
+    assert "outside the feed contract" in message
+    assert message.endswith("feed-chatgpt-prompts.jsonl:2")
+    assert sentinel not in message
+
+
+def test_the_branch_key_is_the_one_optional_key(tmp_path: Path):
+    corpus = _load()
+    rows = [_row(0, "A synthetic ask."), _row(1, "An alternate synthetic ask.", branch="alternate")]
+    assert corpus.load_archive_feed(_write_feed(tmp_path, rows)) == rows
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "body_kind",
+        "event_index",
+        "event_ref",
+        "session_ref",
+        "source_locator",
+        "text",
+        "text_index",
+        "timestamp",
+    ],
+)
+def test_row_missing_a_required_key_rejects_the_feed(tmp_path: Path, key: str):
+    corpus = _load()
+    row = _row(0, "A synthetic ask.")
+    del row[key]
+    with pytest.raises(ValueError, match="missing the key") as caught:
+        corpus.load_archive_feed(_write_feed(tmp_path, [row]))
+    assert repr(key) in str(caught.value)
+    assert str(caught.value).endswith("feed-chatgpt-prompts.jsonl:1")
+
+
+@pytest.mark.parametrize("value", [None, 7, ["a synthetic ask"], {"text": "a synthetic ask"}, True])
+def test_row_text_must_be_a_string(tmp_path: Path, value):
+    corpus = _load()
+    row = _row(0, "A synthetic ask.")
+    row["text"] = value
+    with pytest.raises(ValueError, match="text is not a string") as caught:
+        corpus.load_archive_feed(_write_feed(tmp_path, [row]))
+    assert str(caught.value).endswith("feed-chatgpt-prompts.jsonl:1")
+
+
+def test_a_feed_that_is_not_valid_utf8_is_refused_without_the_decoder_message(tmp_path: Path):
+    corpus = _load()
+    feed = _write_raw_feed(tmp_path, b'{"text": "\xff\xfe synthetic"}\n', rows=1)
+    with pytest.raises(ValueError) as caught:
+        corpus.load_archive_feed(feed)
+    message = str(caught.value)
+    assert message == "archive feed is not valid UTF-8: feed-chatgpt-prompts.jsonl"
+    assert "0xff" not in message and "position" not in message
+    assert caught.value.__cause__ is None and caught.value.__suppress_context__
+
+
+def test_zero_row_feed_is_verified_against_its_receipt(tmp_path: Path):
+    corpus = _load()
+    feed = _write_raw_feed(tmp_path, b"", rows=0)
+    assert feed.stat().st_size == 0
+    assert corpus.load_archive_feed(feed) == []
+
+
+def test_zero_row_feed_still_needs_a_receipt_that_says_zero(tmp_path: Path):
+    corpus = _load()
+    feed = _write_raw_feed(tmp_path, b"", rows=1)
+    with pytest.raises(ValueError, match="row count differs"):
+        corpus.load_archive_feed(feed)
+
+
 # ---------------------------------------------------------------------------
 # The script option end to end
 # ---------------------------------------------------------------------------
@@ -341,6 +439,38 @@ def test_script_dry_run_verifies_the_feed_too(tmp_path: Path):
     feed = _write_feed(tmp_path / "feeds", [_row(0, "A synthetic ask.", provenance="operator_typed")])
     result = _run_script(tmp_path, "--archive-feed", str(feed))
     assert result.returncode == 2
+
+
+def test_script_refuses_a_row_that_tries_to_alter_a_stored_record(tmp_path: Path):
+    sentinel = "synthetic-sentinel-value-that-must-not-leak"
+    feed = _write_feed(
+        tmp_path / "feeds",
+        [_row(0, "A synthetic ask.", existing_occurrence_id=sentinel, atoms=[{"text": sentinel}])],
+    )
+    result = _run_script(tmp_path, "--archive-feed", str(feed), "--write")
+    assert result.returncode == 2
+    assert "outside the feed contract" in result.stderr
+    assert sentinel not in result.stdout + result.stderr
+    assert not (tmp_path / "private").exists()
+
+
+def test_script_reports_a_feed_that_is_not_valid_utf8_without_bytes(tmp_path: Path):
+    feed = _write_raw_feed(tmp_path / "feeds", b"\xff\xfe\xfd\n", rows=1)
+    result = _run_script(tmp_path, "--archive-feed", str(feed), "--write")
+    assert result.returncode == 2
+    assert "not valid UTF-8" in result.stderr
+    assert "0xff" not in result.stderr and "position" not in result.stderr
+    assert not (tmp_path / "private").exists()
+
+
+def test_script_accepts_a_zero_row_feed_and_reports_zero_rows(tmp_path: Path):
+    feed = _write_raw_feed(tmp_path / "feeds", b"", rows=0)
+    dry = _run_script(tmp_path, "--archive-feed", str(feed))
+    assert dry.returncode == 0, dry.stdout + dry.stderr
+    assert "verified: 0 row(s)" in dry.stdout
+    written = _run_script(tmp_path, "--archive-feed", str(feed), "--write")
+    assert written.returncode == 0, written.stdout + written.stderr
+    assert "verified: 0 row(s)" in written.stdout
 
 
 def test_events_jsonl_option_still_takes_operator_rows_for_other_sources(tmp_path: Path):
@@ -445,6 +575,21 @@ def test_eligibility_helper_reads_the_declared_prefixes():
     assert corpus.source_family_operator_eligible("fixture") is True
     assert corpus.source_family_operator_eligible("archive-chatgpt-messages") is False
     assert corpus.source_family_operator_eligible("") is True
+
+
+@pytest.mark.parametrize("label", ["Archive-chatgpt-messages", "ARCHIVE-claude-messages", "  archive-chatgpt-messages"])
+def test_eligibility_helper_ignores_case_and_padding_in_the_label(label: str):
+    corpus = _load()
+    assert corpus.source_family_operator_eligible(label) is False
+
+
+def test_guard_rejects_an_archive_label_written_with_other_case_or_padding(tmp_path: Path):
+    corpus = _load()
+    with pytest.raises(ValueError, match="operator provenance is not permitted"):
+        corpus.update_ledger(
+            corpus.LedgerPaths.for_root(tmp_path),
+            events=[_operator_event("A synthetic ask.", event_ref="one", source=" Archive-Chatgpt-Messages")],
+        )
 
 
 # ---------------------------------------------------------------------------

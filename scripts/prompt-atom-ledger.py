@@ -6324,10 +6324,13 @@ def main() -> int:
         events.extend(load_jsonl(args.events_jsonl))
     for archive_feed in args.archive_feed:
         try:
-            events.extend(load_archive_feed(archive_feed))
+            feed_rows = load_archive_feed(archive_feed)
         except ValueError as exc:
             print(f"FAIL: cannot read archive feed: {exc}", file=sys.stderr)
             return 2
+        # A verified feed with no rows is legitimate (a provider whose export holds no typed asks).
+        print(f"prompt-atom-ledger: archive feed {archive_feed.name} verified: {len(feed_rows)} row(s)")
+        events.extend(feed_rows)
     if args.outcomes_jsonl:
         outcomes = load_jsonl(args.outcomes_jsonl)
     if args.reclassify:

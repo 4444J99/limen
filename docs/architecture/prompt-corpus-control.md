@@ -157,8 +157,19 @@ What `--archive-feed` checks before a single row reaches the ledger:
   receipt's `rows` equals the number of rows read.
 - Every row has `source` equal to `archive-<provider>-messages` and `provenance` equal to
   `unknown_user_input`. Any other value, including operator provenance, rejects the whole feed. An
-  event reference repeated within a feed rejects it too. Error messages name the file and line, never
-  the row text.
+  event reference repeated within a feed rejects it too.
+- A row carries exactly the frozen key list `body_kind`, `event_index`, `event_ref`, `provenance`,
+  `session_ref`, `source`, `source_locator`, `text`, `text_index` and `timestamp`, plus the optional
+  `branch`. A row with any other key, a missing required key, or a `text` that is not a string rejects the
+  whole feed. The allowlist matters because a feed row becomes a ledger event, and keys such as
+  `existing_occurrence_id`, `atoms`, `task_body` or `duplicate_of` would otherwise let a feed edit stored
+  operator records.
+- A feed that is not valid UTF-8 is refused with a fixed message that names the file only.
+- A feed with zero rows is legitimate (a provider whose export holds no typed asks). Its receipt must say
+  `rows: 0` and carry the sha256 of the empty string; the feed is verified, nothing is ingested, and the
+  ledger script reports `0 row(s)`.
+
+Error messages name the file and line, and at most a key name, never a row value or a byte position.
 
 A failure exits 2 and writes nothing. A dry run (no `--write`) verifies the feed as well. `--events-jsonl`
 is unchanged and still carries operator rows for the sources that are allowed to have them.
@@ -176,7 +187,9 @@ eligible families. An allowlist would also have to enumerate every other source 
 carries operator provenance through the events path today (the test fixtures, Codex, Gemini and the
 rest), and would silently drop their rows if one were missing. The Claude project main-session rule
 (`operator_eligible` in `prompt_sources.py`) stays the only scanner-side operator grant; widening the
-guard to an allowlist is a later, separate contract change.
+guard to an allowlist is a later, separate contract change. The source label is matched after strip and
+casefold, so padding or capital letters in a label (` Archive-chatgpt-messages`) cannot step around the
+declared prefix.
 
 Decision, recurrence: the recurrence dimension is the count of atoms sharing a lineage, divided by the
 largest such count. Thousands of vendor asks would raise that maximum and shrink every operator atom's
