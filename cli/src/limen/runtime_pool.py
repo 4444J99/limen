@@ -55,6 +55,13 @@ def selected_claims() -> tuple[ResourceClaimV1, ...]:
     except PoolUnavailable:
         raise
     except Exception as exc:
+        # Lazy, like storage_claim_census: keeps the conduct package off this module's import path.
+        from limen.conduct.client import BrokerQuotaExhausted
+
+        if isinstance(exc, BrokerQuotaExhausted):
+            # The keeper's storage plan is spent (4444J99/limen#2054), not the disk and not a bug in
+            # the census. The gate still fails closed; only the reason stops reading as a census fault.
+            raise PoolUnavailable("broker_quota_exhausted") from exc
         reason = (
             str(exc)
             if isinstance(exc, ValueError) and str(exc).startswith("broker_storage_census_")

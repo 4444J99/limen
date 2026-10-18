@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from limen import runtime_pool as module
+from limen.conduct.client import BrokerQuotaExhausted, ConductError
 from limen.prima_materia import ResourceClaimV1
 from limen.resource_envelope import ResourceTelemetry
 
@@ -116,6 +117,29 @@ def test_missing_selected_graph_does_not_invent_empty_claims(pool, tmp_path, mon
         raise ValueError("broker_storage_census_unavailable")
 
     monkeypatch.setattr(module, "broker_storage_claims", missing)
+    assert pool.observe(tmp_path)["denial_reasons"] == ["broker_storage_census_unavailable"]
+
+
+def test_broker_write_quota_is_named_not_mistaken_for_a_census_fault(pool, tmp_path, monkeypatch):
+    monkeypatch.delenv("LIMEN_RESOURCE_TASK_GRAPH", raising=False)
+
+    def spent():
+        raise BrokerQuotaExhausted("conduct broker rejected request (500): rows written", status=500)
+
+    monkeypatch.setattr(module, "broker_storage_claims", spent)
+    decision = pool.observe(tmp_path)
+    assert decision["allowed"] is False
+    assert decision["denial_reasons"] == ["broker_quota_exhausted"]
+    assert decision["available_growth_bytes"] is None
+
+
+def test_other_broker_errors_still_read_as_census_unavailable(pool, tmp_path, monkeypatch):
+    monkeypatch.delenv("LIMEN_RESOURCE_TASK_GRAPH", raising=False)
+
+    def broken():
+        raise ConductError("conduct broker rejected request (500): boom", status=500)
+
+    monkeypatch.setattr(module, "broker_storage_claims", broken)
     assert pool.observe(tmp_path)["denial_reasons"] == ["broker_storage_census_unavailable"]
 
 
