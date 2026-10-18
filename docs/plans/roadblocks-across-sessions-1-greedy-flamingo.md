@@ -1,7 +1,7 @@
 # Roadblocks across sessions — one root-to-leaf unblock plan
 
 Issue: #2966 (umbrella issue to be opened by `scripts/session-plan.py open` on plan exit; see Homing)
-PR: (pending)
+PR: #3019 (R4), #3020 (R3); R5, R1, R6 pending, R2 is #3011
 
 ## Context
 
