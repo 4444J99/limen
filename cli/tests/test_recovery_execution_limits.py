@@ -79,7 +79,10 @@ def test_issue_limit_survives_producer_restart(tmp_path):
         reserve_growth("issue", "second", work_key="replacement", root=tmp_path)
 
 
-@pytest.mark.parametrize("condition", ["clean", "dirty", "ignored", "advanced", "active", "remote-missing"])
+@pytest.mark.parametrize(
+    "condition",
+    ["clean", "dirty", "ignored", "advanced", "active", "remote-missing", "squash-merged", "pull-ref-wrong-tip"],
+)
 def test_release_retirement_preserves_uncertain_work_and_is_idempotent(tmp_path, condition):
     import subprocess
     from limen.worktree_abandonment import retire_released_worktree
@@ -109,14 +112,24 @@ def test_release_retirement_preserves_uncertain_work_and_is_idempotent(tmp_path,
         git("commit", "-am", "new work", cwd=wt)
     if condition == "remote-missing":
         git("push", "origin", "--delete", "work", cwd=wt)
+    remote_ref = "refs/heads/work"
+    if condition == "squash-merged":
+        # GitHub keeps refs/pull/N/head after a squash merge deletes the branch.
+        git("push", "origin", "HEAD:refs/pull/1/head", cwd=wt)
+        git("push", "origin", "--delete", "work", cwd=wt)
+        remote_ref = "refs/pull/1/head"
+    if condition == "pull-ref-wrong-tip":
+        git("commit", "--allow-empty", "-m", "other", cwd=repo)
+        git("push", "origin", "HEAD:refs/pull/1/head", cwd=repo)
+        remote_ref = "refs/pull/1/head"
     kwargs = dict(
         expected_head=head,
-        remote_ref="refs/heads/work",
+        remote_ref=remote_ref,
         receipt_root=tmp_path / "receipts",
         owner_probe=lambda target: 123 if condition == "active" else None,
     )
     result = retire_released_worktree(repo, wt, **kwargs)
-    if condition == "clean":
+    if condition in {"clean", "squash-merged"}:
         assert result["state"] == "completed"
         assert not wt.exists()
         assert git("rev-parse", "refs/heads/work", cwd=repo) == head
@@ -125,6 +138,23 @@ def test_release_retirement_preserves_uncertain_work_and_is_idempotent(tmp_path,
         assert result["state"] == "retained"
         assert wt.exists()
         assert retire_released_worktree(repo, wt, **kwargs)["state"] == "retained"
+
+
+@pytest.mark.parametrize(
+    "remote_ref",
+    ["refs/tags/v1", "refs/pull/1/merge", "refs/pull/x/head", "refs/pull//head", "refs/heads/", "heads/work", ""],
+)
+def test_release_retirement_rejects_refs_that_are_not_branch_or_pull_head_proof(tmp_path, remote_ref):
+    from limen.worktree_abandonment import retire_released_worktree
+
+    result = retire_released_worktree(
+        tmp_path,
+        tmp_path,  # exists, so the ref check — not the already-absent shortcut — decides
+        expected_head="a" * 40,
+        remote_ref=remote_ref,
+        receipt_root=tmp_path / "receipts",
+    )
+    assert result == {"state": "retained", "reason": "invalid-release-proof"}
 
 
 def test_verification_cache_changes_with_dependency_and_deadline_wins(tmp_path, monkeypatch):
