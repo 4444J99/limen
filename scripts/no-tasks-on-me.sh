@@ -28,6 +28,17 @@ if [[ "$#" -gt 0 ]]; then
   if [[ "${session_source##*/}" == source && -f "${session_source%/*}/receipt.json" && -x "$session_python" ]]; then
     exec "$session_python" "$session_source/scripts/session-closeout.py" "$@"
   fi
+  # A directly-run checkout resolves its interpreter the way the gate rail does: a bare `python3` is
+  # whatever the caller's PATH puts first (Homebrew's newest lacks rfc8785/yaml). Capture before exec —
+  # a failing `$(...)` inside `exec` would not surface as the documented exit 2 (evidence unavailable).
+  # An installed layout carries only this script, so with no resolver beside it PATH python3 is the fallback.
+  session_resolver="$(dirname "${BASH_SOURCE[0]}")/lib/gate-python.sh"
+  if [[ -f "$session_resolver" ]]; then
+    # shellcheck source=lib/gate-python.sh
+    source "$session_resolver"
+    gate_python="$(limen_gate_python)" || exit 2
+    exec "$gate_python" "$(dirname "${BASH_SOURCE[0]}")/session-closeout.py" "$@"
+  fi
   exec python3 "$(dirname "${BASH_SOURCE[0]}")/session-closeout.py" "$@"
 fi
 

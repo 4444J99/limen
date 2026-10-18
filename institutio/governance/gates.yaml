@@ -559,6 +559,13 @@ gates:
     tier: cheap
     owner: lifecycle
     note: "Mandatory admission input, delegation verdict, process-group and event-registration regressions; fixtures do not establish native interception or live enforcement."
+  direct-run-interpreter-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_closeout_runtime_python.py cli/tests/test_ship_docs_interpreter.py cli/tests/test_session_plan_slug.py -q"
+    paths: ["scripts/lib/gate-python.sh", "scripts/no-tasks-on-me.sh", "scripts/ship-docs.sh", "scripts/session-plan.py", "scripts/session-orient.py", "cli/tests/test_closeout_runtime_python.py", "cli/tests/test_ship_docs_interpreter.py", "cli/tests/test_session_plan_slug.py"]
+    scoped: true
+    tier: cheap
+    owner: lifecycle
+    note: "Directly-run entrypoints resolve their interpreter through scripts/lib/gate-python.sh, never a bare PATH python3. verify.py shims python3 for GATES, so a gate run hides this class: the break appears only when closeout step 6, ship-docs.sh or session-plan.py run from a shell whose PATH puts Homebrew's newest python (no PyYAML, no rfc8785) first. Every test therefore fixes PATH itself. Out of scope by decision: the legacy no-argument estate block of no-tasks-on-me.sh, which runs under the verify shim/beat. Also holds the session-plan doubled-date slug and failed-ship stub-cleanup regressions (handoff #3046, 2026-10-18)."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
     paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]

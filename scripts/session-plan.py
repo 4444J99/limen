@@ -192,6 +192,10 @@ def cmd_open(args: argparse.Namespace) -> int:
     slug = args.slug
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
         raise ChainError("slug must be lowercase kebab-case")
+    if re.match(r"\d{4}-\d{2}-\d{2}-", slug):
+        # The filename already carries the date (`plan_path_for`); a dated slug mints
+        # `2026-10-18-2026-10-18-<slug>.md`, which PLAN_NAME_RE accepts and nothing flags.
+        raise ChainError(f"slug '{slug}' starts with a date — pass the bare slug; the plan filename adds today's date")
 
     title = args.title
     if args.body_file:
@@ -234,6 +238,10 @@ def cmd_open(args: argparse.Namespace) -> int:
     sys.stdout.write(ship.stdout)
     sys.stderr.write(ship.stderr)
     if ship.returncode not in (0, 2):
+        # `plan_path_for` only returns a path that did not exist, so this call created the file.
+        # A failed ship must not leave that untracked stub behind to be mistaken for a shipped plan.
+        path.unlink(missing_ok=True)
+        print(f"session-plan: removed unshipped stub {rel}")
         raise ChainError(f"ship-docs.sh refused the plan (exit {ship.returncode})")
     print(f"session-plan: chain open — issue #{issue_num}, plan {rel}, PR {PENDING} until `close`")
     return 0
