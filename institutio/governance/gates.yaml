@@ -1250,6 +1250,17 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: censor
     note: "The /vendor-insights engine's adapter tests plus the cross-vendor health-sensor tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. insight-cadence.py is a path because test_health_packet_is_consumed_by_insight_cadence binds its packet loop to the health packet's declared owner/severity. Cheap tier: two files, hermetic, no xdist."
+  lesson-harvest-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_lesson_harvest.py -q"
+    paths:
+      [
+        "scripts/lesson-harvest.py",
+        "cli/tests/test_lesson_harvest.py",
+        ".claude/skills/lesson-harvest/SKILL.md",
+      ]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: censor
+    note: "The /lesson-harvest organ's deterministic half, which nothing scoped ran before this row existed: the only gate whose paths reach cli/tests/test_lesson_harvest.py is pytest-cli, a heavy serialized full suite that host admission can refuse, and editing scripts/lesson-harvest.py implicated no test at all — the same declared-but-unwired class as vendor-insights-test. The tests pin the one property the `lesson-harvest-backlog` sensor's `--check` depends on: a non-Claude lane whose vendor-insights index is missing or corrupt is EXCLUDED (backlog unknown, printed) and never counted as zero, plus the rolling-window coverage note, username-free project labels, and the Z/naive/missing-started_at timestamp shapes the live indexes carry. Synthetic trees in tmp_path only. Cheap tier: one file, hermetic, no xdist."
   reserved-tier-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_bucket_partition.py cli/tests/test_reserved_tier.py -q"
     paths:

@@ -34,6 +34,11 @@ Usage:
   python3 scripts/vendor-insights.py cat-session --vendor codex --session <id> [--max-chars 60000]
   python3 scripts/vendor-insights.py render --vendor codex
 
+`cat-session --max-chars` bounds the excerpt body for the codex, gemini and opencode readers:
+the message that crosses the cap is clipped, then a truncation marker follows. Codex rollouts
+open with harness-injected context (developer blocks, project-doc, AGENTS.md and app-page
+markup); that context is named with its size and omitted so the cap is spent on the conversation.
+
 Exit codes: 0 ok · 1 error · 2 missing prerequisite (e.g. render before facets exist).
 All vendor stores are opened STRICTLY read-only (SQLite via file:...?mode=ro).
 """
@@ -213,6 +218,15 @@ def _index_claude(mod, window_start: datetime, max_sessions: int) -> IndexResult
         except OSError:
             continue
     return IndexResult(sessions, total, "file mtime")
+
+
+def _clip_chunk(chunk: str, total: int, max_chars: int) -> str:
+    """The part of `chunk` that still fits the budget. A reader that appends a whole message and
+    tests the cap afterwards overshoots by that message's full length (measured 2026-10-18:
+    --max-chars 1200 returned 55.8 KB for codex, and 1500 returned 12.5 KB for gemini), so the
+    message that crosses the cap is clipped instead. Used by the codex, gemini and opencode
+    readers; the other readers still test the cap after appending."""
+    return chunk[: max(max_chars - total, 0)]
 
 
 def _cat_claude(mod, sid: str, max_chars: int) -> str | None:
@@ -433,6 +447,26 @@ def _codex_session_files(mod, sid: str) -> list[Path]:
     return sorted(matches, key=lambda p: p.name)
 
 
+# Codex prepends harness-injected context to every rollout: `developer` blocks, the `project-doc`
+# role, and user-role messages carrying AGENTS.md / app-page / environment markup. Measured over the
+# 68 readable rollouts of the 2026-10-18 index, the first operator turn began a median 67,627 chars
+# in, and beyond the 60,000 default cap in 40 of them, so a bounded read returned no operator speech.
+# These messages are named with their size and omitted, never silently dropped.
+_CODEX_INJECTED_ROLES = frozenset({"developer", "project-doc"})
+_CODEX_INJECTED_USER_PREFIXES = (
+    "# AGENTS.md instructions",
+    "<external_codex_apps_open_page>",
+    "<codex_internal_context",
+    "<environment_context>",
+)
+
+
+def _codex_injected(role, body: str) -> bool:
+    if role in _CODEX_INJECTED_ROLES:
+        return True
+    return role == "user" and body.lstrip().startswith(_CODEX_INJECTED_USER_PREFIXES)
+
+
 def _cat_codex(mod, sid: str, max_chars: int) -> str | None:
     files = _codex_session_files(mod, sid)
     if not files:
@@ -461,10 +495,16 @@ def _cat_codex(mod, sid: str, max_chars: int) -> str | None:
                         if isinstance(blk, dict) and isinstance(blk.get("text"), str):
                             texts.append(blk["text"])
                     if texts:
-                        chunk = f"--- {payload.get('role')} ---\n" + "\n".join(texts) + "\n"
+                        role = payload.get("role")
+                        body = "\n".join(texts)
+                        if _codex_injected(role, body):
+                            chunk = f"[omitted harness-injected {role} message: {len(body)} chars]\n"
+                        else:
+                            chunk = f"--- {role} ---\n{body}\n"
                 elif pt == "function_call":
                     chunk = f"[tool: {payload.get('name')}]\n"
                 if chunk:
+                    chunk = _clip_chunk(chunk, total, max_chars)
                     out.append(chunk)
                     total += len(chunk)
                     if total >= max_chars:
@@ -790,6 +830,20 @@ def _cat_opencode(mod, sid: str, max_chars: int) -> str | None:
                     except (json.JSONDecodeError, TypeError):
                         data = {}
                     texts = []
+                    top_text = data.get("text")
+                    if isinstance(top_text, str) and top_text.strip():
+                        # v2 keeps user, synthetic and system text at the TOP LEVEL of data, not in
+                        # `content` blocks, so a content-only walk dropped every operator turn
+                        # (206 user messages across 59 sessions, measured 2026-10-18). `system` rows
+                        # are harness-injected instruction diffs (median 2.5 KB, max 74 KB), and a `synthetic`
+                        # row wrapped in <system-reminder> is the harness talking, not a shell command the
+                        # operator ran: both are named and omitted.
+                        if r["type"] == "system" or (
+                            r["type"] == "synthetic" and top_text.lstrip().startswith("<system-reminder>")
+                        ):
+                            texts.append(f"[omitted harness-injected {r['type']} message: {len(top_text)} chars]")
+                        else:
+                            texts.append(top_text)
                     for blk in data.get("content") or []:
                         if not isinstance(blk, dict):
                             continue
@@ -840,6 +894,7 @@ def _cat_opencode(mod, sid: str, max_chars: int) -> str | None:
         if out:
             body, total = [], 0
             for chunk in out:
+                chunk = _clip_chunk(chunk, total, max_chars)
                 body.append(chunk)
                 total += len(chunk)
                 if total >= max_chars:
@@ -1428,6 +1483,7 @@ def _cat_gemini(mod, sid: str, max_chars: int) -> str | None:
             if body or tools:
                 chunk = f"--- gemini ---\n{body}\n{tools}"
         if chunk:
+            chunk = _clip_chunk(chunk, total, max_chars)
             out.append(chunk)
             total += len(chunk)
             if total >= max_chars:

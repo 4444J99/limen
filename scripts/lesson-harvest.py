@@ -24,6 +24,12 @@ claude_estate_roots) — one source of truth; this organ never re-declares a pat
 are only ever LISTED here (filenames + sizes); transcript content is read exclusively by
 the skill through vendor-insights.py's bounded `cat-session`.
 
+Claude sessions are listed from the estate roots. The other lanes (antigravity, codex,
+copilot, gemini, opencode) are listed from the per-vendor index scripts/vendor-insights.py
+already builds (logs/vendor-insights/<vendor>/index.json, refreshed by the insight-cross-vendor
+sensor). That index covers a rolling window, so those lanes' backlog is complete WITHIN THE
+WINDOW only; the window is printed by `--queue` and `--check`, never implied away.
+
 The cursor ledger is TRACKED at censor/lesson-harvest.jsonl and is PII-clean by
 construction: session ids (opaque uuids), vendor names, sanitized project labels
 (basename only — never a /Users/... path), timestamps, and owner REFERENCES (a precedent
@@ -104,11 +110,86 @@ def _claude_sessions(mod) -> list[dict]:
     return sessions
 
 
+# Lanes enumerated from the vendor-insights index. scripts/vendor-insights.py owns the per-vendor
+# parent-session grouping (codex's hundreds of rollout files collapse to one session each there),
+# so this organ reuses its index instead of re-deriving the grouping. The index is refreshed by the
+# insight-cross-vendor sensor and covers a ROLLING WINDOW: a session older than the window is not
+# enumerated, so the window is recorded in COVERAGE and printed by every verb. A smaller backlog
+# than the stores hold is stated, never silent.
+INDEXED_VENDORS = ("antigravity", "codex", "copilot", "gemini", "opencode")
+COVERAGE: dict[str, str] = {}
+
+
+def _index_root() -> Path:
+    return Path(os.environ.get("LIMEN_VENDOR_INSIGHTS_DIR") or LIMEN_ROOT / "logs" / "vendor-insights")
+
+
+def _cwd_label(cwd) -> str:
+    """A PII-clean project label from a recorded cwd: the last path component only, and 'home' for
+    the account's home directory (whose basename is the username)."""
+    text = str(cwd or "").strip()
+    if not text:
+        return "unknown"
+    path = Path(text)
+    if path == Path.home():
+        return "home"
+    return path.name or "unknown"
+
+
+def _epoch(value) -> float | None:
+    """Epoch seconds from an index timestamp. Copilot/Gemini write a trailing 'Z' (accepted natively
+    only on 3.11+) and a naive stamp would otherwise be read as local time, so both are normalised to UTC."""
+    try:
+        stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=timezone.utc)
+    return stamp.timestamp()
+
+
+def _indexed_sessions(vendor: str):
+    def enumerate_vendor(mod) -> list[dict] | None:
+        try:
+            doc = json.loads((_index_root() / vendor / "index.json").read_text(encoding="utf-8"))
+            records = doc["sessions"]
+            if not isinstance(records, list):
+                raise TypeError("sessions is not a list")
+        except (OSError, ValueError, KeyError, TypeError):
+            return None  # no readable index: the vendor is EXCLUDED loudly, never counted as zero
+        sessions: list[dict] = []
+        for rec in records:
+            if not isinstance(rec, dict) or not str(rec.get("id") or "").strip():
+                continue
+            when = _epoch(rec.get("ended_at")) or _epoch(rec.get("started_at")) or 0.0
+            try:
+                size = int(float(rec.get("approx_bytes") or 0))
+            except (TypeError, ValueError):
+                size = 0
+            sessions.append(
+                {
+                    "sid": str(rec["id"]).strip(),
+                    "vendor": vendor,
+                    "project": _cwd_label(rec.get("cwd")),
+                    "mtime": when,
+                    "bytes": size,
+                }
+            )
+        window = doc.get("window") if isinstance(doc.get("window"), dict) else {}
+        COVERAGE[vendor] = (
+            f"{vendor}: {len(sessions)} session(s) from the vendor-insights index "
+            f"(window {window.get('days', '?')}d {str(window.get('start', '?'))[:10]}..{str(window.get('end', '?'))[:10]}, "
+            f"generated {str(doc.get('generated_at', '?'))[:16]}); sessions older than the window are not enumerated"
+        )
+        return sessions
+
+    return enumerate_vendor
+
+
 # Vendor → enumerator. Only lanes with a top-level-session enumerator are IN SCOPE for the
-# backlog predicate; every other registry vendor is reported as excluded so the cap is loud
-# (codex's 707 rollout files need the parent-session grouping vendor-insights.py owns —
-# extend by reusing that index rather than re-deriving the grouping here).
-ENUMERATORS = {"claude": _claude_sessions}
+# backlog predicate; every other registry vendor (and any indexed vendor whose index is missing or
+# unreadable) is reported as excluded so the cap is loud.
+ENUMERATORS = {"claude": _claude_sessions, **{name: _indexed_sessions(name) for name in INDEXED_VENDORS}}
 
 
 def _load_cursor() -> dict[tuple[str, str], dict]:
@@ -134,12 +215,14 @@ def _scope(mod, vendor: str | None):
     vendors = [vendor] if vendor else sorted(mod.VENDOR_REGISTRY)
     sessions: list[dict] = []
     excluded: list[str] = []
+    COVERAGE.clear()  # per pass: a vendor whose index vanished must not keep a stale note
     for name in vendors:
         enum = ENUMERATORS.get(name)
-        if enum is None:
+        found = enum(mod) if enum is not None else None
+        if found is None:
             excluded.append(name)
             continue
-        sessions.extend(enum(mod))
+        sessions.extend(found)
     return sessions, excluded
 
 
@@ -154,8 +237,10 @@ def cmd_queue(vendor: str | None, limit: int) -> int:
         print(f"{s['vendor']}\t{s['sid']}\t{s['project']}\t{day}\t{s['bytes']}")
     if len(todo) > limit:
         print(f"# +{len(todo) - limit} more unprocessed (raise --limit)", file=sys.stderr)
+    for note in COVERAGE.values():
+        print(f"# coverage: {note}", file=sys.stderr)
     for name in excluded:
-        print(f"# excluded vendor (no enumerator yet): {name}", file=sys.stderr)
+        print(f"# excluded vendor (no enumerator or no readable index): {name}", file=sys.stderr)
     return 0
 
 
@@ -217,8 +302,10 @@ def cmd_check() -> int:
     for name, (remaining, processed) in sorted(by_vendor.items()):
         remaining_total += remaining
         print(f"{name}: {remaining} unprocessed / {processed} processed")
+    for note in COVERAGE.values():
+        print(f"coverage: {note}")
     for name in excluded:
-        print(f"excluded (no enumerator yet — backlog unknown, NOT zero): {name}")
+        print(f"excluded (no enumerator or no readable index — backlog unknown, NOT zero): {name}")
     stale = [key for key in done if key not in {(s["vendor"], s["sid"]) for s in sessions}]
     if stale:
         print(

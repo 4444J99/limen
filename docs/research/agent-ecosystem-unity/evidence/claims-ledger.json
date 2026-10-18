@@ -1,0 +1,2380 @@
+[
+  {
+    "round": "r1",
+    "old_id": "C1",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "relocation",
+    "text": "GitHub Copilot CLI documents COPILOT_HOME as replacing the entire ~/.copilot directory (settings, session history, etc.), with COPILOT_CACHE_HOME separate and unaffected by COPILOT_HOME.",
+    "url": "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+    "quote": "`COPILOT_HOME` replaces the entire `~/.copilot` path.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says COPILOT_HOME replaces the entire ~/.copilot path; cache dir follows platform conventions, is not affected by COPILOT_HOME, and is overridden separately via COPILOT_CACHE_HOME. Session history is implied (not explicitly listed) under the config dir. No version qualifier found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. It says COPILOT_HOME replaces the entire ~/.copilot path, and that the cache directory is not affected by COPILOT_HOME and is overridden separately with COPILOT_CACHE_HOME. The page shows no date or version banner. Search found no newer contradicting statement.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says COPILOT_HOME replaces ~/.copilot (config, session history, plugins, permissions) and the cache dir is not affected by it; COPILOT_CACHE_HOME overrides cache separately. No OS/version/mode limits stated, and none are asserted by the claim.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C1",
+    "source_id": "S1"
+  },
+  {
+    "round": "r1",
+    "old_id": "C2",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "relocation",
+    "text": "GitHub Copilot CLI treats --config-dir as a legacy option, prefers COPILOT_HOME, and lookup order is --config-dir, then COPILOT_HOME, then ~/.copilot; older XDG-based locations are migrated to ~/.copilot at startup when COPILOT_HOME is unset.",
+    "url": "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+    "quote": "The `--config-dir` option is a legacy option. Prefer `COPILOT_HOME` when you need to change the configuration directory.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page states --config-dir is legacy, prefer COPILOT_HOME; first-applicable order is --config-dir, COPILOT_HOME, then ~/.copilot; XDG locations migrate to ~/.copilot at startup when COPILOT_HOME unset. Page undated in the fetch.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. It says --config-dir is legacy, prefer COPILOT_HOME, a priority table ranks flag, then COPILOT_HOME, then ~/.copilot, and XDG locations migrate at startup when COPILOT_HOME is unset. No newer contradicting source found. No date banner seen; last 64k chars unread.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page states --config-dir is legacy, prefers COPILOT_HOME, lists order --config-dir > COPILOT_HOME > ~/.copilot, and says XDG locations migrate at startup when COPILOT_HOME is unset. Minor caveat: the lookup order is stated in the permissions-config.json context; no version/OS scoping given.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C2",
+    "source_id": "S1"
+  },
+  {
+    "round": "r1",
+    "old_id": "C3",
+    "vendor": "Block goose",
+    "angle": "relocation",
+    "text": "Block goose documents GOOSE_PATH_ROOT as overriding the root for all goose data, config and state, creating config/, data/ and state/ subdirectories under it.",
+    "url": "https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/environment-variables.md",
+    "quote": "Override the root directory for all goose data, config, and state files",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited page lists GOOSE_PATH_ROOT under Development & Testing. It says it overrides the root for all goose data, config and state files, and that goose then creates config/, data/ and state/ subdirectories under the path. The page gives no version qualifiers.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page (aaif-goose/goose, main). It lists GOOSE_PATH_ROOT with the quoted description and says it creates config/, data/, state/ subdirectories. No date or version banner on the page. Search found no newer superseding statement.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page matches the claim: GOOSE_PATH_ROOT overrides the root for data, config and state, creating config/, data/, state/ subdirs. No OS/version/mode restriction stated; it is listed under Development & Testing, with no scope generalization.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C3",
+    "source_id": "S2"
+  },
+  {
+    "round": "r1",
+    "old_id": "C4",
+    "vendor": "Google Gemini CLI",
+    "angle": "relocation",
+    "text": "Google Gemini CLI configuration reference documents GEMINI_CLI_HOME as the root for user-level configuration and storage, with a .gemini folder created inside it; the part of the page read (first 100000 of 116753 characters) has no XDG text.",
+    "url": "https://geminicli.com/docs/reference/configuration/",
+    "quote": "Specifies the root directory for Gemini CLI\u2019s user-level configuration and storage. ... The CLI will create a `.gemini` folder inside this directory.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page. The GEMINI_CLI_HOME entry matches the claim and has no version or platform limits. The first 100000 characters have no XDG text. I did not read the last 16753 characters.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page. It documents GEMINI_CLI_HOME as the root for user-level config and storage, with a .gemini folder created inside it, and has no XDG mention in the first 100000 characters. Caveat: a banner says Gemini CLI was replaced by Antigravity CLI on June 18th, 2026. My search found no contradicting release note.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page. GEMINI_CLI_HOME entry matches the claim, with no OS, version, or mode limits. No XDG mention in the first 100000 characters, and the claim itself limits its absence statement to that portion. The last 16753 characters were not read.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C4",
+    "source_id": "S3"
+  },
+  {
+    "round": "r1",
+    "old_id": "C5",
+    "vendor": "OpenCode",
+    "angle": "relocation",
+    "text": "OpenCode config page documents OPENCODE_CONFIG_DIR as an extra config directory loaded after the global config and .opencode directories so it can override them (it adds to rather than replaces the global ~/.config/opencode), and the page does not mention XDG.",
+    "url": "https://opencode.ai/docs/config/",
+    "quote": "The custom directory is loaded after the global config and `.opencode` directories, so it **can override** their settings.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The Custom directory section says OPENCODE_CONFIG_DIR is loaded after global and .opencode directories and can override them. Configs are merged, not replaced, so it adds to global. The fetched page has no XDG mention. The fetch was summarized by a model; the page shows no date.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page (Last updated Oct 17, 2026) has the quote; the page does not mention XDG and uses ~/.config/opencode. A search found no newer contradicting notes. A top banner advertises OpenCode v2, but the docs show no change to this behavior.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. The \"Custom directory\" section says OPENCODE_CONFIG_DIR loads after global and .opencode directories and can override them. Configs merge, so it is additive. XDG is not mentioned. No OS or mode scoping is stated, so the claim does not overreach.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C5",
+    "source_id": "S4"
+  },
+  {
+    "round": "r1",
+    "old_id": "C6",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "instructions",
+    "text": "GitHub Copilot CLI documents COPILOT_HOME as relocating its user-level instruction locations away from $HOME/.copilot, and COPILOT_CUSTOM_INSTRUCTIONS_DIRS as a comma-separated list of extra directories holding AGENTS.md and *.instructions.md.",
+    "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions",
+    "quote": "If you set the `COPILOT_HOME` environment variable, Copilot CLI uses that directory instead of `$HOME/.copilot` for both user-level instruction locations.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited page says COPILOT_HOME replaces $HOME/.copilot for both user-level instruction locations. It also says COPILOT_CUSTOM_INSTRUCTIONS_DIRS takes comma-separated directories for AGENTS.md and *.instructions.md. The fetch tool's summary showed no version or platform qualifiers and no page date.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. It documents COPILOT_HOME replacing $HOME/.copilot and COPILOT_CUSTOM_INSTRUCTIONS_DIRS as comma-separated directories for extra AGENTS.md and *.instructions.md. No date banner on the page. A search found no newer contradicting source.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page states COPILOT_HOME replaces $HOME/.copilot for both user-level instruction locations, and COPILOT_CUSTOM_INSTRUCTIONS_DIRS adds AGENTS.md and *.instructions.md, comma-separated. No OS, version or mode scoping is stated, so the claim does not overstate the source.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C6",
+    "source_id": "S5"
+  },
+  {
+    "round": "r1",
+    "old_id": "C7",
+    "vendor": "OpenAI Codex CLI",
+    "angle": "instructions",
+    "text": "Codex CLI reads its global instruction file from the Codex home directory (default ~/.codex, relocatable with CODEX_HOME), taking AGENTS.override.md if present else AGENTS.md, using only the first non-empty file at that level.",
+    "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+    "quote": "Global scope: In your Codex home directory (defaults to `~/.codex`, unless you set `CODEX_HOME`), Codex reads `AGENTS.override.md` if it exists. Otherwise, Codex reads `AGENTS.md`.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited page says the global scope is the Codex home (default ~/.codex, or CODEX_HOME). It reads AGENTS.override.md if present, otherwise AGENTS.md, and uses only the first non-empty file at that level. The page shows no date or version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Cited page matches the claim, including first non-empty file only. It shows no date or version banner. The vendor guide on developers.openai.com says the same. No newer changelog found superseding it; a Windows bug report (#11838) is unconfirmed.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page states the global scope behavior as claimed: Codex home defaults to ~/.codex, CODEX_HOME relocates it, override file first, else AGENTS.md, only the first non-empty file used. No mode or OS restrictions are stated, so the claim does not overstate the scope.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C7",
+    "source_id": "S6"
+  },
+  {
+    "round": "r1",
+    "old_id": "C8",
+    "vendor": "OpenAI Codex CLI",
+    "angle": "instructions",
+    "text": "Codex CLI walks from project root down to cwd, checks AGENTS.override.md, AGENTS.md, then project_doc_fallback_filenames in each directory (one file per directory), and concatenates root-down so nearer files appear later (merged, nearest last, 32 KiB default cap via project_doc_max_bytes).",
+    "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+    "quote": "Merge order: Codex concatenates files from the root down, joining them with blank lines. Files closer to your current directory override earlier guidance because they appear later in the combined prompt.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page matches every part of the claim: the root-to-cwd walk, the per-directory check order, one file per directory, root-down concatenation with nearer files last, and the 32 KiB default for project_doc_max_bytes. The page shows no date or version. The fetch tool returned a summary, not raw page text.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page; it matches every element of the claim. It has no date or version banner. A search found no newer changelog contradicting it, and the developers.openai.com guide agrees.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page states the root-to-cwd walk, per-directory order (override, AGENTS.md, fallbacks), one file per directory, root-down concatenation, and 32 KiB default cap. It makes no CLI/IDE or interactive/exec distinction, so the claim does not overreach. Page is undated.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C8",
+    "source_id": "S6"
+  },
+  {
+    "round": "r1",
+    "old_id": "C9",
+    "vendor": "Anthropic Claude Code",
+    "angle": "instructions",
+    "text": "Claude Code (v2.1.277+) reads AGENTS.md natively only as a fallback when no CLAUDE.md, .claude/CLAUDE.md or CLAUDE.local.md exists in or above the working directory (default setting claude-md-or-agents-md); ~/.claude/CLAUDE.md is the user-level file and does not suppress the AGENTS.md fallback; AGENTS.override.md and .agents/ are not read; all files are concatenated, nearest last.",
+    "url": "https://code.claude.com/docs/en/memory",
+    "quote": "By default, Claude reads `AGENTS.md` only when you have no `CLAUDE.md` in your working directory or above it.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page confirms v2.1.277+, default claude-md-or-agents-md, CLAUDE.md/.claude/CLAUDE.md/CLAUDE.local.md suppress AGENTS.md, ~/.claude/CLAUDE.md doesn't, override/.agents not read, concatenated root-to-cwd. Minor: also .claude/AGENTS.md is read.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page (no date banner, but it references v2.1.285). It matches every part of the claim: the default is claude-md-or-agents-md, ~/.claude/CLAUDE.md doesn't count, and AGENTS.override.md and .agents/ are not read. Files concatenate root-down. No newer contradicting source found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page confirms fallback, default value, ~/.claude/CLAUDE.md not counting, and AGENTS.override.md/.agents/ unread. Claim omits caveats (unavailable in some sessions; subdirectory AGENTS.md loads on demand), but these don't contradict its scope.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C9",
+    "source_id": "S7"
+  },
+  {
+    "round": "r1",
+    "old_id": "C10",
+    "vendor": "OpenCode",
+    "angle": "instructions",
+    "text": "OpenCode's documented global instruction file is ~/.config/opencode/AGENTS.md (XDG-style), with ~/.claude/CLAUDE.md as a fallback unless OPENCODE_DISABLE_CLAUDE_CODE(_PROMPT) is set; within each category the first match wins (AGENTS.md over CLAUDE.md), and instruction files from the opencode.json instructions array are combined with AGENTS.md files.",
+    "url": "https://opencode.ai/docs/rules/",
+    "quote": "The first matching file wins in each category. For example, if you have both `AGENTS.md` and `CLAUDE.md`, only `AGENTS.md` is used. Similarly, `~/.config/opencode/AGENTS.md` takes precedence over `~/.claude/CLAUDE.md`.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page confirms global AGENTS.md at ~/.config/opencode, CLAUDE.md fallback, disable env vars (both variants), first-match-wins precedence, and instructions array combined with AGENTS.md. No version/date shown on page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page (banner \"Last updated: Oct 17, 2026\", mentions OpenCode v2) contains the quote, the DISABLE_CLAUDE_CODE vars, and \"All instruction files are combined with your AGENTS.md files.\" No newer contradicting source found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page documents ~/.config/opencode/AGENTS.md as global, ~/.claude/CLAUDE.md as fallback, the disable env vars, first-match-wins per category, and instructions combined with AGENTS.md. Scope matches. Env var nuance (PROMPT variant disables only CLAUDE.md) is consistent with the claim.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C10",
+    "source_id": "S8"
+  },
+  {
+    "round": "r1",
+    "old_id": "C11",
+    "vendor": "OpenAI Codex",
+    "angle": "skills",
+    "text": "OpenAI Codex documents a user-scope skills directory at $HOME/.agents/skills, repo-scope .agents/skills from cwd up to the repo root, an admin scope at /etc/codex/skills, and explicitly supports symlinked skill folders.",
+    "url": "https://learn.chatgpt.com/docs/build-skills.md",
+    "quote": "Codex supports symlinked skill folders and follows the symlink target when scanning these locations.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited page lists $HOME/.agents/skills (user), .agents/skills from cwd up to repo root, and /etc/codex/skills (admin), and states symlink support. No version qualifier is given. The admin path is Unix-style with no Windows equivalent.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched cited page; it documents $HOME/.agents/skills (user), repo .agents/skills from cwd to repo root, /etc/codex/skills (admin), and symlink support. No date banner. Search found no newer vendor source contradicting it; developers.openai.com/codex/skills also lists same paths.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists $HOME/.agents/skills, repo .agents/skills from cwd up to root, /etc/codex/skills, and the symlink sentence. No OS, mode, or version limits are stated either way, so the claim doesn't overstate the page. The admin path is shown in Unix form only.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C11",
+    "source_id": "S9"
+  },
+  {
+    "round": "r1",
+    "old_id": "C12",
+    "vendor": "Google Gemini CLI",
+    "angle": "skills",
+    "text": "Gemini CLI documents ~/.agents/skills/ as a user-tier alias for ~/.gemini/skills/ and .agents/skills/ as a workspace alias for .gemini/skills/, with the .agents alias taking precedence within the same tier; the page does not mention symlinks.",
+    "url": "https://geminicli.com/docs/cli/skills/",
+    "quote": "Within the same tier (user or workspace), the `.agents/skills/` alias takes precedence over the `.gemini/skills/` directory.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists user tier as ~/.gemini/skills/ or ~/.agents/skills/ alias, workspace .gemini/skills/ or .agents/skills/ alias, states .agents precedence within tier, no symlink mention. Page dated Apr 30, 2026; notes Gemini CLI replaced by Antigravity CLI June 18, 2026.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page says user skills live in ~/.gemini/skills/ or the ~/.agents/skills/ alias, and the .agents alias outranks .gemini within a tier. No symlink mention. No newer source contradicts it. Caveat: the page's banner says Gemini CLI was replaced by Antigravity CLI on 2026-06-18; page last updated Apr 30, 2026.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists user skills at ~/.gemini/skills/ or ~/.agents/skills/ alias, workspace at .gemini/skills/ or .agents/skills/ alias, with .agents taking precedence within a tier. No symlink mention, and no version/OS/mode limits stated, so claim scope matches.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C12",
+    "source_id": "S10"
+  },
+  {
+    "round": "r1",
+    "old_id": "C13",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "skills",
+    "text": "GitHub Copilot CLI documents project skills in .github/skills, .claude/skills or .agents/skills and personal skills in ~/.copilot/skills or ~/.agents/skills; the page does not mention symlinks, COPILOT_HOME or environment variables.",
+    "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills",
+    "quote": "Personal skills: \"create a `~/.copilot/skills` or `~/.agents/skills` directory in your local home directory.\"",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists project dirs .github/skills, .claude/skills, .agents/skills and personal dirs ~/.copilot/skills, ~/.agents/skills. It does not mention symlinks, COPILOT_HOME or environment variables (per the fetch summary). No date or version qualifiers.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists project skills (.github/skills, .claude/skills, .agents/skills) and personal skills (~/.copilot/skills, ~/.agents/skills); no mention of symlinks, COPILOT_HOME or env vars; no date banner. One search found no superseding vendor statement.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists project dirs .github/skills, .claude/skills, .agents/skills and personal ~/.copilot/skills, ~/.agents/skills. No mention of symlinks, COPILOT_HOME or env vars, and no OS/mode/version restriction. Claim scope matches the source.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C13",
+    "source_id": "S11"
+  },
+  {
+    "round": "r1",
+    "old_id": "C14",
+    "vendor": "Google Antigravity",
+    "angle": "skills",
+    "text": "A Google codelab states Antigravity CLI does not read ~/.agents/skills (which Antigravity IDE does) and uses ~/.gemini/antigravity-cli/skills globally, while also listing ~/.gemini/config/skills/ as global scope in another section; it is undated and a tutorial, not product reference.",
+    "url": "https://codelabs.developers.google.com/getting-started-with-antigravity-skills",
+    "quote": "at the time of writing, Antigravity picks it up from this folder but Antigravity CLI does not.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says CLI doesn't read ~/.agents/skills and CLI global is ~/.gemini/antigravity-cli/skills, while Section 5 lists ~/.gemini/config/skills/ as global; unreconciled. No date, only \"at the time of publishing\"; it is a codelab tutorial.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page contains the quote, says CLI doesn't see ~/.agents/skills and uses ~/.gemini/antigravity-cli/skills; Section 5 lists ~/.gemini/config/skills/ as global. No date banner. Search summary of official docs (not fetched) consistent: CLI global = ~/.gemini/antigravity-cli/skills.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says CLI doesn't read ~/.agents/skills, uses ~/.gemini/antigravity-cli/skills globally, and lists ~/.gemini/config/skills/ as global elsewhere. Claim itself carries the \"undated tutorial\" caveat; the source is time-qualified, no versions/OS given. Scope matches.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C14",
+    "source_id": "S12"
+  },
+  {
+    "round": "r1",
+    "old_id": "C15",
+    "vendor": "Agent Skills standard (Anthropic origin)",
+    "angle": "skills",
+    "text": "The Agent Skills format was originally developed by Anthropic and released as an open standard; agentskills.io lists adopters including Claude Code, Codex, Gemini CLI, OpenCode, GitHub Copilot, Cursor and Goose, and states no spec version on the overview page or the GitHub repo page.",
+    "url": "https://agentskills.io/home",
+    "quote": "The Agent Skills format was originally developed by Anthropic, released as an open standard, and has been adopted by a growing number of agent products.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page contains the quote verbatim. Its logo list includes Claude Code, ChatGPT & Codex, Gemini CLI, OpenCode, GitHub Copilot, Cursor and Goose. No spec version is stated on the overview. I did not check the GitHub repo page for a version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched agentskills.io/home: the quote appears verbatim; logo carousel lists Claude Code, ChatGPT & Codex, Gemini CLI, OpenCode, GitHub Copilot, Cursor, Goose; no spec version or date banner on the page. Search found no newer contradicting statement. GitHub repo page not checked.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Overview page has the origin sentence and its logo carousel lists all seven named adopters (Codex appears as \"ChatGPT & Codex\"). It states no spec version. The GitHub repo page also shows no version and no releases. Scope matches; the claim does not overgeneralize.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C15",
+    "source_id": "S13"
+  },
+  {
+    "round": "r1",
+    "old_id": "C16",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "mcp",
+    "text": "GitHub Copilot CLI documents COPILOT_HOME as an environment variable that replaces the entire ~/.copilot configuration directory (which holds user-level mcp-config.json), and says previous XDG-based locations are migrated to ~/.copilot at startup when COPILOT_HOME is not set.",
+    "url": "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+    "quote": "You can change the location of this directory by setting the `COPILOT_HOME` environment variable to a different path.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page states COPILOT_HOME replaces the entire ~/.copilot path, mcp-config.json is user-level, and XDG locations migrate to ~/.copilot at startup when COPILOT_HOME isn't set. Page shows no version or date qualifiers.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page; it says COPILOT_HOME replaces ~/.copilot, mcp-config.json is the user-level MCP file, and XDG locations migrate at startup when COPILOT_HOME is unset. No date banner. A search found no newer contradicting changelog or docs.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says COPILOT_HOME replaces the entire ~/.copilot path, lists mcp-config.json as user-level, and says XDG-based locations migrate to ~/.copilot at startup when COPILOT_HOME isn't set. No OS, version or mode limits are stated, so the claim's scope matches the source.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C16",
+    "source_id": "S1"
+  },
+  {
+    "round": "r1",
+    "old_id": "C17",
+    "vendor": "Anthropic Claude Code",
+    "angle": "mcp",
+    "text": "Claude Code documents local-scope and user-scope MCP servers as stored in ~/.claude.json and project-scope servers in .mcp.json at the project root; the MCP page fetched states these paths without describing any relocation of ~/.claude.json.",
+    "url": "https://code.claude.com/docs/en/mcp",
+    "quote": "User-scoped servers are stored in `~/.claude.json` and provide cross-project accessibility, making them available across all projects on your machine while remaining private to your user account.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The MCP page's scope table and text give ~/.claude.json for local and user scope and .mcp.json at the project root for project scope. The first 100k of 123k chars show no relocation of ~/.claude.json; CLAUDE_CONFIG_DIR appears only in other contexts. The last ~23k chars were not read.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page states local/user scope in ~/.claude.json and project scope in .mcp.json at project root. It has no date banner and does not describe relocating ~/.claude.json. I found no vendor source superseding it; only a third-party bug report on CLAUDE_CONFIG_DIR.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The MCP page's scope table and scope sections state local/user in ~/.claude.json and project in .mcp.json at project root, with no OS or mode caveat. It doesn't say CLAUDE_CONFIG_DIR relocates ~/.claude.json. The last ~23k characters were not read.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C17",
+    "source_id": "S14"
+  },
+  {
+    "round": "r1",
+    "old_id": "C18",
+    "vendor": "Anthropic Claude Code",
+    "angle": "mcp",
+    "text": "Claude Code's MCP page names CLAUDE_CONFIG_DIR as the configuration directory (default ~/.claude) used for user-scope and managed MCP dynamic-header helpers, but the portion of the env-vars page read did not include the CLAUDE_CONFIG_DIR row, so whether it relocates ~/.claude.json is not established here.",
+    "url": "https://code.claude.com/docs/en/mcp",
+    "quote": "Your configuration directory, `~/.claude` unless you set [`CLAUDE_CONFIG_DIR`](/docs/en/env-vars)",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the MCP page; the headersHelper table row says the helper runs from the configuration directory, ~/.claude unless CLAUDE_CONFIG_DIR is set, for user-scope and managed servers. The page doesn't say CLAUDE_CONFIG_DIR relocates ~/.claude.json. The last ~23k characters were not read.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the MCP page; the headersHelper table row says the config dir is ~/.claude unless CLAUDE_CONFIG_DIR is set. The page has no date banner. The env-vars row was truncated in my fetch, so ~/.claude.json relocation stays unestablished, as the claim says.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The MCP page's helper working-directory table names CLAUDE_CONFIG_DIR (default ~/.claude) for user-scope, managed MCP, and similar helpers. It never says CLAUDE_CONFIG_DIR relocates ~/.claude.json, and it states no mode, OS, or version limits. The claim keeps to that scope. I did not read the last 23k characters.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C18",
+    "source_id": "S14"
+  },
+  {
+    "round": "r1",
+    "old_id": "C19",
+    "vendor": "OpenAI Codex",
+    "angle": "mcp",
+    "text": "OpenAI Codex stores MCP servers as [mcp_servers.<name>] tables in ~/.codex/config.toml or a trusted project's .codex/config.toml, and the same configuration is shared by the ChatGPT desktop app, Codex CLI and IDE extension; the page read does not mention CODEX_HOME. The old developers.openai.com/codex/mcp URL now returns a 308 redirect to learn.chatgpt.com.",
+    "url": "https://learn.chatgpt.com/docs/extend/mcp?surface=cli",
+    "quote": "The ChatGPT desktop app, Codex CLI, and IDE extension support MCP servers and share MCP configuration for the same Codex host.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page says the desktop app, CLI and IDE extension share this configuration; servers are [mcp_servers.<name>] tables in ~/.codex/config.toml, project .codex/config.toml (trusted only); CODEX_HOME not mentioned. The wording differs slightly from the extractor quote. The 308 redirect was not checked.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page: it says the three clients share the config, stored in ~/.codex/config.toml (project .codex/config.toml for trusted projects) as [mcp_servers.<name>] tables. CODEX_HOME not mentioned. No date or version banner. No newer vendor statement contradicting it found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says the desktop app, CLI and IDE extension share this configuration. It gives ~/.codex/config.toml, trusted-project .codex/config.toml and [mcp_servers.<name>] tables, and does not mention CODEX_HOME. Scope is stated correctly. ChatGPT web is excluded, but the claim doesn't cover it. Redirect not checked.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C19",
+    "source_id": "S15"
+  },
+  {
+    "round": "r1",
+    "old_id": "C20",
+    "vendor": "Google Gemini CLI",
+    "angle": "mcp",
+    "text": "Gemini CLI documents mcpServers in ~/.gemini/settings.json (user scope) and .gemini/settings.json (project scope) selected with --scope, and the MCP page does not mention any environment variable that relocates the configuration directory.",
+    "url": "https://geminicli.com/docs/tools/mcp-server/",
+    "quote": "Based on the scope (`-s, --scope`), it will be added to either the user config `~/.gemini/settings.json` or the project config `.gemini/settings.json` file.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page: `gemini mcp add` writes to user ~/.gemini/settings.json or project .gemini/settings.json by --scope; mcpServers lives in settings.json. No env var relocating the config dir is mentioned (only fixed ~/.gemini paths). Page shows no version/date.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page (Last updated Oct 6, 2026) has the scope passage and no env var relocating config; --scope defaults to project. Banner says Gemini CLI was replaced by Antigravity CLI on June 18, 2026. GEMINI_CLI_HOME exists elsewhere, not on this page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page documents ~/.gemini/settings.json (user) and .gemini/settings.json (project) chosen via -s/--scope (default project, for add/remove). It names no env var relocating the config dir. Claim does not overgeneralize.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C20",
+    "source_id": "S16"
+  },
+  {
+    "round": "r1",
+    "old_id": "C21",
+    "vendor": "Linux Foundation / AAIF",
+    "angle": "governance",
+    "text": "The Linux Foundation announced the Agentic AI Foundation (AAIF) on 9 December 2025 with founding contributions from Anthropic, Block and OpenAI, hosting MCP, goose and AGENTS.md as founding projects.",
+    "url": "https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation",
+    "quote": "With founding contributions from Anthropic, Block, and OpenAI",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page is dated Dec. 9, 2025. It credits founding contributions to Anthropic (MCP), Block (goose) and OpenAI (AGENTS.md), and names AGENTS.md, goose and MCP as inaugural projects.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page is dated 09 December 2025, names Anthropic, Block and OpenAI as founding contributors and MCP, goose and AGENTS.md as the first projects. No update or correction notice. A search found no newer source that contradicts it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page is datelined Dec. 9, 2025 and says founding contributions from Anthropic, Block, OpenAI, with MCP, goose and AGENTS.md as the three founding projects. Claim scope matches the source; no overgeneralization.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C21",
+    "source_id": "S17"
+  },
+  {
+    "round": "r1",
+    "old_id": "C22",
+    "vendor": "Linux Foundation / AAIF",
+    "angle": "governance",
+    "text": "AAIF platinum members include Amazon Web Services, Anthropic, Block, Bloomberg, Cloudflare, Google, Microsoft and OpenAI (as of the press release).",
+    "url": "https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation",
+    "quote": "Platinum members of the AAIF include Amazon Web Services, Anthropic, Block, Bloomberg, Cloudflare,",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited LF press release (dated Dec. 9, 2025). It lists Platinum members exactly as claimed: AWS, Anthropic, Block, Bloomberg, Cloudflare, Google, Microsoft and OpenAI. \"As of the press release\" qualifier matches.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page (dated 9 Dec 2025); it lists the same eight Platinum members. A search found an AAIF Feb 2026 update that confirms eight Platinum members. I fetched no newer primary source and found nothing contradicting the claim.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The press release (dated Dec 9, 2025) lists exactly these eight as AAIF Platinum members. The claim is already scoped \"as of the press release\", so it doesn't overstate.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C22",
+    "source_id": "S17"
+  },
+  {
+    "round": "r1",
+    "old_id": "C23",
+    "vendor": "AAIF / A2A",
+    "angle": "governance",
+    "text": "A2A joined AAIF as a hosted project (post dated 17 August 2026); AAIF lists AGENTS.md, goose, MCP, agentgateway and A2A as its projects, and IBM's Agent Communication Protocol merged into A2A in August 2025.",
+    "url": "https://aaif.io/blog/a2a-joins-aaif",
+    "quote": "is joining the Agentic AI Foundation (AAIF) as a hosted project.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. It is dated August 17, 2026 and says A2A joins AAIF as a hosted project. It lists AGENTS.md, goose, MCP, agentgateway and A2A, and says IBM's ACP merged into A2A in August 2025. Note: the fetch tool summarized the page; I did not read the raw text.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page: dated August 17, 2026, says A2A is joining AAIF as a hosted project, lists AGENTS.md, goose, MCP, agentgateway, A2A, and says IBM's protocol folded into A2A in August 2025. A search found no newer contradicting source.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page matches all claim parts: hosted project, post dated Aug 17 2026, five listed projects, and the IBM ACP merger in Aug 2025. Scope matches; no overgeneralization found.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C23",
+    "source_id": "S18"
+  },
+  {
+    "round": "r1",
+    "old_id": "C24",
+    "vendor": "Agent Plugins / Agent Skills",
+    "angle": "governance",
+    "text": "Agent Plugins (a package format with skills/ directories and mcp.json) is independently governed and is explicitly not an AAIF project; the post names no governing body for Agent Skills.",
+    "url": "https://aaif.io/blog/from-skills-and-tools-to-portable-agent-plugins",
+    "quote": "It is not an AAIF project and has not submitted a proposal to become one.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited post (dated 2026-08-06). It says Agent Plugins is independently governed and not an AAIF project, with no proposal submitted. It names no governing body for Agent Skills and only links to agentskills.io. I did not check the skills/ and mcp.json details.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page (dated Aug 6, 2026); callout says it is not an AAIF project and hasn't submitted a proposal. No governing body named for Agent Skills. Search found no newer statement contradicting (DevClass press framing is non-primary and says it stays independent).",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. It says Agent Plugins is independently governed, not an AAIF project, and has no proposal. It mentions skills/ and mcp.json. It links agentskills.io for Agent Skills but names no governing body. Scope matches.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C24",
+    "source_id": "S19"
+  },
+  {
+    "round": "r1",
+    "old_id": "C25",
+    "vendor": "Agent Skills",
+    "angle": "governance",
+    "text": "The agentskills/agentskills repository README page does not mention .agents/skills, ~/.agents, the Linux Foundation or AAIF (searched the fetched page for each), and states the format was originally developed by Anthropic and released as an open standard.",
+    "url": "https://github.com/agentskills/agentskills",
+    "quote": "The Agent Skills format was originally developed by Anthropic, released as an open standard",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the README; it says the format was originally developed by Anthropic and released as an open standard. It has no mention of .agents/skills, ~/.agents, Linux Foundation or AAIF. The check was done via a summarizing fetch, not a raw read.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the repo page: none of .agents/skills, ~/.agents, Linux Foundation, AAIF appear; it says originally developed by Anthropic and released as an open standard. No date banner (only 2026 GitHub footer). Search found no newer vendor statement contradicting it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the README. It says the format was originally developed by Anthropic. None of .agents/skills, ~/.agents, Linux Foundation or AAIF appear. The claim is scoped to this one page and does not generalize beyond it. The fetch tool returned only the first half of the quote, so \"released as an open standard\" is unconfirmed.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C25",
+    "source_id": "S20"
+  },
+  {
+    "round": "r1",
+    "old_id": "C26",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "xdg",
+    "text": "GitHub Copilot CLI documents COPILOT_HOME as replacing the entire ~/.copilot path, and states that previous XDG-based config locations are migrated to ~/.copilot at startup when COPILOT_HOME is not set.",
+    "url": "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+    "quote": "`COPILOT_HOME` replaces the entire `~/.copilot` path.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. Both parts of the claim appear in it. No version, date or platform qualifier is stated. The tool read only the first 100,000 of about 164,000 characters.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. It states both parts of the claim. The page has no date or version banner. One search found no newer vendor statement contradicting it. An \"about Copilot CLI\" page was reported to mention XDG_CONFIG_HOME, but I did not fetch it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page states both. Scope: no OS/version qualifiers; migration is conditional on COPILOT_HOME unset. Minor caveats: cache dir is unaffected by COPILOT_HOME, and --config-dir takes priority. The claim's \"entire ~/.copilot path\" matches the source wording.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C26",
+    "source_id": "S1"
+  },
+  {
+    "round": "r1",
+    "old_id": "C27",
+    "vendor": "GitHub Copilot CLI",
+    "angle": "xdg",
+    "text": "GitHub Copilot CLI documents that its cache directory is not affected by COPILOT_HOME, uses $XDG_CACHE_HOME/copilot or ~/.cache/copilot on Linux, and is overridden separately by COPILOT_CACHE_HOME.",
+    "url": "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+    "quote": "To override the cache directory separately, set `COPILOT_CACHE_HOME`.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited page says the cache directory is not affected by COPILOT_HOME, lists Linux as $XDG_CACHE_HOME/copilot or ~/.cache/copilot, and says to set COPILOT_CACHE_HOME to override it. The page shows no version or date qualifiers. The fetch returned a summary rather than raw text.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page; it states all three points. No date/version banner on the page. A search found no newer vendor release note or issue superseding or contradicting it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. It says the cache dir follows platform conventions, is not affected by COPILOT_HOME, lists Linux as $XDG_CACHE_HOME/copilot or ~/.cache/copilot (plus macOS and Windows paths), and COPILOT_CACHE_HOME overrides it. Claim is scoped to Linux, matching the source; no mode/version limits.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C27",
+    "source_id": "S1"
+  },
+  {
+    "round": "r1",
+    "old_id": "C28",
+    "vendor": "OpenAI Codex CLI",
+    "angle": "xdg",
+    "text": "OpenAI Codex CLI maintainers closed the XDG request (#4407) as not planned on 2025-12-31, stating that CODEX_HOME is the supported relocation mechanism.",
+    "url": "https://github.com/openai/codex/issues/4407",
+    "quote": "As noted above, codex supports the `CODEX_HOME` env var.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Issue #4407 is closed as not planned on Dec 31, 2025 by a maintainer (etraut-openai), whose closing comment points to CODEX_HOME. The page doesn't literally say \"supported relocation mechanism\", but the meaning is equivalent.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page: closed as not planned on Dec 31, 2025 by etraut-openai, who wrote the quoted line; locked Feb 2026. No newer vendor statement found adding XDG support; search only returned third-party blogs.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Issue #4407 was closed as not planned by etraut-openai on Dec 31, 2025, with the comment about CODEX_HOME. The claim's scope matches, with no OS or mode generalization. \"Supported relocation mechanism\" paraphrases the comment slightly. XDG was requested in the issue body.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C28",
+    "source_id": "S21"
+  },
+  {
+    "round": "r1",
+    "old_id": "C29",
+    "vendor": "Google Gemini CLI",
+    "angle": "xdg",
+    "text": "Google Gemini CLI maintainers closed the XDG Base Directory request (#23796) as not planned on 2026-04-28 and recommended GEMINI_CLI_HOME for custom paths.",
+    "url": "https://github.com/google-gemini/gemini-cli/issues/23796",
+    "quote": "we have decided to close this feature request due to excessive architectural risk and implementation complexity.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Issue #23796 was closed as not planned on 2026-04-28 by maintainer cocosheng-g. The comment cites excessive architectural risk and recommends continuing to use GEMINI_CLI_HOME. The fetch returned a summary, so the quotes are the tool's rendering, not raw page text.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the issue: closed as \"Not planned\" on 2026-04-28 by assignee cocosheng-g, who recommended GEMINI_CLI_HOME for custom paths. No later comments. A web search found no newer vendor doc superseding this, but it also didn't confirm GEMINI_CLI_HOME.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Issue #23796 was closed as Not planned on 2026-04-28 by a maintainer (cocosheng-g). The maintainer recommended continuing with GEMINI_CLI_HOME for custom paths. The claim sets no OS, version or mode limit, and neither does the decision.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C29",
+    "source_id": "S22"
+  },
+  {
+    "round": "r1",
+    "old_id": "C30",
+    "vendor": "Block goose",
+    "angle": "xdg",
+    "text": "Block goose documents GOOSE_PATH_ROOT as a single override that creates config/, data/ and state/ subdirectories, with a macOS default of ~/Library/Application Support/Block/goose/ rather than XDG; the page does not mention XDG.",
+    "url": "https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/environment-variables.md",
+    "quote": "When set, goose creates `config/`, `data/`, and `state/` subdirectories under the specified path.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page documents GOOSE_PATH_ROOT as a root override creating config/, data/, state/ subdirectories, lists macOS default ~/Library/Application Support/Block/goose/, and does not mention XDG. Page shows no date or version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. It has the quote, a macOS default of ~/Library/Application Support/Block/goose/, and no XDG mention. The page has no date or version banner. One web search found no newer contradicting source.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page: GOOSE_PATH_ROOT overrides root for all goose data/config/state, creates config/, data/, state/ subdirs; macOS default is ~/Library/Application Support/Block/goose/; XDG never mentioned. Claim makes no mode-specific generalization.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C30",
+    "source_id": "S2"
+  },
+  {
+    "round": "r2",
+    "old_id": "G1",
+    "vendor": "Google Antigravity CLI",
+    "angle": "antigravity",
+    "text": "Antigravity CLI migration guide (page shows no date or version) states Antigravity CLI skills move from ~/.gemini/skills/ (Gemini CLI) to ~/.gemini/antigravity-cli/skills/ globally and from .gemini/skills/ to .agents/skills/ per workspace, and that workspace skills must be renamed or relocated by hand.",
+    "url": "https://antigravity.google/docs/cli/gcli-migration/",
+    "quote": "you must manually rename or relocate the folder to `.agents/skills/`",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page's \"Updated skills paths\" section lists global ~/.gemini/skills/ -> ~/.gemini/antigravity-cli/skills/ and workspace .gemini/skills/ -> .agents/skills/, with an \"Action required\" note to move workspace skills manually. Page shows no date or version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page: it states global skills moved to ~/.gemini/antigravity-cli/skills/, workspace to .agents/skills/, and manual rename/relocation is required. No date/version banner on the page. Search found no vendor source superseding it (only third-party blogs).",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. Global path moves ~/.gemini/skills/ to ~/.gemini/antigravity-cli/skills/, workspace .gemini/skills/ to .agents/skills/, and workspace skills need manual rename/relocation. No platform, mode or version qualifiers appear. The page shows no date or version.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C31",
+    "source_id": "S23"
+  },
+  {
+    "round": "r2",
+    "old_id": "G2",
+    "vendor": "Google Antigravity CLI",
+    "angle": "antigravity",
+    "text": "Antigravity CLI migration guide (no date or version) says MCP servers move from inline entries in ~/.gemini/settings.json (Gemini CLI) to standalone mcp_config.json files: global ~/.gemini/config/mcp_config.json and workspace .agents/mcp_config.json, with the remote server key url/httpUrl renamed to serverUrl; the page mentions no environment variable or flag for relocating directories (e.g. GEMINI_CLI_HOME is not mentioned).",
+    "url": "https://antigravity.google/docs/cli/gcli-migration/",
+    "quote": "Servers are defined inside a standalone `mcp_config.json` profile",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. Under \"MCP config formatting changes\": legacy inline in ~/.gemini/settings.json; new global ~/.gemini/config/mcp_config.json and workspace .agents/mcp_config.json; url/httpUrl becomes serverUrl. No env var or relocation flag mentioned; no date or version shown.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page confirms the global and workspace paths, the url/httpUrl to serverUrl rename, and no mention of GEMINI_CLI_HOME or any relocation env var or flag. The page has no date or version, only a promo banner. Search found official MCP docs that agree; no newer contradicting vendor source.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists both mcp_config.json paths, the url/httpUrl to serverUrl rename (for remote servers), and mentions no relocation env var or flag. No tier/platform/mode qualifiers on MCP. Minor: the rename is stated for remote WebSocket/SSE servers.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C32",
+    "source_id": "S23"
+  },
+  {
+    "round": "r2",
+    "old_id": "G3",
+    "vendor": "Google Antigravity",
+    "angle": "antigravity",
+    "text": "Antigravity Rules page (no date or version) says that for the Antigravity CLI, workspace and directory rules are AGENTS.md, GEMINI.md or .agents/rules/*.md, and global rules are ~/.gemini/AGENTS.md, ~/.gemini/GEMINI.md, ~/.gemini/config/rules/*.md or ~/.gemini/antigravity-cli/rules/*.md; the IDE and extensions read the same except for the antigravity-cli path. The page does not mention any environment variable for relocating rules or global paths.",
+    "url": "https://antigravity.google/docs/rules/",
+    "quote": "Global rules: ~/.gemini/AGENTS.md, ~/.gemini/GEMINI.md, ~/.gemini/config/rules/*.md, or ~/.gemini/antigravity-cli/rules/*.md.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists CLI workspace rules (AGENTS.md, GEMINI.md, .agents/rules/*.md) and global paths including antigravity-cli/rules; IDE list omits the antigravity-cli path. No env vars mentioned, no date. Fetch summary was paraphrased, so the antigravity-cli path wording is not fully verbatim.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page matches the claim: CLI and IDE paths as stated; IDE lacks antigravity-cli path; no env vars mentioned. Page has no date/version (only a Gemini 4 Argon banner). One search found no newer vendor source contradicting it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. CLI and IDE lists match the claim; the IDE list lacks only the antigravity-cli path. No environment variable is mentioned. The page does describe .agents/rules.json path includes, but that is not an env var. Page undated.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C33",
+    "source_id": "S24"
+  },
+  {
+    "round": "r2",
+    "old_id": "G4",
+    "vendor": "Google Gemini CLI",
+    "angle": "antigravity",
+    "text": "Gemini CLI documentation page 'Provide context with GEMINI.md files' (page shows 'Last updated: Jun 18, 2026') names GEMINI.md as the default context filename, lists the global file at ~/.gemini/GEMINI.md, and says a different name or list of names (its example includes AGENTS.md) is set via context.fileName in settings.json; AGENTS.md appears only in the example, not in prose.",
+    "url": "https://geminicli.com/docs/cli/gemini-md/",
+    "quote": "While GEMINI.md is the default filename, you can configure this in your settings.json file. To specify a different name or a list of names, use the context.fileName property.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page matches every substantive point. The default is GEMINI.md, the global file is ~/.gemini/GEMINI.md, and context.fileName sets other names. AGENTS.md appears once, only in the JSON example. One mismatch: the page shows \"Last updated: Jun 18, 2026\", though the claim says it has no date.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page matches the claim (default GEMINI.md, ~/.gemini/GEMINI.md, context.fileName, AGENTS.md only in the example). The page carries a Jun 18, 2026 banner saying Gemini CLI was replaced by Antigravity CLI, so the 'no date' premise is outdated. No release note found changing the default.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. It says GEMINI.md is the default, lists ~/.gemini/GEMINI.md as the global file, and says context.fileName sets a different name or list. AGENTS.md appears only in the settings.json example. No tier or mode qualifiers appear on the page.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": {
+      "replaced": "(no date or version)",
+      "with": "(page shows 'Last updated: Jun 18, 2026')",
+      "why": "two verifiers noted the page carries a Last updated date; the extractor's aside said none"
+    },
+    "new_id": "C34",
+    "source_id": "S25"
+  },
+  {
+    "round": "r2",
+    "old_id": "G5",
+    "vendor": "Cursor",
+    "angle": "cursor",
+    "text": "Cursor CLI's configuration page says the global CLI config file is ~/.cursor/cli-config.json (macOS/Linux) and can be overridden with the environment variable CURSOR_CONFIG_DIR (custom directory path), or on Linux/BSD only via XDG_CONFIG_HOME, which uses $XDG_CONFIG_HOME/cursor/cli-config.json; only permissions can be set at project level (<project>/.cursor/cli.json).",
+    "url": "https://cursor.com/docs/cli/reference/configuration",
+    "quote": "Override with environment variables: `CURSOR_CONFIG_DIR`: custom directory path; `XDG_CONFIG_HOME` (Linux/BSD): uses `$XDG_CONFIG_HOME/cursor/cli-config.json`",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists global ~/.cursor/cli-config.json for macOS/Linux, CURSOR_CONFIG_DIR as custom directory path, XDG_CONFIG_HOME (Linux/BSD) path, and project <project>/.cursor/cli.json with only permissions configurable. Page shows no date or version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page matches all parts of the claim with same scope. Page shows no date banner. A search found no changelog entry superseding the path overrides; the July 2026 CLI changelog only mentions an atomic-write fix.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page lists ~/.cursor/cli-config.json for macOS/Linux, CURSOR_CONFIG_DIR as a custom directory, XDG_CONFIG_HOME labelled Linux/BSD, and says only permissions can be set at project level (<project>/.cursor/cli.json). The claim keeps these qualifiers.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C35",
+    "source_id": "S26"
+  },
+  {
+    "round": "r2",
+    "old_id": "G6",
+    "vendor": "Cursor",
+    "angle": "cursor",
+    "text": "Cursor's Agent Skills page lists .agents/skills/, .cursor/skills/, ~/.agents/skills/ and ~/.cursor/skills/ as skill load locations, and for compatibility also loads .claude/skills/, .codex/skills/, ~/.claude/skills/ and ~/.codex/skills/; for Cloud Agents only ~/.cursor/skills/ syncs, not ~/.agents/skills/.",
+    "url": "https://cursor.com/docs/skills",
+    "quote": "Only `~/.cursor/skills/` syncs. Project skills, `~/.agents/skills/`, and other files on your machine stay local.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists all four primary locations and the four Claude/Codex compatibility locations. For Cloud Agents it says only ~/.cursor/skills/ syncs (user must sync it) and ~/.agents/skills/ is not copied. No version or date was shown on the page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched cursor.com/docs/skills; it lists all the project, user and compatibility dirs and says only ~/.cursor/skills/ syncs for Cloud Agents. The page has no date banner. Forum posts from staff are consistent and show no newer vendor statement contradicting it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists all eight locations (four marked compatibility) and says only ~/.cursor/skills/ syncs to Cloud Agents. No tier, OS or mode qualifier was found that the claim drops. Project skills also stay local, which the claim omits but does not contradict.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C36",
+    "source_id": "S27"
+  },
+  {
+    "round": "r2",
+    "old_id": "G7",
+    "vendor": "Cursor",
+    "angle": "cursor",
+    "text": "Cursor's rules page documents AGENTS.md in the project root and subdirectories (nested files combined, more specific taking precedence), project rules as .mdc files in .cursor/rules, and User Rules defined in Customize -> Rules (a settings location, not a documented file path); the page gives no file path for user rules.",
+    "url": "https://cursor.com/docs/rules",
+    "quote": "Cursor supports AGENTS.md in the project root and subdirectories.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page says AGENTS.md works in the project root and subdirectories, with nested files merged and more specific ones taking precedence. It says project rules are .mdc files in .cursor/rules. It defines User Rules in Customize \u2192 Rules and gives no file path. This comes from WebFetch's summary of the page, not the raw page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched cursor.com/docs/rules (no date banner). It documents AGENTS.md in root and subdirectories with nested combination and precedence, .mdc project rules in .cursor/rules, and User Rules in Customize \u2192 Rules with no file path. No newer vendor statement contradicting it found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page states AGENTS.md in root and subdirectories with more specific taking precedence, project rules as .mdc in .cursor/rules, and User Rules in Customize \u2192 Rules with no file path. No tier qualifiers on these. User Rules apply to Agent (Chat), not Inline Edit, which the claim omits without overstating. \"Combined\" is paraphrase.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C37",
+    "source_id": "S28"
+  },
+  {
+    "round": "r2",
+    "old_id": "G8",
+    "vendor": "Cursor",
+    "angle": "cursor",
+    "text": "Cursor's MCP page documents project .cursor/mcp.json and global ~/.cursor/mcp.json; the page does not state precedence, and (as fetched) the Configuration page, Skills page do not mention symlinks or --user-data-dir.",
+    "url": "https://cursor.com/docs/mcp",
+    "quote": "Create `~/.cursor/mcp.json` in your home directory for tools available everywhere.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The MCP page documents both locations. It states no precedence or merge rule and doesn't mention symlinks or --user-data-dir. I didn't fetch the Configuration or Skills pages, so that part of the claim is unchecked.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched cursor.com/docs/mcp: it documents both project and global files, states no precedence, and does not mention symlinks or --user-data-dir. No date/version banner. Search found only third-party precedence claims, no newer vendor statement. Configuration and Skills pages were not checked.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "MCP page documents both locations, no precedence, no symlinks/--user-data-dir. Skills page also lacks them. Configuration page URL I tried returned 404, so that part is unchecked; the claim's \"as fetched\" scope is otherwise matched.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C38",
+    "source_id": "S29"
+  },
+  {
+    "round": "r2",
+    "old_id": "G9",
+    "vendor": "xAI Grok",
+    "angle": "jules_grok",
+    "text": "xAI Grok Build documents $GROK_HOME as the way to configure the default home directory; the user-scope config.toml is at ~/.grok/config.toml, or $GROK_HOME/config.toml when GROK_HOME is set (Windows default %USERPROFILE%\\.grok\\config.toml).",
+    "url": "https://docs.x.ai/build/settings",
+    "quote": "To configure the default home directory, you can set `$GROK_HOME`.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page intro gives ~/.grok/config.toml (Windows %USERPROFILE%\\.grok\\config.toml) and says to set $GROK_HOME to configure the default home directory. It doesn't spell out $GROK_HOME/config.toml, but that follows from the wording. The page shows no date or version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. It states the ~/.grok/config.toml path (Windows %USERPROFILE%\\.grok\\config.toml) and $GROK_HOME for the home directory, with $GROK_HOME/config.toml as user scope. The page has no date or version banner. Search found no newer or contradicting source.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page documents $GROK_HOME for the default home directory. The User scope row gives ~/.grok/config.toml or $GROK_HOME/config.toml, and the Windows path is %USERPROFILE%\\.grok\\config.toml. The claim says \"user-scope\", matching the source, with no extra tier or mode limits.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C39",
+    "source_id": "S30"
+  },
+  {
+    "round": "r2",
+    "old_id": "G10",
+    "vendor": "xAI Grok",
+    "angle": "jules_grok",
+    "text": "xAI Grok Build loads global rules from `~/.grok/` first, then every directory from the repo root to the working directory, and in each directory reads AGENTS.md, Agents.md, AGENT.md, CLAUDE.md and Claude.md variants (gitignored files skipped).",
+    "url": "https://docs.x.ai/build/features/project-rules",
+    "quote": "Within each directory, Grok reads any of `AGENTS.md`, `Agents.md`, `AGENT.md`, `CLAUDE.md`, `Claude.md`...",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page says global rules load first from ~/.grok/, then each directory from project root down to the current one, and lists those five filenames per directory. It also says gitignored files are skipped. Minor nuance: it says \"several names, including\", plus .grok/rules/*.md. No version or tier qualifiers seen.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page matches the claim (global ~/.grok first, then repo root to cwd, listed filenames, gitignored skipped). It also reads CLAUDE.local.md and rules dirs, which the claim omits but doesn't contradict. No date banner; no superseding notes found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists ~/.grok/ global rules, every directory from repo root to working directory, the named variants, and skips gitignored files. No tier/mode/version qualifiers. Minor: page also lists CLAUDE.local.md and outside a git repo only the working directory is read; the claim is not contradicted.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C40",
+    "source_id": "S31"
+  },
+  {
+    "round": "r2",
+    "old_id": "G11",
+    "vendor": "xAI Grok",
+    "angle": "jules_grok",
+    "text": "The xAI Grok Build sessions page says sessions are saved under ~/.grok/sessions/ keyed by working directory; that page does not mention GROK_HOME (so it does not state whether GROK_HOME moves session storage).",
+    "url": "https://docs.x.ai/build/features/sessions",
+    "quote": "under `~/.grok/sessions/`, keyed by working directory",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page. It says sessions are stored under ~/.grok/sessions/, keyed by working directory. It does not mention GROK_HOME or any environment variables. The fetch tool returns a summary, so this is not a full-page verbatim re-read. No date or version shown.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page: it says sessions are saved under ~/.grok/sessions/, keyed by working directory, and it does not mention GROK_HOME. It has no date or version banner. Only third-party guides say GROK_HOME relocates storage. I found no vendor source that supersedes the page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the page. It states the storage path with no OS, tier or mode qualifier, and says sessions work the same in the TUI, headless mode and over ACP. It does not mention GROK_HOME, environment variables or relocation. The claim's scope matches.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C41",
+    "source_id": "S32"
+  },
+  {
+    "round": "r2",
+    "old_id": "G12",
+    "vendor": "Google Jules",
+    "angle": "jules_grok",
+    "text": "Google Jules runs in a virtual machine (cloud) and automatically reads AGENTS.md at the repository root; the Jules Tools CLI (@google/jules, npm/pnpm, jules login via browser) page mentions no config file, home directory or local state (page searched for these; only a --theme flag found).",
+    "url": "https://jules.google/docs/cli/reference/",
+    "quote": "Jules Tools is a lightweight command-line interface (CLI) for interacting with Jules, Google\u2019s autonomous AI coding agent.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 2,
+      "contradicted": 0,
+      "unverified": 1,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited CLI reference page has the quote, shows jules login opening a browser, npm/pnpm install, and only a --theme flag, with no config file, home directory or local state. The VM and AGENTS.md parts are on jules.google/docs/, not the cited URL. That page doesn't say \"cloud\".",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page: it has the intro sentence, npm/pnpm install, browser jules login and a --theme flag, and no config file, home directory or local state. It has no date or version banner. A search found no newer contradicting source. The VM and AGENTS.md parts are not on this page; the June 2025 changelog supports AGENTS.md.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "unverified",
+        "fetched": true,
+        "reason": "The page supports only the absence half: no config file, home directory or local state; --theme is the only such flag. It never mentions AGENTS.md or a virtual machine, so the first half isn't at this URL. It does say login opens a browser, and remote means \"sessions running in the cloud\".",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C42",
+    "source_id": "S33"
+  },
+  {
+    "round": "r2",
+    "old_id": "G13",
+    "vendor": "OpenCode",
+    "angle": "opencode",
+    "text": "OpenCode docs (v1 CLI reference) list OPENCODE_CONFIG (path to config file), OPENCODE_CONFIG_DIR (path to config directory), OPENCODE_TUI_CONFIG and OPENCODE_CONFIG_CONTENT, but the environment-variables table lists no variable that relocates the data directory, database, sessions, logs or cache; the page does not mention any XDG_* variable.",
+    "url": "https://opencode.ai/docs/cli/",
+    "quote": "`OPENCODE_CONFIG_DIR`: \"Path to config directory\" (absence: page https://opencode.ai/docs/cli/ searched for XDG_* and for any data/cache/log/state dir variable; none found)",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. Env var table has the four config variables as claimed. No XDG_* mention and no variable for data, cache, log, state or database dir. Page only gives the fixed ~/.local/share/opencode/auth.json path. The page shows no date or version. Fetch tool summarized the page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page (footer \"Last updated: Oct 17, 2026\"; banner announces OpenCode v2). Env table lists the four config vars; no data/db/cache/log/state variable and no XDG_* mention. Only third-party docs mention OPENCODE_DATA_DIR; no vendor source contradicts.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page (last updated Oct 17, 2026) lists OPENCODE_CONFIG, _CONFIG_DIR, _TUI_CONFIG, _CONFIG_CONTENT. No XDG_* mention and no variable for data, database, sessions, logs or cache. The claim is scoped to this page's table, and the page doesn't say which version the table covers.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C43",
+    "source_id": "S34"
+  },
+  {
+    "round": "r2",
+    "old_id": "G14",
+    "vendor": "OpenCode",
+    "angle": "opencode",
+    "text": "OpenCode troubleshooting docs state that on macOS/Linux session data and other application data live at ~/.local/share/opencode/ (auth.json, log/, project/ with per-project storage), logs keep the 10 most recent files, and the cache is ~/.cache/opencode; the page gives no redirect mechanism and does not mention XDG_DATA_HOME or opencode.db.",
+    "url": "https://opencode.ai/docs/troubleshooting",
+    "quote": "opencode stores session data and other application data on disk at: macOS/Linux: `~/.local/share/opencode/`",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. It gives ~/.local/share/opencode/ (macOS/Linux) with auth.json, log/, project/ (per-project storage), keeps the most recent 10 log files, cache at ~/.cache/opencode. No mention of XDG_DATA_HOME, opencode.db, or a redirect mechanism. The page shows no date or version.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page (Last updated Oct 17, 2026) lists ~/.local/share/opencode/ with auth.json, log/, project/ storage, keeps 10 recent logs, cache ~/.cache/opencode, and has no mention of XDG_DATA_HOME, opencode.db or redirect. Third-party sources note opencode.db exists, but that doesn't alter what the page says.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. macOS/Linux data path, auth.json, log/, project/ with per-project storage, 10-log retention and ~/.cache/opencode all appear. No mention of XDG_DATA_HOME, opencode.db or any redirect mechanism. Windows paths differ, but the claim is limited to macOS/Linux. Cache path is under the desktop-app and provider-package notes.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C44",
+    "source_id": "S35"
+  },
+  {
+    "round": "r2",
+    "old_id": "M1",
+    "vendor": "OpenCode",
+    "angle": "opencode",
+    "text": "OpenCode docs list user skill locations ~/.config/opencode/skills, ~/.claude/skills and ~/.agents/skills (plus project .opencode/skills, .claude/skills, .agents/skills), so a shared ~/.agents/skills/<name>/SKILL.md is read natively; the page states no precedence among locations, and OPENCODE_DISABLE_CLAUDE_CODE_SKILLS disables .claude/skills loading.",
+    "url": "https://opencode.ai/docs/skills/",
+    "quote": "Global agent-compatible: `~/.agents/skills/<name>/SKILL.md`",
+    "outcome": "unverified",
+    "tally": {
+      "supported": 1,
+      "contradicted": 0,
+      "unverified": 2,
+      "voters": 3,
+      "outcome": "unverified"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The skills page lists all six locations and states no precedence. It does not mention OPENCODE_DISABLE_CLAUDE_CODE_SKILLS. That variable is documented on opencode.ai/docs/cli/ (\"Disable loading .claude/skills\"), so the claim holds across OpenCode docs but not on the cited page alone.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "unverified",
+        "fetched": true,
+        "reason": "Fetched page lists all six paths including ~/.agents/skills and states no precedence, but never mentions OPENCODE_DISABLE_CLAUDE_CODE_SKILLS. A search found only a mirror citing OPENCODE_DISABLE_EXTERNAL_SKILLS, so the env-var part is not confirmed.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "unverified",
+        "fetched": true,
+        "reason": "The cited page lists all six locations and states no precedence. It never mentions OPENCODE_DISABLE_CLAUDE_CODE_SKILLS, so that part of the claim isn't supported at this URL. I didn't check other pages.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": false,
+    "amendment": null
+  },
+  {
+    "round": "r2",
+    "old_id": "G15",
+    "vendor": "OpenCode",
+    "angle": "opencode",
+    "text": "OpenCode PR #8963, which proposed OPENCODE_DATA_DIR, OPENCODE_CACHE_DIR, OPENCODE_LOG_DIR, OPENCODE_STATE_DIR and OPENCODE_APPNAME for portable mode and profile isolation, was opened 2026-01-16 and closed without merging on 2026-10-10 (maintainer said V1 PRs are no longer accepted), so those variables are not an official V1 mechanism.",
+    "url": "https://github.com/anomalyco/opencode/pull/8963",
+    "quote": "Add `OPENCODE_DATA_DIR` environment variable to override the data directory location",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page shows PR #8963 adding the five env vars, opened Jan 16, 2026, closed Oct 10, 2026 by thdxr with no merge. The maintainer comment says no more V1 PRs. \"Not an official V1 mechanism\" is a reasonable inference from the unmerged PR.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched PR page: opened Jan 16, 2026, closed Oct 10, 2026, not merged; maintainer said no more V1 PRs. Search found no official docs for the variables (only a third-party mention), so no newer vendor statement contradicts the claim.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page shows PR #8963 opened Jan 16, 2026 and Closed Oct 10, 2026. It proposes all five variables. The maintainer (thdxr) said they are no longer taking PRs for V1 and asked for a port to V2. The page shows \"Closed\", not merged. \"Not an official V1 mechanism\" is a fair inference.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C45",
+    "source_id": "S36"
+  },
+  {
+    "round": "r2",
+    "old_id": "G16",
+    "vendor": "Anthropic Claude Code",
+    "angle": "goose_claude",
+    "text": "Anthropic Claude Code: a repository collaborator stated (issue closed as completed 2026-08-17) that Claude Code does not read XDG_CONFIG_HOME directly, that CLAUDE_CONFIG_DIR points the whole config/data directory (settings, sessions, plugins, and on Linux credentials) wherever desired so no symlink is needed, and that a separate config/data split is not supported today.",
+    "url": "https://github.com/anthropics/claude-code/issues/67853",
+    "quote": "Claude Code doesn't read `XDG_CONFIG_HOME` directly, but you can point the whole config/data directory wherever you like with `CLAUDE_CONFIG_DIR`",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the issue. The collaborator comment (bcherny, Aug 17, 2026; closed as completed) matches every point: no direct XDG_CONFIG_HOME read, CLAUDE_CONFIG_DIR covers settings/sessions/plugins/(on Linux) credentials, no symlink, config/data split unsupported today.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched issue #67853: closed as completed Aug 17, 2026 (locked Oct 6, 2026). Collaborator bcherny's comment matches the claim in full. A search found no newer vendor statement contradicting it.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the issue. Collaborator reply (Aug 17, 2026) matches the claim, including the \"(on Linux)\" qualifier for credentials. The issue was closed as completed the same day, and the reply says a separate config/data split isn't supported today.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C46",
+    "source_id": "S37"
+  },
+  {
+    "round": "r2",
+    "old_id": "G17",
+    "vendor": "Block goose",
+    "angle": "goose_claude",
+    "text": "Block goose docs: global skills are read from ~/.agents/skills/ and project skills from .agents/skills/ (plus skills from installed plugins under ~/.agents/plugins/<plugin-name>/), with .goose/skills/, .claude/skills/ and ~/.claude/skills/ also discovered for backward compatibility; the page calls agents/skills the recommended standard.",
+    "url": "https://goose-docs.ai/docs/guides/context-engineering/using-skills/",
+    "quote": "`~/.agents/skills/` \u2014 Global skills, available in all sessions",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page lists ~/.agents/skills/ (global), .agents/skills/ (project), ~/.agents/plugins/<plugin-name>/ (plugins), and says goose also reads .goose/skills/, .claude/skills/, ~/.claude/skills/ for compatibility. \"Recommended\" wording is paraphrased by the fetch tool; no page date seen.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists ~/.agents/skills/, .agents/skills/, ~/.agents/plugins/<plugin-name>/, says goose also discovers .goose/skills/, .claude/skills/, ~/.claude/skills/, and calls agents/skills the recommended standard. Page is 2026-current (AAIF banner, 2026 copyright). No newer contradiction searched or found.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page lists ~/.agents/skills/ (global), .agents/skills/ (project), ~/.agents/plugins/<plugin-name>/ (plugins), and backward-compat discovery of .goose/skills/, .claude/skills/, ~/.claude/skills/; calls agents/skills the recommended standard. No tier or mode limits found.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C47",
+    "source_id": "S38"
+  },
+  {
+    "round": "r2",
+    "old_id": "G18",
+    "vendor": "Anthropic Claude Code",
+    "angle": "goose_claude",
+    "text": "Anthropic Claude Code: CLAUDE_CODE_PLUGIN_CACHE_DIR makes marketplaces and plugins install to a chosen path instead of the default ~/.claude/plugins, and the seed has the same layout (known_marketplaces.json, marketplaces/<name>/, cache/<marketplace>/<plugin>/<version>/); CLAUDE_CODE_PLUGIN_SEED_DIR points a read-only runtime at such a seed (documented for container images and CI).",
+    "url": "https://code.claude.com/docs/en/plugins/org",
+    "quote": "Set `CLAUDE_CODE_PLUGIN_CACHE_DIR` to the seed path so the marketplace and plugins install there instead of `~/.claude/plugins`",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The page's \"Seed containers and CI\" section matches every part of the claim: the cache-dir quote, the seed layout, and SEED_DIR for container images and CI runners. It also says the seed is read-only, with no tier or platform limits on these variables.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the cited page. The \"Seed containers and CI\" section matches the claim: the cache dir sets the install path, the seed layout is the same, and the seed dir is for container images and CI runners, read-only. The page has no date banner. A search found no newer contradicting source.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The \"Seed containers and CI\" section matches the claim's scope: it says container images and CI runners, and it says the seed has the same layout. It says the seed is read-only. The CACHE_DIR step is a build-time step, and the claim doesn't generalize beyond that. No tier or platform qualifier was dropped.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C48",
+    "source_id": "S39"
+  },
+  {
+    "round": "r2",
+    "old_id": "G19",
+    "vendor": "Block goose",
+    "angle": "goose_claude",
+    "text": "Block goose docs: global hints are stored in ~/.config/goose/.goosehints, and by default goose looks for both AGENTS.md and .goosehints (default CONTEXT_FILE_NAMES is [\"AGENTS.md\", \".goosehints\"]) in both the global ~/.config/goose/ and local project locations. The config-files page lists macOS/Linux config at ~/.config/goose/config.yaml (Windows %APPDATA%\\Block\\goose\\config\\config.yaml) with extensions under the extensions key, and does not mention GOOSE_PATH_ROOT or XDG.",
+    "url": "https://goose-docs.ai/docs/guides/context-engineering/using-goosehints/",
+    "quote": "goose looks for each configured filename in both global (`~/.config/goose/`) and local project locations",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "The cited hints page states the global path, the default CONTEXT_FILE_NAMES, and the global+local lookup. The config-files page lists the macOS/Linux and Windows paths and the extensions key, and does not mention GOOSE_PATH_ROOT or XDG. Both pages were fetched (summarized by the tool).",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Cited page (2026 footer, AAIF banner) states all three points. Config-files page lists the macOS/Linux and Windows paths and does not mention GOOSE_PATH_ROOT or XDG. I found no newer contradicting source within budget.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Hints page states the global path, the default CONTEXT_FILE_NAMES, and the global+local lookup. It has no OS or mode qualifiers. The config-files page gives the stated macOS/Linux and Windows paths and the extensions key, and does not mention GOOSE_PATH_ROOT or XDG.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C49",
+    "source_id": "S40"
+  },
+  {
+    "round": "r2",
+    "old_id": "G20",
+    "vendor": "Agent Skills (standard)",
+    "angle": "standards",
+    "text": "The Agent Skills specification defines a skill as a directory containing at minimum a SKILL.md file with YAML frontmatter; name (1-64 chars, lowercase alphanumerics and hyphens, must match the parent directory name) and description (1-1024 chars) are required, while license, compatibility, metadata and allowed-tools (experimental) are optional. It specifies no user-level or home-directory discovery path and no relocation mechanism.",
+    "url": "https://agentskills.io/specification",
+    "quote": "A skill is a directory containing, at minimum, a `SKILL.md` file",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page matches: SKILL.md required; name 1-64 chars, lowercase alnum/hyphens, must match parent dir; description 1-1024; license, compatibility, metadata, allowed-tools (Experimental) optional. No home-directory discovery path or relocation mechanism appears on the page.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched the spec page; it matches the claim on SKILL.md, name, description and the optional fields. The page shows no date or version banner. It has no discovery-path or relocation text. The client guide says the spec \"does not mandate where skill directories live\". That guide does suggest ~/.agents/skills/ as a non-normative convention.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page matches: SKILL.md min, name 1-64 lowercase alnum/hyphen matching parent dir, description 1-1024, optional license/compatibility/metadata/allowed-tools (Experimental). No user-level/home discovery path or relocation mechanism appears on the page. Undated page.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C50",
+    "source_id": "S41"
+  },
+  {
+    "round": "r2",
+    "old_id": "G21",
+    "vendor": "AGENTS.md (standard)",
+    "angle": "standards",
+    "text": "The AGENTS.md site says the format is now stewarded by the Agentic AI Foundation under the Linux Foundation; the page states no format version and no license (only a copyright notice for AGENTS.md a Series of LF Projects, LLC).",
+    "url": "https://agents.md/",
+    "quote": "AGENTS.md is now stewarded by the Agentic AI Foundation under the Linux Foundation.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched agents.md. It contains the stewardship sentence. The page states no format version and no license. The footer reads \"Copyright \u00a9 AGENTS.md a Series of LF Projects, LLC\". The only version number is Lua 5.4, which belongs to a different project.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched agents.md: it contains the stewardship sentence and the \"Copyright \u00a9 AGENTS.md a Series of LF Projects, LLC\" notice, with no version, license or date banner. A search found no newer source contradicting it; sources date AAIF's launch to Dec 2025.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched agents.md. The sentence appears verbatim with no tier or mode qualifier. The footer reads \"Copyright \u00a9 AGENTS.md a Series of LF Projects, LLC\". The page names no license and no format version, so the absence claims hold. The claim does not overstate the source.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C51",
+    "source_id": "S42"
+  },
+  {
+    "round": "r2",
+    "old_id": "G22",
+    "vendor": "AGENTS.md (standard)",
+    "angle": "standards",
+    "text": "AGENTS.md specifies only a repository-root file named AGENTS.md of plain Markdown with no required fields, plus nested per-package files where the nearest file in the directory tree wins and explicit user chat prompts override everything. The page documents no global or home-directory location and no relocation mechanism.",
+    "url": "https://agents.md/",
+    "quote": "The closest AGENTS.md to the edited file wins; explicit user chat prompts override everything.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Page says root file, \"No. AGENTS.md is just standard Markdown\", nearest file wins, user chat prompts override. No global or home-directory location mentioned. Caveat: FAQ shows Aider and Gemini CLI config to read AGENTS.md; that is tool setup, not relocation.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched agents.md: it has no date or version banner, no required fields, and no global or home-directory path. Nearest-file and chat-override rules are present. Only caveat is the symlink migration tip and tool config snippets (Aider, Gemini fileName), which rename the file but don't relocate it. Searches found no newer vendor spec.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched agents.md. It says to put AGENTS.md at the repo root, with nested files per package where the closest wins. It says no fields are required (plain Markdown) and that user chat prompts override. It mentions no global or home-directory location. Aider and Gemini config snippets are tool settings, not a relocation mechanism.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C52",
+    "source_id": "S42"
+  },
+  {
+    "round": "r2",
+    "old_id": "G23",
+    "vendor": "Agent Client Protocol",
+    "angle": "standards",
+    "text": "The Agent Client Protocol governance page says ACP is jointly governed by Zed and JetBrains under an interim governance model, working toward an independent foundation; the page does not mention A2A.",
+    "url": "https://agentclientprotocol.com/community/governance",
+    "quote": "ACP is jointly governed by Zed and JetBrains, who collaborate to ensure the protocol serves the broader ecosystem.",
+    "outcome": "supported",
+    "tally": {
+      "supported": 3,
+      "contradicted": 0,
+      "unverified": 0,
+      "voters": 3,
+      "outcome": "supported"
+    },
+    "votes": [
+      {
+        "lens": "text",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page says ACP is jointly governed by Zed and JetBrains, calls the structure an interim governance model, and says they are working toward an independent foundation. No mention of A2A or Agent2Agent. Page shows no date.",
+        "counter_url": ""
+      },
+      {
+        "lens": "currency",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page matches: joint Zed/JetBrains governance, interim model, working toward an independent foundation; no A2A/Agent2Agent mention. Page has no date/version banner. Search found no newer primary statement of a foundation being formed.",
+        "counter_url": ""
+      },
+      {
+        "lens": "scope",
+        "verdict": "supported",
+        "fetched": true,
+        "reason": "Fetched page. It says joint Zed/JetBrains governance, an interim governance model, and a transition toward an independent foundation. No scope qualifiers (tier, version, platform) limit these statements. A2A/Agent2Agent does not appear on the page.",
+        "counter_url": ""
+      }
+    ],
+    "eligible": true,
+    "amendment": null,
+    "new_id": "C53",
+    "source_id": "S43"
+  }
+]

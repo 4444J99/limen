@@ -26,11 +26,13 @@ whether it is already codified.
 
 ## Steps
 
-1. **Queue.** `python3 scripts/lesson-harvest.py --queue [--vendor claude] [--limit N]`
+1. **Queue.** `python3 scripts/lesson-harvest.py --queue [--vendor <vendor>] [--limit N]`
    → TSV: vendor, session id, project label, day, bytes. Newest first. Note the excluded
-   vendors it prints — carry them into your report verbatim (backlog unknown ≠ zero).
-2. **Read.** For each session:
-   `python3 scripts/vendor-insights.py cat-session --vendor claude --session <sid>`
+   vendors and the `coverage:` lines it prints — carry both into your report verbatim (backlog
+   unknown ≠ zero; every non-Claude lane is listed from a rolling-window index, so a session
+   older than that window is not in the queue).
+2. **Read.** For each session, with the vendor from its queue row:
+   `python3 scripts/vendor-insights.py cat-session --vendor <vendor> --session <sid>`
    (raise `--max-chars` only when the excerpt truncates mid-incident). Look for: a
    correction from the operator; a workaround that was narrated but not codified; a wrong
    confident claim and what refuted it; a gate/tool/method fought twice; a decision that
@@ -53,12 +55,12 @@ whether it is already codified.
      (`evocator.py`-verifiable).
    - Buildable work → **board task** through the conduct broker (`limen conduct …` /
      TABVLARIVS) — never by editing `tasks.yaml`.
-5. **Mark.** `python3 scripts/lesson-harvest.py --mark <sid> --vendor claude --lessons
+5. **Mark.** `python3 scripts/lesson-harvest.py --mark <sid> --vendor <vendor> --lessons
    '[{"owner_kind":"precedent","owner_ref":"PREC-…"}, …]'` — or `--none-found` when a
    session genuinely taught nothing (processed is a state, not a success claim). Marking is
    idempotent; re-marking is a no-op.
 6. **Report.** End with `python3 scripts/lesson-harvest.py --check` output: per-vendor
-   remaining/processed, exclusions, TOTAL. The backlog number is the deliverable — never
+   remaining/processed, coverage windows, exclusions, TOTAL. The backlog number is the deliverable — never
    summarize a tranche as if it drained the corpus.
 
 ## Tranche discipline

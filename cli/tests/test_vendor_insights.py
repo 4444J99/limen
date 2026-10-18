@@ -28,6 +28,7 @@ _ispec.loader.exec_module(ingest)
 
 OLD = datetime.now(timezone.utc) - timedelta(days=365)
 WINDOW = datetime.now(timezone.utc) - timedelta(days=30)
+TRUNCATED = "[... truncated at max-chars ...]\n"
 
 
 def _fake_mod(**registry) -> types.SimpleNamespace:
@@ -163,6 +164,20 @@ def _write_rollout(day_dir: Path, name: str, sid: str, n_user=1, n_assistant=2, 
     (day_dir / name).write_text("\n".join(json.dumps(rec) for rec in lines))
 
 
+def _write_rollout_messages(day_dir: Path, name: str, sid: str, messages: list[tuple[str, str]]):
+    """A rollout holding exactly the given (role, text) response_item messages."""
+    day_dir.mkdir(parents=True, exist_ok=True)
+    lines = [{"type": "session_meta", "payload": {"session_id": sid, "cwd": "/repo"}}]
+    for role, text in messages:
+        lines.append(
+            {
+                "type": "response_item",
+                "payload": {"type": "message", "role": role, "content": [{"type": "input_text", "text": text}]},
+            }
+        )
+    (day_dir / name).write_text("\n".join(json.dumps(rec) for rec in lines))
+
+
 def _codex_mod(tmp_path: Path):
     return _fake_mod(
         codex={
@@ -195,6 +210,59 @@ def test_codex_cat_concatenates_all_rollouts_of_a_session(tmp_path):
     assert text is not None
     assert text.count("===== rollout file:") == 2
     assert "[tool: shell]" in text
+
+
+def test_codex_cat_omits_harness_injected_context_and_keeps_the_operator_turn(tmp_path):
+    # Measured 2026-10-18: the first operator turn sat a median 67,627 chars into a codex render,
+    # so a bounded read of 40 of 68 sessions held no operator speech. The injected blocks are
+    # named with their size and omitted, so the cap is spent on the conversation.
+    day = tmp_path / "sessions" / "2026" / "10" / "18"
+    _write_rollout_messages(
+        day,
+        "rollout-2026-10-18T05-00-00-aaa.jsonl",
+        "sid-injected",
+        [
+            ("developer", "D" * 60_000),
+            ("user", "# AGENTS.md instructions for /home/x\n" + "A" * 9_000),
+            ("project-doc", "P" * 4_000),
+            ("user", '<external_codex_apps_open_page>{"page_id":null}</external_codex_apps_open_page>'),
+            ("user", "<environment_context>\n  <cwd>/repo</cwd>\n</environment_context>"),
+            ("user", "why does the gate go red on a clean tree?"),
+            ("assistant", "the cache key omits the lockfile"),
+        ],
+    )
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-injected", 2_000)
+    assert "why does the gate go red on a clean tree?" in text
+    assert "the cache key omits the lockfile" in text
+    assert "DDDDDDDD" not in text and "AAAAAAAA" not in text and "PPPPPPPP" not in text
+    assert "[omitted harness-injected developer message: 60000 chars]" in text
+    assert "[omitted harness-injected project-doc message: 4000 chars]" in text
+    assert text.count("[omitted harness-injected user message:") == 3
+    assert TRUNCATED not in text  # once the preamble is named rather than rendered, the conversation fits
+
+
+def test_codex_cat_keeps_an_operator_turn_that_only_quotes_injected_markup(tmp_path):
+    # The filter is a prefix test on the message, never a substring test: an operator who
+    # mentions AGENTS.md mid-sentence must still be read.
+    day = tmp_path / "sessions" / "2026" / "10" / "18"
+    _write_rollout_messages(
+        day,
+        "rollout-2026-10-18T05-00-00-bbb.jsonl",
+        "sid-quote",
+        [("user", "please read # AGENTS.md instructions for me"), ("assistant", "ok")],
+    )
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-quote", 2_000)
+    assert "please read # AGENTS.md instructions for me" in text
+    assert "[omitted" not in text
+
+
+def test_codex_cat_cap_clips_the_message_that_crosses_it(tmp_path):
+    # --max-chars 1200 once returned 55.8 KB: the whole message was appended before the cap was tested.
+    day = tmp_path / "sessions" / "2026" / "10" / "18"
+    _write_rollout_messages(day, "rollout-2026-10-18T05-00-00-ccc.jsonl", "sid-big", [("assistant", "x" * 10_000)])
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-big", 500)
+    assert text.endswith(TRUNCATED)
+    assert len(text) == 500 + len(TRUNCATED)
 
 
 # ─── copilot adapter (authoritative session-state, stub honesty) ─────
@@ -345,6 +413,74 @@ def test_opencode_index_and_cat(tmp_path):
     assert "[tool: read]" in text
 
 
+def _make_opencode_v2_db(db_path: Path):
+    """v2 schema as measured 2026-10-18: user/synthetic/system keep `text` at the TOP LEVEL of data,
+    only assistant rows carry `content` blocks."""
+    con = sqlite3.connect(db_path)
+    con.execute(
+        "CREATE TABLE session_v2 (id TEXT PRIMARY KEY, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute(
+        "CREATE TABLE session_message (id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INT, "
+        "time_created INT, time_updated INT, data TEXT)"
+    )
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    con.execute("INSERT INTO session_v2 VALUES ('v2s', '/repo', 't', 'm', 0, 1, 1, ?, ?)", (now_ms, now_ms + 1000))
+    rows = [
+        ("m1", "system", {"text": "S" * 3_000}),
+        ("m2", "user", {"text": "why is the gate red on a clean tree?", "agents": [], "files": []}),
+        ("m3", "synthetic", {"text": "<system-reminder>\nYou are in Plan mode. " + "R" * 400 + "\n</system-reminder>"}),
+        ("m3b", "synthetic", {"text": "The following shell command was executed by the user: git status"}),
+        (
+            "m4",
+            "assistant",
+            {
+                "content": [
+                    {"type": "text", "text": "the cache key omits the lockfile"},
+                    {"type": "tool", "name": "read"},
+                ]
+            },
+        ),
+    ]
+    for seq, (mid, kind, data) in enumerate(rows):
+        con.execute(
+            "INSERT INTO session_message VALUES (?, 'v2s', ?, ?, ?, ?, ?)",
+            (mid, kind, seq, now_ms + seq, now_ms + seq, json.dumps(data)),
+        )
+    con.commit()
+    con.close()
+
+
+def test_opencode_v2_cat_renders_top_level_user_text_and_omits_injected_system(tmp_path):
+    # Measured 2026-10-18: 206 user messages across 59 opencode sessions were never rendered, because the
+    # reader walked only data["content"]. Operator turns (where corrections live) were invisible.
+    db = tmp_path / "opencode.db"
+    _make_opencode_v2_db(db)
+    text = vi._cat_opencode(_fake_mod(opencode={"path": db}), "v2s", 10_000)
+    assert "--- user ---\nwhy is the gate red on a clean tree?" in text
+    assert "--- synthetic ---\nThe following shell command was executed by the user: git status" in text
+    assert "the cache key omits the lockfile" in text and "[tool: read]" in text
+    assert "SSSSSSSS" not in text
+    assert "[omitted harness-injected system message: 3000 chars]" in text
+    # a synthetic row that is the harness's own <system-reminder> wrapper is omitted too, while a
+    # synthetic row recording a shell command the operator ran (asserted above) stays visible
+    assert "RRRRRRRR" not in text
+    assert "[omitted harness-injected synthetic message:" in text
+
+
+def test_opencode_cat_cap_clips_the_message_that_crosses_it(tmp_path):
+    db = tmp_path / "opencode.db"
+    _make_opencode_db(db)
+    con = sqlite3.connect(db)
+    con.execute("UPDATE part SET data = ? WHERE id = 'p1'", (json.dumps({"type": "text", "text": "h" * 5_000}),))
+    con.commit()
+    con.close()
+    text = vi._cat_opencode(_fake_mod(opencode={"path": db}), "s1", 300)
+    assert text.endswith(TRUNCATED)
+    assert len(text) == 300 + len(TRUNCATED)
+
+
 # ─── gemini adapter ──────────────────────────────────────────────────
 
 
@@ -381,6 +517,18 @@ def test_gemini_index_and_cat(tmp_path):
     text = vi._cat_gemini(mod, "gsid", 10_000)
     assert "question" in text
     assert "[tool: read_file]" in text
+
+
+def test_gemini_cat_cap_clips_the_message_that_crosses_it(tmp_path):
+    _write_gemini_session(tmp_path / "proj-slug", "gsid-big")
+    path = tmp_path / "proj-slug" / "chats" / "session-gsid-big.jsonl"
+    lines = path.read_text().splitlines()
+    big = json.loads(lines[1])
+    big["content"] = [{"text": "q" * 5_000}]
+    path.write_text("\n".join([lines[0], json.dumps(big), *lines[2:]]))
+    text = vi._cat_gemini(_fake_mod(gemini={"path": tmp_path}), "gsid-big", 300)
+    assert text.endswith(TRUNCATED)
+    assert len(text) == 300 + len(TRUNCATED)
 
 
 def test_gemini_window_uses_header_time_not_file_mtime(tmp_path):
