@@ -1,0 +1,41 @@
+Session session_01KXY7SaQq5irHdMKsbyBfwQ — scoped verification (2026-10-18 UTC)
+Change: PR #3006 (squash-merged as 9982b85866c0ae6325fbb9775f283bbbdd7173d5) appended 20 read-only
+patterns to permissions.allow in .claude/settings.json. Every predicate below was run bare and its
+own exit code read; none was piped.
+
+POST-MERGE — run on this receipt's base, origin/main d95e5c07957e6085627db79c103cbb200f9433b4
+- merge-base --is-ancestor 9982b85866c0ae6325fbb9775f283bbbdd7173d5 HEAD -> exit 0
+- jq empty .claude/settings.json -> exit 0
+- jq '.permissions.allow | length, (group_by(.) | map(select(length>1)))' -> 75 entries, duplicates [] , exit 0
+- git grep for host-work-admission status / domus-limen-runtime plan-heartbeat / ccd_pr get_status /
+  chezmoi diff on origin/main:.claude/settings.json -> present (5 matching lines)
+- gh pr view 3006 -> state MERGED, mergedAt 2026-10-18T05:08:58Z, merge commit as above
+
+PRE-MERGE — exact-tree scoped verification at the PR head (squash-merged away; NOT an ancestor of the base)
+PR #3006, head 1254d0a322d5f235954414290658f8823fd71995, changed paths .claude/settings.json and
+docs/plans/humming-floating-donut.md:
+- verify-scoped.sh with LIMEN_ROOT pinned to the worktree -> "Scoped verification passed", exit 0
+  (cheap wave: diff-hygiene, syntax-changed, session-phase, check-plan-decisions, check-docs-exports,
+  check-note-links, all PASS)
+- verify-scoped.sh WITHOUT the pin -> exit 1 on check-plan-decisions only ("0 decision(s) in 0 plan(s)",
+  nine STALE-BASELINE rows). Reproduced identically from the live checkout, so it is independent of the
+  diff; owner is issue 2960 (same defect, filed again as 3007 and cross-linked).
+- merge-policy.sh 3006 -> first HOLD (2 required checks pending), then HOLD (mergeState UNKNOWN,
+  transient), then exit 0 CLEARED with MERGE-MODE direct; merge-drain.py -> MERGED
+
+RUNTIME A/B — headless claude -p, --permission-mode default, model haiku, same cwd and prompt
+- python3 scripts/host-work-admission.py status --no-probe, project settings loaded -> ran,
+  permission_denials [], real status output returned
+- same command, --setting-sources user (project settings excluded) -> rejected, "requires approval",
+  permission_decision reject, source config, permission_denials has the Bash call
+- control curl --version, project settings loaded -> rejected, source config
+- Baseline caveat: it excludes all project settings, not only the 20 new entries. The original allow
+  list (read before editing) had no host-work-admission rule. A parent-commit A/B was not run.
+
+NOT RUN / NOT CLAIMED
+- Only 1 of the 20 patterns was exercised at runtime; the other 19 are verified present, not driven.
+- Not live: the shared local main was 15 commits behind origin/main when checked, so the live checkout
+  does not contain 9982b858 yet; sync-release.sh owns that fast-forward.
+- Installed runtime lag: check-runtime-lag.py reported STALE, 32 commits behind origin/main. This change
+  touches no runtime code, so the lag is estate state owned by the runtime-lag sensor, not this session.
+- The session closeout predicate was not measured by this session; see issues 2966 and 2970.

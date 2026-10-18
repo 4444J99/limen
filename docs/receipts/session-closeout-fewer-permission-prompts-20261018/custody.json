@@ -1,0 +1,35 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "session_01KXY7SaQq5irHdMKsbyBfwQ",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3006, "merge_commit": "9982b85866c0ae6325fbb9775f283bbbdd7173d5", "change": "20 read-only patterns appended to permissions.allow in .claude/settings.json, plus the plan docs/plans/humming-floating-donut.md"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2960",
+    "https://github.com/4444J99/limen/issues/2966",
+    "https://github.com/4444J99/limen/issues/2970",
+    "https://github.com/4444J99/limen/issues/3007"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2960#issuecomment-6246005047",
+      "https://github.com/4444J99/limen/issues/3007#issuecomment-6246005310"
+    ],
+    "broker_registration": "none: this direct Claude session was not registered with the conduct broker and the agent shell cannot reach the broker env (issue 2966). The operator registers it, bound to the receipt worktree, before running the check."
+  },
+  "session_worktrees": {
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/chore-fewer-permission-prompts-20261018",
+    "note": "The first branch, worktree-chore-fewer-permission-prompts-20261018, is squash-merged (PR 3006) and its remote head was removed by delete_branch_on_merge; this worktree was reused for the receipt branch. It is retained for the sanctioned reaper, not removed by this session."
+  },
+  "not_owned_by_this_session": [
+    "the live checkout ~/Workspace/limen: 15 commits behind origin/main when measured; sync-release.sh owns the fast-forward",
+    "installed-runtime lag (check-runtime-lag.py: STALE, 32 commits, rotate with domus-limen-runtime install --sha); this change touches no runtime code, so the sensor runtime-lag and domus own the rotation",
+    "the writer-lease holders and other sessions' worktrees listed by git worktree list"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/2960", "what": "ambient LIMEN_ROOT makes gates judge another checkout; now also records check-live-checkout.py"},
+    {"owner": "https://github.com/4444J99/limen/issues/2966", "what": "closeout predicate unmeasurable from an isolated agent shell (broker env)"},
+    {"owner": "https://github.com/4444J99/limen/issues/2970", "what": "publication and verification proofs cannot recognise squash-merged work; Claude sessions have no native witness"}
+  ],
+  "local_only_state": "The headless claude -p transcripts from the runtime A/B live under the session runtime directory as disposable scratch and no restore copy is claimed. Nothing durable exists only locally: the change is merged on origin/main and every finding is a filed issue."
+}
