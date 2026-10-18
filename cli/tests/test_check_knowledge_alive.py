@@ -36,7 +36,7 @@ FAULTS = {item for item in os.environ.get("STUB_FAULT", "").split(",") if item}
 KINDS = ["archive", "conversation", "message", "thread", "family", "pair", "action", "question", "feed",
          "receipt", "corpus", "index", "pattern", "manifest", "report", "vault", "site", "graph", "database",
          "check", "fixture", "provider", "month", "topic", "collection", "home", "coverage", "guide"]
-PROVIDERS = ("chatgpt", "claude")
+PROVIDERS = ("chatgpt", "claude") + (("notebooklm",) if "zero-row-provider" in FAULTS else ())
 SHARED_ASK = "Draft the quarterly synthetic summary for the shared fixture now."
 ELIGIBLE = {"chat", "search", "activity"}
 
@@ -49,6 +49,10 @@ def source_conversations(provider):
     def message(number, role, channel, text):
         return {"id": f"msg-{provider}-{number:04d}", "role": role, "channel": channel,
                 "ts": f"2026-03-01T10:00:{number:02d}Z", "text": text}
+    notebook = {"source_id": "notebook-two", "title": f"Synthetic notebook for {provider}", "kind": "notebook",
+                "messages": [message(6, "user", "typed", "Notebook note that stays out of every feed.")], "extra": {}}
+    if provider == "notebooklm":
+        return [notebook]
     return [
         {"source_id": "conv-one", "title": f"Synthetic planning thread for {provider}", "kind": "chat",
          "messages": [
@@ -59,8 +63,7 @@ def source_conversations(provider):
          ],
          "extra": {"alternate_messages": [
              message(5, "user", "typed", f"Reword the synthetic {provider} outline in plain steps.")]}},
-        {"source_id": "notebook-two", "title": f"Synthetic notebook for {provider}", "kind": "notebook",
-         "messages": [message(6, "user", "typed", "Notebook note that stays out of every feed.")], "extra": {}},
+        notebook,
     ]
 
 
@@ -129,7 +132,8 @@ def main():
             (folder / f"index-{provider}-conversations.jsonl").write_text(lines(index))
             parts.append(lines(rows))
             providers[provider] = {"status": "ok", "conversations": len(rows),
-                                   "messages": sum(len(r["messages"]) for r in rows)}
+                                   "messages": sum(len(r["messages"]) for r in rows),
+                                   "last_activity_max": max(row["updated"] for row in rows)}
         manifest = {"naming_version": 1, "providers": providers,
                     "source_fingerprint": hashlib.sha256("".join(parts).encode()).hexdigest()}
         (archive / "manifest-all.json").write_text(json.dumps(manifest, sort_keys=True))
@@ -141,10 +145,12 @@ def main():
         out.mkdir(parents=True, exist_ok=True)
         manifest = json.loads((archive / "manifest-all.json").read_text())
         fingerprint = manifest["source_fingerprint"]
+        day = max(info["last_activity_max"] for info in manifest["providers"].values()
+                  if info["status"] == "ok")[:10].replace("-", "")
         for provider, info in manifest["providers"].items():
-            if info["status"] != "ok":
+            if info["status"] != "ok" or ("missing-feed" in FAULTS and provider == "claude"):
                 continue
-            rows, days = [], []
+            rows = []
             path = archive / f"provider-{provider}" / f"collection-{provider}-conversations.jsonl"
             for line in path.read_text().splitlines():
                 conversation = json.loads(line)
@@ -163,24 +169,32 @@ def main():
                     if alternate:
                         row["branch"] = "alternate"
                     rows.append(row)
-                    days.append(message["ts"][:10].replace("-", ""))
             if rows and "provenance" in FAULTS:
                 rows[0]["provenance"] = "operator_typed"
             if rows and "source-name" in FAULTS:
                 rows[0]["source"] = "claude-code-sessions"
+            if rows and "reproject-differs" in FAULTS and "reproject" in out.name:
+                rows[0]["text"] += " changed"
             text = lines(rows)
             (out / f"feed-{provider}-prompts.jsonl").write_text(text)
             prefix = "0" * 16 if "stale-receipt" in FAULTS else hashlib.sha256(fingerprint.encode()).hexdigest()[:16]
+            named_day = "20250101" if "receipt-day-name" in FAULTS else day
             receipt = {"feed_sha256": hashlib.sha256(text.encode()).hexdigest(),
                        "rows": len(rows) + (1 if "row-count" in FAULTS else 0),
                        "excluded_counts": {"notebook": 1}, "alternate_branch_count": 1,
                        "source_fingerprint": "f" * 64 if "receipt-fingerprint" in FAULTS else fingerprint,
+                       "day": "20250102" if "receipt-day-body" in FAULTS else named_day,
                        "naming_version": 1, "reader_versions": {provider: "2"}}
-            (out / f"receipt-{provider}-prompts-{prefix}-{max(days)}.json").write_text(json.dumps(receipt))
+            if not ("missing-receipt" in FAULTS and provider == "claude"):
+                (out / f"receipt-{provider}-prompts-{prefix}-{named_day}.json").write_text(json.dumps(receipt))
+            if "extra-receipt" in FAULTS and provider == "claude":
+                (out / f"receipt-{provider}-prompts-{prefix}-20250103.json").write_text(json.dumps(receipt))
             if "receipt-hash" in FAULTS:
                 with (out / f"feed-{provider}-prompts.jsonl").open("a") as handle:
                     handle.write("\n")
                     handle.write(json.dumps({"changed": True}) + "\n")
+        if "extra-feed" in FAULTS:
+            (out / "feed-ghost-prompts.jsonl").write_text("")
         return 0
     print("usage: stub-engine", file=sys.stderr)
     return 2
@@ -406,6 +420,13 @@ FAULT_CASES = [
     ("stale-receipt", "feed receipts"),
     ("receipt-fingerprint", "feed receipts"),
     ("receipt-hash", "feed receipts"),
+    ("missing-feed", "feed receipts"),
+    ("missing-receipt", "feed receipts"),
+    ("extra-receipt", "feed receipts"),
+    ("extra-feed", "feed receipts"),
+    ("receipt-day-body", "feed receipts"),
+    ("receipt-day-name", "feed receipts"),
+    ("reproject-differs", "ledger binding"),
     ("row-count", "ledger binding"),
     ("provenance", "ledger binding"),
     ("source-name", "ledger binding"),
@@ -429,6 +450,34 @@ def test_each_break_names_exactly_one_failing_check(stubs, fault, check):
     failing = [line for line in lines if ": FAIL" in line]
     assert len(failing) == 1 and f" {check}: FAIL" in failing[0]
     assert SHARED_ASK not in done.stdout and "msg-" not in done.stdout and "conv-one" not in done.stdout
+
+
+@pytest.mark.parametrize(
+    ("fault", "check", "reason"),
+    [
+        ("missing-feed", 5, "claude has no feed"),
+        ("missing-receipt", 5, "claude has no receipt"),
+        ("extra-receipt", 5, "claude has more than one receipt"),
+        ("extra-feed", 5, "ghost has a feed or receipt but is not an ok provider"),
+        ("stale-receipt", 5, "chatgpt receipt is for another fingerprint"),
+        ("receipt-day-body", 5, "chatgpt receipt day differs from its name"),
+        ("receipt-day-name", 5, "chatgpt receipt day differs from the manifest's latest activity"),
+        ("reproject-differs", 6, "chatgpt feed differs from its reprojection"),
+    ],
+)
+def test_feed_failures_name_the_provider(stubs, fault, check, reason):
+    done = _run(stubs, "--fixture", STUB_FAULT=fault)
+    failing = [line for line in done.stdout.splitlines() if ": FAIL" in line]
+    assert len(failing) == 1 and f"check {check} " in failing[0] and failing[0].endswith(f"FAIL {reason}"), failing
+
+
+def test_a_provider_with_an_empty_feed_and_a_zero_row_receipt_is_alive(stubs):
+    done = _run(stubs, "--fixture", STUB_FAULT="zero-row-provider")
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert lines[3].startswith("check 4 archive: ok 3 providers")
+    assert lines[4] == "check 5 feed receipts: ok 3 feeds bound to the fingerprint"
+    assert re.fullmatch(r"ALIVE [0-9a-f]{16}", lines[-1])
 
 
 def test_cross_provider_unprovable_is_named(stubs):

@@ -121,7 +121,9 @@ REPORT_COUNT_KEYS = (
     "forms_spanning_sources",
     "trivial_forms",
 )
-RECEIPT_REQUIRED_KEYS = ("feed_sha256", "rows", "source_fingerprint", "naming_version")
+RECEIPT_REQUIRED_KEYS = ("day", "feed_sha256", "rows", "source_fingerprint", "naming_version")
+PROVIDER_NAME = re.compile(r"[a-z0-9]+")
+RECEIPT_NAME = re.compile(r"receipt-([a-z0-9]+)-prompts-([0-9a-f]{16})-([0-9]{8})\.json")
 
 CHECK_NAMES = (
     "tools",
@@ -287,6 +289,8 @@ class Context:
     public_seal: Path
     write_receipt: bool = False
     prepare_failure: tuple[str, str] | None = None
+    # Where scratch directories go: the fixture's work directory, or None for the system temporary directory.
+    work_dir: Path | None = None
 
     @property
     def private_dir(self) -> Path:
@@ -385,6 +389,18 @@ def index_file(ctx: Context, provider: str) -> Path:
     return ctx.archive_root / f"provider-{provider}" / f"index-{provider}-conversations.jsonl"
 
 
+def activity_day(value: Any) -> str | None:
+    """The calendar day of a timestamp as yyyymmdd, or None when it holds no real day."""
+    match = re.match(r"(\d{4})-?(\d{2})-?(\d{2})", str(value or ""))
+    if not match:
+        return None
+    try:
+        dt.date(int(match[1]), int(match[2]), int(match[3]))
+    except ValueError:
+        return None
+    return "".join(match.groups())
+
+
 def latest_activity_day(ctx: Context, providers: list[str]) -> str | None:
     """Newest `last_activity` day over the normalized index, as yyyymmdd. Data, never the clock."""
     best: str | None = None
@@ -393,17 +409,27 @@ def latest_activity_day(ctx: Context, providers: list[str]) -> str | None:
         if not path.is_file():
             continue
         for row in read_rows(path):
-            match = re.match(r"(\d{4})-?(\d{2})-?(\d{2})", str(row.get("last_activity") or ""))
-            if not match:
-                continue
-            try:
-                dt.date(int(match[1]), int(match[2]), int(match[3]))
-            except ValueError:
-                continue
-            day = "".join(match.groups())
-            if best is None or day > best:
+            day = activity_day(row.get("last_activity"))
+            if day is not None and (best is None or day > best):
                 best = day
     return best
+
+
+def manifest_activity_day(manifest: dict[str, Any], providers: list[str]) -> str | None:
+    """Newest `last_activity_max` day the manifest reports over the ok providers, as yyyymmdd.
+
+    The manifest does carry a latest-activity stamp per provider, but the engine dates every feed receipt
+    with the single newest day over all ok providers, so that global day is what each receipt must carry.
+    """
+    info = manifest.get("providers")
+    info = info if isinstance(info, dict) else {}
+    days: list[str] = []
+    for name in providers:
+        entry = info.get(name)
+        day = activity_day(entry.get("last_activity_max")) if isinstance(entry, dict) else None
+        if day is not None:
+            days.append(day)
+    return max(days) if days else None
 
 
 def name_shape_problem(name: str, kinds: set[str]) -> str | None:
@@ -422,6 +448,10 @@ def provider_of_feed(path: Path) -> str:
 
 def feed_files(ctx: Context) -> list[Path]:
     return sorted(ctx.feed_dir.glob("feed-*-prompts.jsonl")) if ctx.feed_dir.is_dir() else []
+
+
+def feed_receipt_files(ctx: Context) -> list[Path]:
+    return sorted(ctx.feed_dir.glob("receipt-*-prompts-*.json")) if ctx.feed_dir.is_dir() else []
 
 
 def recount_eligible(ctx: Context, providers: list[str]) -> dict[str, int]:
@@ -604,6 +634,8 @@ def check_archive(ctx: Context, state: State) -> CheckResult:
         # The engine names a receipt by the first 16 hex of SHA-256 over the exact fingerprint string.
         prefix=hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:FINGERPRINT_PREFIX_LENGTH],
         providers=providers,
+        # The day every receipt must carry: from the manifest, else from the normalized index. Never the clock.
+        day=manifest_activity_day(manifest, providers) or latest_activity_day(ctx, providers),
         conversations=sum(int(info[name].get("conversations") or 0) for name in providers),
         messages=sum(int(info[name].get("messages") or 0) for name in providers),
     )
@@ -611,34 +643,89 @@ def check_archive(ctx: Context, state: State) -> CheckResult:
 
 
 def check_feed_receipts(ctx: Context, state: State) -> CheckResult:
-    feeds = feed_files(ctx)
-    if not feeds:
-        return CheckResult(False, "no feed files")
-    loaded: dict[str, dict[str, Any]] = {}
-    for feed in feeds:
+    """Exactly one feed and one receipt for every ok provider in the manifest, and nothing else.
+
+    A provider whose export holds no typed asks has an empty feed and a receipt that says `rows: 0` with the
+    hash of the empty file; that is a legitimate pair and passes like any other.
+    """
+    providers: list[str] = state["providers"]
+    feeds: dict[str, Path] = {}
+    for feed in feed_files(ctx):
         provider = provider_of_feed(feed)
-        if provider not in state["providers"]:
-            return CheckResult(False, "a feed has no ok provider")
-        receipts = sorted(ctx.feed_dir.glob(f"receipt-{provider}-prompts-{state['prefix']}-*.json"))
-        if len(receipts) != 1:
-            return CheckResult(False, "a feed has no single receipt for the current fingerprint")
-        problem = name_shape_problem(receipts[0].stem, state["kinds"]) or name_shape_problem(feed.stem, state["kinds"])
-        if problem:
-            return CheckResult(False, "a feed or receipt name is malformed")
-        receipt = read_json(receipts[0])
+        if not PROVIDER_NAME.fullmatch(provider):
+            return CheckResult(False, "a feed name is malformed")
+        feeds[provider] = feed
+    receipts: dict[str, list[Path]] = {}
+    for path in feed_receipt_files(ctx):
+        match = RECEIPT_NAME.fullmatch(path.name)
+        if match is None:
+            return CheckResult(False, "a receipt name is malformed")
+        receipts.setdefault(match[1], []).append(path)
+    for provider in sorted({*feeds, *receipts} - set(providers)):
+        return CheckResult(False, f"{provider} has a feed or receipt but is not an ok provider")
+    if state["day"] is None:
+        return CheckResult(False, "the manifest holds no activity day")
+    loaded: dict[str, dict[str, Any]] = {}
+    for provider in providers:
+        if provider not in feeds:
+            return CheckResult(False, f"{provider} has no feed")
+        found = receipts.get(provider, [])
+        if not found:
+            return CheckResult(False, f"{provider} has no receipt")
+        if len(found) > 1:
+            return CheckResult(False, f"{provider} has more than one receipt")
+        feed, path = feeds[provider], found[0]
+        name = RECEIPT_NAME.fullmatch(path.name)
+        assert name is not None
+        if name[2] != state["prefix"]:
+            return CheckResult(False, f"{provider} receipt is for another fingerprint")
+        if name_shape_problem(path.stem, state["kinds"]) or name_shape_problem(feed.stem, state["kinds"]):
+            return CheckResult(False, f"{provider} feed or receipt name is malformed")
+        receipt = read_json(path)
         if receipt is None or any(key not in receipt for key in RECEIPT_REQUIRED_KEYS):
-            return CheckResult(False, "a receipt is unreadable or incomplete")
+            return CheckResult(False, f"{provider} receipt is unreadable or incomplete")
         if receipt["source_fingerprint"] != state["fingerprint"]:
-            return CheckResult(False, "a receipt fingerprint differs from the manifest")
+            return CheckResult(False, f"{provider} receipt fingerprint differs from the manifest")
         if receipt["feed_sha256"] != file_sha256(feed):
-            return CheckResult(False, "a feed differs from its receipt hash")
+            return CheckResult(False, f"{provider} feed differs from its receipt hash")
+        if not isinstance(receipt["rows"], int) or isinstance(receipt["rows"], bool):
+            return CheckResult(False, f"{provider} receipt row count is not a number")
+        if activity_day(name[3]) != name[3] or receipt["day"] != name[3]:
+            return CheckResult(False, f"{provider} receipt day differs from its name")
+        if name[3] != state["day"]:
+            return CheckResult(False, f"{provider} receipt day differs from the manifest's latest activity")
         try:
             rows = list(read_rows(feed))
-        except (OSError, ValueError):
-            return CheckResult(False, "a feed is unreadable")
-        loaded[provider] = {"rows": rows, "receipt_rows": receipt["rows"]}
+        except OSError:
+            return CheckResult(False, f"{provider} feed is unreadable")
+        loaded[provider] = {"rows": rows, "receipt_rows": receipt["rows"], "feed_sha256": receipt["feed_sha256"]}
     state["feeds"] = loaded
     return CheckResult(True, f"{len(loaded)} feeds bound to the fingerprint")
+
+
+def reprojection_problem(ctx: Context, state: State) -> str | None:
+    """Re-project the feeds from the archive and compare bytes: the feed content is bound to the archive.
+
+    Counts alone cannot tell a feed from the same number of different rows. The engine claims two runs write
+    identical bytes, and this makes that claim a tested property of the live archive. The temporary directory
+    sits under the work directory (the system temporary directory in live mode) and is always removed.
+    """
+    feeds: dict[str, dict[str, Any]] = state["feeds"]
+    with tempfile.TemporaryDirectory(prefix="knowledge-alive-reproject-", dir=ctx.work_dir) as directory:
+        out = Path(directory)
+        arguments = ["archive", "project", "feed", "--root", str(ctx.archive_root), "--out", str(out)]
+        if ctx.engine.run(arguments, label="project feed").returncode != 0:
+            return "the engine cannot reproject the feeds"
+        for provider in sorted(feeds):
+            again = out / f"feed-{provider}-prompts.jsonl"
+            if not again.is_file():
+                return f"{provider} feed was not reprojected"
+            reprojected = file_sha256(again)
+            if reprojected != file_sha256(ctx.feed_dir / f"feed-{provider}-prompts.jsonl"):
+                return f"{provider} feed differs from its reprojection"
+            if reprojected != feeds[provider]["feed_sha256"]:
+                return f"{provider} receipt hash differs from the reprojected feed"
+    return None
 
 
 def check_ledger_binding(ctx: Context, state: State) -> CheckResult:
@@ -664,6 +751,9 @@ def check_ledger_binding(ctx: Context, state: State) -> CheckResult:
             total += 1
     if len(wanted) != total:
         return CheckResult(False, "occurrence ids are not unique")
+    problem = reprojection_problem(ctx, state)
+    if problem is not None:
+        return CheckResult(False, problem)
     journal = LedgerPaths.for_root(ctx.ledger_root, private_root=ctx.private_root).event_journal
     if not journal.is_file():
         return CheckResult(False, "the ledger journal is missing")
@@ -802,9 +892,9 @@ def receipt_is_counts_only(body: dict[str, Any]) -> bool:
 def check_receipt(ctx: Context, state: State) -> CheckResult:
     if not ctx.is_live:
         return CheckResult(True, "(live mode only)", skipped=True)
-    day = latest_activity_day(ctx, state["providers"])
+    day = state["day"]
     if day is None:
-        return CheckResult(False, "no activity day in the index")
+        return CheckResult(False, "no activity day in the manifest")
     name = receipt_name(state, day)
     if name_shape_problem(name, state["kinds"]) is not None:
         return CheckResult(False, "the receipt name is malformed")
@@ -987,6 +1077,7 @@ def build_context(args: argparse.Namespace, work: Path | None) -> Context:
             public_markdown=work / "public" / "prompt-atom-ledger.md",
             public_snapshot=work / "public" / "prompt-atom-ledger.json",
             public_seal=work / "public" / "prompt-authority-seal.json",
+            work_dir=work,
         )
     store_root = Path(args.store_root).expanduser() if args.store_root else registered_store_root()
     if not store_root.is_dir():
