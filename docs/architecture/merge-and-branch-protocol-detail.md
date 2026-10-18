@@ -154,10 +154,16 @@ Observed 2026-10-18 on Claude Code 2.1.302 by a read-only multi-agent audit and 
   fires in cloud, so their accuracy is the cloud permission experience. 2026-10-18: both guards denied
   read-only commands that merely *named* their trigger (a `grep` for the retired waiter's filename,
   `python3 -m pytest --version`, `pytest-scope-guard.test.sh`) while the hermetic pytest wrapper passed a
-  full-suite collection. The guards now match invocations only, and `claude-workflow-guard.py` mirrors the
-  pytest token. Residual, by design of the regex: the word pytest between two pipes inside a quoted
-  grep alternation still reads as a command separator and is denied — put such text in a file, not in a
-  Bash command.
+  full-suite collection. The poll guard now denies a best-effort grammar of *invocations* (the retired
+  script also exits 64 on its own, so a miss costs one refused call while a false deny blocks real work —
+  it errs permissive). The pytest guard's token must end at a non-word/`.`/`-` character, treats the
+  hermetic wrapper as pytest, and lets `--version`/`-V`/`--help`/`-h`/`--markers` through (pytest exits
+  before collecting; measured ~0.1-0.3 s with a suite root present). `claude-workflow-guard.py` mirrors the
+  pytest side. Both matchers are linear-time: a nested `\s*` once made the poll guard hang on a 200 KB
+  separator run. Residuals: the word pytest between two pipes inside a quoted alternation, and a heredoc or
+  quoted prose line that *starts* with the retired script's path after a separator, are still denied — put
+  such text in a file, not in a Bash command. The poll guard does not recognise ssh/docker/tmux/`find
+  -exec`/flock/parallel launchers or pipes into a shell. Neither guard parses shell quoting.
 - **GitHub GraphQL is refused (HTTP 403).** Every GraphQL-backed `gh` verb fails: `gh pr view|merge|
   checks|status|list`, `gh issue view|list|comment|close`, `gh label list` (and `gh pr create`, inferred).
   Working: `gh api repos/<owner>/<repo>/...` (REST), `gh run list`, `gh pr diff`, `mcp__github__*`.

@@ -474,6 +474,14 @@ def test_audit_transcript_flags_full_suite_through_the_hermetic_wrapper(tmp_path
     for command in (
         "bash scripts/run-pytest-hermetic.sh cli/tests -q",
         "bash scripts/run-pytest-hermetic.sh web/api/tests cli/tests -q",
+        "timeout 180s bash scripts/run-pytest-hermetic.sh cli/tests -x -vv --tb=short",
+        "pytest-3 cli/tests",
+        "(cd cli && pytest tests)",
+        "pytest --version; pytest cli/tests",
+        "pytest --cov limen cli/tests",
+        "pytest -r f cli/tests",
+        "if true; then pytest cli/tests; fi",
+        "sudo pytest cli/tests",
     ):
         transcript = _bash_transcript(tmp_path, command)
         proc = run_guard("audit-transcript", str(transcript), env={"LIMEN_ALLOW_FULL_PYTEST": "0"})
@@ -491,6 +499,10 @@ def test_audit_transcript_allows_scoped_pytest_and_verify_wrappers(tmp_path):
         "grep -r pytest tests/",
         "bash scripts/run-pytest-hermetic.sh cli/tests/test_dispatch.py -q",
         "python3 -m pytest --version",
+        "pytest cli/tests -V",
+        "ver=$(pytest --version)",
+        "pytest --markers",
+        "bash -n scripts/run-pytest-hermetic.sh",
         "ls scripts/tests | grep -i -E 'hook|pytest-scope|guard'",
         "bash scripts/tests/pytest-scope-guard.test.sh",
     ):

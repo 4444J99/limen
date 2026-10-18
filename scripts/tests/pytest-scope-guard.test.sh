@@ -44,6 +44,35 @@ assert_denied 'ls && python3 -m pytest cli/tests -q'          "$LIVE"           
 assert_denied 'bash scripts/run-pytest-hermetic.sh cli/tests -q'                "$LIVE"  # the hermetic wrapper IS pytest
 assert_denied 'bash scripts/run-pytest-hermetic.sh web/api/tests cli/tests -q'  "$LIVE"  # verify-whole's own full-suite shape
 assert_denied 'scripts/run-pytest-hermetic.sh cli/tests'                        "$LIVE"  # direct exec of the wrapper
+# The wrapper and plain pytest behind the usual prefixes / shells / separators (CI copy-paste shape first)
+assert_denied 'timeout 180s bash scripts/run-pytest-hermetic.sh cli/tests -x -vv --tb=short' "$LIVE"
+assert_denied '/bin/bash scripts/run-pytest-hermetic.sh cli/tests'              "$LIVE"
+assert_denied 'sh scripts/run-pytest-hermetic.sh cli/tests'                     "$LIVE"
+assert_denied 'bash -x scripts/run-pytest-hermetic.sh cli/tests'                "$LIVE"
+assert_denied 'nohup bash scripts/run-pytest-hermetic.sh cli/tests &'           "$LIVE"
+assert_denied 'time pytest cli/tests'                         "$LIVE"
+assert_denied 'timeout 600 pytest cli/tests'                  "$LIVE"
+assert_denied 'pytest-3 cli/tests'                            "$LIVE"            # versioned binary name (Fedora/RHEL)
+assert_denied 'python3 -u -m pytest cli/tests'                "$LIVE"
+assert_denied 'uv run -q pytest cli/tests'                    "$LIVE"
+assert_denied 'uvx pytest cli/tests'                          "$LIVE"
+assert_denied '(cd cli && pytest tests)'                      "$LIVE"            # ) must not stick to the path token
+assert_denied 'x=$(pytest cli/tests)'                         "$LIVE"
+assert_denied $'echo a\npytest cli/tests'                     "$LIVE"            # a newline is a command separator
+assert_denied 'pytest --version; pytest cli/tests'            "$LIVE"            # info flag exempts only its own segment
+assert_denied 'pytest --version && pytest cli/tests'          "$LIVE"
+# Common value-taking flags written with a space must not hide the suite root behind their argument
+assert_denied 'pytest --cov limen cli/tests'                  "$LIVE"
+assert_denied 'pytest --timeout 60 cli/tests'                 "$LIVE"
+assert_denied 'pytest -r f cli/tests'                         "$LIVE"
+assert_denied 'pytest --junitxml out.xml cli/tests'           "$LIVE"
+assert_denied 'pytest --dist loadfile cli/tests'              "$LIVE"
+# Compound-statement heads and sudo/eval
+assert_denied 'if true; then pytest cli/tests; fi'            "$LIVE"
+assert_denied 'for i in 1; do pytest cli/tests; done'         "$LIVE"
+assert_denied '{ pytest cli/tests; }'                         "$LIVE"
+assert_denied 'sudo pytest cli/tests'                         "$LIVE"
+assert_denied 'eval pytest cli/tests'                         "$LIVE"
 
 # Legitimate lanes — must never block
 assert_passes 'pytest cli/tests/test_dispatch.py -q'          "$LIVE"            # file-scoped
@@ -70,6 +99,16 @@ assert_passes 'bash scripts/tests/pytest-scope-guard.test.sh' "$LIVE"           
 assert_passes 'scripts/tests/pytest-scope-guard.test.sh'      "$LIVE"
 assert_passes 'ls scripts/tests | grep -i -E "hook|pytest-scope|guard"' "$LIVE"  # quoted alternation naming the guard
 assert_passes 'cat pytest.ini'                                "$LIVE"
+# pytest prints and exits on these BEFORE collecting (verified: ~0.1 s even with a suite root present)
+assert_passes 'pytest cli/tests -V'                           "$LIVE"
+assert_passes 'pytest -V cli/tests -q'                        "$LIVE"
+assert_passes 'pytest --markers'                              "$LIVE"
+assert_passes 'ver=$(pytest --version)'                       "$LIVE"            # ) / backtick must not defeat the exemption
+assert_passes '(cd cli && pytest --version)'                  "$LIVE"
+assert_passes 'echo `pytest --version`'                       "$LIVE"
+assert_passes 'bash -n scripts/run-pytest-hermetic.sh'        "$LIVE"            # syntax check, not a run
+assert_passes './pytest.sh cli/tests'                         "$LIVE"            # a script NAMED pytest.sh is not pytest
+assert_passes 'scripts/run-pytest-hermetic.sh.bak cli/tests'  "$LIVE"
 
 # Malformed payload → fail open (silent pass)
 out="$(printf 'not json' | "$HOOK")"
