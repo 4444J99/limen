@@ -26,6 +26,14 @@ assert_denied '(while true; do gh pr checks 9; sleep 20; done) &'
 # The retired compatibility path is mechanically denied even before its own fail-closed exit.
 assert_denied 'scripts/await-pr.sh 1872 --merge'
 assert_denied 'bash scripts/await-pr.sh 1879 --merge'
+assert_denied './scripts/await-pr.sh'
+assert_denied 'timeout 60 scripts/await-pr.sh 1'
+assert_denied 'env X=1 scripts/await-pr.sh 1'
+assert_denied 'nohup scripts/await-pr.sh 1 &'
+assert_denied "bash -c 'scripts/await-pr.sh 1'"
+assert_denied 'ls x; scripts/await-pr.sh 1'
+assert_denied 'cd scripts && ./await-pr.sh 1'
+assert_denied $'echo start\nscripts/await-pr.sh 1'                      # second line of a multi-line command
 
 # Legitimate lanes — must never block (the deliverable)
 assert_passes 'scripts/merge-drain.py --repo o/r --pr 7 --expected-head aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
@@ -39,6 +47,16 @@ assert_passes 'echo "while gh pr sleep done"'                          # tokens 
 assert_passes 'git log --grep "sleep"'                                 # prefilter tail
 assert_passes 'ls -la'                                                 # no sleep token at all
 
+# Mentioning the retired waiter is not invoking it — read-only diagnostics, edits and prose must pass
+assert_passes 'ls scripts/await-pr.sh'
+assert_passes 'ls scripts | grep await-pr.sh'
+assert_passes 'grep -n await-pr.sh CLAUDE.md'
+assert_passes 'git log --oneline -- scripts/await-pr.sh'
+assert_passes 'cat scripts/await-pr.sh'
+assert_passes "git commit -m 'retire await-pr.sh waiter'"
+assert_passes 'gh pr create --title t --body "never use scripts/await-pr.sh"'
+assert_passes $'cat <<EOF\nsee scripts/await-pr.sh for the retired path\nEOF'   # heredoc prose
+
 # Escape hatch
 out="$(payload 'while true; do gh pr checks 9; sleep 20; done' | LIMEN_ALLOW_PR_POLL=1 "$HOOK")"
 [ -z "$out" ] || { printf 'expected escape hatch to pass\nout: %s\n' "$out" >&2; exit 1; }
@@ -49,4 +67,4 @@ printf '%s' "$out" | grep -q '"permissionDecision":"deny"' || { printf 'retired 
 out="$(printf 'not-json' | "$HOOK")"
 [ -z "$out" ] || { printf 'expected fail-open on bad payload\nout: %s\n' "$out" >&2; exit 1; }
 
-echo "no-hand-poll-guard.test: OK (8 deny, 10 pass, bounded hatch + fail-open)"
+echo "no-hand-poll-guard.test: OK (16 deny, 18 pass, bounded hatch + fail-open)"

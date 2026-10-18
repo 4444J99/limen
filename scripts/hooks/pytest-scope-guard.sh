@@ -61,14 +61,18 @@ cwd = d.get("cwd") or os.getcwd()
 
 # pytest at command position, in any of its shapes:
 #   pytest / .venv/bin/pytest / python[3[.x]] -m pytest / uv run [python -m] pytest,
-# optionally behind `env VAR=… -u VAR …` or bare VAR=… assignments.
+#   [bash] scripts/run-pytest-hermetic.sh (the hermetic wrapper is `exec python3 -m pytest "$@"`,
+#   so a suite root through it is the same full collection),
+# optionally behind `env VAR=… -u VAR …` or bare VAR=… assignments. The token must END at a
+# non-[word . -] char: `pytest-scope-guard.test.sh` and `pytest.ini` are names, not invocations.
 PYTEST = re.compile(
     r"(?:^|[;&|(]\s*|`\s*)\s*(?:command\s+)?"
     r"(?:env\s+(?:-u\s+\S+\s+|[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)?"
     r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
     r"(?:uv\s+run\s+(?:--\S+\s+)*)?"
     r"(?:\S*python3?(?:\.\d+)?\s+-m\s+)?"
-    r"(?:\S*/)?pytest\b")
+    r"(?:bash\s+)?"
+    r"(?:\S*/)?(?:pytest|run-pytest-hermetic\.sh)(?![\w.-])")
 
 # Args end at the first shell separator or redirection after the pytest token.
 STOP = re.compile(r"\d*>|<|;|\||&")
@@ -111,6 +115,8 @@ for m in PYTEST.finditer(cmd):
         tokens = shlex.split(tail)
     except ValueError:
         continue                                      # unparseable tail — fail open
+    if tokens and all(t in ("--version", "-V", "--help", "-h") for t in tokens):
+        continue                                      # prints and exits — no collection
 
     path_args, skip = [], False
     for tok in tokens:

@@ -41,6 +41,9 @@ assert_denied 'env -u LIMEN_API_TOKEN pytest cli/tests'       "$LIVE"           
 assert_denied 'pytest cli/tests'                              "$WT"              # worktrees are the same law
 assert_denied 'pytest tests'                                  "$WT/cli"          # relative suite inside a worktree
 assert_denied 'ls && python3 -m pytest cli/tests -q'          "$LIVE"            # pytest after separator
+assert_denied 'bash scripts/run-pytest-hermetic.sh cli/tests -q'                "$LIVE"  # the hermetic wrapper IS pytest
+assert_denied 'bash scripts/run-pytest-hermetic.sh web/api/tests cli/tests -q'  "$LIVE"  # verify-whole's own full-suite shape
+assert_denied 'scripts/run-pytest-hermetic.sh cli/tests'                        "$LIVE"  # direct exec of the wrapper
 
 # Legitimate lanes — must never block
 assert_passes 'pytest cli/tests/test_dispatch.py -q'          "$LIVE"            # file-scoped
@@ -59,6 +62,14 @@ assert_passes 'pip install pytest'                            "$LIVE"
 assert_passes 'ls -la'                                        "$LIVE"            # prefilter
 assert_passes 'cd $SOMEWHERE && pytest tests/'                "$LIVE"            # unresolved var → fail open
 assert_passes 'pytest $SUITE'                                 "$LIVE"            # unresolved arg → fail open
+# Names that merely CONTAIN the token, and info-only flags — read-only diagnostics, never a collection
+assert_passes 'bash scripts/run-pytest-hermetic.sh cli/tests/test_dispatch.py -q' "$LIVE"  # wrapper, file-scoped
+assert_passes 'python3 -m pytest --version'                   "$LIVE"            # prints and exits
+assert_passes 'pytest --help'                                 "$LIVE/cli"
+assert_passes 'bash scripts/tests/pytest-scope-guard.test.sh' "$LIVE"            # the guard's own test
+assert_passes 'scripts/tests/pytest-scope-guard.test.sh'      "$LIVE"
+assert_passes 'ls scripts/tests | grep -i -E "hook|pytest-scope|guard"' "$LIVE"  # quoted alternation naming the guard
+assert_passes 'cat pytest.ini'                                "$LIVE"
 
 # Malformed payload → fail open (silent pass)
 out="$(printf 'not json' | "$HOOK")"

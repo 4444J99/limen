@@ -423,10 +423,13 @@ def section_phase() -> str:
     if (settings.get("permissions") or {}).get("defaultMode") != "plan":
         return ""
 
-    line = (
-        "**Phase** — opens in PLAN (entry-bound; shift+tab or ExitPlanMode to build) · "
-        "chain: `scripts/session-plan.py open <slug> --title '...'` → plan + issue + PR"
+    opening = (
+        "**Phase** — settings declare plan, but a cloud session takes its mode from the dropdown "
+        "(the transcript's permissionMode is the measurement) · "
+        if os.environ.get("CLAUDE_CODE_REMOTE") == "true"
+        else "**Phase** — opens in PLAN (entry-bound; shift+tab or ExitPlanMode to build) · "
     )
+    line = opening + "chain: `scripts/session-plan.py open <slug> --title '...'` → plan + issue + PR"
     try:
         out = subprocess.run(
             [sys.executable, str(ROOT / "scripts" / "session-plan.py"), "audit", "--json"],

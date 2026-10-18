@@ -469,6 +469,19 @@ def test_audit_transcript_flags_full_suite_pytest(tmp_path):
     assert any("scoped-verification law" in v for v in report["violations"])
 
 
+def test_audit_transcript_flags_full_suite_through_the_hermetic_wrapper(tmp_path):
+    # The wrapper is `exec python3 -m pytest "$@"`: a suite root through it is the same collection.
+    for command in (
+        "bash scripts/run-pytest-hermetic.sh cli/tests -q",
+        "bash scripts/run-pytest-hermetic.sh web/api/tests cli/tests -q",
+    ):
+        transcript = _bash_transcript(tmp_path, command)
+        proc = run_guard("audit-transcript", str(transcript), env={"LIMEN_ALLOW_FULL_PYTEST": "0"})
+        report = json.loads(proc.stdout)
+        assert report["fullSuitePytestCalls"] == 1, command
+        assert proc.returncode != 0, command
+
+
 def test_audit_transcript_allows_scoped_pytest_and_verify_wrappers(tmp_path):
     for command in (
         "pytest cli/tests/test_dispatch.py -q",
@@ -476,6 +489,10 @@ def test_audit_transcript_allows_scoped_pytest_and_verify_wrappers(tmp_path):
         "bash scripts/verify-scoped.sh",
         "pip install pytest",
         "grep -r pytest tests/",
+        "bash scripts/run-pytest-hermetic.sh cli/tests/test_dispatch.py -q",
+        "python3 -m pytest --version",
+        "ls scripts/tests | grep -i -E 'hook|pytest-scope|guard'",
+        "bash scripts/tests/pytest-scope-guard.test.sh",
     ):
         transcript = _bash_transcript(tmp_path, command)
         proc = run_guard("audit-transcript", str(transcript), env={"LIMEN_ALLOW_FULL_PYTEST": "0"})

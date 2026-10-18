@@ -41,15 +41,18 @@ FABLE_ACCEPTANCE_RE = re.compile(
 _MUTATION_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 _MUTATING_BASH_RE = re.compile(r"\bgit\s+(add|commit|push|apply|merge|rebase)\b|\bgh\s+pr\s+(create|merge|edit)\b")
 
-# pytest at command position, in any of its shapes (mirrors scripts/hooks/pytest-scope-guard.sh).
+# pytest at command position, in any of its shapes, including the hermetic wrapper (mirrors
+# scripts/hooks/pytest-scope-guard.sh — change the two together).
 _PYTEST_CMD_RE = re.compile(
     r"(?:^|[;&|(]\s*|`\s*)\s*(?:command\s+)?"
     r"(?:env\s+(?:-u\s+\S+\s+|[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)?"
     r"(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
     r"(?:uv\s+run\s+(?:--\S+\s+)*)?"
     r"(?:\S*python3?(?:\.\d+)?\s+-m\s+)?"
-    r"(?:\S*/)?pytest\b"
+    r"(?:bash\s+)?"
+    r"(?:\S*/)?(?:pytest|run-pytest-hermetic\.sh)(?![\w.-])"
 )
+_PYTEST_INFO_FLAGS = {"--version", "-V", "--help", "-h"}  # print and exit — no collection
 _VERIFY_WRAPPER_RE = re.compile(r"verify\.py|verify-scoped\.sh|verify-whole\.sh")
 _PYTEST_SUITE_ROOTS = {"tests", "cli/tests", "web/api/tests"}
 _PYTEST_VALUE_FLAGS = {
@@ -84,6 +87,8 @@ def _full_suite_pytest(cmd: str) -> bool:
         try:
             tokens = shlex.split(tail)
         except ValueError:
+            continue
+        if tokens and all(t in _PYTEST_INFO_FLAGS for t in tokens):
             continue
         paths, skip = [], False
         for tok in tokens:

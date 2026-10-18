@@ -44,7 +44,16 @@ except Exception:
     sys.exit(0)
 cmd = (d.get("tool_input") or {}).get("command") or ""
 
-if re.search(r"(?:^|\s|/)(?:bash\s+)?(?:\S*/)?await-pr\.sh(?:\s|$)", cmd):
+# The retired waiter is denied as an INVOCATION — at command position (newline included), optionally
+# behind env/nohup/exec/time/timeout/xargs or a shell/source/. runner (incl. `bash -c` + a quoted body). A
+# mere mention (ls, grep, git log, a heredoc line, a commit or PR body) is not an invocation and
+# passes; the script exits 64 on its own, so a mention can never wait on a PR.
+WAITER = re.compile(
+    r"(?:^|[;&|(`\n]\s*|\b(?:do|then|else|while|until)\s+|!\s+)\s*"
+    r"(?:(?:[A-Za-z_][A-Za-z0-9_]*=\S*|env|nohup|exec|command|time|nice|xargs|timeout\s+\S+)\s+)*"
+    r"(?:(?:bash|sh|zsh|dash|ksh|source|\.)\s+(?:-\S+\s+)*[\x27\"]?)?"
+    r"(?:\S*/)?await-pr\.sh(?![\w.-])")
+if WAITER.search(cmd):
     print("deny")
     sys.exit(0)
 

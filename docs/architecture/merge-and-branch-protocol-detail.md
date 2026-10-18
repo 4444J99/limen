@@ -128,3 +128,40 @@ block. Every consumer that reads a sensor fact derives it from the registry, not
 (`omega_eligible`, `armed_valve_type`, `args_when`, `cadence`/`timeout`) are read by capability, never
 by sensor id — consumers work unchanged if an id is renamed. See `docs/IDEAL-FORMS-LEDGER.md` →
 IF-SENSOR-REGISTRY.
+
+## Claude Code cloud sessions
+
+What the repo's permission configuration can and cannot do when a session runs in a Claude Code cloud
+container (`CLAUDE_CODE_REMOTE=true`). Observed 2026-10-18 on Claude Code 2.1.302 by a read-only
+multi-agent audit and re-checked by hand; the Mac, the fleet and other providers need their own evidence.
+
+- **The project allow list is inert until the workspace is trusted.** `/tmp/claude-code.log` (lines
+  45-47 of that session): `Dropped 75 project-scoped permissions.allow entries — workspace not yet
+  trusted`; only the launcher's `Skill` rule applied, and `/root/.claude.json` has no `projects` key.
+  Trust needs an interactive accept or `projects["<path>"].hasTrustDialogAccepted`. Seeding it activates
+  every project rule at once (including the Mac-tuned `git push *`, `gh api *`, `npm *`, `npx *`), so it
+  is an operator posture decision, never an agent write. The platform page for session permissions says a
+  single-repo session reads repo allow rules; the runtime observation governs and the omission is upstream's.
+- **The mode is chosen by the dropdown, not `defaultMode`.** Cloud ignores `bypassPermissions` and
+  `dontAsk` from settings files. The observed session ran in Auto: the classifier decides Bash calls,
+  the launcher's `Bash(*)`/`Agent(*)`/`Monitor(*)` arguments are stripped, and the binary honours
+  `autoMode` classifier rules only from user, flag or managed settings — never from the repo.
+- **Project hooks still run.** The repo's PreToolUse deny hooks (`pytest-scope-guard.sh`,
+  `no-hand-poll-guard.sh`, `worktree-commit-guard.sh`) are the one repo-side permission surface that
+  fires in cloud, so their accuracy is the cloud permission experience. 2026-10-18: both guards denied
+  read-only commands that merely *named* their trigger (a `grep` for the retired waiter's filename,
+  `python3 -m pytest --version`, `pytest-scope-guard.test.sh`) while the hermetic pytest wrapper passed a
+  full-suite collection. The guards now match invocations only, and `claude-workflow-guard.py` mirrors the
+  pytest token. Residual, by design of the regex: the word pytest between two pipes inside a quoted
+  grep alternation still reads as a command separator and is denied — put such text in a file, not in a
+  Bash command.
+- **GitHub GraphQL is refused (HTTP 403).** REST and `mcp__github__*` work. `gh pr view|create|merge`,
+  `gh issue view|list`, `merge-policy.sh`, `merge-drain.py` and `ship-docs.sh` therefore cannot run; the
+  403 reads in `merge-policy.sh` as a generic `BLOCKED — cannot read PR`, not as a refusal of the PR.
+  The conduct broker (`LIMEN_CONDUCT_URL`/`LIMEN_CONDUCT_TOKEN`) is also unset, so child reservation
+  (`limen conduct split`) cannot be satisfied there.
+- **`scripts/dialogs-silenced.sh` measures the host it runs on.** It reads `$HOME/.claude/settings.json`;
+  its container exit 1 is not evidence about the Mac's user layer (lever `L-AGENT-BASH-PROMPT`).
+- **Unverified:** the Mac's Claude Code version and whether it reads a top-level `autoMode` as 2.1.302
+  does (`scripts/dialogs-silenced.sh` and `scripts/heal-hook-wiring.py` still use `permissions.autoMode`);
+  whether allow rules pre-approve Bash during plan mode; fleet worktree trust under `dontAsk`.
