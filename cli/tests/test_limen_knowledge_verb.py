@@ -13,6 +13,15 @@ The contract under test (scripts/open-knowledge.sh):
   C6 --status binds the receipt to the live fingerprint.
   C7 Portable to bash 3.2 and bash 5.  C8 Loopback probes ignore a user ~/.curlrc.
   C9 Strict mode stays, --help prints the whole header, one new environment variable.
+  C10 A dead start lock (its pid is gone, a zombie or not this script, or it has no pid and its directory
+      is at least 3 seconds old) is removed only by the holder of the <lock>.reap recovery mutex, after
+      re-checking; a release removes the lock only while its pid file is absent, empty or its own.
+  C11 The lock wait bound is max(15, start timeout + 5) seconds.
+  C12 --stop: a failed signal to an exited server clears the pid file and exits 0; to a live one exits 1;
+      a pid file that now names a newer start survives a successful stop.
+  C13 A state directory that cannot be created or written fails at once.
+  C14 curl is required: exit 127 before any probe.  C15 --port is a plain decimal from 1 to 65535.
+  C16 The header names every changed behavior.
 """
 
 import contextlib
@@ -20,6 +29,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import signal
 import socket
 import subprocess
@@ -55,11 +65,23 @@ FAKE_ENGINE = """#!@PY@
 import http.server
 import json
 import os
+import signal
 import sys
 import time
 
 arguments = sys.argv[1:]
 port = int(arguments[arguments.index("--port") + 1])
+
+
+def on_term(signum, frame):
+    # A newer start may have rewritten the pid file by the time this server dies: say so.
+    with open(os.environ["FAKE_ENGINE_ON_TERM_FILE"], "w", encoding="utf-8") as pid_file:
+        pid_file.write(os.environ["FAKE_ENGINE_ON_TERM_TEXT"])
+    os._exit(0)
+
+
+if "FAKE_ENGINE_ON_TERM_FILE" in os.environ:
+    signal.signal(signal.SIGTERM, on_term)
 with open(os.environ["FAKE_ENGINE_RECORD"], "w", encoding="utf-8") as record:
     json.dump(
         {"arguments": arguments, "legacy_store_variable_set": "CCE_CORPUS_STORE_ROOT" in os.environ},
@@ -160,6 +182,39 @@ sys.exit(1)
 """
 
 
+# Every tool the script runs outside its own interpreter, bar curl, python and the engine.
+TOOLS_THE_SCRIPT_RUNS = "bash sh env dirname git cat ps sleep mkdir rm tail nohup uname awk".split()
+
+# A stand-in `curl` that counts every probe the script makes, then runs the real one: the observable
+# proof that a start is inside its lock-polling loop.
+CURL_LOGGER = """#!/bin/sh
+echo probe >>"@LOG@"
+exec "@REAL@" "$@"
+"""
+
+# A stand-in `ps` that lists one pid as an archive server for its first @LISTED@ lookups, then reports it
+# gone (or, with a large @LISTED@, never gone). Every other lookup goes to the real ps.
+PS_SHIM = """#!/bin/sh
+wanted=""
+previous=""
+for argument in "$@"; do
+  if [ "$previous" = "-p" ]; then wanted="$argument"; fi
+  previous="$argument"
+done
+if [ "$wanted" = "@PID@" ]; then
+  calls=$(cat "@COUNT@" 2>/dev/null || echo 0)
+  calls=$((calls + 1))
+  echo "$calls" >"@COUNT@"
+  if [ "$calls" -le @LISTED@ ]; then
+    echo "@COMMAND@"
+    exit 0
+  fi
+  exit 1
+fi
+exec "@REAL@" "$@"
+"""
+
+
 def free_port() -> int:
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
@@ -180,14 +235,25 @@ def label(name: str) -> str:
     return f"  {name}:".ljust(16)
 
 
+def process_state(pid: int) -> str:
+    """The process state letters from ps, empty when no such process is listed."""
+    done = subprocess.run(["ps", "-p", str(pid), "-o", "stat="], capture_output=True, text=True, check=False)
+    return done.stdout.strip()
+
+
 def alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
+    """Running, as ps sees it: a zombie is dead (kill -0 would still answer for it)."""
+    state = process_state(pid)
+    return bool(state) and not state.startswith("Z")
+
+
+def wait_until(condition, seconds: float = 10.0, reason: str = "the condition") -> None:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if condition():
+            return
+        time.sleep(0.02)
+    pytest.fail(f"timed out after {seconds}s waiting for {reason}")
 
 
 def wait_dead(pid: int, seconds: float = 3.0) -> bool:
@@ -369,12 +435,63 @@ def layout(tmp_path):
         proc.wait()
         return proc.pid
 
-    def take_lock(on_port, pid):
+    def take_lock(on_port, pid=None):
+        """The start lock as a holder leaves it; with no pid, as one killed before it wrote its pid."""
         state.mkdir(parents=True, exist_ok=True)
         lock = state / f"open-knowledge-{on_port}.lock"
         lock.mkdir()
-        (lock / "pid").write_text(f"{pid}\n")
+        if pid is not None:
+            (lock / "pid").write_text(f"{pid}\n")
         return lock
+
+    def zombie():
+        """A child that has exited and is not reaped, so ps lists it as a zombie until the finalizer waits."""
+        proc = subprocess.Popen(
+            [sys.executable, "-c", "pass", "open-knowledge-zombie"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        spawned.append(proc)
+        wait_until(lambda: process_state(proc.pid).startswith("Z"), reason="the child to become a zombie")
+        return proc
+
+    def watch_curl():
+        """Count every curl probe the script makes; the count rises only while a start is polling."""
+        log = tmp_path / "curl-probes.txt"
+        real = shutil.which("curl", path=os.environ["PATH"])
+        assert real, "these tests need curl"
+        shim = binaries / "curl"
+        shim.write_text(CURL_LOGGER.replace("@LOG@", str(log)).replace("@REAL@", real))
+        shim.chmod(0o755)
+        return lambda: len(log.read_text().splitlines()) if log.exists() else 0
+
+    def fake_ps(pid, listed_lookups):
+        """Make ps list `pid` as the archive server on this port for its first `listed_lookups` lookups."""
+        real = shutil.which("ps", path=os.environ["PATH"])
+        assert real, "these tests need ps"
+        command = f"{binaries / 'cce'} archive serve --project-root {store} --port {layout_port}"
+        shim = binaries / "ps"
+        shim.write_text(
+            PS_SHIM.replace("@PID@", str(pid))
+            .replace("@COUNT@", str(tmp_path / "ps-lookups.txt"))
+            .replace("@LISTED@", str(listed_lookups))
+            .replace("@COMMAND@", command)
+            .replace("@REAL@", real)
+        )
+        shim.chmod(0o755)
+
+    def path_without_curl():
+        """A PATH of links to the tools the script needs, and no curl."""
+        tools = tmp_path / "tools-without-curl"
+        tools.mkdir()
+        for name in TOOLS_THE_SCRIPT_RUNS:
+            found = shutil.which(name, path=os.environ["PATH"])
+            if found:
+                (tools / name).symlink_to(found)
+        for name in ("python3", "cce"):
+            (tools / name).symlink_to(binaries / name)
+        assert shutil.which("curl", path=str(tools)) is None
+        return tools
 
     layout_port = port
     try:
@@ -397,6 +514,10 @@ def layout(tmp_path):
             "hold": hold,
             "dead_pid": dead_pid,
             "take_lock": take_lock,
+            "zombie": zombie,
+            "watch_curl": watch_curl,
+            "fake_ps": fake_ps,
+            "path_without_curl": path_without_curl,
             "pid_file": lambda on_port=port: state / f"open-knowledge-{on_port}.pid",
             "lock": lambda on_port=port: state / f"open-knowledge-{on_port}.lock",
             "log": lambda on_port=port: state / f"open-knowledge-{on_port}.log",
@@ -730,8 +851,11 @@ def test_a_start_waiting_on_a_held_lock_joins_the_server_that_comes_up(layout):
     port = layout["port"]
     holder = layout["hold"]("open-knowledge-holder")
     lock = layout["take_lock"](port, holder.pid)
+    probes = layout["watch_curl"]()
     waiter = layout["spawn"]("--no-open")
-    time.sleep(1.0)
+    # Wait for the thing the waiter must be doing, not for a guessed delay: it has probed the port once
+    # and is polling behind the held lock.
+    wait_until(lambda: probes() >= 1, reason="the waiter to start polling behind the lock")
     engine = layout["serve_engine"](port)
     out, err = waiter.communicate(timeout=30)
 
@@ -742,22 +866,45 @@ def test_a_start_waiting_on_a_held_lock_joins_the_server_that_comes_up(layout):
     assert (lock / "pid").read_text().strip() == str(holder.pid), "the waiter disturbed a lock it did not own"
 
 
-def test_a_start_gives_up_after_fifteen_seconds_behind_a_live_holder(layout):
-    port = layout["port"]
-    holder = layout["hold"]("open-knowledge-holder")
-    lock = layout["take_lock"](port, holder.pid)
-    began = time.monotonic()
-    result = layout["run"]("--no-open", timeout=45)
-    elapsed = time.monotonic() - began
+def test_a_start_gives_up_at_a_wait_bound_that_follows_the_start_timeout(layout):
+    """Behind a live holder a start waits max(15, start timeout + 5) seconds: 15 by default, 17 for a
+    12-second start timeout. The two waits run side by side, each on its own port, so the file pays once."""
+    cases = {}
+    for name, extra_env in (("default", None), ("long timeout", {TIMEOUT_VARIABLE: "12"})):
+        on_port = layout["port"] if name == "default" else free_port()
+        holder = layout["hold"]("open-knowledge-holder")
+        lock = layout["take_lock"](on_port, holder.pid)
+        cases[name] = {
+            "port": on_port,
+            "holder": holder,
+            "lock": lock,
+            "began": time.monotonic(),
+            "proc": layout["spawn"]("--no-open", port=on_port, extra_env=extra_env),
+        }
 
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert (
-        f"open-knowledge: another start on port {port} did not finish within 15 seconds (lock {lock})"
-        in result.stderr.splitlines()
-    )
-    assert 13 <= elapsed < 30, f"gave up after {elapsed:.1f}s"
+    def finish(case):
+        case["output"] = case["proc"].communicate(timeout=60)
+        case["elapsed"] = time.monotonic() - case["began"]
+
+    waiters = [threading.Thread(target=finish, args=(case,)) for case in cases.values()]
+    for waiter in waiters:
+        waiter.start()
+    for waiter in waiters:
+        waiter.join()
+
+    for name, bound in (("default", 15), ("long timeout", 17)):
+        case = cases[name]
+        _, err = case["output"]
+        assert case["proc"].returncode == 1, (name, case["output"])
+        assert (
+            f"open-knowledge: another start on port {case['port']} did not finish within {bound} seconds"
+            f" (lock {case['lock']})" in err.splitlines()
+        ), (name, err)
+        assert bound - 2 <= case["elapsed"] < bound + 15, f"{name}: gave up after {case['elapsed']:.1f}s"
+        holder = case["holder"]
+        assert (case["lock"] / "pid").read_text().strip() == str(holder.pid), "the loser released a lock it did not own"
+    assert cases["long timeout"]["elapsed"] > 15.5, "the 12-second start timeout did not lengthen the lock wait"
     assert layout["launches"]() == []
-    assert (lock / "pid").read_text().strip() == str(holder.pid), "the loser released a lock it did not own"
 
 
 @pytest.mark.parametrize("flag", ["--stop", "--status"])
@@ -767,6 +914,340 @@ def test_stop_and_status_never_block_on_the_start_lock(layout, flag):
     result = layout["run"](flag, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr
     assert lock.exists() and (lock / "pid").read_text().strip() == str(holder.pid)
+
+
+# --- C10: lock recovery ----------------------------------------------------------------------------
+
+# One run of the stale-lock race fails about one time in five on the script without the recovery mutex;
+# repeating it this many times inside one test leaves under a one-in-a-hundred chance of missing it.
+STALE_LOCK_ROUNDS = 25
+STARTERS_PER_ROUND = 6
+
+
+def reap_of(lock: Path) -> Path:
+    """The recovery mutex that sits beside a start lock."""
+    return lock.with_name(lock.name + ".reap")
+
+
+def test_a_lock_with_no_pid_file_is_recovered_once_its_directory_is_three_seconds_old(layout):
+    lock = layout["take_lock"](layout["port"])
+    began = time.monotonic()
+    result = layout["run"]("--no-open", timeout=45)
+    elapsed = time.monotonic() - began
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    # Not removed at once (a fresh pid-less lock may be a holder between its mkdir and its pid write),
+    # and well inside the 15-second give-up bound.
+    assert 2.5 <= elapsed < 10, f"recovered after {elapsed:.1f}s"
+    assert len(layout["launches"]()) == 1
+    assert answers(layout["port"])
+    assert not lock.exists(), "the recovered lock was never released"
+    assert not reap_of(lock).exists(), "the recovery mutex outlived the recovery"
+
+
+def test_a_lock_whose_pid_file_is_empty_is_recovered_within_the_bound(layout):
+    lock = layout["take_lock"](layout["port"])
+    (lock / "pid").write_text("")
+    began = time.monotonic()
+    result = layout["run"]("--no-open", timeout=45)
+    elapsed = time.monotonic() - began
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 2.5 <= elapsed < 10, f"recovered after {elapsed:.1f}s"
+    assert len(layout["launches"]()) == 1
+    assert not lock.exists()
+    assert not reap_of(lock).exists()
+
+
+def test_the_age_of_a_lock_without_a_pid_is_its_directorys_own_modification_time(layout):
+    """A start that has only just begun must not need three seconds of its own to condemn a lock that the
+    file system already says is old."""
+    lock = layout["take_lock"](layout["port"])
+    long_ago = time.time() - 60
+    os.utime(lock, (long_ago, long_ago))
+    began = time.monotonic()
+    result = layout["run"]("--no-open", timeout=45)
+    elapsed = time.monotonic() - began
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert elapsed < 3, f"an already old lock took {elapsed:.1f}s to recover"
+    assert len(layout["launches"]()) == 1
+    assert not lock.exists()
+
+
+def test_a_lock_without_a_pid_that_gains_a_live_holder_is_left_alone_and_the_waiter_joins(layout):
+    port = layout["port"]
+    holder = layout["hold"]("open-knowledge-holder")
+    probes = layout["watch_curl"]()
+    lock = layout["take_lock"](port)
+    waiter = layout["spawn"]("--no-open")
+    wait_until(lambda: probes() >= 1, reason="the waiter to start polling behind the pid-less lock")
+    # The holder's pid arrives; the directory itself is old, so only the pid can keep the lock alive.
+    (lock / "pid").write_text(f"{holder.pid}\n")
+    long_ago = time.time() - 60
+    os.utime(lock, (long_ago, long_ago))
+    seen = probes()
+    wait_until(lambda: probes() >= seen + 3, reason="the waiter to poll the lock again")
+    assert waiter.poll() is None
+    assert layout["launches"]() == [], "the waiter condemned a lock whose holder is alive"
+    engine = layout["serve_engine"](port)
+    out, err = waiter.communicate(timeout=30)
+
+    assert waiter.returncode == 0, out + err
+    assert f"server already up on port {port}" in out
+    assert [launched for launched, _ in layout["launches"]()] == [engine.pid]
+    assert (lock / "pid").read_text().strip() == str(holder.pid), "the waiter disturbed a lock it did not own"
+
+
+def test_a_lock_whose_holder_is_a_zombie_is_recovered(layout):
+    gone = layout["zombie"]()
+    lock = layout["take_lock"](layout["port"], gone.pid)
+    began = time.monotonic()
+    result = layout["run"]("--no-open")
+    elapsed = time.monotonic() - began
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert elapsed < 5, f"a zombie holder kept the lock for {elapsed:.1f}s"
+    assert len(layout["launches"]()) == 1
+    assert not lock.exists()
+
+
+def test_a_recovery_mutex_blocks_recovery_until_it_is_a_minute_old(layout):
+    """A mutex left by a recoverer that died stops recovery while it is fresh and is removed once old."""
+    port = layout["port"]
+    lock = layout["take_lock"](port, layout["dead_pid"]())
+    mutex = reap_of(lock)
+    mutex.mkdir()
+    starter = layout["spawn"]("--no-open")
+
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        assert starter.poll() is None, starter.communicate()
+        assert lock.exists(), "the dead lock was recovered without holding the recovery mutex"
+        assert layout["launches"]() == []
+        time.sleep(0.1)
+    assert mutex.exists()
+
+    a_minute_ago = time.time() - 120
+    os.utime(mutex, (a_minute_ago, a_minute_ago))
+    out, err = starter.communicate(timeout=30)
+    assert starter.returncode == 0, out + err
+    assert len(layout["launches"]()) == 1
+    assert not lock.exists()
+    assert not mutex.exists(), "the aged mutex was left behind"
+
+
+def test_a_start_that_exits_does_not_remove_a_lock_that_now_names_another_process(layout):
+    layout["install_engine"](SILENT_ENGINE)
+    starter = layout["spawn"]("--no-open", extra_env={TIMEOUT_VARIABLE: "3"})
+    wait_until(layout["launches"], reason="the start to launch its engine")
+    holder = layout["hold"]("open-knowledge-holder")
+    lock = layout["lock"]()
+    assert lock.exists()
+    # The start was displaced: another process owns the lock by the time this one exits.
+    (lock / "pid").write_text(f"{holder.pid}\n")
+    out, err = starter.communicate(timeout=40)
+
+    assert starter.returncode == 1, out + err
+    assert lock.exists(), "the exiting start removed a lock that another process had taken"
+    assert (lock / "pid").read_text().strip() == str(holder.pid)
+
+
+def test_many_concurrent_starts_behind_one_stale_lock_launch_exactly_one_engine(layout):
+    port = layout["port"]
+    for round_number in range(1, STALE_LOCK_ROUNDS + 1):
+        lock = layout["take_lock"](port, layout["dead_pid"]())
+        starters = [layout["spawn"]("--no-open") for _ in range(STARTERS_PER_ROUND)]
+        outputs = [proc.communicate(timeout=60) for proc in starters]
+
+        where = f"round {round_number} of {STALE_LOCK_ROUNDS}"
+        assert [proc.returncode for proc in starters] == [0] * STARTERS_PER_ROUND, (where, outputs)
+        launched = layout["launches"]()
+        assert len(launched) == round_number, f"{where}: {len(launched)} engines were launched in all"
+        assert not lock.exists(), f"{where}: the recovered lock was never released"
+        assert not reap_of(lock).exists(), f"{where}: the recovery mutex outlived the recovery"
+        recorded = int(layout["pid_file"]().read_text().strip())
+        assert alive(recorded) and "archive serve" in command_of(recorded), (
+            f"{where}: the pid file names {recorded}, which is not a live archive server"
+        )
+        assert recorded == launched[-1][0], f"{where}: the pid file names an engine that lost the race"
+        assert answers(port)
+
+        stopped = layout["run"]("--stop")
+        assert stopped.returncode == 0, (where, stopped.stdout + stopped.stderr)
+        assert wait_dead(recorded), f"{where}: the engine survived --stop"
+
+
+def test_the_pid_file_is_created_exclusively_before_the_lock_counts_as_held():
+    """A holder stalled past its own recovery must not write its pid into the directory of the process that
+    replaced it. That interleaving cannot be driven without hooks, so the exclusive create is pinned as text."""
+    text = SCRIPT.read_text(encoding="utf-8")
+    body = text.split("acquire_start_lock() {", 1)[1].split("\n}\n", 1)[0]
+    code = "\n".join(line for line in body.splitlines() if not line.lstrip().startswith("#"))
+    exclusive = re.search(r"set -C\b|set -o noclobber", code)
+    write = re.search(r">\s*\"\$lock_dir/pid\"", code)
+    held = code.find("lock_held=1")
+    assert exclusive and write and held >= 0, "acquire_start_lock lost its exclusive pid-file create"
+    assert exclusive.start() < write.start() < held, "lock_held is set before the exclusive pid write"
+
+
+@pytest.mark.parametrize("flag", ["--stop", "--status"])
+def test_stop_and_status_ignore_the_start_lock_and_the_recovery_mutex(layout, flag):
+    holder = layout["hold"]("open-knowledge-holder")
+    lock = layout["take_lock"](layout["port"], holder.pid)
+    mutex = reap_of(lock)
+    mutex.mkdir()
+    began = time.monotonic()
+    result = layout["run"](flag, timeout=10)
+    elapsed = time.monotonic() - began
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert elapsed < 3, f"{flag} waited {elapsed:.1f}s"
+    assert lock.exists() and (lock / "pid").read_text().strip() == str(holder.pid)
+    assert mutex.exists()
+
+
+# --- C12: --stop when the signal fails --------------------------------------------------------------
+
+
+def test_stop_reports_a_server_that_exited_before_the_signal_and_clears_its_pid_file(layout):
+    gone = layout["dead_pid"]()
+    layout["state"].mkdir(parents=True, exist_ok=True)
+    layout["pid_file"]().write_text(f"{gone}\n")
+    # ps lists the pid as our server when the pid file is read, and no longer once the signal has failed.
+    layout["fake_ps"](gone, 1)
+    result = layout["run"]("--stop")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"open-knowledge: the server (pid {gone}) had already exited; pid file removed" in result.stdout.splitlines()
+    assert "stopped the server" not in result.stdout, "a pid that never ran was reported as stopped"
+    assert not layout["pid_file"]().exists()
+
+
+def test_stop_fails_loudly_for_a_pid_that_ps_still_lists_but_cannot_be_signalled(layout):
+    stuck = layout["dead_pid"]()
+    layout["state"].mkdir(parents=True, exist_ok=True)
+    layout["pid_file"]().write_text(f"{stuck}\n")
+    layout["fake_ps"](stuck, 10**6)
+    result = layout["run"]("--stop")
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert f"open-knowledge: cannot signal pid {stuck}" in result.stderr.splitlines()
+    assert "stopped the server" not in result.stdout
+
+
+def test_a_successful_stop_keeps_a_pid_file_that_now_names_a_newer_start(layout):
+    newer = layout["hold"]("open-knowledge-newer-start")
+    started = layout["run"](
+        "--no-open",
+        extra_env={
+            "FAKE_ENGINE_ON_TERM_FILE": str(layout["pid_file"]()),
+            "FAKE_ENGINE_ON_TERM_TEXT": f"{newer.pid}\n",
+        },
+    )
+    assert started.returncode == 0, started.stdout + started.stderr
+    first = int(layout["pid_file"]().read_text().strip())
+
+    stopped = layout["run"]("--stop")
+    assert stopped.returncode == 0, stopped.stdout + stopped.stderr
+    assert f"stopped the server on port {layout['port']} (pid {first})" in stopped.stdout
+    assert not answers(layout["port"])
+    # By the time the old server died, the pid file already named the newer start: it must survive.
+    assert layout["pid_file"]().exists(), "the stop removed the pid file of a newer start"
+    assert layout["pid_file"]().read_text().strip() == str(newer.pid)
+
+
+# --- C13: state directory errors are immediate ----------------------------------------------------
+
+
+def test_a_state_path_that_is_a_regular_file_fails_the_start_at_once(layout):
+    layout["state"].write_text("this is a file, not a directory")
+    began = time.monotonic()
+    result = layout["run"]("--no-open", timeout=45)
+    elapsed = time.monotonic() - began
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert f"open-knowledge: cannot create the state directory {layout['state']}" in result.stderr.splitlines()
+    assert elapsed < 5, f"waited {elapsed:.1f}s for a lock that could never be taken"
+    assert layout["launches"]() == []
+
+
+def test_an_unwritable_state_directory_fails_the_start_at_once(layout):
+    if os.geteuid() == 0:
+        pytest.skip("root can write into a mode 555 directory, so the unwritable state cannot be built")
+    state = layout["state"]
+    state.mkdir(parents=True)
+    state.chmod(0o555)
+    try:
+        if os.access(state, os.W_OK):
+            pytest.skip("this file system ignores directory modes, so the unwritable state cannot be built")
+        began = time.monotonic()
+        result = layout["run"]("--no-open", timeout=45)
+        elapsed = time.monotonic() - began
+    finally:
+        state.chmod(0o755)
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert (
+        f"open-knowledge: cannot take the start lock; the state directory is not writable: {state}"
+        in result.stderr.splitlines()
+    )
+    assert elapsed < 5, f"waited {elapsed:.1f}s for a lock that could never be taken"
+    assert layout["launches"]() == []
+
+
+# --- C14: curl is required --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("flag", ["--stop", "--status", "--no-open"])
+def test_a_path_without_curl_stops_every_mode_before_any_probe(layout, flag):
+    result = layout["run"](
+        flag,
+        extra_env={"PATH": str(layout["path_without_curl"]()), TIMEOUT_VARIABLE: "2"},
+        timeout=40,
+    )
+    assert result.returncode == 127, result.stdout + result.stderr
+    assert "open-knowledge: curl not found on PATH; the liveness probe needs it" in result.stderr.splitlines()
+    assert layout["launches"]() == [], "a start went ahead with no way to tell whether the server answers"
+
+
+# --- C15: --port is a plain decimal from 1 to 65535 -------------------------------------------------
+
+
+@pytest.mark.parametrize("value", ["08", "0010", "0", "65536", "18446744073709551617"])
+def test_a_port_that_is_octal_zero_or_out_of_range_is_refused(layout, value):
+    result = layout["run"]("--status", port=value)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert result.stderr.strip() == f"open-knowledge: --port must be a number from 1 to 65535, got '{value}'"
+    assert result.stdout == ""
+
+
+@pytest.mark.parametrize("value", ["1", "65535"])
+def test_the_lowest_and_highest_ports_are_accepted(layout, value):
+    result = layout["run"]("--status", port=value)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"server down on port {value}" in result.stdout
+
+
+# --- C2 again: a pid file for a port that is a prefix of the engine's port ----------------------------
+
+
+def test_a_pid_file_for_a_short_port_naming_an_engine_on_the_longer_port_is_not_trusted(layout):
+    long_port = free_port()
+    while long_port < 10000:
+        long_port = free_port()
+    short_port = long_port // 10
+    assert str(long_port).startswith(str(short_port))
+    engine = layout["serve_engine"](long_port)
+    layout["state"].mkdir(parents=True, exist_ok=True)
+    layout["pid_file"](short_port).write_text(f"{engine.pid}\n")
+
+    result = layout["run"]("--stop", port=short_port)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"no server of ours on port {short_port} — nothing to stop" in result.stdout
+    assert engine.poll() is None, "--stop killed the engine on the longer port"
+    assert answers(long_port)
+    assert not layout["pid_file"](short_port).exists(), "the untrusted pid file was kept"
 
 
 # --- C5: the browser step stays after readiness and never fails the door ---------------------------
@@ -916,6 +1397,14 @@ def test_help_prints_the_whole_header(layout):
         assert not content or content in printed, f"--help dropped a header line: {content!r}"
     assert TIMEOUT_VARIABLE in result.stdout
     assert "set -euo pipefail" not in result.stdout, "--help printed code, not just the header"
+
+
+def test_the_header_names_each_changed_behavior_and_the_accepted_residuals():
+    header = "\n".join(header_lines(SCRIPT.read_text(encoding="utf-8"))).lower()
+    for term in ("curl", ".reap", "3 seconds", "65535"):
+        assert term in header, f"the header never mentions {term!r}"
+    assert re.search(r"fork\W+to\W+exec", header), "the header does not name the fork-to-exec --stop residual"
+    assert "concurrent stop" in header, "the header does not name the unlocked-pid-file residual"
 
 
 def test_the_script_keeps_strict_mode_and_adds_only_the_one_environment_variable():
