@@ -1,0 +1,62 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "a89fb304-ecdf-45a7-aef4-2cebe27d2309",
+  "worktree_name": "pickup-2961-landing",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-pickup-2961-landing-20261018",
+  "base_head": "bd4e539347cc4e25ceaba3256d14c4e7744fc011",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/2961",
+  "owned_paths": [],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "release",
+      "head": "bd4e539347cc4e25ceaba3256d14c4e7744fc011",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/verification.txt",
+      "sha256": "ba465d56b79609c458c05bbc4fbe66dbab2484001c95b210195f7db9a5c36e72"
+    },
+    {
+      "purpose": "release",
+      "head": "6b7e60fb77a392a529e01315d773789864f86c4d",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/verification.txt",
+      "sha256": "ba465d56b79609c458c05bbc4fbe66dbab2484001c95b210195f7db9a5c36e72"
+    },
+    {
+      "purpose": "release",
+      "head": "d14c3a9f23f97720ab4a590cb3b94e2a4baccdb2",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/verification.txt",
+      "sha256": "ba465d56b79609c458c05bbc4fbe66dbab2484001c95b210195f7db9a5c36e72"
+    },
+    {
+      "purpose": "release",
+      "head": "aeac9b6c600535bbb414e87bee79cd4981bcc054",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/verification.txt",
+      "sha256": "ba465d56b79609c458c05bbc4fbe66dbab2484001c95b210195f7db9a5c36e72"
+    },
+    {
+      "purpose": "release",
+      "head": "944b5f6aeb8a3de8e6b6c5c0080df51569862b41",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/verification.txt",
+      "sha256": "ba465d56b79609c458c05bbc4fbe66dbab2484001c95b210195f7db9a5c36e72"
+    },
+    {
+      "purpose": "completion",
+      "head": "6b7e60fb77a392a529e01315d773789864f86c4d",
+      "exit_code": 75,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/verification.txt",
+      "sha256": "ba465d56b79609c458c05bbc4fbe66dbab2484001c95b210195f7db9a5c36e72",
+      "owner_url": "https://github.com/4444J99/limen/issues/2961"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-pickup-2961-landing-20261018/custody.json",
+    "sha256": "c8cc6aceea487eb69f4432f5e78ba7f8cfe3ada5acac47ebfbde8410090ef43a"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "a89fb304-ecdf-45a7-aef4-2cebe27d2309",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3048, "merge_commit": "21e3f21fb22b6373c4e18338622cf9d8d40dd1ff", "what": "rehome #3039's docs/session-closeout/ into docs/receipts/ (check-docs-manifest was red on main)"},
+    {"repository": "4444J99/limen", "pr": 3043, "merge_commit": "cf89cd8257f87d749a0b7722c1deb1f9d0a7aa63", "what": "lane credential consumer for CLI and MCP (authored by a sibling session; landed here after a bounded STALE-CORE base sync with its author's consent)", "closes_defect": "https://github.com/4444J99/limen/issues/2961"},
+    {"repository": "4444J99/limen", "pr": 3050, "merge_commit": "acfa0a6ad88cb1269b40284d0d2a55e537bccac8", "what": "merge-policy.sh bare form judges the same required-check policy as --repo"},
+    {"repository": "4444J99/limen", "pr": 3052, "merge_commit": "f2d557e5fc4d3f88d7ab2e8879ab33cac0c95966", "what": "register the ianva-unit-test gate (ianva/tests had no runner anywhere)"},
+    {"repository": "4444J99/limen", "pr": 3053, "merge_commit": "bd4e539347cc4e25ceaba3256d14c4e7744fc011", "what": "the pickup plan and its Outcome"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2961",
+    "https://github.com/4444J99/limen/issues/3003"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6248515317"
+    ],
+    "broker_registration": "registered by scripts/hooks/conduct-register.sh as a protected direct claude session bound to this receipt's worktree; broker audit at closeout: session_present true, retained_run_count 0, active_lease_count 0, retained_state_complete true. No lease, run, child or fanout was ever reserved by this session."
+  },
+  "session_worktrees": {
+    "receipt_worktree": "pickup-2961-landing (this checkout; the only checkout this session created)",
+    "not_touched": "the locked worktree of PR 3043's author (lane-credential-consumer-2961) and every peer checkout; the Archive4T 3022 repair checkout and its retention file"
+  },
+  "not_owned_by_this_session": [
+    "worktree-lane-credential-consumer-2961 / PR 3043's author session: it owns that branch; only one fast-forward base-sync push was made to it, with that author's stated consent, no rebase and no force",
+    "PR 3042 (owner-gated session release) and the retained limen-session-release-unblock-3022 custody: owned by the live 3022 lane",
+    "the codex-worktree-write leases and every other session's worktree in git worktree list",
+    "logs/autonomy-policy.json (mode observe, no approved priorities): TABVLARIVS-owned, read only"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/2961", "what": "go-live of the MCP door was NOT run: it needs a per-lane upstream design (Codex, Gemini and OpenCode share the gateway), a pre-fetched MCPHub so a restart cannot fail cold, and a reinstall of the limen-mcp uv tool from merged main. Status is merged, not live. Execution-policy row, host admission for the bounded checkout, and child acceptance remain owner-gated."},
+    {"owner": "https://github.com/4444J99/limen/issues/3003", "what": "the dead CI credential for the private ops-witness checkout (registered in the credential wall) makes witness-contract fail fleet-wide, advisory only; human-gated credential install, not touched"}
+  ],
+  "local_only_state": "Nothing durable exists only locally: every code change is merged on origin/main and every finding is in a git-tracked or GitHub-hosted owner. Disposable scratch lives in a private test venv under the job directory and in the gitignored .agent-runtime/scratch of this worktree (proof harness, PR body files, an SHA checker); no restore copy is claimed. Local branch refs of merged squash PRs remain in the shared git store for the sanctioned reaper; their tips equal the PR heads that GitHub retains under refs/pull. No credential value was read into any file, comment or log.",
+  "host_effects": "None. No host configuration, uv tool, ianva upstream file, gateway, lease, policy or secret store was changed."
+}
