@@ -1,7 +1,7 @@
 # Lane-specific credential consumer (OpenCode broker access)
 
 Issue: #2961
-PR: (pending)
+PR: #3043
 
 ## Context
 
