@@ -1,5 +1,14 @@
 {
   "broker_scope_root_id": "implementation",
+  "closeout_attempts": {
+    "bare_exit_codes": [
+      2,
+      2
+    ],
+    "owner_url": "https://github.com/4444J99/limen/issues/2763",
+    "receipt_commit": "1db26efd41782faecc1e1f2cbfde89ef8a004f9e",
+    "session_released": false
+  },
   "continuation_owner": "existing #3001 / #3042; no successor or replacement task registry",
   "custody": {
     "evidence": "docs/receipts/unblock-3022-20261018/custody.json",
@@ -40,7 +49,7 @@
       "evidence": "docs/receipts/unblock-3022-20261018/hanging-work.json",
       "id": "broker-terminal-runs",
       "kind": "conduct-lifecycle",
-      "sha256": "f261bdb43cf6a9e91fc57ca1c4fa776053c59ef52a8931b9525d9b7b65fd6882",
+      "sha256": "7f12ca6b71c58b74a1d5b533207d3b9b39c81d56477f07f602f3f412f53c8e18",
       "verified": true
     }
   ],
@@ -136,7 +145,7 @@
       "exit_code": 0,
       "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
       "root_id": "implementation",
-      "sha256": "f261bdb43cf6a9e91fc57ca1c4fa776053c59ef52a8931b9525d9b7b65fd6882"
+      "sha256": "7f12ca6b71c58b74a1d5b533207d3b9b39c81d56477f07f602f3f412f53c8e18"
     },
     {
       "command": "R6 correction and live acceptance",
@@ -146,7 +155,7 @@
       "owner_url": "https://github.com/4444J99/limen/issues/3001",
       "purpose": "completion",
       "root_id": "implementation",
-      "sha256": "f261bdb43cf6a9e91fc57ca1c4fa776053c59ef52a8931b9525d9b7b65fd6882"
+      "sha256": "7f12ca6b71c58b74a1d5b533207d3b9b39c81d56477f07f602f3f412f53c8e18"
     },
     {
       "command": "private-artifact independent-restoration custody",

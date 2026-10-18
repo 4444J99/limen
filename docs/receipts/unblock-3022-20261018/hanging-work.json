@@ -61,6 +61,17 @@
     "owner_url": "https://github.com/4444J99/limen/issues/1417",
     "state": "unmeasured"
   },
+  "metadata_delta_gate": {
+    "base": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "denial": [
+      "swap-fraction",
+      "vitals-shed"
+    ],
+    "executed": false,
+    "exit_code": null,
+    "implementation_verification_reused": true,
+    "metadata_validation": "four JSON files parse; all evidence digests match; staged diff hygiene passes"
+  },
   "native_anchor": {
     "identity_witness": "exact native transcript header",
     "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
@@ -121,10 +132,26 @@
     "command": "python scripts/check-runtime-lag.py",
     "exit_code": 0,
     "installed_sha": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
-    "observed_at": "2026-10-18T11:58:00Z",
+    "observed_during": "2026-10-18 closeout inventory",
     "scope": "within declared bound at observation; not proof all newly merged behavior is installed"
   },
   "schema": "limen.unblock_closeout_hanging_work.v1",
   "session_id": "01a14d95-6949-79d1-b836-c39edf9158f4",
+  "session_predicate": {
+    "bare_exit_codes": [
+      2,
+      2
+    ],
+    "bridge_owner": "https://github.com/4444J99/limen/issues/1417",
+    "documented_observer_bootstrap": "attempted once; tool hook denied write-target-outside-worktree",
+    "idempotent_fixed_point_claimed": false,
+    "next_action": "Process-ownership owner restores complete exact-native/scope observation; custody owner supplies independent restoration proof; then run this published receipt's session predicate twice.",
+    "owner_url": "https://github.com/4444J99/limen/issues/2763",
+    "protocol_sha": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
+    "reason": "process ownership observation unavailable or invalid",
+    "receipt_commit": "1db26efd41782faecc1e1f2cbfde89ef8a004f9e",
+    "session_released": false,
+    "status": "unmeasured"
+  },
   "unfiled_followups": []
 }
