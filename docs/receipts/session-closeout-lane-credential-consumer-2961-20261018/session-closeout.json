@@ -1,0 +1,63 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "7213f6b6-98a3-4aa8-88ee-d5bdbebb0251",
+  "worktree_name": "lane-credential-consumer-2961",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-lane-credential-consumer-2961",
+  "base_head": "0e6ead6ea93763cd4328fd0c99a234a84bf5d588",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/2961",
+  "owned_paths": [
+    "cli/src/limen/conduct/client.py",
+    "cli/src/limen/conduct/env_cache.py",
+    "cli/tests/test_conduct_env_cache.py",
+    "cli/tests/test_mcp_server.py",
+    "ianva/tests/test_backend_env.py",
+    "institutio/governance/parameters.yaml",
+    "mcp/src/limen_mcp/server.py"
+  ],
+  "retained_work": [
+    {
+      "owner_url": "https://github.com/4444J99/limen/issues/2961",
+      "paths": [
+        "docs/session-closeout.md",
+        "ianva/upstreams.example.json"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "head": "eea3b1e1d4ad9bf6534228d103853bd3099e2761",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-lane-credential-consumer-2961-20261018/verification-targeted-tests.txt",
+      "sha256": "c4d2084858bbdde20ec9777d2ec7c0b2d1584f0608e456b3225390e4e837e226"
+    },
+    {
+      "head": "eea3b1e1d4ad9bf6534228d103853bd3099e2761",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-lane-credential-consumer-2961-20261018/verification-credential-wall.txt",
+      "sha256": "a7303c329355c400f694a904b67eb6253b680c023e3a9bacdc5a5c9fd8a0debf"
+    },
+    {
+      "purpose": "completion",
+      "head": "eea3b1e1d4ad9bf6534228d103853bd3099e2761",
+      "exit_code": 75,
+      "evidence": "docs/receipts/session-closeout-lane-credential-consumer-2961-20261018/verification-scoped-3043.txt",
+      "sha256": "b3cb2398cf0a55e7ba98ddb15683d3abd96dbb085337d161f829e571506f39c8",
+      "owner_url": "https://github.com/4444J99/limen/issues/2961"
+    },
+    {
+      "purpose": "completion",
+      "head": "7b820542ec7bd74740e2b53873e82a3b4555e33a",
+      "exit_code": 75,
+      "evidence": "docs/receipts/session-closeout-lane-credential-consumer-2961-20261018/verification-scoped-3051.txt",
+      "sha256": "7833aa5fa56068cfb3ab7c0353fd0b286839c3027fa597309efe8b2577536730",
+      "owner_url": "https://github.com/4444J99/limen/issues/2961"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-lane-credential-consumer-2961-20261018/custody.json",
+    "sha256": "30abfc296b53dc102d0e3e45fccbf57eff766356180339c72fd3a087830b421e"
+  }
+}

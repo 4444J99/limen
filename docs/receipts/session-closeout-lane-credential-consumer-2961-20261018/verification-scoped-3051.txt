@@ -1,0 +1,22 @@
+Changed paths (2):
+  docs/session-closeout.md
+  ianva/upstreams.example.json
+WAVE cheap: START gates=8 jobs=4 gate_timeout=registry-budget output_limit=1048576B
+WAVE cheap: START gate=agent-docs
+WAVE cheap: START gate=syntax-changed
+WAVE cheap: START gate=diff-hygiene
+WAVE cheap: START gate=check-docs-manifest
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=2.61s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.61s
+WAVE cheap: FINISH gate=check-docs-manifest status=PASS duration=2.71s
+WAVE cheap: FINISH gate=agent-docs status=PASS duration=2.82s
+WAVE cheap: START gate=ruff-lint
+WAVE cheap: START gate=ruff-format
+WAVE cheap: START gate=check-note-links
+WAVE cheap: START gate=check-docs-exports
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=1.04s
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=1.14s
+WAVE cheap: FINISH gate=check-docs-exports status=PASS duration=1.36s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=1.41s
+WAVE cheap: PASS
+Host admission denied scoped heavy verification: heavy-lease-held

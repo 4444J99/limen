@@ -1,0 +1,60 @@
+Changed paths (10):
+  cli/src/limen/conduct/client.py
+  cli/src/limen/conduct/env_cache.py
+  cli/tests/test_conduct_env_cache.py
+  cli/tests/test_mcp_server.py
+  docs/plans/complete-execution-policy-owner-moves-distributed-shell.md
+  docs/session-closeout.md
+  ianva/tests/test_backend_env.py
+  ianva/upstreams.example.json
+  institutio/governance/parameters.yaml
+  mcp/src/limen_mcp/server.py
+WAVE cheap: START gates=23 jobs=4 gate_timeout=registry-budget output_limit=1048576B
+WAVE cheap: START gate=python-typecheck
+WAVE cheap: START gate=syntax-changed
+WAVE cheap: START gate=direct-main-writer-contract
+WAVE cheap: START gate=diff-hygiene
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=1.72s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.08s
+WAVE cheap: START gate=sync-release-test
+WAVE cheap: FINISH gate=direct-main-writer-contract status=PASS duration=2.56s
+WAVE cheap: START gate=guard-degradation
+WAVE cheap: START gate=board-publication-acceptance-test
+WAVE cheap: FINISH gate=python-typecheck status=PASS duration=3.08s
+WAVE cheap: START gate=stale-claim-ownership-test
+WAVE cheap: FINISH gate=guard-degradation status=PASS duration=1.59s
+WAVE cheap: FINISH gate=board-publication-acceptance-test status=PASS duration=1.32s
+WAVE cheap: START gate=lane-liveness-test
+WAVE cheap: START gate=agent-docs
+WAVE cheap: FINISH gate=agent-docs status=PASS duration=0.97s
+WAVE cheap: FINISH gate=stale-claim-ownership-test status=PASS duration=2.25s
+WAVE cheap: FINISH gate=lane-liveness-test status=PASS duration=1.65s
+WAVE cheap: START gate=session-phase
+WAVE cheap: START gate=check-params
+WAVE cheap: START gate=check-test-hygiene
+WAVE cheap: FINISH gate=session-phase status=PASS duration=1.27s
+WAVE cheap: START gate=paused-beat-test
+WAVE cheap: FINISH gate=check-params status=PASS duration=1.54s
+WAVE cheap: START gate=check-plan-decisions
+WAVE cheap: FINISH gate=paused-beat-test status=PASS duration=1.56s
+WAVE cheap: FINISH gate=check-test-hygiene status=PASS duration=2.57s
+WAVE cheap: FINISH gate=check-plan-decisions status=PASS duration=1.16s
+WAVE cheap: START gate=check-docs-manifest
+WAVE cheap: START gate=check-docs-exports
+WAVE cheap: START gate=check-note-links
+WAVE cheap: FINISH gate=check-docs-manifest status=PASS duration=1.68s
+WAVE cheap: FINISH gate=check-docs-exports status=PASS duration=1.65s
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=1.94s
+WAVE cheap: START gate=check-board-consumers
+WAVE cheap: START gate=ruff-lint
+WAVE cheap: START gate=check-effectors
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=0.48s
+WAVE cheap: START gate=ruff-format
+WAVE cheap: FINISH gate=check-board-consumers status=PASS duration=1.39s
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=0.50s
+WAVE cheap: FINISH gate=sync-release-test status=PASS duration=9.47s
+WAVE cheap: START gate=dependency-completion-integration
+WAVE cheap: FINISH gate=dependency-completion-integration status=PASS duration=1.48s
+WAVE cheap: FINISH gate=check-effectors status=PASS duration=4.33s
+WAVE cheap: PASS
+Host admission denied scoped heavy verification: heavy-lease-held

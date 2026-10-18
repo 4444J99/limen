@@ -1,0 +1,41 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "7213f6b6-98a3-4aa8-88ee-d5bdbebb0251",
+  "scope": "custody accounting only: no independent native-transcript restore was performed and none is claimed",
+  "merged": [
+    "4444J99/limen#3043 lane-specific credential consumer for CLI and MCP (cf89cd825); landed by a peer session after a bounded base merge, head 6b7e60fb7",
+    "4444J99/limen#3051 single-lane wording correction for the shared gateway (0e6ead6ea); submitted once by this session"
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2961",
+    "https://github.com/4444J99/limen/issues/3003"
+  ],
+  "closed_with_pointer": [
+    "https://github.com/4444J99/limen/issues/3049 was filed by this session and closed as a duplicate of the merged fix in https://github.com/4444J99/limen/pull/3050; the closure was on verified evidence but was not explicitly authorized by the operator, and is reversible with an issue reopen"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6247871365",
+      "https://github.com/4444J99/limen/issues/2961#issuecomment-6248477784"
+    ],
+    "plan": "docs/plans/complete-execution-policy-owner-moves-distributed-shell.md, merged with #3043 (Issue 2961, PR 3043)",
+    "memory_ticket": "none submitted by this session",
+    "broker_registration": "bound once with scripts/bind-running-claude-session.py for this native session id; authenticated readback returned status bound, agent claude, human protected"
+  },
+  "session_worktrees": {
+    "created_and_removed": [],
+    "retained": [
+      "~/Workspace/limen/.claude/worktrees/lane-credential-consumer-2961 (receipt worktree; its original PR branch is merged and its remote copy auto-deleted)"
+    ]
+  },
+  "not_owned_by_this_session": [
+    "the base merge of origin/main into the PR branch and the single submission that landed #3043 were performed by a peer session (opencode-standalone-domus-launch)",
+    "#3050 (merge-policy bare-form fix) and #3048 (docs manifest rehome) were authored by that peer",
+    "the witness-contract credential failure is owned by issue 3003 and was only diagnosed, never repaired, by this session"
+  ],
+  "open_after_this_session": [
+    "issue 2961 go-live: the shared-gateway shape (per-lane upstream process or per-request lane) is undesigned; nothing was deployed or enabled",
+    "the Domus-pinned limen runtime is 10 commits behind origin/main and the live checkout was 3 behind when measured; sync-release.sh and the Domus runtime install own those"
+  ],
+  "local_only_state": "scratch logs under the job tmp directory (scoped-gate full output, the witness-contract failure log) are disposable; the verdict lines that matter are committed as the verification-scoped text files beside this note. No restore copy is claimed for them."
+}
