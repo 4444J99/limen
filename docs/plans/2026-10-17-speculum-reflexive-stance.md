@@ -1,7 +1,7 @@
 # Codify the Speculum reflexive stance as cross-agent doctrine
 
 Issue: #2989
-PR: (pending)
+PR: #2990
 
 ## Context
 
