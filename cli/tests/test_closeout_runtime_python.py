@@ -53,7 +53,9 @@ def _run_closeout(scripts: Path, poisoned: Path) -> subprocess.CompletedProcess[
         env=env,
         capture_output=True,
         text=True,
-        timeout=5,
+        # The script under test returns in about a second; the limit only has to
+        # outlast a host running a full xdist suite alongside other sessions.
+        timeout=60,
     )
 
 
