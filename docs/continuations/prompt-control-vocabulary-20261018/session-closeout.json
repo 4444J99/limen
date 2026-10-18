@@ -1,0 +1,39 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "63586451-ad44-4226-8414-e74463df6b1b",
+  "repository": "4444J99/limen",
+  "worktree_name": "plan-prompt-control-vocabulary",
+  "base_head": "f62363a97e08e9e2a6159cd5fe4ac3ff7fe0c217",
+  "publication_branch": "docs/prompt-control-vocabulary-closeout",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "disposition": "handoff",
+  "owned_paths": [
+    "docs/plans/2026-10-18-prompt-control-vocabulary.md",
+    "docs/prompt-control-vocabulary-study.md",
+    "docs/prompt-corpus-policy.json",
+    "institutio/governance/docs-manifest.yaml",
+    "docs/continuations/prompt-control-vocabulary-20261018/harness-plan-approved.md"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "bash scripts/verify-scoped.sh (cheap wave PASS at this head; substantive paths verified on PR head 43390659, merged by squash as c7c05a0c)",
+      "head": "7d55a71df44904fbbb37240294d6b72a35262b70",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-control-vocabulary-20261018/session-evidence.json",
+      "sha256": "89d7a0a11feeff9d22978d7f42418884a878c4c6bbbad06a643ae1587469d077"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "head": "7d55a71df44904fbbb37240294d6b72a35262b70",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-control-vocabulary-20261018/session-evidence.json",
+      "sha256": "89d7a0a11feeff9d22978d7f42418884a878c4c6bbbad06a643ae1587469d077"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/prompt-control-vocabulary-20261018/session-evidence.json",
+    "sha256": "89d7a0a11feeff9d22978d7f42418884a878c4c6bbbad06a643ae1587469d077"
+  }
+}
