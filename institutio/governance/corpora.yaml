@@ -76,8 +76,28 @@ stores:
       older ingestion system than CCE — declared here so it is addressable, deliberately not
       merged into CCE.
 
+  # Declared LAST on purpose: `corpus_resolve.corpus_home()` returns the first populated store,
+  # and this one holds only normalized-archive rows, which the resolver skips by rule anyway.
+  limen-private-archive:
+    root: "~/Workspace/limen/.limen-private/session-corpus/archive"
+    remote: none
+    git: false
+    owner: cce
+    note: >
+      Regenerable working copy (hot cache) of the normalized conversation archive, built by
+      the conversation corpus engine from the raw provider exports (`cce archive ingest`, then
+      `cce archive project corpus`). Inside the live checkout but under `.limen-private/`,
+      which .gitignore excludes, so it is remote-less by construction and safe to hold
+      unredacted conversation text. Never the only copy of the raw exports, and not custody:
+      the exports stay in their own custody row, and this store can be deleted and rebuilt.
+      Check B (measured 2026-10-17): the `~` escape applies only where `~/Workspace` is absent,
+      such as a CI runner, where the missing root is an advisory. On a host that has
+      `~/Workspace` and no custody row, a missing root is UNACCOUNTED and check B fails by
+      design, so this store reads red until `cce archive ingest` has built it there. No custody
+      row is declared for it on purpose, because a cache that can be rebuilt is not custody.
+
 # ── corpora ──────────────────────────────────────────────────────────────────────────────
-# kind:        session-memory | raw-archive | atom-stream | brainstorm-extract
+# kind:        session-memory | raw-archive | atom-stream | brainstorm-extract | normalized-archive
 # harvestable: may the brainstorm harvester read this as a source of brainstorm sessions?
 # redacted:    has content passed a redaction pass? (false ⇒ never leaves its store)
 # cce_id:      only when CCE's provider catalog declares a DIFFERENT id than the directory
@@ -187,6 +207,22 @@ corpora:
       claude-local-session-memory), `chatgpt-export-2026-04` (150, overlaps
       chatgpt-local-session-memory; reconcile at Phase-C convergence),
       `knowledge-base-canonical-sources` (162, reference documents not conversations).
+
+  archive-all:
+    store: limen-private-archive
+    provider: multi
+    kind: normalized-archive
+    cce_declared: false
+    harvestable: false
+    redacted: false
+    owner: cce
+    note: >
+      The normalized archive across every provider: one conversation per file with a stable
+      name, plus the analysis, vault, site and search database derived from it. Regenerable
+      from the raw exports with `cce archive ingest`; never the only copy of them. Not
+      harvestable until a person decides, as with every other unredacted corpus here. The
+      per-provider `corpus-<provider>-archive` projections get their own rows here once
+      `cce archive project corpus` has written them to this store.
 
 # ── declared-but-unpopulated ─────────────────────────────────────────────────────────────
 # CCE's provider catalog names a corpus id for each of these; none has ever been populated.
