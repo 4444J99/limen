@@ -17,6 +17,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Literal, overload
 from urllib.parse import quote, urlsplit
 
+from limen.conduct.client import BrokerUnavailable
+
 SCHEMA = "limen.session_closeout.v1"
 SCHEMA_V2 = "limen.session_closeout.v2"
 SHA = re.compile(r"[0-9a-f]{40}")
@@ -791,7 +793,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from limen.conduct.client import client_from_env
 
-        client = client_from_env()
+        # An isolated agent shell cannot source the organ-owned credential cache (issue 2966).
+        client = client_from_env(hydrate_cache=True)
         audit = client.session_audit(args.session_id)
         sessions = client.capabilities().get("sessions", [])
         binding = next((row for row in sessions if row.get("session_id") == args.session_id), None)
@@ -833,6 +836,9 @@ def main(argv: list[str] | None = None) -> int:
             "error_type": type(exc).__name__,
         }
         if isinstance(exc, Unmeasured):
+            result["reason"] = str(exc)
+        elif isinstance(exc, BrokerUnavailable):
+            # Fixed, secret-free messages that name the missing broker configuration or credential cache.
             result["reason"] = str(exc)
         code = 2
     print(
