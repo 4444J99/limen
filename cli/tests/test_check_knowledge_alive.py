@@ -77,6 +77,8 @@ def main():
         kinds = list(KINDS)
         if "names-old" in FAULTS:
             version = 0
+        elif "names-three" in FAULTS:
+            version = 3
         else:
             version = 1
         if "names-flaky" in FAULTS:
@@ -717,10 +719,43 @@ def test_live_mode_writes_then_requires_the_counts_only_receipt(module, stubs, t
     assert module.main(_live_arguments(context, repo)) == 1
     assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: receipt"
 
+    # A well-shaped receipt copied from another run still fails: the body must match this run.
+    tampered = [
+        ({"counts": {**body["counts"], "forms": body["counts"]["forms"] + 1}}, "counts"),
+        ({"naming_version": 7}, "naming version"),
+        ({"date": "20250101"}, "date"),
+        ({"fingerprint": "0" * 16}, "fingerprint"),
+    ]
+    for change, field in tampered:
+        receipts[0].write_text(json.dumps({**body, **change}))
+        assert module.main(_live_arguments(context, repo)) == 1
+        lines = capsys.readouterr().out.splitlines()
+        assert lines[8] == f"check 9 receipt: FAIL the receipt differs from this run in its {field}", lines
+        assert lines[-1] == "NOT ALIVE: receipt"
+    receipts[0].write_text(json.dumps(body))
+    assert module.main(_live_arguments(context, repo)) == 0
+    capsys.readouterr()
+
     # A receipt that carried a typed ask would be caught by the privacy scan before the receipt check.
     receipts[0].write_text(json.dumps({**body, "text": SHARED_ASK}))
     assert module.main(_live_arguments(context, repo)) == 1
     assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: privacy"
+
+
+def test_the_receipt_carries_the_naming_version_the_engine_reported(module, stubs, tmp_path, monkeypatch, capsys):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    _patch_registry(monkeypatch, context, tmp_path)
+    monkeypatch.setenv("STUB_FAULT", "names-three")
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    assert module.main(_live_arguments(context, repo, "--write-receipt")) == 0
+    (path,) = (repo / "docs" / "receipts").glob("receipt-knowledge-alive-*.json")
+    assert json.loads(path.read_text())["naming_version"] == 3
+    assert module.main(_live_arguments(context, repo)) == 0
+    # The same receipt no longer matches once the engine reports another version.
+    monkeypatch.setenv("STUB_FAULT", "")
+    assert module.main(_live_arguments(context, repo)) == 1
+    capsys.readouterr()
 
 
 def test_a_file_inside_the_private_root_is_not_public_but_a_leak_in_docs_is(

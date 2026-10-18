@@ -912,22 +912,44 @@ def receipt_name(state: State, day: str) -> str:
     return f"{RECEIPT_STEM}-{state['prefix']}-{day}"
 
 
+def receipt_counts(state: State) -> dict[str, int]:
+    return {
+        "conversations": state["conversations"],
+        "feed_rows": state["feed_rows"],
+        "forms": state["forms"],
+        "forms_spanning_providers": state["forms_spanning"],
+        "messages": state["messages"],
+        "occurrences_bound": state["occurrences_bound"],
+        "providers": len(state["providers"]),
+    }
+
+
 def receipt_body(state: State, day: str) -> dict[str, Any]:
     return {
-        "counts": {
-            "conversations": state["conversations"],
-            "feed_rows": state["feed_rows"],
-            "forms": state["forms"],
-            "forms_spanning_providers": state["forms_spanning"],
-            "messages": state["messages"],
-            "occurrences_bound": state["occurrences_bound"],
-            "providers": len(state["providers"]),
-        },
+        "counts": receipt_counts(state),
         "date": day,
         "fingerprint": state["prefix"],
         "kind": "receipt",
-        "naming_version": MINIMUM_NAMING_VERSION,
+        # The version the engine reported in check 1, not the pinned minimum.
+        "naming_version": state["naming_version"],
     }
+
+
+def receipt_mismatch(body: dict[str, Any], name: str, state: State) -> str | None:
+    """The first field where a stored receipt disagrees with this run, as a fixed phrase, or None.
+
+    The shape check alone passes a receipt copied from another run. This binds the body to the run:
+    the fingerprint prefix, the day in the receipt's own name, the engine's naming version and the counts.
+    """
+    if body["fingerprint"] != state["prefix"]:
+        return "fingerprint"
+    if body["date"] != name.rsplit("-", 1)[-1]:
+        return "date"
+    if body["naming_version"] != state["naming_version"]:
+        return "naming version"
+    if body["counts"] != receipt_counts(state):
+        return "counts"
+    return None
 
 
 def receipt_is_counts_only(body: dict[str, Any]) -> bool:
@@ -958,6 +980,9 @@ def check_receipt(ctx: Context, state: State) -> CheckResult:
     body = read_json(path)
     if body is None or not receipt_is_counts_only(body):
         return CheckResult(False, "the receipt is not counts only")
+    mismatch = receipt_mismatch(body, name, state)
+    if mismatch is not None:
+        return CheckResult(False, f"the receipt differs from this run in its {mismatch}")
     return CheckResult(True, "receipt present for the current fingerprint")
 
 
