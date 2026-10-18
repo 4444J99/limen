@@ -1,0 +1,38 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "63586451-ad44-4226-8414-e74463df6b1b",
+  "repository": "4444J99/limen",
+  "worktree_name": "plan-prompt-control-vocabulary",
+  "base_head": "c98acbd1bae4dc489e293e07ce40b2018036c6d5",
+  "publication_branch": "docs/prompt-control-vocabulary-closeout",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "disposition": "handoff",
+  "owned_paths": [
+    "docs/plans/2026-10-18-prompt-control-vocabulary.md",
+    "docs/prompt-control-vocabulary-study.md",
+    "docs/prompt-corpus-policy.json",
+    "institutio/governance/docs-manifest.yaml"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "bash scripts/verify-scoped.sh (exact PR head; scripts/merge-policy.sh 3057 CLEARED)",
+      "head": "43390659321b9f314202b26002f42c9e44606758",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-control-vocabulary-20261018/session-evidence.json",
+      "sha256": "943dadfe28e3d03346b9184908066dabf60efdf33595779a63be7deb505a33ba"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "head": "43390659321b9f314202b26002f42c9e44606758",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-control-vocabulary-20261018/session-evidence.json",
+      "sha256": "943dadfe28e3d03346b9184908066dabf60efdf33595779a63be7deb505a33ba"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/prompt-control-vocabulary-20261018/session-evidence.json",
+    "sha256": "943dadfe28e3d03346b9184908066dabf60efdf33595779a63be7deb505a33ba"
+  }
+}

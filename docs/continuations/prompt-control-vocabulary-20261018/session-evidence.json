@@ -1,0 +1,16 @@
+{
+  "session_id": "63586451-ad44-4226-8414-e74463df6b1b",
+  "verified_head": "43390659321b9f314202b26002f42c9e44606758",
+  "tests_reused": "bash scripts/verify-scoped.sh exited 0 bare on the exact PR head 43390659 (7 cheap-wave gates PASS: syntax-changed, diff-hygiene, session-phase, check-plan-decisions, check-docs-manifest, check-docs-exports, check-note-links). The squash merge c7c05a0c carries the same four paths byte-for-byte; a first run on the uncommitted tree failed check-docs-manifest (declared row for an untracked doc) and was repaired by committing, then re-run green. scripts/merge-policy.sh 3057 exited 0 CLEARED.",
+  "verification_reference": "https://github.com/4444J99/limen/pull/3057",
+  "credential_wall": "scripts/credential-wall.py --check exited 0 (32 secret atoms registered). No credential was used, printed, copied or committed.",
+  "custody": "All implementation is merged to origin/main (#3057 c7c05a0c). The study quotes at most 120 characters per phrasing with private individuals and clients redacted; personal-thread turns are counted, never quoted. No raw transcript, private path or session-corpus payload is committed. The prompt-atoms ledger and .limen-private were read only and not modified. Memory ticket 20261018T104034_059402Z-63586451 is queued to the keeper.",
+  "checkout_disposition": "Retain this session worktree; no deletion authority. A scratch ship-docs worktree (/Volumes/Scratch/limen-worktrees/ship-docs-prompt-control-vocabulary-20261018103505-5123) and local branch docs/prompt-control-vocabulary-20261018103505 were left by scripts/session-plan.py after its ship-docs leg failed (execution_work_key_required while the session was unbound); they hold no unique work and are owned by the reclaim lanes (docs/worktree-reclaim-acceptance.jsonl, docs/branch-reap-acceptance.jsonl).",
+  "handoff": "Unfinished plan steps 2, 4 and 5 (first --all Claude baseline scan, then prompt-recurring-forms over the provider-claude index) are owned by https://github.com/4444J99/limen/issues/3056 and docs/plans/2026-10-18-prompt-control-vocabulary.md; BLOCKED: host admission (host-work-admission status allowed=false, swap-fraction + vitals-shed). Follow-ups: https://github.com/4444J99/limen/issues/3062 (closeout inherited-red clause), https://github.com/4444J99/limen/issues/3063 (name the post-opener commands; alias or retire the 22 unused skills), https://github.com/4444J99/limen/issues/3064 (four unwritten rules), https://github.com/4444J99/prompt-registry-archive/issues/5 (sole-copy custody and README path). Live-checkout currency is owned by scripts/sync-release.sh: check-live-checkout.py reported state=drift behind=11 with the beat deferred under host shed.",
+  "own_paths": [
+    "docs/plans/2026-10-18-prompt-control-vocabulary.md",
+    "docs/prompt-control-vocabulary-study.md",
+    "docs/prompt-corpus-policy.json",
+    "institutio/governance/docs-manifest.yaml"
+  ]
+}
