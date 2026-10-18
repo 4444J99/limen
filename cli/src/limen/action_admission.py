@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import subprocess
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -703,6 +704,33 @@ def path_within(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
     except ValueError:
+        return False
+    return True
+
+
+def codex_artifact_write(targets: list[Path], session_id: str) -> bool:
+    """Recognize only this native Codex thread's visualization descendants.
+
+    CODEX_HOME is the harness-owned root, not an arbitrary layout-shaped path.
+    Resolve targets before matching so symlinks cannot escape the thread.
+    Config, credentials, memories and sibling threads retain normal admission.
+    """
+    if not targets or not re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", session_id):
+        return False
+    configured = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex").expanduser()
+    if not configured.is_absolute():
+        return False
+    try:
+        root = configured.resolve(strict=True) / "visualizations"
+        for target in targets:
+            parts = target.resolve(strict=False).relative_to(root).parts
+            if len(parts) < 5 or parts[3] != session_id:
+                return False
+            calendar = "/".join(parts[:3])
+            if not re.fullmatch(r"[0-9]{4}/[0-9]{2}/[0-9]{2}", calendar):
+                return False
+            date.fromisoformat(calendar.replace("/", "-"))
+    except (OSError, RuntimeError, ValueError):
         return False
     return True
 
