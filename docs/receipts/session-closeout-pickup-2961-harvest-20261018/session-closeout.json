@@ -1,0 +1,26 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "a89fb304-ecdf-45a7-aef4-2cebe27d2309",
+  "worktree_name": "docs-manifest-gate-coverage",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-pickup-2961-harvest-20261018",
+  "base_head": "88debb9b53937a9d199aa380a6d66124a07bf00f",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/2961",
+  "owned_paths": [],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "release",
+      "head": "88debb9b53937a9d199aa380a6d66124a07bf00f",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-2961-harvest-20261018/verification.txt",
+      "sha256": "bf5a29cf9e55ece8a6439d7765ff14fa00635499423ce334b4e1a004323562b0"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-pickup-2961-harvest-20261018/custody.json",
+    "sha256": "d43d20235c5dbf7d0416d12225754708077dae429057570ecad52dae5a9276e5"
+  }
+}
