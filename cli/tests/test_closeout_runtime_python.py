@@ -109,6 +109,45 @@ def test_direct_closeout_uses_the_gate_resolver_not_path_python3(tmp_path: Path)
     assert result.stdout == f"{MARKER}\n"
 
 
+def _resolve_gate_python(override: str, *, path: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+    """Source scripts/lib/gate-python.sh with a fixed PATH and print what `limen_gate_python` resolves."""
+    root = Path(__file__).resolve().parents[2]
+    return subprocess.run(
+        ["/bin/bash", "-c", 'source "$1" && limen_gate_python', "_", str(root / "scripts/lib/gate-python.sh")],
+        env={"PATH": path, "LIMEN_GATE_PYTHON": override},
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+
+def test_gate_resolver_prints_an_absolute_path_for_a_bare_override(tmp_path: Path) -> None:
+    # verify.py symlinks its python3 shim to the printed value, so a bare `LIMEN_GATE_PYTHON=python3.14`
+    # became a dangling relative link and every gate fell through to the PATH python3 the shim exists
+    # to replace (2026-10-18: check-docs-manifest under Homebrew's yaml-less python3). The resolver's
+    # contract is ONE ABSOLUTE path, for a PATH name and for a relative path alike.
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    fake = bindir / "pyfake"
+    fake.write_text("#!/bin/sh\nexit 0\n")  # answers every `-c 'import ...'` probe as satisfied
+    fake.chmod(0o700)
+    system = "/usr/bin:/bin"
+
+    by_name = _resolve_gate_python("pyfake", path=f"{bindir}:{system}", cwd=tmp_path)
+    assert by_name.returncode == 0, by_name.stderr
+    assert by_name.stdout == f"{fake}\n"
+
+    relative = _resolve_gate_python("bin/pyfake", path=system, cwd=tmp_path)
+    assert relative.returncode == 0, relative.stderr
+    assert relative.stdout == f"{fake}\n"
+
+    absolute = _resolve_gate_python(str(fake), path=system, cwd=tmp_path)
+    assert absolute.returncode == 0, absolute.stderr
+    assert absolute.stdout == f"{fake}\n"
+
+
 def test_direct_closeout_with_no_usable_interpreter_is_unmeasured_not_a_traceback(tmp_path: Path) -> None:
     # Resolver present but nothing it can pick: exit 2 (evidence unavailable), the resolver's own hint, and
     # neither the poisoned PATH python3 (99) nor a ModuleNotFoundError traceback.

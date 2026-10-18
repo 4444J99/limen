@@ -31,7 +31,20 @@ limen_gate_python() {
 
   if [[ -n "${LIMEN_GATE_PYTHON:-}" ]]; then
     if limen_gate_python_has "$LIMEN_GATE_PYTHON" 'import yaml'; then
-      printf '%s\n' "$LIMEN_GATE_PYTHON"
+      # The contract is ONE ABSOLUTE path: verify.py symlinks its python3 shim to the printed value,
+      # and a bare name (`LIMEN_GATE_PYTHON=python3.14`) makes that link relative to the shim
+      # directory, so it dangles and every gate falls through to the PATH python3 the shim exists
+      # to replace (2026-10-18: check-docs-manifest died on Homebrew's yaml-less python3 while the
+      # override itself imported yaml fine). Resolve a PATH name or a relative path here.
+      local resolved="$LIMEN_GATE_PYTHON"
+      if [[ "$resolved" != /* ]]; then
+        if [[ "$resolved" == */* ]]; then
+          resolved="$(cd "$(dirname "$resolved")" 2>/dev/null && pwd)/$(basename "$resolved")"
+        else
+          resolved="$(type -P "$resolved" 2>/dev/null)" || resolved="$LIMEN_GATE_PYTHON"
+        fi
+      fi
+      printf '%s\n' "$resolved"
       return 0
     fi
     echo "gate-python: LIMEN_GATE_PYTHON=$LIMEN_GATE_PYTHON cannot import yaml; ignoring it and searching PATH." >&2
