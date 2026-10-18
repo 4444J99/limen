@@ -18,6 +18,10 @@ acceptance predicate passes. Session release does not authorize checkout retirem
    `limen.session_closeout.v1`, or v2 with explicit roots for multi-repository sessions
    (see `docs/session-closeout.md`). Unknown ownership fails
    closed. Commit and publish the receipt and owned artifacts through the normal PR rail.
+   Check a receipt with `jq empty FILE` and cite committed content by blob id
+   (`git ls-files -s FILE`); an inline interpreter (`python3 -c`), a hash tool, or an
+   `rm` is an improvised command that prompts outside a checkout with an allowlist.
+   Any scratch probe lives under `mktemp -d` outside the worktree, so nothing needs removal.
 3. Reuse passing verification for unchanged implementation. Run implicated scoped gates
    once per changed tree, including credential-wall evidence for secrets used by the
    session. Whole-repository verification is required only for a whole-repository claim.

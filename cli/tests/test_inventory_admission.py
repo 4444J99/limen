@@ -114,7 +114,7 @@ def test_authored_scope_is_distinct_from_all_authors():
 def test_author_tampering_cannot_reuse_collector_receipts():
     snapshot = census()
     snapshot["leaves"][1]["author_login"] = "dependabot[bot]"
-    with pytest.raises(InventoryAdmissionError, match="inventory_content_changed"):
+    with pytest.raises(InventoryAdmissionError, match="inventory_content_digest_invalid"):
         count(snapshot)
 
 
@@ -122,7 +122,7 @@ def test_author_tampering_cannot_reuse_collector_receipts():
 def test_collector_leaf_count_must_match_full_content(leaf_count):
     snapshot = census()
     snapshot["source_report"]["normalized_leaf_count"] = leaf_count
-    with pytest.raises(InventoryAdmissionError, match="inventory_(leaf_count_invalid|content_changed)"):
+    with pytest.raises(InventoryAdmissionError, match="inventory_leaf_count_invalid"):
         count(snapshot)
 
 
@@ -167,6 +167,7 @@ def test_migration_aliases_deduplicate_stable_repository_id():
     snapshot["source_report"].update(
         content_sha256=_canonical_sha256(snapshot["leaves"]), normalized_leaf_count=len(snapshot["leaves"])
     )
+    snapshot["source_report"]["cursor"]["known_leaf_count"] = len(snapshot["leaves"])
     assert count(snapshot) == 1
     snapshot["leaves"][1]["author_login"] = "somebody-else"
     snapshot["source_report"]["content_sha256"] = _canonical_sha256(snapshot["leaves"])

@@ -1,0 +1,234 @@
+{
+  "schema": "limen.recovery_review_reply_assessments.v1",
+  "assessment": "Each listed reply was read as a correction receipt or acknowledgement of its native parent finding. It adds evidence, not a distinct corrective request. These assessments do not accept the claimed correction as delivered.",
+  "replies": [
+    {
+      "review_id": "3836070217",
+      "root_review_id": "3836007527",
+      "source_body_sha256": "1550c1b0b77be385783195a7865337d44fe7b624504cf31641ed942081825ebe",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3836070273",
+      "root_review_id": "3836007530",
+      "source_body_sha256": "e88de83efac7a633e864a1a62f8c95d32b038983419e492b62330c837bafd960",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3836362566",
+      "root_review_id": "3836083747",
+      "source_body_sha256": "77d96ea08be72662300fe2572b837f468613e8206baeacee37ce4fd972b59406",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3838695178",
+      "root_review_id": "3836083754",
+      "source_body_sha256": "9f3c76ea124cfcfcfb3abc59a0565dffb76794e4e378508f79dd8a097a6d1d52",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3838695467",
+      "root_review_id": "3836083757",
+      "source_body_sha256": "4eae98aa0b397f8a138d5ab103c49d86fb08706edcc6d2d5c3ae292cf6139b08",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3838695789",
+      "root_review_id": "3836083758",
+      "source_body_sha256": "cc6b17225bd4fc918ad25d4ff5d7e98449b39d0b879af28e55f7fc33716b2eda",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953351",
+      "root_review_id": "3852993380",
+      "source_body_sha256": "e124f0d18abb6a23d6de639ebaf9a9e8465f519cae1ffdb67cc69e5d5323a702",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953356",
+      "root_review_id": "3853267997",
+      "source_body_sha256": "3f21db5ee9089a4ff717785e5dd4875545cdcd46ebd084b69d9a67325b9d0593",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953357",
+      "root_review_id": "3853029927",
+      "source_body_sha256": "4ba75a7d847af268787d32e41d87be05f533bd7988bfffb91c1780bc939d56a9",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953358",
+      "root_review_id": "3853029930",
+      "source_body_sha256": "0dcb73d17c368a57199e6b917a7b7ceb98668cb2333d71530fdf11c5ce283233",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953361",
+      "root_review_id": "3853029920",
+      "source_body_sha256": "e0ac64c4fb8b59783adf8d7c29aaf8cf8f1e2275325b61be0da0a41798dc96fa",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953364",
+      "root_review_id": "3853029916",
+      "source_body_sha256": "b4fba7025a16c2c49122fe28330ff63b1cf76d4e731e841c7c4ab458e6cb4df8",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953372",
+      "root_review_id": "3852993418",
+      "source_body_sha256": "cbf51e1aae18cb0fc38bf187b4c915d76905ab97e0f6d7c79dccfcdfed6c47aa",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953385",
+      "root_review_id": "3852993407",
+      "source_body_sha256": "f6612fa90c872537bebe2f0deae1665b408090ca5c88e1612325343cb4682775",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854953387",
+      "root_review_id": "3852993426",
+      "source_body_sha256": "d7f7c7a64eba900211220c943bea3330e40b063e2fd82532858ce21b4fb15d2c",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854959844",
+      "root_review_id": "3852993426",
+      "source_body_sha256": "ad5d3ba164de129b0a0a3e010bc57921037fce48446f83ccdfc3cc220f6a4789",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854961830",
+      "root_review_id": "3852993418",
+      "source_body_sha256": "0fe5a454d874dccd0429b2833aef672f7ec7862bdb8f0b452ae4ec5993b23c28",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854963048",
+      "root_review_id": "3852993380",
+      "source_body_sha256": "2614f96909e4e9d2baf37113a7da35441f60951532edc7f018c7bf92f1ca70a6",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3854963708",
+      "root_review_id": "3852993407",
+      "source_body_sha256": "d09a3eb8d635438adfa33d35c7921627287331c90244d09a4dff96b1f1c17e54",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832329849",
+      "root_review_id": "3831328380",
+      "source_body_sha256": "d11741be02d2d82acf7b9c50cd29015c5781c164df7d03f681ed2499dd68247c",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832329852",
+      "root_review_id": "3831346865",
+      "source_body_sha256": "728dd73b8041a85ef96d50e9762d4bfb08cc0e573a639245f1161792b35ecfc3",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832329854",
+      "root_review_id": "3831346882",
+      "source_body_sha256": "927a60f18719dd1af9f625fc7e0eea08f2a18a0edc3a4f08ce2ed30fac6e7303",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832331777",
+      "root_review_id": "3831328380",
+      "source_body_sha256": "229cf363ee777c983d7aaadf8507118faa658c7cadf269965d234d631b5d9014",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832332150",
+      "root_review_id": "3831328380",
+      "source_body_sha256": "aab6ad8772d6c2ec4622cf76d7853ae1f0584b8224fd245af2359092cf935a03",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832332783",
+      "root_review_id": "3831328380",
+      "source_body_sha256": "1b2b17b898b7ef6b633f8ba20c0bf116e25e985d8736c9b1a92e6e45506f01ac",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832396712",
+      "root_review_id": "3832366059",
+      "source_body_sha256": "fae34987c968bea8acc183e371bf3b80ac2fa46397c02331841f8d7984c26852",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832396854",
+      "root_review_id": "3832366086",
+      "source_body_sha256": "5cb57ef8257936d89912c68204767ef214eeeb512bc0d700c1e19f283f05d485",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832396964",
+      "root_review_id": "3832366094",
+      "source_body_sha256": "47c04a8da615a6b85466ed179112e18b4e80c9371c8a0e749f30675a487c2551",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832397055",
+      "root_review_id": "3832366100",
+      "source_body_sha256": "2f4b44320d4934715bc87c37601a5c6d01fd4f3795f4af141bdb765aa0a28a47",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832397151",
+      "root_review_id": "3832366110",
+      "source_body_sha256": "e36aea997207b48e3b2be7d7965cb11e6a2ff3e8bf16610f45100d7c08e2125b",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832397221",
+      "root_review_id": "3832377131",
+      "source_body_sha256": "cfc5a16197587f0dc7ed422071859b0dd3f460a520cf845968bf1603dd523ff0",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832397315",
+      "root_review_id": "3832377138",
+      "source_body_sha256": "a11658ab09dc23ce931959d7e37ff92498d26f1ae7ebccbd07a064becff02f2a",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832397409",
+      "root_review_id": "3832377145",
+      "source_body_sha256": "edc597e3b8e43cc8f5d8c793879c50748a6049c3080062f73f7faf853731bd07",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832398000",
+      "root_review_id": "3832366059",
+      "source_body_sha256": "6134f8ccd0b3dd43f6ae3d9a17f3f8c386d9bdc7f91fafdb64692e803dca1936",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832398494",
+      "root_review_id": "3832366094",
+      "source_body_sha256": "5e2e5e2125ffbd825ccd513381428fe0be9adea071e49bf078834a7f3aa4fd94",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832398862",
+      "root_review_id": "3832366100",
+      "source_body_sha256": "1ffbd98385170e80dd5fa34204eb1f4b8a2ae9466e481158f122b6bddd5ef9ab",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832398881",
+      "root_review_id": "3832366110",
+      "source_body_sha256": "008bda73b0efec2a9dc47f68c0aa68ed88ab3bf94b911f9d5598c2b885e437ad",
+      "disposition": "same_finding_evidence"
+    },
+    {
+      "review_id": "3832399155",
+      "root_review_id": "3832366086",
+      "source_body_sha256": "4db94a5e3e92decf9c483a38ab79b83ac6fc86568c4c701121ba978cbdfea8f8",
+      "disposition": "same_finding_evidence"
+    }
+  ]
+}
