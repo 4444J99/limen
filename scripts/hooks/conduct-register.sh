@@ -56,7 +56,22 @@ case "$cwd" in
     [ -n "$name" ] || exit 0
     wt="${cwd%%/.claude/worktrees/*}/.claude/worktrees/$name"
     ;;
-  *) exit 0 ;;                                               # shared checkout: claim nothing
+  *)                                                         # shared checkout: claim nothing
+    # ...but say so ONCE per session in the job log. Exiting silently leaves a session that can never
+    # be claimed or released with no trace at all, indistinguishable from a healthy one (issue 3102).
+    # Log only: SessionStart stdout is injected as model context, so this must stay off stdout.
+    skip_dir="$CLAUDE_JOB_DIR/tmp"
+    skip_mark="$skip_dir/conduct-register.skipped"
+    if [ "$(cat "$skip_mark" 2>/dev/null)" != "$sid" ]; then
+      {
+        mkdir -p "$skip_dir" &&
+          printf '%s skipped session=%s: cwd is the shared checkout, which no job owns; this session cannot be claimed or released by the broker. Enter .claude/worktrees/<name> (EnterWorktree) to become claimable.\n' \
+            "$(date -u +%FT%TZ)" "$sid" >>"$skip_dir/conduct-register.log" &&
+          printf '%s' "$sid" >"$skip_mark"
+      } 2>/dev/null || true
+    fi
+    exit 0
+    ;;
 esac
 
 state_dir="$CLAUDE_JOB_DIR/tmp"
