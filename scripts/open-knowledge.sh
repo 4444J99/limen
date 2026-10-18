@@ -37,11 +37,36 @@
 #   Only the start path requires the manifest and exits 2 without it.
 #
 # STARTS ARE SERIALIZED PER PORT
-#   The start path takes a per-port lock (mkdir of <store>/state/open-knowledge-PORT.lock, holder pid
-#   in its pid file), released on every exit path and before the browser opens. A second start finds
-#   the lock held and polls every 0.2 seconds until the server answers (it then reuses it), the
-#   holder is provably dead (the stale lock is removed and taken), or 15 seconds pass (exit 1). Two
+#   The start path takes a per-port lock: mkdir of <store>/state/open-knowledge-PORT.lock, then an
+#   exclusive (noclobber) write of the holder pid to its pid file, so of two writers only one owns
+#   it. The lock is released on every exit path and before the browser opens, and only while its pid
+#   file is absent, empty or names the releasing process. A second start finds the lock held and
+#   polls every 0.2 seconds until the server answers (it then reuses it), the lock is dead (it is
+#   recovered and taken), or max(15, start timeout + 5) seconds pass, 15 by default (exit 1). Two
 #   concurrent starts launch exactly one engine. --stop and --status never wait on the lock.
+#   A lock is dead when its pid names no process, a zombie, or a process whose command line lacks
+#   open-knowledge (judged with ps, never kill -0, so a live process of another user counts as
+#   alive), or when it has no usable pid and the lock directory is at least 3 seconds old (a holder
+#   killed between its mkdir and its pid write; the age is the directory's own modification time).
+#   Only the holder of the recovery mutex (mkdir of the lock path plus .reap) removes a dead lock,
+#   after judging it dead again under the mutex; a mutex at least a minute old was left by a
+#   recoverer that died and is removed by whoever finds it, so such a death delays recovery by up
+#   to a minute.
+#
+# ERRORS THAT DO NOT WAIT
+#   If the state directory cannot be created, or the lock cannot be taken because the state
+#   directory is not writable, the start exits 1 at once with a message naming the directory. A
+#   host without curl exits 127 before any probe, for --stop, --status and the start path alike.
+#   --port must be a decimal number from 1 to 65535 without leading zeros; anything else exits 2.
+#
+# --STOP
+#   If the signal to the recorded pid fails and ps no longer lists that process, the pid file is
+#   removed (only while it still names that pid) and the exit is 0 with a note; if ps still lists
+#   it, the exit is 1. After a stop the pid file is removed only while it still names the stopped pid.
+#
+# ACCEPTED RESIDUALS (named, not fixed)
+#   A --stop that lands in the fork-to-exec window of a starting engine can drop its pid file; a pid
+#   file is not locked against a concurrent stop of a different start.
 #
 # A START THAT TIMES OUT CLEANS UP AFTER ITSELF
 #   If the server does not answer within 10 seconds (override with the environment variable
@@ -95,8 +120,10 @@ done
 
 number_re='^[0-9]+$'
 positive_re='^[1-9][0-9]*$'
+port_re='^[1-9][0-9]{0,4}$'
 
-if [[ ! "$port" =~ $number_re ]] || (( port < 1 || port > 65535 )); then
+# The pattern rules out leading zeros (octal in arithmetic) and overflow before any arithmetic runs.
+if [[ ! "$port" =~ $port_re ]] || (( port > 65535 )); then
   echo "open-knowledge: --port must be a number from 1 to 65535, got '$port'" >&2
   exit 2
 fi
@@ -152,6 +179,13 @@ pid_file="$state_dir/open-knowledge-$port.pid"
 lock_dir="$state_dir/open-knowledge-$port.lock"
 url="http://127.0.0.1:$port/"
 vault="$archive/vault-all"
+
+# Every liveness probe is a curl call, so a host without curl fails here, before any probe can
+# misread "no curl" as "no server".
+if ! command -v curl >/dev/null 2>&1; then
+  echo "open-knowledge: curl not found on PATH; the liveness probe needs it" >&2
+  exit 127
+fi
 
 # The archive server, by protocol: the engine's own liveness ping answers 200 with "ok": true.
 server_answers() {
@@ -248,13 +282,23 @@ if [[ "$stop_server" -eq 1 ]]; then
     fi
     exit 0
   fi
-  kill "$pid"
+  if ! kill "$pid" 2>/dev/null; then
+    # The signal failed: either the process exited since it was looked up, or it cannot be signalled.
+    if [[ -n "$(ps -p "$pid" -o command= 2>/dev/null || true)" ]]; then
+      echo "open-knowledge: cannot signal pid $pid" >&2
+      exit 1
+    fi
+    if [[ "$(cat "$pid_file" 2>/dev/null || true)" == "$pid" ]]; then rm -f "$pid_file"; fi
+    echo "open-knowledge: the server (pid $pid) had already exited; pid file removed"
+    exit 0
+  fi
   deadline=$((SECONDS + 5))
   while kill -0 "$pid" 2>/dev/null; do
     (( SECONDS < deadline )) || { echo "open-knowledge: pid $pid ignored the stop request" >&2; exit 1; }
     sleep 0.2
   done
-  rm -f "$pid_file"
+  # A new start may already have written its own pid; remove the file only while it names the one stopped.
+  if [[ "$(cat "$pid_file" 2>/dev/null || true)" == "$pid" ]]; then rm -f "$pid_file"; fi
   echo "open-knowledge: stopped the server on port $port (pid $pid)"
   exit 0
 fi
@@ -268,12 +312,26 @@ fi
 # --- the per-port start lock -------------------------------------------------------------------
 
 lock_held=0
-stale_holder=""
+reap_held=0
+reap_dir="$lock_dir.reap"
+# A waiting start gives up only after the holder has had its whole start timeout plus a margin.
+lock_wait=$(( start_timeout + 5 > 15 ? start_timeout + 5 : 15 ))
 
+# Release the recovery mutex if this process holds it, then the start lock only while it is still
+# ours: its pid file absent, empty or naming this process. A displaced holder never deletes a lock
+# that another process has taken since.
 release_start_lock() {
+  local owner
+  if [[ "$reap_held" -eq 1 ]]; then
+    reap_held=0
+    rm -rf "$reap_dir"
+  fi
   if [[ "$lock_held" -eq 1 ]]; then
     lock_held=0
-    rm -rf "$lock_dir"
+    owner="$(cat "$lock_dir/pid" 2>/dev/null || true)"
+    if [[ -z "$owner" || "$owner" == "$$" ]]; then
+      rm -rf "$lock_dir"
+    fi
   fi
 }
 
@@ -287,42 +345,67 @@ install_lock_exit_trap() {
   trap "release_start_lock; $prior" EXIT
 }
 
-# Provably dead: the recorded holder no longer runs, or runs something that is not this script. A
-# lock whose pid file has not appeared is unknown, never dead — it ages out at the 15-second bound.
+# True when PATH exists and was last modified at least SECONDS ago. The age is read from the file
+# system each time, never from when this process first looked, so a lock replaced by a fresh one
+# is judged by the fresh one's age. Any error reads as not old.
+path_is_older_than() {
+  "$python_with_yaml" -c 'import os, sys, time
+sys.exit(0 if time.time() - os.stat(sys.argv[1]).st_mtime >= float(sys.argv[2]) else 1)' "$1" "$2" 2>/dev/null
+}
+
+# Dead: the pid file names a process that is gone, a zombie, or something that is not this script
+# (decided by ps, not kill -0, so a live holder owned by another user still counts as alive); or the
+# lock has no usable pid and its directory is at least 3 seconds old, which is a holder killed
+# between its mkdir and its pid write. A lock that no longer exists is not dead.
 lock_holder_is_dead() {
   local holder command_line
   holder="$(cat "$lock_dir/pid" 2>/dev/null || true)"
-  [[ "$holder" =~ $number_re ]] || return 1
-  stale_holder="$holder"
-  kill -0 "$holder" 2>/dev/null || return 0
-  command_line="$(ps -p "$holder" -o command= 2>/dev/null || true)"
-  [[ "$command_line" == *open-knowledge* ]] || return 0
-  return 1
+  if [[ "$holder" =~ $number_re ]]; then
+    command_line="$(ps -p "$holder" -o command= 2>/dev/null || true)"
+    [[ "$command_line" != *open-knowledge* ]]
+    return
+  fi
+  path_is_older_than "$lock_dir" 3
 }
 
-# Returns 0 holding the lock, or 10 when the server came up while waiting (lock not held).
+# Returns 0 holding the lock, or 10 when the server came up while waiting (lock not held). It runs
+# as `acquire_start_lock || lock_status=$?`, which turns errexit off here, so every failure is
+# handled explicitly.
 acquire_start_lock() {
-  local deadline=$((SECONDS + 15)) current
-  mkdir -p "$state_dir"
+  local deadline=$((SECONDS + lock_wait))
+  if ! mkdir -p "$state_dir" 2>/dev/null; then
+    echo "open-knowledge: cannot create the state directory $state_dir" >&2
+    exit 1
+  fi
   while :; do
     if mkdir "$lock_dir" 2>/dev/null; then
-      lock_held=1
-      printf '%s\n' "$$" >"$lock_dir/pid"
-      return 0
+      # The pid file is created exclusively (noclobber): if a holder that stalled past its own
+      # recovery writes into this directory first, it owns the lock and this start waits.
+      if ( set -C; printf '%s\n' "$$" >"$lock_dir/pid" ) 2>/dev/null; then
+        lock_held=1
+        return 0
+      fi
+    elif [[ ! -d "$lock_dir" && ! -w "$state_dir" ]]; then
+      echo "open-knowledge: cannot take the start lock; the state directory is not writable: $state_dir" >&2
+      exit 1
     fi
     if server_answers; then
       return 10
     fi
+    # Only a dead lock is removed, only by the holder of the recovery mutex, and only after its
+    # deadness is checked again under the mutex. A mutex a minute old was left by a dead recoverer.
     if lock_holder_is_dead; then
-      # Remove only the lock still held by the holder judged dead; a fresh holder is left alone.
-      current="$(cat "$lock_dir/pid" 2>/dev/null || true)"
-      if [[ "$current" == "$stale_holder" ]]; then
-        rm -rf "$lock_dir"
+      if mkdir "$reap_dir" 2>/dev/null; then
+        reap_held=1
+        if lock_holder_is_dead; then rm -rf "$lock_dir"; fi
+        reap_held=0
+        rm -rf "$reap_dir"
+      elif path_is_older_than "$reap_dir" 60; then
+        rm -rf "$reap_dir"
       fi
-      continue
     fi
     if (( SECONDS >= deadline )); then
-      echo "open-knowledge: another start on port $port did not finish within 15 seconds (lock $lock_dir)" >&2
+      echo "open-knowledge: another start on port $port did not finish within $lock_wait seconds (lock $lock_dir)" >&2
       exit 1
     fi
     sleep 0.2
