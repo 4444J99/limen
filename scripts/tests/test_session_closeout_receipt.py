@@ -109,8 +109,6 @@ class World:
         self.tmp = tmp_path.resolve()
         self.staging = self.tmp / "staging"
         self.staging.mkdir(mode=0o700)
-        self.registry = self.staging / "gates.yaml"
-        self.registry.write_text(REGISTRY)
         self.retained_scope = retained
         self.owner_states: dict[str, str] = {}
         self.pulls: dict[str, dict] = {}
@@ -154,7 +152,12 @@ class World:
         git(root, "remote", "add", "origin", f"https://github.com/example/{ident}.git")
         git(root, "config", "remote.origin.pushurl", str(remote))
         (root / "README.md").write_text("base\n")
-        paths = ["README.md"]
+        # The gate registry is the repository's own COMMITTED file (A6): attest reads it from the head's object
+        # database, so the base commit of every fixture repository declares the test gates.
+        registry = root / producer.DEFAULT_GATES_REGISTRY
+        registry.parent.mkdir(parents=True)
+        registry.write_text(REGISTRY)
+        paths = ["README.md", producer.DEFAULT_GATES_REGISTRY]
         if ident == "owner":
             (root / CONTINUATION).mkdir(parents=True)
             (root / CONTINUATION / "NOTES.md").write_text("continuation owner\n")
@@ -322,9 +325,18 @@ class World:
         return code, json.loads(buffer.getvalue())
 
     def attest(self, scope, label, gate="trivial", *extra):
-        return self.cli(
-            "attest", "--scope", scope, "--label", label, "--gate", gate, "--gates-registry", str(self.registry), *extra
-        )
+        return self.cli("attest", "--scope", scope, "--label", label, "--gate", gate, *extra)
+
+    def commit_registry(self, scope, text, relative=None):
+        """Commit a (different) gate registry into a scope repository; attest reads only committed registries."""
+        relative = relative or producer.DEFAULT_GATES_REGISTRY
+        root = self.repos[scope]
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text)
+        git(root, "add", "--", relative)
+        git(root, "commit", "-q", "-m", f"registry {relative}")
+        return relative
 
     def write_bundle(self, manifest):
         scope_paths = {row["id"]: closeout.path_digest(Path(row["path"])) for row in manifest["scopes"]}
@@ -827,29 +839,13 @@ def test_a05_attest_scrubs_the_environment_and_kills_the_group_at_its_deadline(w
 
 def test_a06_only_registry_declared_gates_are_attested(world):
     world.write_manifest(world.base_manifest())
-    code, payload = world.cli(
-        "attest", "--scope", "subject", "--label", "x", "--gates-registry", str(world.registry), "--", "echo", "hi"
-    )
+    code, payload = world.cli("attest", "--scope", "subject", "--label", "x", "--", "echo", "hi")
     assert code == 1 and "argv_not_registry_gate" in codes(payload)
-    code, payload = world.cli(
-        "attest", "--scope", "subject", "--label", "ok", "--gates-registry", str(world.registry), "--", "true"
-    )
+    code, payload = world.cli("attest", "--scope", "subject", "--label", "ok", "--", "true")
     assert code == 0 and payload["recorded"]["gate_id"] == "trivial"
     code, payload = world.attest("subject", "x", "no-such-gate")
     assert code == 1 and "gate_not_declared" in codes(payload)
-    code, payload = world.cli(
-        "attest",
-        "--scope",
-        "subject",
-        "--label",
-        "y",
-        "--gate",
-        "trivial",
-        "--gates-registry",
-        str(world.registry),
-        "--",
-        "false",
-    )
+    code, payload = world.cli("attest", "--scope", "subject", "--label", "y", "--gate", "trivial", "--", "false")
     assert code == 1 and "argv_not_registry_gate" in codes(payload)
 
 
@@ -1509,3 +1505,275 @@ def test_the_script_runs_as_a_cli_under_an_isolated_interpreter():
         check=False,
     )
     assert result.returncode == 0 and "plan" in result.stdout and "attest" in result.stdout
+
+
+# =========================================================================== independent-review repairs (D1-D3, minors)
+
+
+TRIVIAL_DIGEST = hashlib.sha256(
+    (json.dumps({"command": "true", "paths": ["implementation.py"]}, indent=2, sort_keys=True) + "\n").encode()
+).hexdigest()
+
+
+def forge_attestation(world, scope, label, **override):
+    """Hand-write a limen.session_check_attestation.v1 file that `attest` never produced."""
+    record = {
+        "schema": producer.ATTESTATION_SCHEMA,
+        "session_id": SID,
+        "root_id": scope,
+        "head": git(world.repos[scope], "rev-parse", "HEAD"),
+        "label": label,
+        "gate_id": "trivial",
+        "gate_registry": producer.DEFAULT_GATES_REGISTRY,
+        "gate_definition_sha256": TRIVIAL_DIGEST,
+        "command": "true",
+        "environment": "scrubbed allowlist",
+        "exit_code": 0,
+        "output_sha256": "0" * 64,
+        "output_bytes": 0,
+        "tree_clean_at_start": True,
+        "tree_and_head_unchanged_at_end": True,
+    }
+    record.update(override)
+    record = {key: value for key, value in record.items() if value is not None}
+    relative = f"{EVIDENCE_DIR}/{label}.json"
+    target = world.repos["owner"] / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
+    return relative
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        {"gate_id": "bogus", "gate_definition_sha256": "0" * 64, "command": "totally-not-a-gate"},
+        {"gate_definition_sha256": "f" * 64},
+        {"command": "false"},
+        {"gate_id": "failing"},
+        {"gate_registry": None},
+        {"gate_registry": "institutio/governance/does-not-exist.yaml"},
+        {"gate_registry": "/etc/gates.yaml"},
+        {"output_sha256": "not-a-digest"},
+        {"tree_clean_at_start": False},
+    ],
+)
+def test_a06_a_hand_written_attestation_that_does_not_re_resolve_is_refused(world, override):
+    manifest = world.ready()
+    relative = forge_attestation(world, "subject", "forged", **override)
+    manifest["verification"] = [manifest["verification"][0], {"scope": "subject", "evidence": relative}]
+    world.write_manifest(manifest)
+    for verb in ("plan", "build"):
+        code, payload = world.cli(verb)
+        assert code == 1 and "verification_not_a_gate" in codes(payload), (verb, payload)
+    assert not (world.repos["owner"] / CONTINUATION / "session-closeout.json").exists()
+
+
+def test_a06_the_attested_gate_is_resolved_at_the_attested_head_not_the_working_tree(world):
+    world.ready()
+    registry = world.repos["owner"] / producer.DEFAULT_GATES_REGISTRY
+    registry.write_text(REGISTRY.replace('command: "true"', 'command: "echo changed"'))
+    code, payload = world.cli("plan")
+    assert "verification_not_a_gate" not in codes(payload), "an uncommitted edit must not re-define a past gate"
+
+
+def test_a06_an_operator_supplied_registry_declares_no_gate(world):
+    world.write_manifest(world.base_manifest())
+    mine = world.staging / "mine.yaml"
+    mine.write_text('gates:\n  green:\n    command: "true"\n    paths: ["implementation.py"]\n')
+    code, payload = world.cli(
+        "attest", "--scope", "subject", "--label", "selfmade", "--gate", "green", "--gates-registry", str(mine)
+    )
+    assert code == 1 and "gates_registry_not_committed" in codes(payload), payload
+    assert not list((world.repos["owner"] / CONTINUATION).glob("closeout-evidence/*/selfmade.json"))
+    code, payload = world.cli(
+        "attest", "--scope", "subject", "--label", "traversal", "--gate", "green", "--gates-registry", "../mine.yaml"
+    )
+    assert code == 1 and "gates_registry_not_committed" in codes(payload), payload
+    # An uncommitted repository-relative registry is a dirty tree, and a never-committed path is not a registry.
+    (world.repos["subject"] / "own.yaml").write_text(mine.read_text())
+    code, payload = world.cli(
+        "attest", "--scope", "subject", "--label", "untracked", "--gate", "green", "--gates-registry", "own.yaml"
+    )
+    assert code == 1 and "tree_dirty_at_start" in codes(payload), payload
+    (world.repos["subject"] / "own.yaml").unlink()
+    code, payload = world.cli(
+        "attest", "--scope", "subject", "--label", "absent", "--gate", "green", "--gates-registry", "own.yaml"
+    )
+    assert code == 1 and "gates_registry_not_committed" in codes(payload), payload
+
+
+def test_a06_a_registry_the_scope_commits_is_the_declaration_and_is_recorded(world):
+    world.write_manifest(world.base_manifest())
+    relative = world.commit_registry(
+        "subject", 'gates:\n  green:\n    command: "true"\n    paths: []\n', "ci/gates.yaml"
+    )
+    code, payload = world.cli(
+        "attest", "--scope", "subject", "--label", "committed", "--gate", "green", "--gates-registry", relative
+    )
+    assert code == 0 and payload["recorded"]["gate_id"] == "green", payload
+    record = json.loads((world.repos["owner"] / payload["write"][0]).read_text())
+    assert record["gate_registry"] == relative and record["head"] == git(world.repos["subject"], "rev-parse", "HEAD")
+
+
+def test_a06_a_malformed_committed_registry_is_unmeasured_not_a_traceback(world):
+    world.write_manifest(world.base_manifest())
+    world.commit_registry("subject", "gates: [unclosed\n  - {")
+    code, payload = world.cli("attest", "--scope", "subject", "--label", "bad", "--gate", "trivial")
+    assert code == 2 and payload["status"] == "unmeasured" and "YAML" in payload["reason"], payload
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            str(ROOT / "scripts/session-closeout-receipt.py"),
+            "attest",
+            "--manifest",
+            str(world.manifest_path),
+            "--scope",
+            "subject",
+            "--label",
+            "bad2",
+            "--gate",
+            "trivial",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+    assert result.returncode == 2 and "Traceback" not in result.stderr, result.stderr[-300:]
+
+
+def _commit_gate(world, name, command):
+    world.commit_registry("subject", f"gates:\n  {name}:\n    command: {json.dumps(command)}\n    paths: []\n")
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "G=git; $G push origin HEAD",
+        "G=git; ${G} commit -m x",
+        "eval 'g''it push'",
+        "git\tpush",
+        "bash -c 'git -C . push origin HEAD'",
+    ],
+)
+def test_a06_shell_indirection_forms_of_a_mutating_gate_are_refused(world, command):
+    world.write_manifest(world.base_manifest())
+    _commit_gate(world, "evil", command)
+    code, payload = world.cli("attest", "--scope", "subject", "--label", "evil", "--gate", "evil", "--timeout", "5")
+    assert code == 1 and "command_mutates_repository_or_broker" in codes(payload), (command, payload)
+
+
+def test_a06_a_gate_that_pushes_despite_the_static_scan_is_caught_by_the_observed_ref_change(world):
+    world.write_manifest(world.base_manifest())
+    command = 'python3 -c \'import subprocess as s; s.run(["g"+"it","push","origin","HEAD:refs/heads/zz"])\''
+    assert not any(pattern.search(command) for pattern in producer.MUTATING_COMMANDS), "the static scan is evaded"
+    _commit_gate(world, "sneaky", command)
+    code, payload = world.cli(
+        "attest", "--scope", "subject", "--label", "sneaky", "--gate", "sneaky", "--timeout", "30"
+    )
+    assert code == 1 and "tree_or_head_changed_during_run" in codes(payload), payload
+    assert not list((world.repos["owner"] / CONTINUATION).glob("closeout-evidence/*/sneaky.json"))
+
+
+def write_effect_evidence(world, **fields):
+    record = {
+        "schema": producer.EFFECT_SCHEMA,
+        "session_id": SID,
+        "id": "pr1",
+        "kind": "pull_request",
+        "readback": {"merged": False, "state": "open"},
+        "expect": {"merged": True},
+        "matches": True,
+    }
+    record.update(fields)
+    target = world.repos["owner"] / EVIDENCE_DIR / "effect-pr1.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
+
+
+def effect_manifest(world, expect):
+    manifest = world.ready()
+    manifest["external_effects"] = [{"id": "pr1", "kind": "pull_request", "url": PULL_URL, "expect": expect}]
+    world.write_manifest(manifest)
+    return manifest
+
+
+def test_a10_a_reused_effect_verdict_is_recomputed_from_its_stored_readback(world):
+    effect_manifest(world, {"merged": True})
+    write_effect_evidence(world)  # the readback says merged:false but the hand-written file claims matches:true
+    world.effect_readbacks["pr1"] = {"merged": False, "state": "open"}
+    for verb in ("plan", "build"):
+        code, payload = world.cli(verb)
+        assert code == 1 and "external_effect_evidence_inconsistent" in codes(payload), (verb, payload)
+    assert not (world.repos["owner"] / CONTINUATION / "session-closeout.json").exists()
+
+
+def test_a10_a_consistent_reused_effect_keeps_its_recomputed_verdict(world):
+    effect_manifest(world, {"merged": True})
+    write_effect_evidence(world, readback={"merged": True, "state": "closed"}, matches=True)
+    built = world.build_clean()
+    assert world.receipt()["external_effects"][0]["verified"] is True
+    world.commit_and_push(built)
+    code, result = world.cli("check")
+    assert code == 0, result
+
+
+def test_a10_a_changed_expect_never_reuses_the_old_verdict(world):
+    manifest = effect_manifest(world, {"merged": True})
+    world.effect_readbacks["pr1"] = {"merged": True, "state": "closed"}
+    world.build_clean()
+    manifest["external_effects"][0]["expect"] = {"state": "open"}
+    world.write_manifest(manifest)
+    code, payload = world.cli("plan")
+    assert code == 1 and "external_effect_evidence_stale" in codes(payload), payload
+    manifest["receipt"]["name"] = "second.json"
+    world.write_manifest(manifest)
+    code, payload = world.cli("build")
+    assert code == 1 and "external_effect_evidence_stale" in codes(payload), payload
+    assert not (world.repos["owner"] / CONTINUATION / "second.json").exists()
+
+
+def test_a14_caller_supplied_effect_evidence_gets_the_credential_assignment_scan(world):
+    manifest = world.ready()
+    relative = f"{CONTINUATION}/caller-effect.json"
+    (world.repos["owner"] / relative).write_text(json.dumps({"deploy": "x", "api_key": "abcd1234efgh"}))
+    manifest["external_effects"] = [{"id": "dep", "kind": "deploy", "evidence": relative, "owner_url": OWNER_URL}]
+    world.write_manifest(manifest)
+    code, payload = world.cli("build")
+    assert code == 1 and "committed_bytes_unsafe" in codes(payload), payload
+    assert not (world.repos["owner"] / CONTINUATION / "session-closeout.json").exists()
+
+
+@pytest.fixture
+def owner_anchor_world(tmp_path, monkeypatch):
+    return World(tmp_path, monkeypatch, retained=False, anchor_is_owner=True)
+
+
+def test_a16_a_forged_custody_absence_file_is_not_cited(owner_anchor_world):
+    world = owner_anchor_world
+    world.ready(custody="absence")
+    forged = {
+        "schema": producer.ABSENCE_SCHEMA,
+        "session_id": SID,
+        "claim": "nothing to see",
+        "scopes": [{"root_id": "owner"}, {"root_id": "subject"}],
+        "limits": [],
+    }
+    target = world.repos["owner"] / EVIDENCE_DIR / "custody-absence.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(forged, indent=2, sort_keys=True) + "\n")
+    code, payload = world.cli("build")
+    assert code == 1 and "custody_evidence_stale" in codes(payload), payload
+    assert not (world.repos["owner"] / CONTINUATION / "session-closeout.json").exists()
+
+
+def test_a16_a_genuine_absence_file_is_reused_after_the_receipt_commit_moves_the_receipt_head(owner_anchor_world):
+    world = owner_anchor_world
+    world.ready(custody="absence")
+    built = world.build_clean()
+    world.commit_and_push(built)
+    code, payload = world.cli("build")
+    assert code == 0, payload
+    code, result = world.cli("check")
+    assert code == 0, result

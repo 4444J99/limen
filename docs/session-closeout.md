@@ -193,8 +193,15 @@ under the existing continuation directory):
    and prints every gap. Candidate ownership paths appear only under "unattributed, NOT written".
 2. `attest --manifest M --scope ID --label L --gate GATE` runs one registry-declared gate (or the
    verify-scoped wrapper) in the scope root, in its own process group with a deadline, a scrubbed
-   environment and `check=False`, and records the real exit code, exact head and output digest. It
-   refuses a dirty tree, a gate that mutates git or the broker, and any command that is not declared.
+   environment and `check=False`, and records the real exit code, exact head and output digest. The
+   registry is read from the scope's own git object database at the attested head (default
+   `institutio/governance/gates.yaml`; `--gates-registry` takes only a repository-relative path committed at
+   that head), never from an operator-supplied file. It refuses a dirty tree, a gate whose command text
+   mutates git or the broker, a gate that changes HEAD, the tree or any ref while it runs, and any command
+   that is not declared. `build` re-resolves every attestation the same way (gate id, command and definition
+   digest at the attested head) and refuses one that does not match. Limits: the command scan is lexical, and a
+   remote-only mutation or a registry the session itself committed is not detectable here; an attestation is
+   unsigned, so a hand-written file that is consistent with a committed gate cannot be told from a real run.
 3. `build --manifest M` re-derives everything, refuses on any gap, writes evidence then the receipt,
    runs the real checker as a labelled dry run (`non_evidence`: uncommitted bytes are overlaid and only
    the receipt root's publication is simulated) and removes the files it created if that finds anything.
@@ -216,7 +223,9 @@ What it refuses, with an actionable `gap: <code>: <message>`: unknown ownership 
 a missing or unverifiable `owner_url`, dirty or unattributed paths, an empty verification list, an
 unpublished or absent remote ref, an empty attribution window (a fork point equal to HEAD), custody that
 is not a scope-bound `limen.custody_receipt.v2` bundle or a provable absence (a sealed-custody tracked
-receipt binds no session or scope), effects without a non-empty `expect` or an explicit
+receipt binds no session or scope), a reused effect file whose verdict its own readback does not support
+or that was recorded for a different `expect`, a reused absence file that is not the live measurement,
+effects without a non-empty `expect` or an explicit
 `external_effects_enumerated` attestation, an active lease, a nonterminal run, `complete` when anything
 is retained, unverified or failing, a symlink anywhere in the evidence path, and any committed byte that
 matches a secret shape, an absolute private path, or a declared scope path.

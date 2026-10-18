@@ -131,15 +131,26 @@ ABSOLUTE_PATH_PATTERN = re.compile(
 )
 FILE_URL_PATTERN = re.compile(r"file://")
 
-# A6: a gate may never rewrite the repository or the broker. Registry commands are scanned verbatim.
+# A6: a gate may never rewrite the repository or the broker. Registry commands are scanned verbatim. This static
+# scan is a first line only (shell indirection can always hide a verb); the authoritative guard is the observed
+# before/after state in `attest` (HEAD, tree and every ref), which also catches a `git push` that updates a
+# remote-tracking ref. A remote-only mutation (for example `gh` against the API) is not observable locally.
+GIT_MUTATING_VERBS = (
+    r"push|commit|add|reset|checkout|switch|merge|rebase|stash|clean|restore|rm|mv|tag|"
+    r"cherry-pick|revert|worktree|am|apply|update-ref|gc|prune"
+)
 MUTATING_COMMANDS = (
-    re.compile(
-        r"\bgit\b[^\n;&|]*\b(?:push|commit|add|reset|checkout|switch|merge|rebase|stash|clean|restore|rm|mv|tag|"
-        r"cherry-pick|revert|worktree|am|apply|update-ref|gc|prune)\b"
-    ),
+    re.compile(rf"\bgit\b[^\n;&|]*\b(?:{GIT_MUTATING_VERBS})\b"),
+    # A variable expanded in command position followed by a mutating verb (`G=git; $G push`).
+    re.compile(rf"\$\{{?[A-Za-z_][A-Za-z0-9_]*\}}?\s+(?:{GIT_MUTATING_VERBS})\b"),
+    re.compile(r"\beval\b"),
     re.compile(r"\bgh\b[^\n;&|]*\b(?:merge|create|close|edit|delete|reopen|comment|review|ready)\b"),
     re.compile(r"\blimen\s+conduct\b"),
 )
+DEFAULT_GATES_REGISTRY = "institutio/governance/gates.yaml"
+VERIFY_SCOPED_WRAPPER = "bash scripts/verify-scoped.sh"
+VERIFY_SCOPED_SCRIPT = "scripts/verify-scoped.sh"
+HEX64 = re.compile(r"[0-9a-f]{64}")
 
 
 class ProducerError(RuntimeError):
@@ -759,6 +770,32 @@ def _read_json_file(ctx: Context, rep: Report, relative: str, code: str) -> tupl
     return None
 
 
+def _revalidate_gate(ctx: Context, scope: Scope, head: str, value: dict) -> str | None:
+    """A6: an attestation file is evidence only if its gate re-resolves, today, from the registry the scope COMMITS at
+    the attested head: same gate id, same command, same definition digest, and a command `attest` would still run.
+    A hand-written file naming an unknown gate or a made-up digest is refused (the reason string, or None if sound)."""
+    gate_id, registry_rel = value.get("gate_id"), value.get("gate_registry")
+    command, digest = value.get("command"), value.get("gate_definition_sha256")
+    if not all(isinstance(item, str) and item for item in (gate_id, registry_rel, command, digest)):
+        return "does not bind a registry-declared gate (gate id, registry, command and digest are required)"
+    if HEX64.fullmatch(digest) is None or HEX64.fullmatch(str(value.get("output_sha256", ""))) is None:
+        return "carries a malformed gate or output digest"
+    if value.get("tree_clean_at_start") is not True or value.get("tree_and_head_unchanged_at_end") is not True:
+        return "does not record a clean tree and an unchanged head around the run"
+    try:
+        registry = load_committed_registry(scope.path, head, registry_rel)
+        resolved_id, resolved_command, resolved_digest = resolve_gate(
+            registry, lambda relative: read_committed_blob(scope.path, head, relative), gate_id, []
+        )
+    except (Refusal, ProducerError, subprocess.SubprocessError):
+        return "names a gate the scope does not declare in a registry committed at the attested head"
+    if resolved_id != gate_id or resolved_command != command or resolved_digest != digest:
+        return "does not match the gate definition committed at the attested head"
+    if command_problem(command, ctx.private_literals) is not None:
+        return "records a command that attest would refuse"
+    return None
+
+
 def _derive_verification(ctx: Context, rep: Report) -> list[dict]:
     """Read attestations written by `attest`; head and exit_code come from the file, never from the manifest."""
     entries: list[dict] = []
@@ -796,8 +833,9 @@ def _derive_verification(ctx: Context, rep: Report) -> list[dict]:
         if not isinstance(head, str) or not closeout.SHA.fullmatch(head) or type(code) is not int:
             rep.gap("verification_malformed", f"{relative} lacks an exact head or an integer exit code")
             continue
-        if not value.get("gate_id") or not value.get("gate_definition_sha256"):
-            rep.gap("verification_not_a_gate", f"{relative} does not bind a registry-declared gate")
+        gate_problem = _revalidate_gate(ctx, scope, head, value)
+        if gate_problem is not None:
+            rep.gap("verification_not_a_gate", f"{relative} {gate_problem}")
             continue
         entry: dict[str, Any] = {
             "root_id": scope.id,
@@ -1005,25 +1043,48 @@ def _custody_absence(ctx: Context, seams: Seams, rep: Report, root_ids: list[str
         scopes_out.append(row)
     relative = f"{ctx.evidence_dir_rel}/custody-absence.json"
     reused = _reuse_evidence(ctx, rep, relative, ABSENCE_SCHEMA)
+    evidence = {
+        "schema": ABSENCE_SCHEMA,
+        "session_id": ctx.session_id,
+        "claim": "no untracked, ignored or stashed local-only payload in the declared git scopes",
+        "scopes": scopes_out,
+        "limits": [
+            "self-measured by the producer; this is not an independent restore copy",
+            "git scopes only; artifacts outside git are not measured",
+        ],
+    }
     if reused is None:
-        evidence = {
-            "schema": ABSENCE_SCHEMA,
-            "session_id": ctx.session_id,
-            "claim": "no untracked, ignored or stashed local-only payload in the declared git scopes",
-            "scopes": scopes_out,
-            "limits": [
-                "self-measured by the producer; this is not an independent restore copy",
-                "git scopes only; artifacts outside git are not measured",
-            ],
-        }
         data = json_bytes(evidence)
         rep.new_files[relative] = data
     else:
         data, existing = reused
-        if sorted(row.get("root_id", "") for row in existing.get("scopes", []) if isinstance(row, dict)) != root_ids:
-            rep.gap("custody_evidence_stale", "the existing absence evidence does not cover the declared scopes")
+        # A3/A16: an existing absence file is cited only if it IS the live measurement. The receipt-root head moves
+        # when the receipt is committed, so an excluded row is compared without its head.
+        if _absence_comparable(existing) != _absence_comparable(evidence):
+            rep.gap(
+                "custody_evidence_stale",
+                "the existing absence evidence is not the live measurement of the declared scopes; "
+                "remove it (it is untracked output of `build`) and rebuild",
+            )
     rep.cite(relative)
     return {"verified": True, "root_ids": root_ids, "evidence": relative, "sha256": sha256_hex(data)}
+
+
+def _absence_comparable(evidence: dict) -> dict:
+    rows = evidence.get("scopes")
+    normalized = []
+    for row in rows if isinstance(rows, list) else []:
+        if isinstance(row, dict):
+            row = dict(row)
+            if row.get("excluded"):
+                row.pop("head", None)
+            normalized.append(row)
+    normalized.sort(key=lambda row: str(row.get("root_id", "")))
+    return {
+        "claim": evidence.get("claim"),
+        "limits": evidence.get("limits"),
+        "scopes": normalized,
+    }
 
 
 def _published_flag(scope: Scope) -> bool:
@@ -1139,7 +1200,7 @@ def _native_effect(ctx: Context, seams: Seams, rep: Report, spec: dict, relative
     except closeout.Unmeasured:
         rep.gap("external_effect_unreadable", f"effect {spec['id']}: the live readback is unavailable or malformed")
         return None
-    matched = all(_lookup(readback, key) == value for key, value in expect.items())
+    matched = _expect_matches(readback, expect)
     evidence = {
         "schema": EFFECT_SCHEMA,
         "session_id": ctx.session_id,
@@ -1162,15 +1223,43 @@ def _native_effect(ctx: Context, seams: Seams, rep: Report, spec: dict, relative
     }
 
 
+def _expect_matches(readback: Any, expect: dict) -> bool:
+    return all(_lookup(readback, key) == value for key, value in expect.items())
+
+
 def _reuse_evidence_effect(ctx: Context, rep: Report, relative: str, spec: dict) -> tuple[bytes, bool] | None:
+    """A10: `verified` is recomputed from the stored readback against the manifest's CURRENT `expect`; the file's own
+    `matches` flag is never trusted. Evidence recorded for a different expectation, or whose flag disagrees with its
+    own readback, is refused rather than silently re-judged (it is create-only: use a new effect id)."""
     reused = _reuse_evidence(ctx, rep, relative, EFFECT_SCHEMA)
     if reused is None:
         return None
     raw, value = reused
-    if value.get("id") != spec["id"] or value.get("kind") != spec["kind"] or type(value.get("matches")) is not bool:
+    readback, stored_expect = value.get("readback"), value.get("expect")
+    if (
+        value.get("id") != spec["id"]
+        or value.get("kind") != spec["kind"]
+        or type(value.get("matches")) is not bool
+        or not isinstance(readback, dict)
+        or not isinstance(stored_expect, dict)
+        or not stored_expect
+    ):
         rep.gap("evidence_exists_unrecognized", f"existing {relative} does not describe effect {spec['id']}")
         return None
-    return raw, value["matches"]
+    if stored_expect != spec["expect"]:
+        rep.gap(
+            "external_effect_evidence_stale",
+            f"effect {spec['id']}: {relative} was recorded for a different `expect`; use a new effect id",
+        )
+        return None
+    recomputed = _expect_matches(readback, spec["expect"])
+    if recomputed is not value["matches"]:
+        rep.gap(
+            "external_effect_evidence_inconsistent",
+            f"effect {spec['id']}: {relative} claims a verdict its own readback does not support",
+        )
+        return None
+    return raw, recomputed
 
 
 def _caller_effect(ctx: Context, rep: Report, spec: dict) -> dict | None:
@@ -1645,10 +1734,9 @@ def _finalize_files(ctx: Context, rep: Report) -> None:
             data = read_receipt_file(ctx.receipt_root, relative)
         except OSError:
             continue
-        # Producer-authored files (the evidence directory) get the strict scan; caller-supplied custody
-        # evidence gets the high-precision secret and path scan only.
-        strict = bool(ctx.evidence_dir_rel) and relative.startswith(ctx.evidence_dir_rel + "/")
-        problems = scrub_problems(data, literals=ctx.private_literals, allowed=ctx.allowed_literals, strict=strict)
+        # Every cited byte gets the strict scan (assignment and flag shapes included), wherever the file lives:
+        # caller-supplied effect and custody evidence is committed and cited exactly like producer-authored files.
+        problems = scrub_problems(data, literals=ctx.private_literals, allowed=ctx.allowed_literals, strict=True)
         if problems:
             rep.gap("committed_bytes_unsafe", f"cited evidence {relative} contains {', '.join(problems)}")
     receipt_path = ctx.receipt_root / ctx.receipt_rel
@@ -1953,50 +2041,99 @@ def cmd_check(args: argparse.Namespace, seams: Seams) -> int:
 # ---- attest (A5, A6)
 
 
-def load_registry(path: Path) -> dict[str, dict]:
+def read_committed_blob(root: Path, head: str, relative: str) -> bytes | None:
+    """The bytes of `relative` as committed at `head`, or None when that commit has no such file.
+
+    The gate registry and the verify-scoped wrapper are read from the scope's own git object database, never from
+    the working tree or from an operator-supplied path: a gate is "declared" only by a file the repository commits.
+    """
+    if not closeout.SHA.fullmatch(head):
+        raise ProducerError("a gate is resolved only at an exact 40-hex head")
+    try:
+        return _git(root, "show", f"{head}:{relative}", raw=True)
+    except subprocess.CalledProcessError:
+        return None
+
+
+def parse_registry(data: bytes) -> dict[str, dict]:
     try:
         import yaml
     except ImportError as exc:
         raise ProducerError("PyYAML is required to read the gate registry") from exc
     try:
-        value = yaml.safe_load(path.read_text())
-    except OSError as exc:
-        raise ProducerError("the gate registry is unreadable") from exc
+        value = yaml.safe_load(data)
+    except yaml.YAMLError as exc:
+        raise ProducerError("the gate registry is not valid YAML") from exc
     gates = value.get("gates") if isinstance(value, dict) else None
     if not isinstance(gates, dict):
         raise ProducerError("the gate registry has no gates mapping")
     return gates
 
 
+def load_committed_registry(root: Path, head: str, relative: str) -> dict[str, dict]:
+    """A6: the registry is the scope's own committed file at `head`; an operator-supplied file declares nothing."""
+    try:
+        safe = closeout.safe_path(relative)
+    except closeout.Unmeasured:
+        safe = None
+    data = read_committed_blob(root, head, safe) if safe else None
+    if data is None:
+        raise Refusal(
+            "gates_registry_not_committed",
+            "the gate registry must be a repository-relative file committed at the scope head",
+        )
+    return parse_registry(data)
+
+
 def resolve_gate(
-    registry: dict[str, dict], scope_root: Path, gate_id: str | None, argv: list[str]
+    registry: dict[str, dict],
+    read_blob: Callable[[str], bytes | None],
+    gate_id: str | None,
+    argv: list[str],
 ) -> tuple[str, str, str]:
-    """A6: only a registry-declared gate (or the verify-scoped wrapper for the exact tree) may be attested."""
-    wrapper = "bash scripts/verify-scoped.sh"
+    """A6: only a registry-declared gate (or the verify-scoped wrapper for the exact tree) may be attested.
+
+    `read_blob` returns the committed bytes of a repository-relative path at the attested head.
+    """
     command_text = shlex.join(argv) if argv else None
     if gate_id is None and command_text is not None:
         gate_id = next(
             (name for name, row in registry.items() if isinstance(row, dict) and row.get("command") == command_text),
             None,
         )
-        if gate_id is None and command_text == wrapper:
+        if gate_id is None and command_text == VERIFY_SCOPED_WRAPPER:
             gate_id = "verify-scoped"
     if gate_id is None:
         raise Refusal("argv_not_registry_gate", "attest runs only a gate declared in the registry (use --gate ID)")
     if command_text is not None:
-        expected = wrapper if gate_id == "verify-scoped" else (registry.get(gate_id) or {}).get("command")
+        expected = VERIFY_SCOPED_WRAPPER if gate_id == "verify-scoped" else (registry.get(gate_id) or {}).get("command")
         if command_text != expected:
             raise Refusal("argv_not_registry_gate", "the supplied command is not the declared command of that gate")
     if gate_id == "verify-scoped":
-        script = scope_root / "scripts/verify-scoped.sh"
-        if not script.is_file():
-            raise Refusal("gate_not_declared", "the scope has no scripts/verify-scoped.sh")
-        return gate_id, wrapper, sha256_hex(script.read_bytes())
+        script = read_blob(VERIFY_SCOPED_SCRIPT)
+        if script is None:
+            raise Refusal("gate_not_declared", "the scope head commits no scripts/verify-scoped.sh")
+        return gate_id, VERIFY_SCOPED_WRAPPER, sha256_hex(script)
     row = registry.get(gate_id)
     if not isinstance(row, dict) or not isinstance(row.get("command"), str):
         raise Refusal("gate_not_declared", "the gate is not declared in the registry")
     definition = json_bytes({"command": row["command"], "paths": row.get("paths", [])})
     return gate_id, row["command"], sha256_hex(definition)
+
+
+def command_problem(command: str, literals: list[str]) -> Refusal | None:
+    """The refusal (if any) for a gate command that mutates the repository or would commit unsafe bytes."""
+    if any(pattern.search(command) for pattern in MUTATING_COMMANDS):
+        return Refusal(
+            "command_mutates_repository_or_broker",
+            "an attested gate may not stage, commit, push, merge or touch the broker",
+        )
+    problems = scrub_problems(command.encode(), literals=literals, allowed=[], strict=True)
+    if problems:
+        return Refusal(
+            "committed_bytes_unsafe", f"the gate command would put {', '.join(problems)} in a committed file"
+        )
+    return None
 
 
 def child_environment(root: Path) -> dict[str, str]:
@@ -2040,7 +2177,8 @@ def run_bounded(command: str, root: Path, timeout: int) -> tuple[int, str, int]:
             ) from exc
         finally:
             # Reap stray children: survivors with a cwd in the scope would become census `unknown` processes.
-            with contextlib.suppress(ProcessLookupError):
+            # macOS answers EPERM (not ESRCH) for a group whose members are all already-exited zombies.
+            with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(group, signal.SIGKILL)
         sink.seek(0)
         digest, size = hashlib.sha256(), 0
@@ -2070,39 +2208,40 @@ def cmd_attest(args: argparse.Namespace, seams: Seams) -> int:
             "timeout_invalid",
             f"--timeout must be 1..{MAX_TIMEOUT_SECONDS} seconds (the finite-work verification bound)",
         )
-    registry_path = args.gates_registry or scope.path / "institutio/governance/gates.yaml"
-    registry = load_registry(Path(registry_path))
-    gate_id, command, definition_digest = resolve_gate(registry, scope.path, args.gate, list(args.command))
-    if any(pattern.search(command) for pattern in MUTATING_COMMANDS):
-        raise Refusal(
-            "command_mutates_repository_or_broker",
-            "an attested gate may not stage, commit, push, merge or touch the broker",
-        )
-    problems = scrub_problems(command.encode(), literals=ctx.private_literals, allowed=[], strict=True)
-    if problems:
-        raise Refusal("committed_bytes_unsafe", f"the gate command would put {', '.join(problems)} in a committed file")
     prefix = ctx.evidence_dir_rel + "/"
 
-    def tree_state() -> tuple[str, bytes]:
+    def tree_state() -> tuple[str, bytes, str]:
         status = _git(scope.path, "status", "--porcelain=v1", "-z", "--untracked-files=all", raw=True)
         if scope.id == ctx.receipt_id:
             status = filter_porcelain(status, {p for p in closeout.dirty_paths(status) if p.startswith(prefix)})
-        return _git(scope.path, "rev-parse", "HEAD"), status
+        # Every ref (branches, tags, remote-tracking refs, stash): a gate that pushes updates a remote-tracking ref.
+        refs = _git(scope.path, "for-each-ref", "--format=%(refname) %(objectname)")
+        return _git(scope.path, "rev-parse", "HEAD"), status, refs
 
-    head, status = tree_state()
+    head, status, refs = tree_state()
     if status:
         raise Refusal(
             "tree_dirty_at_start", f"scope {scope.id} has uncommitted changes; attest only an exact clean head"
         )
+    # A6: the gate is resolved from the registry COMMITTED at this exact head, never from an operator-supplied file.
+    registry_rel = args.gates_registry or DEFAULT_GATES_REGISTRY
+    registry = load_committed_registry(scope.path, head, registry_rel)
+    gate_id, command, definition_digest = resolve_gate(
+        registry, lambda relative: read_committed_blob(scope.path, head, relative), args.gate, list(args.command)
+    )
+    refusal = command_problem(command, ctx.private_literals)
+    if refusal is not None:
+        raise refusal
     target = f"{ctx.evidence_dir_rel}/{args.label}.json"
     if os.path.lexists(ctx.receipt_root / target):
         raise Refusal("attestation_exists", f"{target} already exists; attestations are create-only, pick a new label")
     owner_url = args.owner_url or (ctx.manifest.get("owner_url") if args.purpose else None)
     code, output_sha, output_bytes = run_bounded(command, scope.path, args.timeout)
-    after_head, after_status = tree_state()
-    if after_head != head or after_status != status:
+    after_head, after_status, after_refs = tree_state()
+    if after_head != head or after_status != status or after_refs != refs:
         raise Refusal(
-            "tree_or_head_changed_during_run", "the gate changed HEAD or the working tree; nothing was attested"
+            "tree_or_head_changed_during_run",
+            "the gate changed HEAD, the working tree or a ref; nothing was attested",
         )
     record: dict[str, Any] = {
         "schema": ATTESTATION_SCHEMA,
@@ -2111,6 +2250,7 @@ def cmd_attest(args: argparse.Namespace, seams: Seams) -> int:
         "head": head,
         "label": args.label,
         "gate_id": gate_id,
+        "gate_registry": registry_rel,
         "gate_definition_sha256": definition_digest,
         "command": command,
         "environment": "scrubbed allowlist",
@@ -2164,7 +2304,11 @@ def build_parser() -> argparse.ArgumentParser:
     attest.add_argument("--scope", required=True)
     attest.add_argument("--label", required=True)
     attest.add_argument("--gate")
-    attest.add_argument("--gates-registry", type=Path)
+    attest.add_argument(
+        "--gates-registry",
+        help="repository-relative path of a gate registry COMMITTED at the scope head "
+        f"(default {DEFAULT_GATES_REGISTRY}); an operator-supplied file outside the repository declares no gate",
+    )
     attest.add_argument("--purpose")
     attest.add_argument("--owner-url")
     attest.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT_SECONDS)
