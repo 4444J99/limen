@@ -5327,7 +5327,35 @@
       "sovereignty": {
         "reason": "governance_choice"
       },
-      "issue": 3046
+      "issue": 3046,
+      "diagnosed_at": "2026-10-18T09:11:00Z",
+      "diagnosis_provenance": "parity-handoff-3046.git-cherry",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Once the operator states a disposition per PR, execute it on the normal PR rail: reland by cutting a fresh branch from main and porting the patches, or retire only after a positive repository-qualified landing proof exists for the ref.",
+        "rationale": "All three refs are restored and retained, so nothing is at risk while the decision is pending. Whether the work was abandoned on purpose is intent, which no predicate can derive; #2756 in particular is not superseded by its -v2 successors.",
+        "evidence_refs": [
+          "docs/plans/2026-10-18-parity-rail-handoff-envelope.md",
+          "docs/receipts/session-closeout-parity-t2-deletion-correction-20261018/README.md",
+          "https://github.com/4444J99/limen/issues/3046"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#session-discipline",
+          "AGENTS.md#full-lifecycle-closure"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3046",
+        "acceptance": {
+          "condition": "Each of #2682, #2576 and #2756 has a recorded disposition (retire, reland, or parked with a reason) and any retired ref has positive landing proof.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Operator statement of intent per PR"
+        ],
+        "remaining_human_action": "State retire, reland, or keep parked for each of the three PRs.",
+        "historical_gate_requires_verification": "Whether closed-unmerged work was abandoned on purpose or lost is a statement of intent that no predicate can derive.",
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }
