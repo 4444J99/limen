@@ -177,11 +177,12 @@ live run is by hand at closeout and is the only proof about the real archive.
 
 ## Engine dependency
 
-The archive, feed, names and fixture commands come from the engine work in pull requests 75 and 76 of
-`conversation-corpus-engine`. This loop is live from `main` only when both are merged and `cce` is
-reinstalled from `main`. An engine without these commands makes the check report `NOT ALIVE` or
-`UNUSABLE`. Today `cce` is installed from the branch checkout:
+The archive, feed, names and fixture commands come from the engine work in pull requests 75 and 79 of
+`conversation-corpus-engine` (79 replayed the stacked 76 onto `main` after 75 landed); both merged on
+2026-10-18. This loop is live from `main` only while `cce` on the host is installed from engine `main`.
+An engine without these commands makes the check report `NOT ALIVE` or `UNUSABLE`. Install or refresh
+it from `main`, pinning the commit so the receipt can name the engine it ran under:
 
 ```bash
-uv tool install --force --from <engine checkout> conversation-corpus-engine
+uv tool install --force --from git+https://github.com/4444J99/conversation-corpus-engine@<main commit> conversation-corpus-engine
 ```
