@@ -1877,7 +1877,12 @@ def base_payload(verb: str, rep: Report, ctx: Context, args: argparse.Namespace)
         "checker": checker_identity(getattr(args, "canonical_checker", None)),
         "residual_risk": (
             "path_sha256 and session_root_path_sha256 of well-known private paths are brute-forceable; the checker "
-            "mandates them, so only opaque ids appear anywhere else"
+            "mandates them, so only opaque ids appear anywhere else. Evidence strength: an attestation is unsigned, "
+            "so a hand-written file that matches a committed gate cannot be told from a real run; a gate's registry "
+            "paths are never matched to owned_paths, so a registry-declared no-op gate satisfies verification for a "
+            "scope that owns paths; a reused effect readback is checked only against itself, so a self-consistent "
+            "forged readback is accepted (re-reading the live effect would break create-only reuse); and a registry "
+            "the session itself committed is accepted as the repository's own declaration"
         ),
     }
 

@@ -235,7 +235,21 @@ mismatch class. A session anchored at a shared directory such as HOME cannot rea
 other agents run, because every process whose cwd is exactly the anchor is counted: anchor the session
 at a dedicated quiet directory. Residual risk: `path_sha256` and `session_root_path_sha256` of
 well-known private paths are brute-forceable; the checker mandates them, so only opaque ids appear
-anywhere else. Deliberately not done: `prune`, `--use-installed` (the checker module hash is reported
+anywhere else.
+
+Evidence strength, stated plainly so a receipt is not mistaken for stronger proof than it is. The checker
+accepts what is committed and bound by digest, and the producer can only vouch for what it can re-derive:
+an attestation is unsigned, so a hand-written file that matches a real committed gate (id, command, digest,
+exit 0) cannot be told from a real run; a gate's registry `paths` are never matched to the scope's
+`owned_paths`, so a registry-declared no-op gate satisfies verification for a scope that owns paths even
+though the section above says verification must be the implicated tests and gates; a reused effect
+readback is recomputed only against its own stored readback, so a self-consistent forged readback is
+accepted (re-reading the live effect would break create-only reuse); and a registry the session itself
+committed is accepted as the repository's own declaration, bound by digest. Reviewers should read a
+`verified: true` effect or a passing attestation as "consistent with the committed record", not as
+independently witnessed.
+
+Deliberately not done: `prune`, `--use-installed` (the checker module hash is reported
 and compared with `--canonical-checker` instead), deriving the session start from broker run receipts,
 candidate PR/ref discovery for effects, and retirement or lineage packets.
 
