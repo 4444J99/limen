@@ -1,0 +1,27 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "session_018jhoZqSVB9xFWAW5kWFJea",
+  "worktree_name": "session-closeout-pickup-20261018",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-pickup-20261018",
+  "base_head": "f1297a8bf25084f91b7dfe73251b087129b25a62",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/2898",
+  "owned_paths": [],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "completion",
+      "head": "f1297a8bf25084f91b7dfe73251b087129b25a62",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-pickup-20261018/verification.txt",
+      "sha256": "1ba1f4a1e094aba5054df97ec6a713deffbb46dfa9a2f9e0d3c9d168a118da91",
+      "owner_url": "https://github.com/4444J99/limen/issues/2898"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-pickup-20261018/custody.json",
+    "sha256": "209439ade985c547caa9f428da612bd3f4356ef55f33c2db33962722456c6218"
+  }
+}
