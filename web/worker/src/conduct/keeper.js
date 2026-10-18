@@ -1,4 +1,4 @@
-import { ChunkedDurableStateStore } from "./durable-store.js";
+import { RecordDurableStateStore } from "./record-store.js";
 import { acceptInventoryObservation, requireInventoryCollector, executionAdmission, executionActive, pendingRemoteAttempts, executionPriority, projectionExecutionStatus } from "./inventory-admission.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { sessionAudit } from "./session-audit.js";
@@ -2101,9 +2101,9 @@ export class MemoryConductStore {
   }
 }
 
-export class DurableConductStore extends ChunkedDurableStateStore {
-  constructor(storage) {
-    super(storage, emptyConductState);
+export class DurableConductStore extends RecordDurableStateStore {
+  constructor(storage, options = {}) {
+    super(storage, emptyConductState, options);
   }
 }
 
@@ -2144,14 +2144,6 @@ export class SerializedConductService {
   call(operation, payload = {}) {
     const execute = async () => {
       let state = await this.store.load();
-      if (!this.steadyHeartbeatPersistence
-          && typeof this.store.hasLivenessOverlays === "function"
-          && this.store.hasLivenessOverlays()) {
-        // Rollback drain: disabling the fast path and making any authenticated
-        // request folds all selected overlays into the cold manifest before an
-        // older binary can be restored.
-        await this.store.save(state);
-      }
       const options = Object.fromEntries(Object.entries(this.options).filter(([, value]) => value !== undefined));
       const now = this.clock();
       if ([
