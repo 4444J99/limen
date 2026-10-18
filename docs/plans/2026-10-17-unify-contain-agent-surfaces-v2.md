@@ -183,3 +183,35 @@ Every symlink change or file quarantine in Phases 1–4 must write a JSON receip
   "undo_command": "ln -f /Users/4jp/.local/state/domus/home-residue/.claude.json.pre-relink-20261017 /Users/4jp/.claude.json"
 }
 ```
+
+---
+
+## 8. Superseded provisions (appended 2026-10-18; original text above is unchanged)
+
+Plans are append-only, so §5 and §7 stay as written. Where they conflict with this block, this block governs.
+Evidence and dispositions: `docs/plans/2026-10-18-agent-surface-reconciliation-v3.md` § Corrections to v2.
+
+1. **§5 (mitigation 1 and the Orthogonal correction): an APFS clone is not custody.** The text above calls a
+   `cp -Rc` clone "independent, immutable" and "zero additional blocks". A clone is a writable copy on the *same
+   volume*. It is neither immutable nor independent, and while it exists, deleting the source frees no blocks, so
+   "stage then retire" does not relieve quota. Custody requires a second device plus a checksum manifest; set the
+   staged tree read-only; claim reclaimed space only once the source is gone *and* a second copy exists elsewhere.
+2. **§7 (receipt contract): `undo_command` must never delete the destination first.** The live receipt
+   `~/.local/state/domus/home-residue/codex-custody-receipt-20261017.json` records the same
+   `rm -rf <dest> && cp -Rc <backup>/. <dest>` in all three of `one_command_undo`, `undo_command` and `rollback_cmd`.
+   Replayed after the destination has accumulated new history, that destroys the history, and a failed copy leaves
+   nothing. The receipt lives outside git and was not edited. Corrected rollback for that receipt (rename aside, copy
+   back, verify, delete nothing):
+
+   ```sh
+   D=/Users/4jp/.local/share/codex
+   B=/Users/4jp/Workspace/limen/.limen-private/custody-staging/codex-legacy-share-20261017T171401Z
+   test ! -e "$D" || mv "$D" "$D.pre-rollback-$(date -u +%Y%m%dT%H%M%SZ)"
+   cp -Rc "$B" "$D"
+   (cd "$D" && shasum -a 256 -c --quiet manifest.sha256)
+   ```
+
+   As of 2026-10-18 `$D` does not exist (the share was retired), so the `mv` is a no-op and the sequence restores from
+   custody. Any future receipt must carry an `undo_command` of this rename-aside shape, plus a `verify_command`.
+3. **Census claims (Phase 1B, §1): not exhaustive.** A depth-bounded `find` cannot establish an inventory. The ledger
+   (v3 item 7) must record its method, depth, prune list, every scan error, and a deduplicated physical-directory count.
