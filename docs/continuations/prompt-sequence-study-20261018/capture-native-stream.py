@@ -1,5 +1,6 @@
 import collections
 import hashlib
+import importlib.util
 import json
 import sys
 import time
@@ -16,16 +17,11 @@ PATHS = sorted(
 OFFSET = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 START = time.monotonic()
 LIMIT = 128 * 1024 * 1024
-PREFIXES = (
-    "# AGENTS.md instructions",
-    "<environment_context>",
-    "<codex_internal_context",
-    "<turn_aborted>",
-    "<subagent_notification>",
-    "<external_codex_apps_open_page>",
-    "<skill>",
-    "<session_context>",
+SPEC = importlib.util.spec_from_file_location(
+    "native_projection_decoder", Path(__file__).with_name("capture-native-projection.py")
 )
+DECODER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(DECODER)
 
 
 def read_session(path):
@@ -33,88 +29,43 @@ def read_session(path):
     opener = zstd.open if path.suffix == ".zst" else open
     digest = hashlib.sha256()
     byte_count = 0
-    prompts = []
-    excluded = []
-    current = None
-    last_reply = None
     metas = []
     compactions = 0
     count = 0
 
-    def finish():
-        if current is not None and not current["finals"] and last_reply:
-            current["finals"].append({**last_reply, "phase_inferred": True})
+    def records():
+        nonlocal byte_count, compactions, count
+        with opener(path, "rb") as stream:
+            for line_no in range(1, 200001):
+                if time.monotonic() - START > 20:
+                    raise TimeoutError("tranche_deadline")
+                line = stream.readline(4 * 1024 * 1024 + 1)
+                if not line:
+                    break
+                byte_count += len(line)
+                if byte_count > LIMIT:
+                    raise ValueError("unit_128MiB_limit")
+                if len(line) > 4 * 1024 * 1024:
+                    raise ValueError("record_4MiB_limit")
+                digest.update(line)
+                record = json.loads(line)
+                payload = record.get("payload") or {}
+                count = line_no
+                if record.get("type") == "session_meta":
+                    metas.append({k: payload.get(k) for k in ("id", "session_id", "cwd")})
+                if record.get("type") == "compacted":
+                    compactions += 1
+                yield line_no, record
+            else:
+                raise ValueError("unit_record_limit")
 
-    with opener(path, "rb") as stream:
-        for line_no in range(1, 200001):
-            if time.monotonic() - START > 20:
-                raise TimeoutError("tranche_deadline")
-            line = stream.readline(4 * 1024 * 1024 + 1)
-            if not line:
-                break
-            byte_count += len(line)
-            if byte_count > LIMIT:
-                raise ValueError("unit_128MiB_limit")
-            if len(line) > 4 * 1024 * 1024:
-                raise ValueError("record_4MiB_limit")
-            digest.update(line)
-            r = json.loads(line)
-            q = r.get("payload", {})
-            count = line_no
-            if r.get("type") == "session_meta":
-                metas.append(q)
-            if r.get("type") == "compacted":
-                compactions += 1
-            if r.get("type") != "response_item":
-                continue
-            if q.get("role") == "user":
-                text = "\n".join(
-                    b.get("text", "")
-                    for b in q.get("content", [])
-                    if isinstance(b, dict) and b.get("type") == "input_text"
-                )
-                if text.lstrip().startswith(PREFIXES):
-                    excluded.append({"line": line_no, "reason": "harness_or_expansion"})
-                    continue
-                finish()
-                retained = (r.get("metadata") or {}).get("retained_source")
-                current = {
-                    "line": line_no,
-                    "id": q.get("id"),
-                    "timestamp": r.get("timestamp"),
-                    "text": text,
-                    "media": [
-                        b.get("type")
-                        for b in q.get("content", [])
-                        if isinstance(b, dict) and b.get("type") != "input_text"
-                    ],
-                    "retained_complete": retained.get("complete") if isinstance(retained, dict) else None,
-                    "finals": [],
-                    "tool_calls": 0,
-                }
-                prompts.append(current)
-                last_reply = None
-            elif current is not None and q.get("role") == "assistant":
-                reply = "\n".join(
-                    b.get("text", "")
-                    for b in q.get("content", [])
-                    if isinstance(b, dict) and b.get("type") == "output_text"
-                )
-                if reply:
-                    last_reply = {"line": line_no, "text": reply}
-                    if q.get("phase") in ("final_answer", "final") or q.get("channel") == "final":
-                        current["finals"].append(last_reply)
-            elif current is not None and q.get("type") in ("function_call", "custom_tool_call"):
-                current["tool_calls"] += 1
-        else:
-            raise ValueError("unit_record_limit")
-    finish()
+    projected = DECODER.project_rollout_records(records())
     after = path.stat()
     if (before.st_ino, before.st_size, before.st_mtime_ns) != (after.st_ino, after.st_size, after.st_mtime_ns):
         raise ValueError("native_changed_during_read")
     meta = metas[0] if metas else {}
     return {
-        "id": meta.get("id", meta.get("session_id")),
+        "id": meta.get("id") or meta.get("session_id"),
         "path": str(path),
         "cwd": meta.get("cwd"),
         "decompressed_sha256": digest.hexdigest(),
@@ -123,8 +74,7 @@ def read_session(path):
         "source_eof": True,
         "compactions": compactions,
         "metadata_records": len(metas),
-        "excluded": excluded,
-        "prompts": prompts,
+        **projected,
     }
 
 
@@ -151,7 +101,7 @@ for index, path in enumerate(PATHS[OFFSET:], OFFSET):
         if isinstance(exc, TimeoutError):
             break
     last = index + 1
-destination = BASE / ("native-stream-" + str(OFFSET).zfill(4) + ".json")
+destination = BASE / ("native-stream-v3-" + str(OFFSET).zfill(4) + ".json")
 if destination.exists():
     raise SystemExit("Preserve the existing tranche; do not overwrite.")
 result = {

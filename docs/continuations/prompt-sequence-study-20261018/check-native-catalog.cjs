@@ -27,3 +27,6 @@ const renderedTexts = new Set(walk(ids.board).filter(item => item.tagName === "p
 for (const session of actual.sessions) for (const prompt of session.prompts) assert.ok(renderedTexts.has(prompt.text));
 assert.equal(page.includes('src="http'), false);
 console.log(JSON.stringify({ columns: ids.board.children.length, originalPromptsPreserved: actual.sessions.reduce((n,s) => n+s.prompts.length,0), browserVisualInspection: "not performed" }));
+
+assert.ok(walk(ids.board).some(item => item.textContent === "Response attribution: shared-native-turn"));
+assert.ok(walk(ids.board).some(item => typeof item.textContent === "string" && item.textContent.startsWith("Derived context frames kept separately")));

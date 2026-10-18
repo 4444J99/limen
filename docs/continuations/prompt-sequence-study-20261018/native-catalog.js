@@ -26,6 +26,15 @@ function render() {
         "All retained bodies marked complete. Logical-session completeness unproven." :
         "Retained-body gaps or unknown completeness: do not assume the opener survived."));
     column.append(header);
+    if (session.frames?.length) {
+      const context = node("details");
+      context.append(node("summary", "Derived context frames kept separately (" + session.frames.length + ")"));
+      for (const frame of session.frames) {
+        context.append(node("p", frame.source_label || "Derived frame", "meta"), node("pre", frame.text));
+        for (const reply of frame.finals) context.append(node("pre", reply.text));
+      }
+      column.append(context);
+    }
     const list = node("ol");
     session.prompts.forEach((prompt, position) => {
       const item = node("li");
@@ -33,12 +42,19 @@ function render() {
         node("p", "Native line " + prompt.line + " | body completeness: " + String(prompt.retained_complete), "meta"),
         node("pre", prompt.text));
       if (prompt.media.length) item.append(node("p", "Media descriptors only: " + prompt.media.join(", ") + ". Inspect the original input for visual meaning.", "meta"));
+      item.append(node("p", "Response attribution: " + (prompt.response_attribution || "not recorded"), "meta"));
+      if (prompt.extra_parts?.length) {
+        const parts = node("details");
+        parts.append(node("summary", "Structured input references"), node("pre", JSON.stringify(prompt.extra_parts, null, 2)));
+        item.append(parts);
+      }
       const replies = node("details");
       replies.append(node("summary", "Recorded replies and actions (" + prompt.finals.length + ")"),
         node("p", "Historical claims, not current verification. Tool calls: " + prompt.tool_calls, "meta"));
       for (const reply of prompt.finals) {
         if (reply.phase_inferred) replies.append(node("p", "Final phase inferred from last captured assistant text.", "meta"));
         replies.append(node("pre", reply.text));
+        if (reply.native_fields?.questions) replies.append(node("pre", JSON.stringify(reply.native_fields.questions, null, 2)));
       }
       item.append(replies);
       list.append(item);
