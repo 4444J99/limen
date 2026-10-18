@@ -1,0 +1,856 @@
+{
+  "schema_version": "1.0",
+  "request_id": "SGO-REQ-2026-AGENT-ECOSYSTEM-UNITY-01",
+  "verified_at": "2026-10-18T12:14:15Z",
+  "verifier": "Limen in-harness Source Verifier (3-lens fetch-before-vote)",
+  "verdict": "accepted",
+  "private_connected_sources_used": false,
+  "claims": [
+    {
+      "claim_id": "CLM-C1",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S1"
+      ]
+    },
+    {
+      "claim_id": "CLM-C2",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S1"
+      ]
+    },
+    {
+      "claim_id": "CLM-C3",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S2"
+      ]
+    },
+    {
+      "claim_id": "CLM-C4",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S3"
+      ]
+    },
+    {
+      "claim_id": "CLM-C5",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S4"
+      ]
+    },
+    {
+      "claim_id": "CLM-C6",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S5"
+      ]
+    },
+    {
+      "claim_id": "CLM-C7",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S6"
+      ]
+    },
+    {
+      "claim_id": "CLM-C8",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S6"
+      ]
+    },
+    {
+      "claim_id": "CLM-C9",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S7"
+      ]
+    },
+    {
+      "claim_id": "CLM-C10",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S8"
+      ]
+    },
+    {
+      "claim_id": "CLM-C11",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S9"
+      ]
+    },
+    {
+      "claim_id": "CLM-C12",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S10"
+      ]
+    },
+    {
+      "claim_id": "CLM-C13",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S11"
+      ]
+    },
+    {
+      "claim_id": "CLM-C14",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S12"
+      ]
+    },
+    {
+      "claim_id": "CLM-C15",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S13"
+      ]
+    },
+    {
+      "claim_id": "CLM-C16",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S1"
+      ]
+    },
+    {
+      "claim_id": "CLM-C17",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S14"
+      ]
+    },
+    {
+      "claim_id": "CLM-C18",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S14"
+      ]
+    },
+    {
+      "claim_id": "CLM-C19",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S15"
+      ]
+    },
+    {
+      "claim_id": "CLM-C20",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S16"
+      ]
+    },
+    {
+      "claim_id": "CLM-C21",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S17"
+      ]
+    },
+    {
+      "claim_id": "CLM-C22",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S17"
+      ]
+    },
+    {
+      "claim_id": "CLM-C23",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S18"
+      ]
+    },
+    {
+      "claim_id": "CLM-C24",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S19"
+      ]
+    },
+    {
+      "claim_id": "CLM-C25",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S20"
+      ]
+    },
+    {
+      "claim_id": "CLM-C26",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S1"
+      ]
+    },
+    {
+      "claim_id": "CLM-C27",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S1"
+      ]
+    },
+    {
+      "claim_id": "CLM-C28",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S21"
+      ]
+    },
+    {
+      "claim_id": "CLM-C29",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S22"
+      ]
+    },
+    {
+      "claim_id": "CLM-C30",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S2"
+      ]
+    },
+    {
+      "claim_id": "CLM-C31",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S23"
+      ]
+    },
+    {
+      "claim_id": "CLM-C32",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S23"
+      ]
+    },
+    {
+      "claim_id": "CLM-C33",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S24"
+      ]
+    },
+    {
+      "claim_id": "CLM-C34",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S25"
+      ]
+    },
+    {
+      "claim_id": "CLM-C35",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S26"
+      ]
+    },
+    {
+      "claim_id": "CLM-C36",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S27"
+      ]
+    },
+    {
+      "claim_id": "CLM-C37",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S28"
+      ]
+    },
+    {
+      "claim_id": "CLM-C38",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S29"
+      ]
+    },
+    {
+      "claim_id": "CLM-C39",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S30"
+      ]
+    },
+    {
+      "claim_id": "CLM-C40",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S31"
+      ]
+    },
+    {
+      "claim_id": "CLM-C41",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S32"
+      ]
+    },
+    {
+      "claim_id": "CLM-C42",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S33"
+      ]
+    },
+    {
+      "claim_id": "CLM-C43",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S34"
+      ]
+    },
+    {
+      "claim_id": "CLM-C44",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S35"
+      ]
+    },
+    {
+      "claim_id": "CLM-C45",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S36"
+      ]
+    },
+    {
+      "claim_id": "CLM-C46",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S37"
+      ]
+    },
+    {
+      "claim_id": "CLM-C47",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S38"
+      ]
+    },
+    {
+      "claim_id": "CLM-C48",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S39"
+      ]
+    },
+    {
+      "claim_id": "CLM-C49",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S40"
+      ]
+    },
+    {
+      "claim_id": "CLM-C50",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S41"
+      ]
+    },
+    {
+      "claim_id": "CLM-C51",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S42"
+      ]
+    },
+    {
+      "claim_id": "CLM-C52",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S42"
+      ]
+    },
+    {
+      "claim_id": "CLM-C53",
+      "verification_status": "supported",
+      "source_ids": [
+        "SRC-S43"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "SRC-S1",
+      "url": "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S2",
+      "url": "https://github.com/aaif-goose/goose/blob/main/documentation/docs/guides/environment-variables.md",
+      "resolvable": true,
+      "source_type": "vendor_repository",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S3",
+      "url": "https://geminicli.com/docs/reference/configuration/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S4",
+      "url": "https://opencode.ai/docs/config/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S5",
+      "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S6",
+      "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S7",
+      "url": "https://code.claude.com/docs/en/memory",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S8",
+      "url": "https://opencode.ai/docs/rules/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S9",
+      "url": "https://learn.chatgpt.com/docs/build-skills.md",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S10",
+      "url": "https://geminicli.com/docs/cli/skills/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S11",
+      "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S12",
+      "url": "https://codelabs.developers.google.com/getting-started-with-antigravity-skills",
+      "resolvable": true,
+      "source_type": "other",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S13",
+      "url": "https://agentskills.io/home",
+      "resolvable": true,
+      "source_type": "specification",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S14",
+      "url": "https://code.claude.com/docs/en/mcp",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S15",
+      "url": "https://learn.chatgpt.com/docs/extend/mcp?surface=cli",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S16",
+      "url": "https://geminicli.com/docs/tools/mcp-server/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S17",
+      "url": "https://www.linuxfoundation.org/press/linux-foundation-announces-the-formation-of-the-agentic-ai-foundation",
+      "resolvable": true,
+      "source_type": "news",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S18",
+      "url": "https://aaif.io/blog/a2a-joins-aaif",
+      "resolvable": true,
+      "source_type": "blog",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S19",
+      "url": "https://aaif.io/blog/from-skills-and-tools-to-portable-agent-plugins",
+      "resolvable": true,
+      "source_type": "blog",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S20",
+      "url": "https://github.com/agentskills/agentskills",
+      "resolvable": true,
+      "source_type": "vendor_repository",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S21",
+      "url": "https://github.com/openai/codex/issues/4407",
+      "resolvable": true,
+      "source_type": "issue_tracker",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S22",
+      "url": "https://github.com/google-gemini/gemini-cli/issues/23796",
+      "resolvable": true,
+      "source_type": "issue_tracker",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S23",
+      "url": "https://antigravity.google/docs/cli/gcli-migration/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S24",
+      "url": "https://antigravity.google/docs/rules/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S25",
+      "url": "https://geminicli.com/docs/cli/gemini-md/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S26",
+      "url": "https://cursor.com/docs/cli/reference/configuration",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S27",
+      "url": "https://cursor.com/docs/skills",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S28",
+      "url": "https://cursor.com/docs/rules",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S29",
+      "url": "https://cursor.com/docs/mcp",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S30",
+      "url": "https://docs.x.ai/build/settings",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S31",
+      "url": "https://docs.x.ai/build/features/project-rules",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S32",
+      "url": "https://docs.x.ai/build/features/sessions",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S33",
+      "url": "https://jules.google/docs/cli/reference/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S34",
+      "url": "https://opencode.ai/docs/cli/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S35",
+      "url": "https://opencode.ai/docs/troubleshooting",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S36",
+      "url": "https://github.com/anomalyco/opencode/pull/8963",
+      "resolvable": true,
+      "source_type": "issue_tracker",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S37",
+      "url": "https://github.com/anthropics/claude-code/issues/67853",
+      "resolvable": true,
+      "source_type": "issue_tracker",
+      "primary_source": true,
+      "quality_tier": "B",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S38",
+      "url": "https://goose-docs.ai/docs/guides/context-engineering/using-skills/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S39",
+      "url": "https://code.claude.com/docs/en/plugins/org",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S40",
+      "url": "https://goose-docs.ai/docs/guides/context-engineering/using-goosehints/",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S41",
+      "url": "https://agentskills.io/specification",
+      "resolvable": true,
+      "source_type": "specification",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S42",
+      "url": "https://agents.md/",
+      "resolvable": true,
+      "source_type": "specification",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    },
+    {
+      "source_id": "SRC-S43",
+      "url": "https://agentclientprotocol.com/community/governance",
+      "resolvable": true,
+      "source_type": "official_documentation",
+      "primary_source": true,
+      "quality_tier": "A",
+      "metadata_confirmed": true,
+      "language": "en",
+      "jurisdictions": []
+    }
+  ]
+}

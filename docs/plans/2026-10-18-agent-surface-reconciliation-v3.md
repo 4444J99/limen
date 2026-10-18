@@ -238,3 +238,45 @@ Two durable lessons, recorded here because no other surface owns them:
   unrelated `undeclared_home_entry`.
 - `scripts/check-session-phase.py` exits 0 for this plan (Issue + PR lines present).
 - Re-run the 8-consumer matrix (v2 §6) rows for Claude Code, Claude Desktop, and OpenCode after items 1–2.
+
+## Research findings (2026-10-18, appended): what the vendors document
+
+Full record, evidence and corrections: `docs/research/agent-ecosystem-unity/report.md`. Method: 190 read-only
+agents on explicit tiers, 54 claims, 163 fetch-before-vote votes (all fetched; 0 refuted), 43 primary sources, plus
+operator spot-checks in the main loop and disk/code measurement. Evidence classes: [W] workflow-verified, [M]
+single-reader main-loop check, [D] measured here.
+
+**Answer to "can one runtime root stand on supported mechanisms?"** Mostly yes, per launch, and the Domus adapter
+(`relocation_environment`) already does it.
+
+| Vendor | Supported mechanism | Doorway still needed |
+|---|---|---|
+| Claude Code | `CLAUDE_CONFIG_DIR` (settings, session history, plugins) [M] | No; the `~/.claude*` doorways now expose **frozen** copies |
+| Codex | `CODEX_HOME` [W] | No (redundant) |
+| Gemini CLI | `GEMINI_CLI_HOME` [W]; consumer tiers retired 2026-06-18, paid-API and enterprise continue [M] | Env suffices on a continuing tier |
+| Antigravity | **none documented** [W] | **Yes** |
+| Copilot CLI | `COPILOT_HOME` [W]; unused here | No |
+| Cursor | `CURSOR_CONFIG_DIR`, CLI config only [W] | **Yes** (mcp, skills) |
+| OpenCode | config dir only [W]; data via `XDG_*` set by the adapter [D], undocumented by the vendor | Adapter-dependent |
+| goose | `GOOSE_PATH_ROOT` [W], coverage of `~/.config/goose` unverified | No |
+| Jules | cloud VM; `~/.jules` still holds `config.yaml`, `history.txt`, `cache/` [D] | n/a |
+| Grok Build | `$GROK_HOME` [W]; **not installed** here [D] | n/a |
+
+Standards converge at the project level and at `~/.agents/skills` (Codex, Gemini CLI, Copilot, Cursor, goose);
+nothing, including the Agentic AI Foundation, standardizes a home directory. XDG is not converging.
+
+**Corrections this research makes to this plan's own premises:**
+- Item 2/8 follow-on: Antigravity's CLI documents its global skills at `~/.gemini/antigravity-cli/skills/` while
+  `skills.json` points at `~/.agents/skills` [W, D]; skills only in `<RT>/.agents/skills` reach no documenting vendor.
+- `GEMINI_CLI_HOME` is `<RT>/gemini/home` (the CLI reads `<RT>/gemini/home/.gemini`), not `<RT>/gemini`; `~/.gemini`
+  resolves to the separate `legacy-home` tree, which holds the OAuth credentials [D]. Antigravity's five surfaces
+  are symlinks into `<RT>/antigravity/` from both trees, so `legacy-home` is not "live for agy".
+- The `~/.claude.json` doorway is **not** load-bearing: the live file is `$CLAUDE_CONFIG_DIR/.claude.json` [D].
+- Step 8 candidates, none executed, all rename-aside with custody first: repoint or retire the Claude doorways;
+  repoint `~/.local/share/opencode` at the live store (readers already resolve it, limen #3029); export
+  `COPILOT_HOME`; decide the Gemini lane's tier before touching `context.fileName`.
+
+**Owed:** the gap list in the report; Studium profile for agent-run research (praxis-perpetua#57); research CLI
+traceback (limen#3078); workflow reservation, `advisor` and `Bash` reachability (limen#3079). Verification update
+since this plan merged: `domus-home-guard --check` now exits 0 (the `.grokbot` route is applied and the stray
+`visual_dashboard.html` is in custody).

@@ -1,0 +1,21 @@
+{
+  "attempted_profiles": [
+    "api_search",
+    "api_synthesis",
+    "pro_computer",
+    "pro_research",
+    "provider_auto"
+  ],
+  "blocked_at": "2026-10-18T12:15:53Z",
+  "blocker_code": "missing_capability",
+  "failed_predicate": "api_search=health:adapter_disabled,health:api_credit_state_unverified,health:automatic_top_up_state_unverified,health:credential_missing,health:live_pricing_confirmed,health:projected_cost_missing,health:required_profile_state,latency_unknown,missing_capabilities:cited_synthesis,claim_verification,markdown_export,spend_unknown,state:dormant,verification_strength; api_synthesis=health:adapter_disabled,health:api_credit_state_unverified,health:automatic_top_up_state_unverified,health:credential_missing,health:live_catalog_confirmed,health:live_pricing_confirmed,health:projected_cost_missing,health:required_profile_state,latency_unknown,missing_capabilities:claim_verification,markdown_export,spend_unknown,state:dormant,verification_strength; pro_computer=health:automatic_refill_unverified,health:computer_credits_unverified,health:required_profile_state,health:value_case_unverified,latency_unknown,missing_capabilities:cited_synthesis,claim_verification,current_web_retrieval,markdown_export,spend_unknown,state:disabled,verification_strength; pro_research=state:disabled; provider_auto=no_reachable_adapters",
+  "next_action": "Refresh the owner catalog or satisfy its recorded health gate; do not substitute silently",
+  "outcome_type": "BlockedReceipt",
+  "owner_surface": "organvm/limen",
+  "request_id": "SGO-REQ-2026-AGENT-ECOSYSTEM-UNITY-01",
+  "reversible_work_completed": [
+    "validated_request",
+    "evaluated_profile_catalog"
+  ],
+  "schema_version": "1.0"
+}

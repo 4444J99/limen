@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "request_id": "SGO-REQ-2026-AGENT-ECOSYSTEM-UNITY-01",
+  "attested_at": "2026-10-18T12:14:15Z",
+  "attestor": "Limen operator review (main loop)",
+  "export_hash": "sha256:e8724466ebfa8324119f3bf473ce28ca323bcbd81936fcb0fb11da3f48df9d78",
+  "preservation_tier": "operational_internal",
+  "external_transmission": "public_only",
+  "tracked_output_safe": true,
+  "contains_credentials": false,
+  "contains_private_prompt_body": false,
+  "contains_sensitive_raw_material": false,
+  "redactions_applied": []
+}
