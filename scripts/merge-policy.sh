@@ -267,11 +267,15 @@ if [ -n "$req_json" ] && printf '%s' "$req_json" | jq -e 'type == "array"' >/dev
   req_scope="required"
   req_failing=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')
   req_pending=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "pending")] | length')
-elif [ -n "$REPO" ] && "$_py" "$_root/scripts/_required_checks.py" \
-    --prove-no-required "$REPO" --branch "$base" >/dev/null 2>&1; then
+elif [ -n "$queue_repo" ] && "$_py" "$_root/scripts/_required_checks.py" \
+    --prove-no-required "$queue_repo" --branch "$base" >/dev/null 2>&1; then
   # gh emits text/nonzero rather than [] when the policy has no required checks.
   # Prove that absence through the shared branch-protection AND rules predicate;
   # an unavailable/unknown policy still retains the conservative fallback above.
+  # queue_repo is --repo when given, else the canonical PR URL's repository, so the documented
+  # bare form `merge-policy.sh <PR#>` judges the same policy as `--repo OWNER/NAME`. Keying this
+  # proof on $REPO alone made a bare run HOLD on an advisory-red PR that the --repo run CLEARED
+  # (2026-10-18: #3043 read HOLD on witness-contract, a non-required check, until --repo was added).
   req_scope="required"; req_failing=0; req_pending=0
 fi
 
