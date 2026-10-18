@@ -38,6 +38,9 @@
   "reclassification": {
     "max_occurrences_per_run": 5
   },
+  "resource_limits": {
+    "max_source_bytes_per_unit": 134217728
+  },
   "recency_half_life_days": 30.0,
   "unconverged_repeat_limit": 15
 }
