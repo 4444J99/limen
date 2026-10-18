@@ -144,6 +144,9 @@ surfaces:
   scripts/worktree-pr-receipts.py:
     disposition: nondefault-worktree-branch-pr-default-refused
     expected: {git_push: 1}
+  scripts/session-closeout-receipt.py:
+    disposition: diagnostic-remediation-string-only-no-git-write
+    expected: {git_push: 1}
   web/api/main.py:
     disposition: github-storage-read-only-before-side-effects
     expected: {}

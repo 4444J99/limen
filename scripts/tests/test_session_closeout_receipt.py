@@ -15,6 +15,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 import shlex
 import subprocess
 import sys
@@ -243,7 +244,7 @@ class World:
             return world.observe(roots, session_id, anchor=anchor, evidence=evidence)
 
         import limen.conduct.client as conduct_client
-        import limen.process_ownership as process_ownership
+        from limen import process_ownership
 
         self.monkeypatch.setattr(closeout, "run", fake_run)
         self.monkeypatch.setattr(conduct_client, "client_from_env", lambda: Client())
@@ -443,7 +444,8 @@ def test_valid_two_repo_session_is_accepted_by_the_real_checker(world):
     for entry in receipt["verification"]:
         assert (
             subprocess.run(
-                ["git", "-C", str(world.repos[entry["root_id"]]), "merge-base", "--is-ancestor", entry["head"], "HEAD"]
+                ["git", "-C", str(world.repos[entry["root_id"]]), "merge-base", "--is-ancestor", entry["head"], "HEAD"],
+                check=False,
             ).returncode
             == 0
         )
@@ -774,7 +776,7 @@ def test_attest_tolerates_only_its_own_evidence_directory_on_the_receipt_root(wo
 
 def test_a05_attestations_bind_the_gate_definition_the_head_and_the_digest_but_no_output(world):
     world.write_manifest(world.base_manifest())
-    code, payload = world.attest("subject", "bound")
+    _code, payload = world.attest("subject", "bound")
     record = json.loads((world.repos["owner"] / payload["write"][0]).read_text())
     assert record["schema"] == producer.ATTESTATION_SCHEMA and record["gate_id"] == "trivial"
     assert record["head"] == git(world.repos["subject"], "rev-parse", "HEAD") and record["exit_code"] == 0
@@ -988,7 +990,7 @@ def test_a02_a_shared_home_anchor_cannot_reach_zero_while_other_agents_run(world
     world.write_manifest(manifest)
     world.census = {"complete": True, "process_count": 5, "counts": {"unknown": 5}}
     world.sessions = [{"session_id": SID, "worktree": str(home)}]
-    code, payload = world.cli("plan")
+    _code, payload = world.cli("plan")
     message = next(g["message"] for g in payload["gaps"] if g["code"] == "process_census_nonzero")
     assert "shared directory" in message and "cannot reach zero" in message
 
@@ -1273,7 +1275,7 @@ def test_a23_a_complete_claim_can_always_be_downgraded_to_handoff_but_read_only_
 
 def test_a12_an_uncited_attestation_is_named_before_it_becomes_an_unattributed_path(world):
     world.ready()
-    code, payload = world.attest("subject", "superseded")
+    code, _payload = world.attest("subject", "superseded")
     assert code == 0
     code, plan = world.cli("plan")
     assert code == 1 and "uncited_evidence_file" in codes(plan)
@@ -1474,7 +1476,11 @@ def test_exceptions_the_checker_leaks_as_tracebacks_exit_two_in_the_producer(wor
     monkeypatch.setattr(producer, "derive", explode)
     code, payload = world.cli("plan")
     assert code == 2 and payload["error_type"] == "AttributeError" and payload["status"] == "unmeasured"
-    monkeypatch.setattr(producer, "derive", lambda ctx, seams: [][1])
+
+    def _explode_index(ctx, seams):
+        raise IndexError("boom")
+
+    monkeypatch.setattr(producer, "derive", _explode_index)
     code, payload = world.cli("plan")
     assert code == 2 and payload["error_type"] == "IndexError"
 
@@ -1572,7 +1578,7 @@ def test_a06_the_attested_gate_is_resolved_at_the_attested_head_not_the_working_
     world.ready()
     registry = world.repos["owner"] / producer.DEFAULT_GATES_REGISTRY
     registry.write_text(REGISTRY.replace('command: "true"', 'command: "echo changed"'))
-    code, payload = world.cli("plan")
+    _code, payload = world.cli("plan")
     assert "verification_not_a_gate" not in codes(payload), "an uncommitted edit must not re-define a past gate"
 
 
@@ -1777,3 +1783,179 @@ def test_a16_a_genuine_absence_file_is_reused_after_the_receipt_commit_moves_the
     assert code == 0, payload
     code, result = world.cli("check")
     assert code == 0, result
+
+
+# ---- negative safety controls (A25 - A33)
+
+
+def test_a25_manifest_gaps_block_check_and_recheck_heads(world):
+    world.ready()
+    built = world.build_clean()
+    world.commit_and_push(built)
+
+    code, result = world.cli("check")
+    assert code == 0, result
+
+    # Tamper with manifest permissions (0o644 is insecure)
+    world.manifest_path.chmod(0o644)
+
+    # check must refuse closed with exit code 1 and status manifest_gaps
+    code, payload = world.cli("check")
+    assert code == 1, payload
+    assert payload["status"] == "manifest_gaps"
+    assert any(g["code"] == "manifest_mode_too_open" for g in payload["gaps"])
+
+    # check --recheck-heads must also refuse closed with exit code 1 and status manifest_gaps
+    code, payload = world.cli("check", "--recheck-heads")
+    assert code == 1, payload
+    assert payload["status"] == "manifest_gaps"
+
+
+def test_a26_incomplete_verification_coverage(world):
+    manifest = world.base_manifest()
+    subject = world.repos["subject"]
+    (subject / "uncovered.py").write_text("x = 1\n")
+    git(subject, "add", "uncovered.py")
+    git(subject, "commit", "-q", "-m", "add uncovered")
+    git(subject, "push", "-q", "origin", f"HEAD:refs/heads/{world.branch['subject']}")
+
+    for row in manifest["scopes"]:
+        if row["id"] == "subject":
+            row["owned_paths"] = ["implementation.py", "uncovered.py"]
+    world.write_manifest(manifest)
+
+    # Attest trivial gate, which only covers implementation.py
+    code, payload = world.attest("owner", "gate-owner")
+    assert code == 0
+    manifest["verification"].append({"scope": "owner", "evidence": payload["write"][0]})
+    code, payload = world.attest("subject", "gate-subject")
+    assert code == 0
+    manifest["verification"].append({"scope": "subject", "evidence": payload["write"][0]})
+    world.write_bundle(manifest)
+    world.write_manifest(manifest)
+
+    code, plan = world.cli("plan")
+    assert any(g["code"] == "verification_coverage_incomplete" for g in plan["gaps"])
+    assert "uncovered.py" in next(g["message"] for g in plan["gaps"] if g["code"] == "verification_coverage_incomplete")
+
+    code, build = world.cli("build")
+    assert code == 1 and "verification_coverage_incomplete" in codes(build)
+
+
+def test_a27_stale_custody_absence_at_release(owner_anchor_world):
+    world = owner_anchor_world
+    world.ready(custody="absence")
+    built = world.build_clean()
+    world.commit_and_push(built)
+
+    code, result = world.cli("check")
+    assert code == 0, result
+
+    # Leave an untracked file in the subject repository at release
+    (world.repos["subject"] / "stray.txt").write_text("untracked\n")
+
+    code, result = world.cli("check")
+    assert code == 1, result
+    assert result["status"] == "custody_absence_unproven"
+    assert any(f["code"] == "custody_absence_unproven" for f in result.get("findings", []))
+
+
+def test_a28_orphaned_background_processes_rejected(world):
+    world.write_manifest(world.base_manifest())
+    world.commit_registry(
+        "subject",
+        """\
+gates:
+  orphan:
+    command: "sleep 10 & exit 0"
+    paths: ["implementation.py"]
+    owner: test
+    note: leaves an orphaned sleep process in the process group
+""",
+    )
+    code, payload = world.attest("subject", "orphan-label", gate="orphan")
+    assert code == 1, payload
+    assert payload["status"] == "refused"
+    assert any(g["code"] == "gate_left_orphaned_processes" for g in payload["gaps"])
+    assert not (
+        world.repos["owner"] / CONTINUATION / "closeout-evidence" / SID / "attestation-orphan-label.json"
+    ).exists()
+
+
+def test_a29_output_buffer_ceiling_overflow(world):
+    world.write_manifest(world.base_manifest())
+    world.commit_registry(
+        "subject",
+        """\
+gates:
+  flood:
+    command: "python3 -c \\"import sys; sys.stdout.write('A' * (9 * 1024 * 1024)); sys.stdout.flush()\\""
+    paths: ["implementation.py"]
+    owner: test
+    note: overflows the 8 MiB output buffer ceiling
+""",
+    )
+    code, payload = world.attest("subject", "flood-label", gate="flood")
+    assert code == 1, payload
+    assert payload["status"] == "refused"
+    assert any(g["code"] == "gate_output_exceeded_ceiling" for g in payload["gaps"])
+
+
+def test_a30_create_only_write_failure_cleanup(tmp_path, monkeypatch):
+    target_rel = "new_dir/sub_dir/test_file.txt"
+    created_parent = tmp_path / "new_dir/sub_dir"
+    target_file = tmp_path / target_rel
+
+    def failing_fsync(fd):
+        raise OSError("simulated fsync failure: disk full")
+
+    monkeypatch.setattr(os, "fsync", failing_fsync)
+    with pytest.raises(OSError, match="simulated fsync failure"):
+        producer.create_only(tmp_path, target_rel, b"sample content", create_from=0)
+
+    assert not target_file.exists(), "partial file must be unlinked on failure"
+    assert not created_parent.exists(), "newly created directories must be pruned on failure"
+    assert not (tmp_path / "new_dir").exists(), "root newly created dir must also be pruned"
+
+
+def test_a31_unsafe_scp_origin_credentials(world):
+    assert producer.origin_credential_problem("alice@github.com:example/subject.git") is True
+    assert producer.origin_credential_problem("git:secret@github.com:example/subject.git") is True
+    assert producer.origin_credential_problem("git@github.com:example/subject.git") is False
+
+    world.ready()
+    git(world.repos["subject"], "remote", "set-url", "origin", "alice@github.com:example/subject.git")
+    code, payload = world.cli("plan")
+    assert code == 1 and "origin_has_embedded_credentials" in codes(payload)
+
+
+def test_a32_missing_field_sentinel_not_matching_null():
+    # A missing key must not match an expected None value
+    assert producer._expect_matches({"status": None}, {"status": None}) is True
+    assert producer._expect_matches({}, {"status": None}) is False
+    assert producer._expect_matches({"nested": {}}, {"nested.field": None}) is False
+    assert producer._expect_matches({"nested": {"field": None}}, {"nested.field": None}) is True
+
+
+def test_a33_stale_default_branch_tip_at_release(world):
+    world.ready()
+    built = world.build_clean()
+    world.commit_and_push(built)
+
+    code, result = world.cli("check")
+    assert code == 0, result
+
+    # Simulate GitHub's default branch moving ahead of local origin/main
+    orig_gh = world.gh
+
+    def mock_gh(endpoint):
+        if "git/ref/heads/main" in endpoint:
+            return json.dumps({"ref": "refs/heads/main", "object": {"type": "commit", "sha": "0" * 40}})
+        return orig_gh(endpoint)
+
+    world.gh = mock_gh
+
+    code, result = world.cli("check")
+    assert code == 1, result
+    assert result["status"] == "default_branch_tip_stale"
+    assert any(f["code"] == "default_branch_tip_stale" for f in result.get("findings", []))

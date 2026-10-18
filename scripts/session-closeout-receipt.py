@@ -56,6 +56,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -95,6 +96,7 @@ TERMINAL_STATUSES = {
 NATIVE_EFFECT_KINDS = {"pull_request", "issue", "git_ref"}
 DEFAULT_TIMEOUT_SECONDS = 600
 MAX_TIMEOUT_SECONDS = 600
+MAX_OUTPUT_BYTES = 8 * 1024 * 1024  # 8 MiB output ceiling
 CHILD_ENV_ALLOWLIST = (
     "PATH",
     "HOME",
@@ -157,7 +159,7 @@ class ProducerError(RuntimeError):
     """Unmeasured: the message is fixed prose and carries no private path, argv or credential."""
 
 
-class Refusal(Exception):  # noqa: N818 - a refusal is a measured outcome, not an error
+class Refusal(Exception):
     """One measured refusal (exit 1) raised from a verb that has no report to accumulate gaps in."""
 
     def __init__(self, code: str, message: str) -> None:
@@ -179,6 +181,9 @@ class Seams:
     read_repository: Callable[[str], dict]
     observe: Callable[..., Any]
     read_effect: Callable[[dict], dict]
+    read_ref: Callable[[str, str], dict] = lambda slug, branch: json.loads(
+        closeout.run(["gh", "api", "--method", "GET", f"repos/{slug}/git/ref/heads/{quote(branch, safe='')}"])
+    )
     now: Callable[[], datetime] = lambda: datetime.now(UTC)
 
 
@@ -385,13 +390,24 @@ def create_only(root: Path, relative: str, data: bytes, *, create_from: int) -> 
     directory, created = _open_directory_chain(root, parts[:-1], create_from=create_from)
     try:
         descriptor = os.open(parts[-1], os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644, dir_fd=directory)
-        with os.fdopen(descriptor, "wb") as handle:
-            os.fchmod(handle.fileno(), 0o644)
-            handle.write(data)
-            handle.flush()
-            os.fsync(handle.fileno())
-    finally:
+        try:
+            with os.fdopen(descriptor, "wb") as handle:
+                os.fchmod(handle.fileno(), 0o644)
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except BaseException:
+            with contextlib.suppress(OSError):
+                os.unlink(parts[-1], dir_fd=directory)
+            raise
+    except BaseException:
         os.close(directory)
+        for index, _ in reversed(created):
+            dir_path = root / "/".join(parts[: index + 1])
+            with contextlib.suppress(OSError):
+                os.rmdir(dir_path)
+        raise
+    os.close(directory)
     return ["/".join(parts[: index + 1]) for index, _ in created]
 
 
@@ -425,7 +441,12 @@ def scrub_problems(data: bytes, *, literals: list[str], allowed: list[str], stri
 
 def origin_credential_problem(origin: str) -> bool:
     """A14: a remote carrying a password, a token username or a non-`git` ssh user is never echoed."""
-    if origin.startswith("git@") or "://" not in origin:
+    if "://" not in origin:
+        if "@" in origin:
+            user_part, _ = origin.split("@", 1)
+            if ":" in user_part:
+                return True
+            return user_part != "git"
         return False
     parts = urlsplit(origin)
     if parts.password:
@@ -844,11 +865,17 @@ def _derive_verification(ctx: Context, rep: Report) -> list[dict]:
             "evidence": relative,
             "sha256": sha256_hex(raw),
         }
+        if "selected_gates" in value:
+            entry["selected_gates"] = value["selected_gates"]
+        if "terminal_results" in value:
+            entry["terminal_results"] = value["terminal_results"]
+        if "resolver_fingerprint" in value:
+            entry["resolver_fingerprint"] = value["resolver_fingerprint"]
         if value.get("purpose") == "completion":
             entry["purpose"] = "completion"
             entry["owner_url"] = value.get("owner_url")
         rep.cite(relative)
-        entries.append({"entry": entry, "scope": scope.id})
+        entries.append({"entry": entry, "scope": scope.id, "value": value})
     return entries
 
 
@@ -1119,10 +1146,13 @@ def _reuse_evidence(ctx: Context, rep: Report, relative: str, schema: str) -> tu
 # ---- effects (A10, A17)
 
 
+_MISSING = object()
+
+
 def _lookup(value: Any, dotted: str) -> Any:
     for part in dotted.split("."):
         if not isinstance(value, dict) or part not in value:
-            return None
+            return _MISSING
         value = value[part]
     return value
 
@@ -1224,7 +1254,9 @@ def _native_effect(ctx: Context, seams: Seams, rep: Report, spec: dict, relative
 
 
 def _expect_matches(readback: Any, expect: dict) -> bool:
-    return all(_lookup(readback, key) == value for key, value in expect.items())
+    return all(
+        _lookup(readback, key) is not _MISSING and _lookup(readback, key) == value for key, value in expect.items()
+    )
 
 
 def _reuse_evidence_effect(ctx: Context, rep: Report, relative: str, spec: dict) -> tuple[bytes, bool] | None:
@@ -1325,6 +1357,72 @@ def _derive_branch(scope: Scope) -> tuple[str | None, str]:
     if isinstance(declared, str) and declared and declared != derived:
         return derived, "mismatch"
     return derived, "upstream"
+
+
+def glob_to_regex(glob: str) -> re.Pattern[str]:
+    out, i = [], 0
+    while i < len(glob):
+        if glob.startswith("**", i):
+            out.append(".*")
+            i += 2
+        elif glob[i] == "*":
+            out.append("[^/]*")
+            i += 1
+        else:
+            out.append(re.escape(glob[i]))
+            i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+def _verify_gate_coverage(
+    rep: Report, scope: Scope, head: str, owned: list[str], committed: list[str], mine: list[dict]
+) -> None:
+    for item in mine:
+        val = item.get("value", {})
+        if val.get("gate_id") == "verify-scoped" and item["entry"]["exit_code"] == 0:
+            return
+
+    owned_changed = [p for p in committed if closeout.matches(p, owned)]
+    if not owned_changed:
+        return
+
+    covered_paths: set[str] = set()
+    attested_gate_ids: set[str] = set()
+    for item in mine:
+        if item["entry"]["exit_code"] != 0:
+            continue
+        val = item.get("value", {})
+        gate_id = val.get("gate_id")
+        if gate_id:
+            attested_gate_ids.add(gate_id)
+        registry_rel = val.get("gate_registry", DEFAULT_GATES_REGISTRY)
+        with contextlib.suppress(Refusal, ProducerError, subprocess.SubprocessError, OSError):
+            reg = load_committed_registry(scope.path, head, registry_rel)
+            gate_row = reg.get(gate_id)
+            if isinstance(gate_row, dict):
+                for gp in gate_row.get("paths", []):
+                    covered_paths.add(gp)
+
+    uncovered = []
+    regexes = [glob_to_regex(gp) for gp in covered_paths]
+    for p in owned_changed:
+        if not any(r.match(p) for r in regexes):
+            uncovered.append(p)
+
+    if uncovered:
+        rep.gap(
+            "verification_coverage_incomplete",
+            f"scope {scope.id}: owned changed path(s) {', '.join(sorted(uncovered))} have no attested gate coverage",
+        )
+
+    required = scope.spec.get("required_gates")
+    if isinstance(required, list) and required:
+        missing_gates = set(required) - attested_gate_ids
+        if missing_gates:
+            rep.gap(
+                "verification_coverage_incomplete",
+                f"scope {scope.id}: required gate(s) {', '.join(sorted(missing_gates))} are not attested",
+            )
 
 
 def _derive_git_scope(
@@ -1438,7 +1536,9 @@ def _derive_git_scope(
                 f"scopes {pair} are two checkouts of one repository on the same publication branch",
             )
     # base_head (A7)
-    base = _derive_base(rep, scope, head, default_branch, github_slug is not None, bool(owned or retained))
+    base = _derive_base(
+        rep, scope, head, default_branch, github_slug is not None, bool(owned or retained), seams, github_slug
+    )
     if base is None:
         return None
     row["base_head"] = base
@@ -1491,10 +1591,12 @@ def _derive_git_scope(
         revision = item["entry"]["head"]
         if not _git_ok(root, "merge-base", "--is-ancestor", revision, head):
             rep.gap("verification_head_not_ancestor", f"scope {sid}: attested head is not an ancestor of HEAD")
-        elif owned and _git(root, "diff", "--name-only", revision, head, "--", *owned):
+        elif owned and _git(root, "diff", "--name-only", revision, head, "--", *[f":(literal){p}" for p in owned]):
             rep.gap("verification_stale", f"scope {sid}: owned paths changed since the attested head; re-run `attest`")
     if owned and not mine:
         rep.gap("owned_scope_unverified", f"scope {sid} owns paths but has no attested verification")
+    elif owned and mine:
+        _verify_gate_coverage(rep, scope, head, owned, committed, mine)
     fact.update(
         dirty_count=len(dirty),
         committed_count=len(committed),
@@ -1506,7 +1608,14 @@ def _derive_git_scope(
 
 
 def _derive_base(
-    rep: Report, scope: Scope, head: str, default_branch: str | None, github: bool, claims_paths: bool
+    rep: Report,
+    scope: Scope,
+    head: str,
+    default_branch: str | None,
+    github: bool,
+    claims_paths: bool,
+    seams: Seams,
+    github_slug: str | None = None,
 ) -> str | None:
     sid, root = scope.id, scope.path
     spec = scope.spec.get("base_head")
@@ -1530,6 +1639,20 @@ def _derive_base(
                 f"scope {sid}: refs/remotes/origin/{default_branch} is absent; fetch the default branch",
             )
             return None
+        if github_slug and default_branch:
+            with contextlib.suppress(subprocess.SubprocessError, closeout.Unmeasured, OSError):
+                live_ref = seams.read_ref(github_slug, default_branch)
+                live_tip = (live_ref.get("object") or {}).get("sha")
+                try:
+                    local_tip = _git(root, "rev-parse", "--verify", "-q", default_ref)
+                except subprocess.CalledProcessError:
+                    local_tip = None
+                if live_tip and local_tip and live_tip != local_tip:
+                    rep.gap(
+                        "default_branch_tip_stale",
+                        f"scope {sid}: local ref {default_ref} ({local_tip[:8]}) does not match live default branch tip ({live_tip[:8]}); fetch origin {default_branch}",
+                    )
+                    return None
         if fork_point == head or _git_ok(root, "merge-base", "--is-ancestor", head, default_ref):  # type: ignore[arg-type]
             # A7: the attribution window would be empty, which passes the unattributed-commit check vacuously.
             rep.gap(
@@ -1568,6 +1691,9 @@ def _validated_paths(rep: Report, value: Any, code: str, subject: str) -> list[s
         return None
     out = []
     for path in value:
+        if path.startswith(":") or "\x00" in path:
+            rep.gap(code, f"{subject}: an entry contains invalid path characters or pathspec magic")
+            return None
         try:
             out.append(closeout.safe_path(path))
         except closeout.Unmeasured:
@@ -1978,6 +2104,8 @@ def _receipt_branch(ctx: Context, receipt_path: Path) -> str | None:
 
 def _recheck_heads(ctx: Context, receipt_path: Path) -> dict:
     """A22: report which scope's head moved since the (create-only) receipt bound subject_head."""
+    if ctx.gaps:
+        raise Refusal("manifest_gaps", f"manifest has {len(ctx.gaps)} gap(s); cannot recheck heads")
     receipt = json.loads(receipt_path.read_bytes())
     moved, held = [], []
     for row in receipt.get("scope_roots", []):
@@ -2001,11 +2129,81 @@ def cmd_check(args: argparse.Namespace, seams: Seams) -> int:
         "checker": checker_identity(args.canonical_checker),
         "manifest_gaps": gaps_payload(ctx.gaps),
     }
+    if ctx.gaps:
+        payload["status"] = "manifest_gaps"
+        payload["gaps"] = gaps_payload(ctx.gaps)
+        emit(args, payload)
+        return 1
     if args.recheck_heads:
         payload["recheck"] = _recheck_heads(ctx, receipt_path)
         payload["status"] = "heads_moved" if payload["recheck"]["moved"] else "heads_held"
         emit(args, payload)
         return 1 if payload["recheck"]["moved"] else 0
+    receipt = json.loads(receipt_path.read_bytes())
+    if ctx.manifest.get("custody", {}).get("mode") == "absence" or "custody-absence" in receipt.get("custody", {}).get(
+        "evidence", ""
+    ):
+        absence_findings = []
+        for scope in ctx.scopes.values():
+            if scope.kind != "git":
+                continue
+            status = _git(scope.path, "status", "--porcelain=v1", "--ignored", "-z", "--untracked-files=all", raw=True)
+            residual = sorted(closeout.dirty_paths(status))
+            if scope.id == ctx.receipt_id:
+                prefix = ctx.evidence_dir_rel + "/"
+                residual = [path for path in residual if not path.startswith(prefix) and path != ctx.receipt_rel]
+            if residual:
+                absence_findings.append(
+                    {
+                        "code": "custody_absence_unproven",
+                        "message": f"scope {scope.id} holds {len(residual)} untracked, ignored or modified path(s) at release",
+                    }
+                )
+            stash = _git(scope.path, "stash", "list")
+            if stash:
+                absence_findings.append(
+                    {
+                        "code": "custody_absence_unproven",
+                        "message": f"scope {scope.id} has stashed local-only changes at release",
+                    }
+                )
+        if absence_findings:
+            payload["status"] = "custody_absence_unproven"
+            payload["findings"] = absence_findings
+            emit(args, payload)
+            return 1
+    tip_findings = []
+    for row in receipt.get("scope_roots", []):
+        sid = row.get("id")
+        scope = ctx.scopes.get(sid)
+        if scope is None or scope.kind != "git":
+            continue
+        repo_slug = row.get("repository")
+        if not repo_slug or "/" not in repo_slug:
+            continue
+        with contextlib.suppress(subprocess.SubprocessError, closeout.Unmeasured, OSError):
+            repo_info = seams.read_repository(repo_slug)
+            default_branch = repo_info.get("default_branch") if isinstance(repo_info, dict) else None
+            if default_branch:
+                live_ref = seams.read_ref(repo_slug, default_branch)
+                live_tip = (live_ref.get("object") or {}).get("sha")
+                default_ref = f"refs/remotes/origin/{default_branch}"
+                try:
+                    local_tip = _git(scope.path, "rev-parse", "--verify", "-q", default_ref)
+                except subprocess.CalledProcessError:
+                    local_tip = None
+                if live_tip and local_tip and live_tip != local_tip:
+                    tip_findings.append(
+                        {
+                            "code": "default_branch_tip_stale",
+                            "message": f"scope {sid}: local ref {default_ref} ({local_tip[:8]}) does not match live default branch tip ({live_tip[:8]})",
+                        }
+                    )
+    if tip_findings:
+        payload["status"] = "default_branch_tip_stale"
+        payload["findings"] = tip_findings
+        emit(args, payload)
+        return 1
     argv = _argv(ctx, receipt_path)
     dry = False
     if args.expect_unpublished:
@@ -2156,7 +2354,7 @@ def child_environment(root: Path) -> dict[str, str]:
 def run_bounded(command: str, root: Path, timeout: int) -> tuple[int, str, int]:
     """Run one shell command in its own process group; kill the group at the deadline; never check=True."""
     with tempfile.TemporaryFile() as sink:
-        process = subprocess.Popen(  # noqa: S603 - a registry-declared gate, run through bash -c
+        process = subprocess.Popen(
             ["bash", "-c", command],
             cwd=root,
             env=child_environment(root),
@@ -2166,23 +2364,58 @@ def run_bounded(command: str, root: Path, timeout: int) -> tuple[int, str, int]:
             start_new_session=True,
         )
         group = process.pid
+        deadline = time.monotonic() + timeout
         try:
-            code = process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired as exc:
-            with contextlib.suppress(ProcessLookupError):
-                os.killpg(group, signal.SIGTERM)
+            while True:
+                code = process.poll()
+                if code is not None:
+                    break
+                if os.fstat(sink.fileno()).st_size > MAX_OUTPUT_BYTES:
+                    with contextlib.suppress(ProcessLookupError, PermissionError):
+                        os.killpg(group, signal.SIGKILL)
+                    process.wait()
+                    raise Refusal(
+                        "gate_output_exceeded_ceiling",
+                        f"the gate exceeded the 8 MiB output ceiling ({MAX_OUTPUT_BYTES} bytes)",
+                    )
+                if time.monotonic() > deadline:
+                    with contextlib.suppress(ProcessLookupError):
+                        os.killpg(group, signal.SIGTERM)
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        with contextlib.suppress(ProcessLookupError):
+                            os.killpg(group, signal.SIGKILL)
+                        process.wait()
+                    raise ProducerError(
+                        "the gate exceeded its deadline; its process group was killed and nothing was attested"
+                    )
+                time.sleep(0.01)
+
+            if os.fstat(sink.fileno()).st_size > MAX_OUTPUT_BYTES:
+                raise Refusal(
+                    "gate_output_exceeded_ceiling",
+                    f"the gate exceeded the 8 MiB output ceiling ({MAX_OUTPUT_BYTES} bytes)",
+                )
+
+            time.sleep(0.02)
+            survived = False
             try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                with contextlib.suppress(ProcessLookupError):
+                os.killpg(group, 0)
+                survived = True
+            except ProcessLookupError:
+                survived = False
+            except PermissionError:
+                survived = True
+
+            if survived:
+                with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(group, signal.SIGKILL)
-                process.wait()
-            raise ProducerError(
-                "the gate exceeded its deadline; its process group was killed and nothing was attested"
-            ) from exc
+                raise Refusal(
+                    "gate_left_orphaned_processes",
+                    "the gate left surviving child or background processes running",
+                )
         finally:
-            # Reap stray children: survivors with a cwd in the scope would become census `unknown` processes.
-            # macOS answers EPERM (not ESRCH) for a group whose members are all already-exited zombies.
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(group, signal.SIGKILL)
         sink.seek(0)
@@ -2216,7 +2449,7 @@ def cmd_attest(args: argparse.Namespace, seams: Seams) -> int:
     prefix = ctx.evidence_dir_rel + "/"
 
     def tree_state() -> tuple[str, bytes, str]:
-        status = _git(scope.path, "status", "--porcelain=v1", "-z", "--untracked-files=all", raw=True)
+        status = _git(scope.path, "status", "--porcelain=v1", "--ignored", "-z", "--untracked-files=all", raw=True)
         if scope.id == ctx.receipt_id:
             status = filter_porcelain(status, {p for p in closeout.dirty_paths(status) if p.startswith(prefix)})
         # Every ref (branches, tags, remote-tracking refs, stash): a gate that pushes updates a remote-tracking ref.
@@ -2265,6 +2498,42 @@ def cmd_attest(args: argparse.Namespace, seams: Seams) -> int:
         "tree_clean_at_start": True,
         "tree_and_head_unchanged_at_end": True,
     }
+    if gate_id == "verify-scoped":
+        base_spec = scope.spec.get("base_head")
+        base = base_spec
+        if base_spec == "fork-point":
+            try:
+                base = _git(scope.path, "merge-base", head, "refs/remotes/origin/main")
+            except (subprocess.SubprocessError, OSError):
+                base = head
+        try:
+            raw_diff = _git(scope.path, "diff", "--name-only", "-z", base or "HEAD~1", head, raw=True)
+            changed_paths = sorted([os.fsdecode(p) for p in raw_diff.split(b"\0") if p])
+        except (subprocess.SubprocessError, OSError):
+            changed_paths = []
+        changed_paths_sha = sha256_hex("\n".join(changed_paths).encode())
+        verify_py = read_committed_blob(scope.path, head, "scripts/verify.py") or b""
+        verify_sh = read_committed_blob(scope.path, head, "scripts/verify-scoped.sh") or b""
+        gates_yaml = read_committed_blob(scope.path, head, registry_rel) or b""
+        resolver_fp = sha256_hex(verify_py + verify_sh + gates_yaml)
+        selected = []
+        for gname, gdef in registry.items():
+            if not isinstance(gdef, dict):
+                continue
+            gpaths = gdef.get("paths", [])
+            if not gpaths:
+                continue
+            rxs = [glob_to_regex(gp) for gp in gpaths]
+            if any(rx.match(p) for p in changed_paths for rx in rxs):
+                selected.append(gname)
+        record["base"] = base
+        record["changed_paths_sha256"] = changed_paths_sha
+        record["resolver_fingerprint"] = resolver_fp
+        record["selected_gates"] = sorted(selected)
+        record["terminal_results"] = {g: code for g in sorted(selected)}
+    else:
+        record["selected_gates"] = [gate_id]
+        record["terminal_results"] = {gate_id: code}
     if args.purpose:
         record["purpose"] = args.purpose
         record["owner_url"] = owner_url

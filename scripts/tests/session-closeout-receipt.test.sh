@@ -21,9 +21,9 @@ for candidate in "${LIMEN_SESSION_CLOSEOUT_RECEIPT_PYTHON:-}" "${LIMEN_GATE_PYTH
   [ -n "$candidate" ] || continue
   if "$candidate" -c "
 import sys
-sys.path.insert(0, '$ROOT/cli/src')
+sys.path.insert(0, sys.argv[1])
 import limen.portable_custody, limen.process_ownership, limen.conduct.client, yaml, pytest
-" >/dev/null 2>&1; then
+" "$ROOT/cli/src" >/dev/null 2>&1; then
     PY="$(command -v "$candidate")"
     break
   fi

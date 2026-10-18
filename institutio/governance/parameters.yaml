@@ -780,6 +780,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Interpreter override for scripts/tests/sealed-custody.test.sh; must import rfc8785 and pydantic (the cli venv). Unset, the test probes the gate python, the cli venvs, then PATH pythons."
+  LIMEN_SESSION_CLOSEOUT_RECEIPT_PYTHON:
+    default: ""
+    env: LIMEN_SESSION_CLOSEOUT_RECEIPT_PYTHON
+    self_update: none
+    owner: continuity
+    note: "Interpreter override for scripts/tests/session-closeout-receipt.test.sh; must import pytest, yaml, and pydantic. Unset, the test probes the gate python, the cli venvs, then PATH pythons."
   LIMEN_PRIVATE_CUSTODY_ROOT:
     default: "$LIMEN_ROOT/.limen-private"
     env: LIMEN_PRIVATE_CUSTODY_ROOT
