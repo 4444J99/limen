@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli/src"))
 from limen.conduct.client import client_from_env
 from limen.conduct.models import canonical_hash
 from limen.dispatch import _load_limen_env
-from limen.execution_policy import native_policy_record, reconcile_policy
+from limen.execution_policy import native_policy_record, policy_binding_for_runtime, reconcile_policy
 
 
 def main():
@@ -49,6 +49,11 @@ def main():
             prior_runtime=live["runtime"],
             preserved_priorities=len(source["approved_priorities"]),
         )
+        binding = policy_binding_for_runtime(candidate, live)
+        receipt.update(
+            binding_bytes=len(binding.encode("utf-8")),
+            binding_encoding="gzip+base64" if json.loads(binding).get("encoding") == "gzip+base64" else "json",
+        )
         if args.install and candidate != source:
             # Recheck immediately before installation; this route has no provider CAS.
             if client._request("GET", "/api/conduct/execution/policy") != live:
@@ -63,7 +68,7 @@ def main():
                     "--config",
                     "web/worker/wrangler.toml",
                 ],
-                input=json.dumps(candidate),
+                input=binding,
                 text=True,
                 capture_output=True,
                 timeout=90,

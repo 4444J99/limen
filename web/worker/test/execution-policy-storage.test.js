@@ -44,6 +44,13 @@ test("oversize complete policy round trips through bounded compressed binding an
   assert.ok(!JSON.stringify(body).includes("preserved-policy-data"));
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.deepEqual((await (await read(instance, true)).json()).policy, policy);
+  const allowance = await instance.fetch(new Request("https://limen.test/api/conduct/execution/allowance", {
+    method: "POST", headers: {authorization: `Bearer ${bearer}`, "content-type": "application/json"},
+    body: JSON.stringify({work_key: "fixture-0"})}));
+  assert.equal(allowance.status, 200);
+  const admitted = await allowance.json();
+  assert.equal(admitted.outcome_id, "storage-fixture-0");
+  assert.equal(admitted.limit_seconds, 7200);
 });
 
 test("legacy JSON policy readback retains its original semantic fingerprint", async () => {
@@ -65,7 +72,7 @@ test("invalid compressed policy never falls back to its envelope as an execution
     length: {...good, uncompressed_bytes: good.uncompressed_bytes - 1},
     limit: {...good, uncompressed_bytes: 65537},
     expansion: {...envelope({}, Buffer.from(" ".repeat(65537))), uncompressed_bytes: 1024},
-    utf8: envelope({}, Buffer.from([0xff])),
+    utf8: envelope({}, Buffer.from([0xff, 0xff])),
     json: envelope({}, Buffer.from("{")),
     array: envelope([]),
     missing: {...good, data: undefined},

@@ -16,6 +16,7 @@ import {
 } from "./projection.js";
 import { loadPrivateBoard } from "./private-board.js";
 import { ChatGithubController } from "./chat-github.js";
+import { readExecutionPolicy } from "./execution-policy-storage.js";
 import { configuredInventoryAuthority, InventoryAdmissionError } from "./inventory-admission.js";
 import {
   ConductValidationError,
@@ -160,8 +161,7 @@ export class ConductKeeperDurableObject {
     this.env = env;
     let inventoryAuthority = null;
     try { inventoryAuthority = configuredInventoryAuthority(env); } catch { /* Disabled until installed. */ }
-    let executionPolicy = {};
-    try { executionPolicy = JSON.parse(env.LIMEN_EXECUTION_POLICY || "{}"); } catch { /* Fail closed. */ }
+    const executionPolicy = {};
     this.service = new SerializedConductService(
       new DurableConductStore(ctx.storage),
       {
@@ -178,6 +178,13 @@ export class ConductKeeperDurableObject {
         runtimeIdentity: runtimeIdentity(env),
       },
     );
+    // One immutable decoded snapshot drives admission and readback. Keep the
+    // service available for diagnostics, but deny execution on invalid storage.
+    const service = this.service;
+    this.executionPolicy = readExecutionPolicy(env.LIMEN_EXECUTION_POLICY).catch(() => null);
+    this.policyReady = this.executionPolicy.then(policy => {
+      service.options.executionPolicy = policy ?? {};
+    });
   }
 
   async fetch(request) {
@@ -185,6 +192,7 @@ export class ConductKeeperDurableObject {
     const auth = await authorizeConductRequest(request, this.env);
     if (!auth.ok) return errorResponse(auth.detail, auth.status, this.env);
     try {
+      await this.policyReady;
       return await this.route(request, auth.principal);
     } catch (err) {
       if (err instanceof ConductValidationError || err instanceof ConductError || err instanceof ConductProjectionError
@@ -336,15 +344,15 @@ export class ConductKeeperDurableObject {
     }
     if (path === "/api/conduct/execution/policy" && request.method === "GET") {
       requireRole(principal, "conductor");
-      let policy;
-      try { policy = JSON.parse(this.env.LIMEN_EXECUTION_POLICY || "{}"); }
-      catch { throw new ConductError("execution_policy_invalid", 409); }
+      const policy = await this.executionPolicy;
+      if (policy === null) throw new ConductError("execution_policy_invalid", 409);
       const custody = request.headers.get("x-limen-policy-custody");
       if (custody !== null && custody !== "recover") {
         throw new ConductError("policy_custody_forbidden", 403);
       }
       const response = json({schema_version: "limen.execution_policy_readback.v1",
         configuration_fingerprint: await canonicalHash(policy),
+        supported_storage_encodings: ["json", "gzip+base64"],
         runtime: runtimeIdentity(this.env), ...(custody !== null ? {policy} : {})}, 200, this.env);
       response.headers.set("cache-control", "no-store");
       return response;
@@ -434,6 +442,7 @@ export class ConductKeeperDurableObject {
   }
 
   async alarm() {
+    await this.policyReady;
     this.chatGithub ||= new ChatGithubController(this.ctx, this.env, this.service);
     return this.chatGithub.serial(() => this.chatGithub.alarm());
   }
