@@ -84,6 +84,30 @@ def parse_assignments(text: str, keys: frozenset[str]) -> dict[str, str]:
     return found
 
 
+def lane_credential_present(lane: str, environ: Mapping[str, str] | None = None) -> bool:
+    """True when ``lane`` owns a named bearer, in the environment or in a safe cache.
+
+    Never raises and never returns a value: a malformed lane id, an absent or unsafe cache, or a cache
+    without the lane's entry is simply "no own credential". Callers that inherit ``LIMEN_AGENT`` from a
+    launcher use this to engage lane resolution only for lanes that actually have a bearer of their own,
+    leaving every other lane's existing resolution untouched.
+    """
+    environ = os.environ if environ is None else environ
+    try:
+        key = lane_token_key(lane)
+    except BrokerUnavailable:
+        return False
+    if environ.get(key, "").strip():
+        return True
+    path = cache_path(environ)
+    if not ownership_ok(path):
+        return False
+    try:
+        return key in parse_assignments(path.read_text(encoding="utf-8"), frozenset({key}))
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
 def read_conduct_credentials(
     environ: Mapping[str, str] | None = None, *, lane: str | None = None
 ) -> tuple[str, str] | None:

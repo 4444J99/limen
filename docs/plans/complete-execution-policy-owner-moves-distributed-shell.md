@@ -48,9 +48,11 @@ the retained `repair-checkout.json`, or any peer checkout.
      request never returns `LocalConductClient`; a missing lane credential raises `BrokerUnavailable` that names
      the key, never the value.
 3. `mcp/src/limen_mcp/server.py`: `_conduct_client()` passes `lane=os.environ["LIMEN_AGENT"]` with
-   `hydrate_cache=True` **only when `LIMEN_AGENT` is explicitly set** (no implicit `"opencode"` default for
-   credentials, so existing MCP tests and local-adapter use are unaffected). Credentials are resolved per call
-   and never cached or exported, as the docstring already requires.
+   `hydrate_cache=True` **only when `LIMEN_AGENT` is set and that lane owns a bearer of its own** in the
+   environment or a safe cache (`env_cache.lane_credential_present`, which never raises). `workstream-capsule.sh`
+   exports `LIMEN_AGENT` for every native lane, so scoping to "set" alone would make a Codex or Gemini session's
+   MCP server start raising; every lane without its own bearer keeps today's resolution byte-for-byte. No
+   implicit `"opencode"` default for credentials. Credentials are resolved per call and never cached or exported.
 4. ianva upstream (declared in Domus-owned config; example in `ianva/upstreams.example.json`): the limen MCP
    upstream sets only `LIMEN_AGENT=opencode` and `LIMEN_CONDUCT_ENV_FILE=<absolute path>`, never a token.
    Repo side: update the example and doc. The deployed config edit is a Domus follow-up atom, not an edit to a

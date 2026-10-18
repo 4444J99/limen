@@ -13,6 +13,7 @@ from mcp.types import ToolAnnotations
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from limen.conduct.client import client_from_env
+from limen.conduct.env_cache import lane_credential_present
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
@@ -268,12 +269,14 @@ def _load_data() -> LimenFile:
 def _conduct_client() -> Any:
     """Resolve the authenticated broker for each call; never cache credentials in process state.
 
-    An explicit ``LIMEN_AGENT`` names the lane, so the client authenticates with that lane's own bearer
-    (read from the owned cache, not exported) rather than the generic one that would relabel it ``codex``.
+    ``LIMEN_AGENT`` names the lane. When that lane owns a bearer of its own (environment or the owned
+    cache) the client authenticates with it, never the generic one that would relabel the job ``codex``.
+    A lane with no bearer of its own, including every launcher-exported lane that never had one, keeps
+    the existing resolution exactly.
     """
 
     lane = os.environ.get("LIMEN_AGENT", "").strip()
-    if lane:
+    if lane and lane_credential_present(lane):
         return client_from_env(hydrate_cache=True, lane=lane)
     return client_from_env()
 

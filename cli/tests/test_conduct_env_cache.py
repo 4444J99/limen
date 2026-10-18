@@ -220,6 +220,27 @@ def test_local_state_adapter_is_never_production_authority_for_a_lane(clean_env,
         client_from_env(hydrate_cache=True, lane="opencode")
 
 
+def test_lane_credential_present_reports_only_a_lane_that_owns_a_bearer(tmp_path):
+    cache = write_cache(tmp_path / "limen.env", LANE_CACHE)
+    environ = lane_environ(cache)
+    assert env_cache.lane_credential_present("opencode", environ) is True
+    assert env_cache.lane_credential_present("claude", environ) is True
+    assert env_cache.lane_credential_present("codex", environ) is False
+    assert env_cache.lane_credential_present("gemini", {"LIMEN_CONDUCT_TOKEN_GEMINI": "g", **environ}) is True
+    assert env_cache.lane_credential_present("gemini", {"LIMEN_CONDUCT_TOKEN_GEMINI": "  ", **environ}) is False
+
+
+def test_lane_credential_present_never_raises_and_never_trusts_an_unsafe_cache(tmp_path):
+    loose = write_cache(tmp_path / "loose.env", LANE_CACHE, mode=0o644)
+    absent = {"LIMEN_CONDUCT_ENV_FILE": str(tmp_path / "absent.env")}
+    assert env_cache.lane_credential_present("opencode", lane_environ(loose)) is False
+    assert env_cache.lane_credential_present("opencode", absent) is False
+    for lane in ("", "OpenCode", "../x", "open code"):
+        assert (
+            env_cache.lane_credential_present(lane, lane_environ(write_cache(tmp_path / "ok.env", LANE_CACHE))) is False
+        )
+
+
 def test_a_malformed_lane_never_reaches_the_cache(clean_env, tmp_path):
     clean_env.setenv("LIMEN_CONDUCT_ENV_FILE", str(write_cache(tmp_path / "limen.env", LANE_CACHE)))
     with pytest.raises(BrokerUnavailable, match=re.escape(env_cache.LANE_INVALID)):

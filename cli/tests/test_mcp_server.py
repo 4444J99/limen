@@ -613,6 +613,23 @@ def test_mcp_and_cli_resolve_the_identical_lane_credential(tmp_path, monkeypatch
     assert (mcp_client.endpoint, mcp_client.token) == (cli_client.endpoint, cli_client.token)
 
 
+def test_a_launcher_exported_lane_without_its_own_bearer_keeps_the_existing_resolution(
+    tmp_path, monkeypatch, lane_broker
+):
+    """workstream-capsule.sh exports LIMEN_AGENT for every native lane; only lanes with a bearer of their own change."""
+    endpoint, presented = lane_broker
+    _clear_conduct_env(monkeypatch)
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(_lane_cache(tmp_path, endpoint)))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("LIMEN_CONDUCT_URL", endpoint)
+    monkeypatch.setenv("LIMEN_CONDUCT_TOKEN", "explicit-generic")
+    server = _load_server()
+
+    server._conduct_client().capabilities()
+
+    assert presented == ["Bearer explicit-generic"]
+
+
 def test_mcp_conduct_client_without_an_explicit_lane_keeps_the_default_resolution(tmp_path, monkeypatch, lane_broker):
     from limen.conduct.client import BrokerUnavailable
 
