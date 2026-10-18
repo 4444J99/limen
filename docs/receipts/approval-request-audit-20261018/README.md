@@ -53,6 +53,11 @@ audit sees refusals, not the approvals the operator gave.
 | 6 | Leaky or opaque command forms (bare `env`, `~/.ssh` listing, transcript token grep); stops defensible (15) | Domus PreToolUse dispatcher reroutes plus `guard-liveness-check.sh` fixtures | Agent authors; operator arms with the cause-1 apply |
 | 7 | Worktrees carry frozen copies of the project allowlist (38 of 58 live copies are pre-#3006) | Fold durable entries of the shared `settings.local.json` into tracked settings; a drift sensor in `sensors.yaml` | Agent PR (forward risk only) |
 
+How the counts relate: the event counts in parentheses partition the 102 events that were not warranted
+(24 + 16 + 23 + 14 + 10 + 15 + 0 = 102); the 12 warranted events (114 − 102) belong to no cluster. Each event
+sits in exactly one cluster, assigned by its deepest root cause, so the ranking is by event count, not by how
+often a cause was merely contributing.
+
 Hypothesis tested and refuted for the rejected-prompt incident: that a stale worktree allowlist caused it.
 `Bash(shasum *)` reached main at 05:08:58Z, after both rejected prompts (04:58Z, 05:02Z), and the session's
 cwd was the worktree itself. The stale-copy mechanism is real (cause 7) but did not cause that incident.
