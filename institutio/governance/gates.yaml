@@ -1253,6 +1253,23 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: continuity
     note: "The disposability predicate, the census it consults, and the litter sensor — none of which anything scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/verify-hot-cache.sh implicated no test at all, the same declared-but-unwired class check-runner-coverage exists to catch. These tests drive the SHIPPED script (bash scripts/verify-hot-cache.sh under a tmp LIMEN_ROOT and a narrowed PATH), never an extracted copy of a rung, because the defects they pin are rungs that reported GREEN: R6 derived its verdict from parsed BREACH lines, so a census that died any other way named nothing and PASSED; R5 printed '0 clone(s) clean, pushed, stash-free' for a walk that never happened; and a failed `cd $ROOT` still reached DISPOSABLE. An extracted-copy test is what let the previous 'bidirectional proof' pass against a file it had already diverged from. mise.toml is a path because R4 asserts every tool THIS repo declares is in force — a mise query answers for the config merged from the CWD upward, so a declaration change must re-run the rung that reads it. Cheap tier: three files, hermetic, no xdist."
+  check-knowledge-alive:
+    command: "python3 scripts/check-knowledge-alive.py --fixture && bash scripts/run-pytest-hermetic.sh cli/tests/test_check_knowledge_alive.py -q"
+    paths:
+      [
+        "scripts/check-knowledge-alive.py",
+        "cli/tests/test_check_knowledge_alive.py",
+        "institutio/governance/corpora.yaml",
+        "scripts/check-corpora.py",
+        "scripts/corpus_resolve.py",
+        "scripts/prompt-recurring-forms.py",
+        "scripts/prompt-atom-ledger.py",
+        "cli/src/limen/prompt_corpus.py",
+      ]
+    tier: cheap
+    timeout_seconds: 240
+    owner: governance
+    note: "Proves the private knowledge archive loop is alive end to end on synthetic data only: the engine's own fixture exports are built into a throwaway store, projected to the prompt feed with receipts, ingested into a throwaway ledger through --archive-feed, and grouped into the recurring-form index, then ten fixed-order checks (tools, names, archive, feed receipts, ledger binding with no operator authority for any archive source, recurring forms, privacy, determinism) must all hold. The tests drive the same script with stub tools broken one fault at a time. It needs an engine that has the archive names and fixture commands: set KNOWLEDGE_ALIVE_ENGINE to an engine checkout, or have a current cce on PATH; an engine that lacks them is NOT ALIVE or UNUSABLE, never a silent skip. The live mode (--live) reads the real private store and ledger, so it cannot run in CI and is run by hand at closeout; this gate never reads private data. No ci_job: the fixture needs the engine, which CI does not have."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]
