@@ -854,7 +854,7 @@ def extract_opencode(agg: Aggregator, writer: Any) -> None:
     if not OPENCODE_DB.exists():
         return
     try:
-        con = sqlite3.connect(f"file:{OPENCODE_DB}?immutable=1", uri=True)
+        con = sqlite3.connect(f"file:{OPENCODE_DB}?mode=ro", uri=True)
     except sqlite3.Error:
         return
     con.row_factory = sqlite3.Row
