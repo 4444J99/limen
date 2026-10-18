@@ -1125,6 +1125,37 @@ def streams(show_status, family, lane, dry_run, max_parallel, unbounded, tmux_se
     raise SystemExit(subprocess.run(args).returncode)
 
 
+@main.command("knowledge")
+@click.option(
+    "--status",
+    "show_status",
+    is_flag=True,
+    help="Whether the server is up, its URL, the archive fingerprint and the latest alive receipt; touches nothing.",
+)
+@click.option("--stop", "stop_server", is_flag=True, help="Stop the server this command started.")
+@click.option("--port", default=None, type=int, help="Port to serve on (default 8472).")
+@click.option("--no-open", "no_open", is_flag=True, help="Start the server and print the URL, but open nothing.")
+def knowledge(show_status, stop_server, port, no_open):
+    """Open the AI-exports knowledge archive: the site with full-text search over every conversation.
+
+    The advertised form of scripts/open-knowledge.sh — a pure delegate, so the CLI can never tell a
+    different story than the script. It starts the loopback-only archive server when nothing is
+    answering, then opens the site; `limen knowledge --status` shows the fingerprint and
+    `limen knowledge --stop` ends the server.
+    """
+    root = resolve_limen_repo_root()
+    args = ["bash", str(root / "scripts" / "open-knowledge.sh")]
+    if show_status:
+        args.append("--status")
+    if stop_server:
+        args.append("--stop")
+    if port is not None:
+        args.extend(["--port", str(port)])
+    if no_open:
+        args.append("--no-open")
+    raise SystemExit(subprocess.run(args).returncode)
+
+
 @main.command()
 @click.option(
     "--verify",
