@@ -2653,12 +2653,15 @@ def build_snapshot(
 ) -> dict[str, Any]:
     outcomes = {str(row.get("atom_id")): row for row in outcome_rows if isinstance(row, dict) and row.get("atom_id")}
     counted_authorities = set(recurrence_authorities(policy))
-    recurrence = Counter(
-        str(atom.get("lineage_id") or "")
+    # Recurrence counts distinct occurrences per lineage, not atoms: one ask that fragments into several
+    # atoms is still one repetition. An atom without an occurrence id stands for itself.
+    counted_occurrences = {
+        (str(atom.get("lineage_id") or ""), str(atom.get("occurrence_id") or atom.get("atom_id") or ""))
         for atom in atoms
-        if counted_authorities == set(AUTHORITY_CLASSES)  # default: every atom counts, as before the knob
+        if counted_authorities == set(AUTHORITY_CLASSES)  # default: every authority counts, as before the knob
         or str(atom.get("authority") or "unknown") in counted_authorities
-    )
+    }
+    recurrence = Counter(lineage_id for lineage_id, _occurrence_id in counted_occurrences)
     dependents: Counter[str] = Counter()
     for atom in atoms:
         for dependency in atom.get("dependency_ids") or []:
@@ -2683,9 +2686,10 @@ def build_snapshot(
             "operator_emphasis": _emphasis_score(atom),
             "system_leverage": _clamp(dependents.get(str(atom["atom_id"]), 0) / max_dependents),
             "magnitude": _magnitude_score(atom),
-            # Every lineage is present in the counter under the default authority set, so the 0 fallback
-            # only applies to a lineage with no counted authority (recurrence is then not evidenced).
-            "recurrence": _clamp(recurrence.get(lineage_id, 0) / max_recurrence),
+            # Log scale, so one very large lineage (a vendor archive feed) cannot flatten every other lineage
+            # toward 0. Every lineage is present in the counter under the default authority set, so the 0
+            # fallback only applies to a lineage with no counted occurrence (recurrence is then not evidenced).
+            "recurrence": _clamp(math.log1p(recurrence.get(lineage_id, 0)) / math.log1p(max_recurrence)),
             "dependency_impact": _clamp(dependency_count / max(1, max_dependents)),
             "preservation_risk": 0.0,
             "recency": _recency_score(atom.get("timestamp"), reference, float(policy["recency_half_life_days"])),
