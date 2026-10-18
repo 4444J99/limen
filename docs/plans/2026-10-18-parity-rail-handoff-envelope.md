@@ -1,7 +1,7 @@
 # Handoff envelope — parity rail closure (4444J99/limen)
 
 Issue: #3046
-PR: (pending)
+PR: #3068
 
 **Written:** 2026-10-18T09:11Z · **Author lane:** opencode · **Target:** another agent, no guessing required
 

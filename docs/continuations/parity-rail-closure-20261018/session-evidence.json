@@ -1,0 +1,96 @@
+{
+  "session_id": "18a829b9-471d-4c8e-bceb-e7ad35260529",
+  "verified_head": "b6ea6301848ce2ff0e014267604f6e46508434c5",
+  "verified_head_note": "The first publication of this receipt cited 548451268 (the merged tip of PR 3068). The closeout predicate correctly reported 'owned implementation changed since verification' because that commit also stamped the owned envelope's PR line. Every command below was therefore re-run at b6ea630, which contains the stamp; it differs from 548451268 only by the envelope stamp, the receipt and this evidence file.",
+  "owner": "https://github.com/4444J99/limen/issues/3046",
+  "scope": "Pickup of the parity-rail handoff envelope: Gap 1 (interpreter rail, PR 3059) and Gap 3 (branch-preservation predicate, PR 3068) built and merged; Gap 2 and Gap 4 homed, not decided.",
+  "baseline_note": "base_head in the receipt is the fork point of the publication branch (the merged tip of PR 3068), not the session's first main revision (1b789784c). From that revision to this tip, other lanes merged unrelated paths; counting them would require declaring them as retained work this session does not own. PR 3059 and PR 3068, this session's implementation, are verified below and listed in owned_paths.",
+  "fresh_runs_at_verified_head": [
+    {
+      "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_closeout_runtime_python.py cli/tests/test_ship_docs_interpreter.py cli/tests/test_session_plan_slug.py -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "9 passed"
+    },
+    {
+      "command": "python3 scripts/check-branch-parity.py --ledgers",
+      "exit_code": 0,
+      "result": "ok ledgers: 19 restored, 70 recovered, shapes and OIDs valid (ledger integrity only - NOT a parity claim about any branch); 5 evidence digests UNVERIFIABLE-IN-CI, not counted as a pass"
+    },
+    {
+      "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_check_branch_parity.py cli/tests/test_check_his_hand.py cli/tests/test_lever_classify.py cli/tests/test_his_hand_registry.py -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "52 passed"
+    },
+    {
+      "command": "python3 scripts/check-his-hand.py --check",
+      "exit_code": 0,
+      "result": "his-hand: 113 levers, diagnosed=1, violations=0"
+    },
+    {
+      "command": "python3 scripts/lever-classify.py --check",
+      "exit_code": 0,
+      "result": "ok every open lever (103) is proven-sovereign or converted to design_debt"
+    },
+    {
+      "command": "python3 scripts/check-gates.py",
+      "exit_code": 0,
+      "result": "OK - 180 gates, 4 deploy triggers (one pre-existing UNJUSTIFIED note on deploy_triggers.api cli/**)"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "exit_code": 0,
+      "result": "all 32 secret atoms registered"
+    }
+  ],
+  "scoped_push_gate_outcomes_not_claimed_green": [
+    {
+      "pr": "https://github.com/4444J99/limen/pull/3059",
+      "head": "ec1efb5579386c72a4e81697f61c642c31243d27",
+      "command": "bash scripts/verify-scoped.sh",
+      "exit_code": 1,
+      "result": "Cheap wave PASS (incl. direct-run-interpreter-test, session-closeout-test, check-gates, agent-docs, session-phase, ruff). Heavy pytest-cli wave hit the 1500s shared gate deadline at 99%; a full cli/tests run then finished 8 failed, 9263 passed, 60 skipped. The 8 are test_prompt_atom_ledger/test_prompt_atom_canary and fail identically on the pristine parent tree (A/B with changes stashed): tracked in https://github.com/4444J99/limen/issues/3058."
+    },
+    {
+      "pr": "https://github.com/4444J99/limen/pull/3068",
+      "head": "a1b369a205b6ea76aec55abfa0e1c50701a1cd58",
+      "command": "bash scripts/verify-scoped.sh",
+      "exit_code": 75,
+      "result": "A first run failed his-hand-registry-test on this PR's own lever (missing diagnosed_at and implementation; registry-size pin); fixed in the second commit. On the second run the cheap wave PASSED and the heavy wave was refused by host admission (swap-fraction), so pytest-cli did not run on this tree. In its place, the 25 cli test files that read the two changed registries ran: 455 passed, 56 skipped, 0 failed."
+    }
+  ],
+  "live_measurement": {
+    "command": "python3 scripts/check-branch-parity.py --live",
+    "observed": "2026-10-18, estate state is moving and this is a timestamped observation, not a completion claim",
+    "restored_refs": "19 targets, 19 at recorded OID, 0 advanced, 0 drifted, 0 missing",
+    "estate": "131 local branches: CONTAINED=34, PATCH_EQUIVALENT=2, PR_HEAD=58, UNPRESERVED=37. None of the 37 is in the recovery ledger; 30 carry SELF_UPSTREAM. UNPRESERVED is a finding, not proof of loss: a squash-merged multi-commit branch reads as one, and deliberate quarantine is indistinguishable from an accident until a retention registry exists. Several are checked out in other lanes' worktrees and are theirs; this session changed none.",
+    "exit_code": 1
+  },
+  "custody": "No unique private payload created. Every implementation and evidence file is committed and published. The session worktree holds one tracked change (the envelope PR line stamp, published with this receipt) and only ignored caches and daemon runtime state (pycache, pytest and ruff caches, logs/*.json, web/app build output). Temporary issue and PR body files were written inside the worktree and removed. No credential value was written to any artifact; credential-wall.py --check exited 0.",
+  "checkout_disposition": "This session's worktree is retained for the closeout predicate; no deletion authority exercised. No ref, branch or worktree belonging to another lane was touched.",
+  "handoff": {
+    "owner": "https://github.com/4444J99/limen/issues/3046",
+    "open": [
+      "Gap 2: no limen closeout producer command exists (the session authors its own receipt, per docs/session-closeout.md); the opencode lane's own receipt can only be authored by that lane.",
+      "Gap 4: lever L-PARITY-UNLANDED-PRS holds the operator's retire-or-reland decision for #2682, #2576 and #2756; #2756 is not superseded."
+    ],
+    "filed": [
+      "https://github.com/4444J99/limen/issues/3058 (8 prompt-atom tests red on main)",
+      "https://github.com/4444J99/limen/issues/3069 (shrink-only ratchet on bare python3 in directly-run shell entrypoints)"
+    ]
+  },
+  "own_paths": [
+    "cli/tests/test_check_branch_parity.py",
+    "cli/tests/test_check_his_hand.py",
+    "cli/tests/test_closeout_runtime_python.py",
+    "cli/tests/test_session_plan_slug.py",
+    "cli/tests/test_ship_docs_interpreter.py",
+    "docs/plans/2026-10-18-parity-rail-handoff-envelope.md",
+    "his-hand-levers.json",
+    "institutio/governance/gates.yaml",
+    "scripts/check-branch-parity.py",
+    "scripts/no-tasks-on-me.sh",
+    "scripts/session-orient.py",
+    "scripts/session-plan.py",
+    "scripts/ship-docs.sh"
+  ]
+}
