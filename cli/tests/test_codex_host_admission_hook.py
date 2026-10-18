@@ -291,6 +291,36 @@ def test_agent_state_metabolism_is_a_self_gated_sanctioned_control(tmp_path: Pat
     assert service.status(probe=False)["leases"] == []
 
 
+def test_prompt_claude_session_is_admitted_from_a_non_repo_caller_cwd(tmp_path: Path) -> None:
+    """The reviewer's denial: Codex ran the helper from a non-repo cwd and the hook rejected it with
+    workspace-scope-unavailable before Python started. The helper validates its *target's* worktree
+    itself, so the caller's hook must treat it as a sanctioned control — no caller worktree, no lease."""
+    hook = load_hook()
+    service = controller(tmp_path)
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    command = "python3 scripts/prompt-claude-session.py --to 'external session review' --prompt-file p.txt --dry-run"
+
+    assert (
+        hook.handle(
+            payload("PreToolUse", cwd=str(plain), tool_input={"command": command}),
+            controller=service,
+            owner_pid=101,
+        )
+        is None
+    )
+    assert service.status(probe=False)["leases"] == []
+
+    # The recognised form is `python3 <script>`; a bare shebang call is not sanctioned and still needs a worktree.
+    bare = command.removeprefix("python3 ")
+    denied = hook.handle(
+        payload("PreToolUse", cwd=str(plain), tool_input={"command": bare}),
+        controller=service,
+        owner_pid=101,
+    )
+    assert denied is not None and "workspace-scope-unavailable" in json.dumps(denied)
+
+
 def test_read_only_pipeline_and_dev_null_redirection_never_acquire_writer(tmp_path: Path) -> None:
     hook = load_hook()
     for command in (

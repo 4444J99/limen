@@ -77,3 +77,31 @@ It does not touch Ghostty, Computer Use, or the hook; it satisfies the hook's ow
 Loosening `host_admission.py`; keystroke injection into Ghostty; any Codex-side change to
 Computer Use policy; re-sending the original review instruction (the target now reports `busy`,
 so it is likely already working; the script's busy refusal covers a repeat).
+
+## Review amendments (PR #3017 review, head dd322fd7)
+
+Five findings, each dispositioned; the original approach's central claim was wrong.
+
+- **P1 accepted — the original blockage remained.** Codex's dry-run was denied by *its own* hook
+  (`admit_pre_tool_action`) before Python started: an unclassified command is a workspace mutation, so the
+  caller needs a linked-worktree cwd and a writer lease. Setting the child's cwd cannot reach that
+  decision. Fix: register the helper in `_SANCTIONED_SCRIPTS` (`action_admission.py`), the class
+  `dispatch-async.py` and `host-work-admission.py` already belong to. **Deviation from "out of scope":** this
+  edits `action_admission.py`, not `host_admission.py`, and adds one allow-list entry; the helper keeps
+  its own safety checks. The recognised form is `python3 scripts/prompt-claude-session.py`; the earlier
+  bare-shebang usage line is withdrawn. Evidence: before the change `classify_action` returns
+  `workspace_write` for both forms; the admission suite now pins the `python3` form allowed from a
+  non-repo cwd with no lease, and the bare form still denied.
+- **P1 accepted — timeout exposed the prompt.** `str(TimeoutExpired)` embeds argv. The timeout is now a
+  receipt (`delivered: false`, delivery unknown, exit 3); `main` never prints an exception string;
+  captured `claude` output is scrubbed of the prompt.
+- **P1 accepted — missing cwd selected the caller's checkout.** An absent or relative target cwd is a
+  refusal, never `Path(".")`.
+- **P1 accepted, residual stated — busy race and receiver identity.** The row is re-read right before the
+  send, senders are serialized per target, and sessions are re-listed afterwards: the receipt records
+  `forked`, `identity_verified`, `receiving_session`. The window is narrowed, not closed; a fork is
+  detected after the fact (exit 4), not prevented.
+- **P2 accepted — gate omitted the script.** New `prompt-claude-session-test` row in `gates.yaml`.
+
+Observed-live verification (a real idle send and `claude logs` read-back) is recorded on the PR, not
+here, because it can only happen after the head is pushed.
