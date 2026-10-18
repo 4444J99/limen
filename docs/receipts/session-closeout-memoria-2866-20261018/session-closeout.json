@@ -1,0 +1,53 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "session_0117ah7dyS3PujRZVW5e1qDG",
+  "worktree_name": "memoria-repro-2866",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-memoria-2866-20261018",
+  "subject_head": "f75dce740c8b87d8c1de7e642611650ccb0c3964",
+  "subject_publication_branch": "test/tabularius-organ-memory-2866",
+  "base_head": "f75dce740c8b87d8c1de7e642611650ccb0c3964",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/pull/2869",
+  "owned_paths": [],
+  "retained_work": [
+    {
+      "owner_url": "https://github.com/4444J99/limen/pull/2869",
+      "paths": [
+        "scripts/organ-health.py",
+        "scripts/tabularius-organ.py",
+        "cli/tests/tabularius_organ_fixtures.py",
+        "cli/tests/test_organ_health_defect.py",
+        "cli/tests/test_tabularius_organ_memory.py",
+        "docs/receipts/memoria-keeper-drain-2866"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "head": "f75dce740c8b87d8c1de7e642611650ccb0c3964",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-memoria-2866-20261018/verification-cheap-wave.txt",
+      "sha256": "87c8bcde545c75ad0afb60e2361aa30b16366a52987cd649b0aeffb7ed057a14"
+    },
+    {
+      "head": "f75dce740c8b87d8c1de7e642611650ccb0c3964",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-memoria-2866-20261018/verification-credential-wall.txt",
+      "sha256": "36ed09add4fec4f7ca0f5bee67c037c7dd06b7d30bda20702a9932e3d1c7d7c4"
+    },
+    {
+      "purpose": "completion",
+      "head": "f75dce740c8b87d8c1de7e642611650ccb0c3964",
+      "exit_code": 1,
+      "evidence": "docs/receipts/session-closeout-memoria-2866-20261018/verification-pytest-cli.txt",
+      "sha256": "a9839eb8ce8f947452cd2c3c2247434e0efc93bd6aa9d8ffcbf1664bcad5844f",
+      "owner_url": "https://github.com/4444J99/limen/pull/2869"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-memoria-2866-20261018/custody.json",
+    "sha256": "8f9cfa3edc0e0ee670ebc58686ed62a3e548c1a7be36ff89c9e422d2228aea25"
+  }
+}
