@@ -118,7 +118,96 @@
       "unmeasured_reason": "process_evidence_stale"
     },
     "owner_url": "https://github.com/4444J99/limen/pull/3030",
-    "next_action": "Process-ownership owner must reconcile the stale exact process witness and positively attribute the anchor processes without signaling peers. Re-run the explicit session predicate only after evidence changes.",
-    "idempotence_proven": false
+    "next_action": "Reconcile the three source-owned attribution defects recorded in followup_observation, without mutating or signaling peer sessions. Host admission must permit scoped verification before source integration. Repeat the installed exact-session predicate only after operational evidence changes.",
+    "idempotence_proven": false,
+    "followup_observation": {
+      "observed_at": "2026-10-18T08:08:19Z",
+      "installed_revision": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
+      "method": "Installed process_ownership.snapshot plus assess over the exact native anchor and declared handoff root; metadata only. Operational evidence was supplied, not removed.",
+      "counts": {
+        "checker": 1,
+        "shared_service": 0,
+        "foreign_session": 0,
+        "owned_survivor": 0,
+        "unknown": 84,
+        "unmeasured": 1
+      },
+      "pid_reuse": {
+        "confirmed": true,
+        "old_service": "serena",
+        "current_executable": "zsh",
+        "native_start_identities_differ": true,
+        "receipt_changed": false
+      },
+      "host_contract": {
+        "same_canonical_executable": true,
+        "missing_declared_flag": "--analytics-default-enabled",
+        "source": ".chezmoidata/config-ownership.json: mcp process_ownership.hosts",
+        "rendered_surface": "~/.config/domus/mcp-policy.json",
+        "source_repository": "4444J99/domus-genoma-private"
+      },
+      "counterfactual": {
+        "diagnostic_only": true,
+        "method": "In-memory copy of derived service contracts used the exact observed native host argv. No policy or operational record changed.",
+        "counts": {
+          "checker": 1,
+          "shared_service": 30,
+          "foreign_session": 0,
+          "owned_survivor": 0,
+          "unknown": 54,
+          "unmeasured": 1
+        },
+        "acceptance_proof": false
+      },
+      "admission": {
+        "observed_at": "2026-10-18T08:05:55.363528Z",
+        "command": "/usr/local/bin/python3.13 scripts/host-work-admission.py status --no-probe",
+        "allowed": false,
+        "reasons": [
+          "swap-fraction",
+          "vitals-shed"
+        ],
+        "swap_fraction": 0.3435858153970912,
+        "gate_retried": false
+      },
+      "source_actions": [
+        {
+          "owner_url": "https://github.com/4444J99/domus-genoma-private/issues/397",
+          "source": ".chezmoidata/config-ownership.json; dot_config/domus/mcp-policy.json.tmpl",
+          "action": "Declare the verified analytics-enabled native host invocation as an exact source-owned variant while preserving other supported invocations; validate and deploy through the source owner's rail. Do not wildcard argv or remove flags in the assessor."
+        },
+        {
+          "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+          "source": "dot_local/bin/executable_domus-process-ownership",
+          "action": "Implement an identity-bound, evidence-preserving stale-receipt reconciliation path. A reused PID must not be adopted as the old service. Preserve the old receipt and positively classify the current process before any replacement; do not signal it."
+        },
+        {
+          "owner_url": "https://github.com/4444J99/limen/pull/3030",
+          "source": "cli/src/limen/process_services.py; cli/src/limen/process_ownership.py",
+          "action": "Resolve remaining managed-wrapper, helper and non-Codex native-session ownership through verified source contracts and exact native evidence. Matching names, inherited cwd, app ancestry or creation time alone are insufficient. Retain unknowns until proved."
+        }
+      ],
+      "acceptance": [
+        "Scoped source checks pass under actual host admission.",
+        "The installed observer positively attributes every in-scope surviving instance and has zero unknown, unmeasured and owned-survivor counts.",
+        "The explicit v2 session predicate exits 0 twice with the native anchor unchanged and no new artifacts on its second run."
+      ],
+      "changes": {
+        "operational_receipts": false,
+        "live_config": false,
+        "peer_processes": false,
+        "native_state": false
+      },
+      "session_predicate_retried": false,
+      "reason_not_retried": "No operational ownership inputs changed; the diagnostic remains unmeasured. Repeating the same session predicate would provide no new evidence.",
+      "private_evidence": {
+        "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+        "commit": "ffcec9e24ae51a258584010bd844a1867c0fa4d0",
+        "path": "docs/receipts/codex-directory-census-20261018/closeout-observation-0808.json",
+        "byte_readback": true,
+        "sha256": "5db66451963b7b9f1fd0305ffe5e6292d7bed0cfd663468f06b0a2b68117a25b",
+        "size": 4096
+      }
+    }
   }
 }
