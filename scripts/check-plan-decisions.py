@@ -46,7 +46,16 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+# A push gate judges the checkout that owns this script, never an ambient runtime root.
+ROOT = Path(__file__).resolve().parents[1]
+_env_root = os.environ.get("LIMEN_ROOT")
+if _env_root and Path(_env_root).expanduser().resolve() != ROOT:
+    print(
+        f"check-plan-decisions: NOTE - $LIMEN_ROOT={_env_root} is set but NOT used; "
+        f"this gate always judges its own tree ({ROOT}). Run the other checkout's "
+        "own script to inspect a different tree.",
+        file=sys.stderr,
+    )
 PLANS = ROOT / "docs" / "plans"
 
 # Decisions present when this predicate shipped (2026-07-30). Each entry is "<file>#<number>".
