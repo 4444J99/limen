@@ -98,7 +98,6 @@ MINIMUM_NAMING_VERSION = 1
 STORE_IDENTIFIER = "limen-private-archive"
 ARCHIVE_DIRECTORY_NAME = "archive-all"
 MANIFEST_FILE_NAME = "manifest-all.json"
-FEED_DIRECTORY_NAME = "feed"
 FORMS_INDEX_FILE_NAME = "index-all-patterns.jsonl"
 FORMS_REPORT_FILE_NAME = "report-all-patterns.json"
 RECEIPT_STEM = "receipt-knowledge-alive"
@@ -283,6 +282,10 @@ class Context:
     corpora_script: Path
     store_root: Path
     archive_root: Path
+    # Feeds and receipts sit flat in the archive root by default, so every path under it is a minted name
+    # (`archive verify-names` rejects a folder called `feed`). This is safe because `archive project feed`
+    # replaces only feed-<provider>-prompts.jsonl and removes only that provider's older prompt receipts
+    # (archive_feed._stale_receipts), so nothing else in the archive is touched.
     feed_dir: Path
     ledger_root: Path
     private_root: Path
@@ -498,6 +501,24 @@ def recount_eligible(ctx: Context, providers: list[str]) -> dict[str, int]:
 # --------------------------------------------------------------------------- pure helpers
 
 
+def store_directory_names(store_root: Path) -> list[str]:
+    """The corpus directories directly under a store root.
+
+    The engine keeps its own infrastructure there too: registering a store with the store as its project root
+    creates `state/`. `corpus_resolve.NON_CORPUS_DIRS` is the one list of such directories (it also drives the
+    undeclared-directory sweep), so checks 2 and 3 read it instead of keeping a copy.
+    """
+    import corpus_resolve
+
+    if not store_root.is_dir():
+        return []
+    return sorted(
+        child.name
+        for child in store_root.iterdir()
+        if child.is_dir() and child.name not in corpus_resolve.NON_CORPUS_DIRS
+    )
+
+
 def registry_problems(registry: dict[str, Any], store_root: Path, home: Path) -> list[str]:
     """Registry versus disk for the private archive store. Pure so tests can feed it synthetic registries."""
     problems: list[str] = []
@@ -511,7 +532,7 @@ def registry_problems(registry: dict[str, Any], store_root: Path, home: Path) ->
     )
     if not keys:
         problems.append("store has no declared rows")
-    names = sorted(child.name for child in store_root.iterdir() if child.is_dir()) if store_root.is_dir() else []
+    names = store_directory_names(store_root)
     for key in keys:
         if key not in names:
             problems.append("a row key is not a directory name")
@@ -629,7 +650,7 @@ def check_names(ctx: Context, state: State) -> CheckResult:
     done = ctx.engine.run(["archive", "verify-names", "--root", str(ctx.archive_root)], label="verify-names")
     if done.returncode != 0:
         return CheckResult(False, "the engine rejects a name under the archive")
-    directories = sorted(child.name for child in ctx.store_root.iterdir() if child.is_dir())
+    directories = store_directory_names(ctx.store_root)
     for name in directories:
         if name_shape_problem(name, state["kinds"]) is not None:
             return CheckResult(False, "a store directory name is not a listed kind")
@@ -1144,7 +1165,8 @@ def prepare_fixture(ctx: Context, work: Path) -> None:
     """
     exports = work / "exports"
     assert ctx.project_root is not None
-    for directory in (ctx.store_root, exports, ctx.feed_dir, ctx.private_root, ctx.ledger_root, ctx.project_root):
+    # The feed directory is the archive root, which the archive build creates.
+    for directory in (ctx.store_root, exports, ctx.private_root, ctx.ledger_root, ctx.project_root):
         directory.mkdir(parents=True, exist_ok=True)
 
     def register_store() -> Completed:
@@ -1244,10 +1266,12 @@ def build_context(args: argparse.Namespace, work: Path | None) -> Context:
             corpora_script=corpora_script,
             store_root=store_root,
             archive_root=archive_root,
-            feed_dir=work / "feeds" / FEED_DIRECTORY_NAME,
+            feed_dir=archive_root,
             ledger_root=ledger_root,
             private_root=work / "ledger-private",
-            project_root=work / "project",
+            # The live store is registered with the store as its own project root, which makes the engine
+            # create state/ beside archive-all/. The fixture does the same so it cannot hide that layout.
+            project_root=store_root,
             public_markdown=work / "public" / "prompt-atom-ledger.md",
             public_snapshot=work / "public" / "prompt-atom-ledger.json",
             public_seal=work / "public" / "prompt-authority-seal.json",
@@ -1271,7 +1295,7 @@ def build_context(args: argparse.Namespace, work: Path | None) -> Context:
         corpora_script=corpora_script,
         store_root=store_root,
         archive_root=archive_root,
-        feed_dir=Path(args.feed_dir).expanduser() if args.feed_dir else archive_root / FEED_DIRECTORY_NAME,
+        feed_dir=Path(args.feed_dir).expanduser() if args.feed_dir else archive_root,
         ledger_root=repo_root,
         private_root=private_root,
         project_root=Path(args.project_root).expanduser() if args.project_root else None,

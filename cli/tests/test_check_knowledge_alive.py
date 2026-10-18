@@ -96,6 +96,11 @@ def main():
         (project / "registered.json").write_text(json.dumps({"root": option("--root")}))
         return 0
     if args[:2] == ["archive", "verify-names"]:
+        # Like the engine, walk every entry under the root: each must be a kind word plus more, never a bare kind.
+        for entry in Path(option("--root")).iterdir():
+            stem = entry.name.split(".")[0]
+            if "-" not in stem or stem.split("-")[0] not in KINDS:
+                return 1
         return 1 if "bad-names" in FAULTS else 0
     if args[:2] == ["archive", "fixture"] and "no-fixture" not in FAULTS:
         out = Path(option("--out"))
@@ -822,6 +827,59 @@ def test_fixture_reprojection_scratch_stays_in_the_work_directory(module, stubs,
     assert not any(target.exists() for target in targets)
 
 
+def test_feeds_sit_flat_in_the_archive_root_in_both_modes(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    assert context.feed_dir == context.archive_root
+    assert sorted(path.name for path in context.archive_root.glob("feed-*-prompts.jsonl")) == [
+        "feed-chatgpt-prompts.jsonl",
+        "feed-claude-prompts.jsonl",
+    ]
+    assert not (context.archive_root / "feed").exists()
+    live = module.build_context(
+        module.parse_args(["--live", "--store-root", str(context.store_root), "--private-root", str(tmp_path / "p")]),
+        None,
+    )
+    assert live.feed_dir == live.archive_root == context.archive_root
+
+
+def test_the_engine_state_directory_beside_the_archive_is_not_a_name_problem(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    # The engine creates state/ when the store is its own project root, which is how the live store is registered.
+    (context.store_root / "state").mkdir(exist_ok=True)
+    lines, code = module.evaluate(context)
+    assert code == 0, lines
+    assert lines[1] == "check 2 names: ok 1 store directories"
+    assert re.fullmatch(r"ALIVE [0-9a-f]{16}", lines[-1])
+
+
+def test_any_other_unknown_store_directory_still_fails_the_names_check(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    (context.store_root / "state").mkdir(exist_ok=True)
+    (context.store_root / "scratchpad").mkdir()
+    lines, code = module.evaluate(context)
+    assert code == 1
+    assert lines[1] == "check 2 names: FAIL a store directory name is not a listed kind"
+    assert lines[-1] == "NOT ALIVE: names"
+
+
+def test_the_exempt_directories_are_the_resolvers_list_not_a_copy(module, tmp_path):
+    import corpus_resolve
+
+    for name in sorted(corpus_resolve.NON_CORPUS_DIRS):
+        (tmp_path / name).mkdir()
+    (tmp_path / "archive-all").mkdir()
+    assert module.store_directory_names(tmp_path) == ["archive-all"]
+    assert "state" in corpus_resolve.NON_CORPUS_DIRS
+
+
+def test_a_feed_subfolder_in_the_archive_fails_the_names_check(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    (context.archive_root / "feed").mkdir()
+    lines, code = module.evaluate(context)
+    assert code == 1
+    assert lines[1] == "check 2 names: FAIL the engine rejects a name under the archive"
+
+
 def test_a_file_inside_the_private_root_is_not_public_but_a_leak_in_docs_is(
     module, stubs, tmp_path, monkeypatch, capsys
 ):
@@ -1005,6 +1063,8 @@ def test_registry_problems(module, tmp_path):
     assert "store is not declared" in module.registry_problems({**good, "stores": {}}, store, home)
     renamed = {**good, "corpora": {"archive": {"store": "limen-private-archive"}}}
     assert "a row key is not a directory name" in module.registry_problems(renamed, store, home)
+    (store / "state").mkdir()  # the engine's own directory is not a corpus and needs no row
+    assert module.registry_problems(good, store, home) == []
     (store / "corpus-chatgpt-archive").mkdir()
     assert "a directory has no row" in module.registry_problems(good, store, home)
     assert "store is the corpus home" in module.registry_problems(good, store, store)

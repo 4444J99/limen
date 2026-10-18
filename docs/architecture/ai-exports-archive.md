@@ -10,7 +10,7 @@ earlier draft, which described a store on the Scratch volume.
 ```
 raw exports (/Volumes/Scratch/ai-exports/<provider>) + the ChatGPT delta file from the Archive4T replica
   -> cce archive build               -> the archive store, folder archive-all/
-  -> cce archive project feed        -> a feed and a receipt per provider, in archive-all/feed/
+  -> cce archive project feed        -> a feed and a receipt per provider, beside manifest-all.json in archive-all/
   -> prompt-atom-ledger.py --archive-feed ... --write      -> the private ledger
   -> prompt-recurring-forms.py --write                     -> the recurring-form index and report
   -> check-knowledge-alive.py --live --write-receipt       -> a counts-only receipt in docs/receipts/
@@ -23,7 +23,7 @@ raw exports (/Volumes/Scratch/ai-exports/<provider>) + the ChatGPT delta file fr
 | Raw exports: chatgpt, claude, gemini, grok, perplexity | `/Volumes/Scratch/ai-exports/<provider>` | no |
 | ChatGPT delta file (conversations newer than the account export) | Archive4T custody replica, for example `chatgpt-bodies-20261017-delta.json` | no |
 | Archive store, also the engine project root | `~/Workspace/limen/.limen-private/session-corpus/archive` | no |
-| Derived folder; feeds and receipts under `feed/` | `<store>/archive-all/` | no |
+| Derived folder; feeds and receipts sit flat beside `manifest-all.json` | `<store>/archive-all/` | no |
 | Private ledger and form index | `~/Workspace/limen/.limen-private/session-corpus/prompt-atoms/` | no |
 | Registry rows | `institutio/governance/corpora.yaml` | yes |
 | Alive receipt | `docs/receipts/receipt-knowledge-alive-<16hex>-<yyyymmdd>.json` | yes |
@@ -60,8 +60,13 @@ Obsidian vault, which is also the wiki), `site-all/`, `graph-all/` and `database
 ## Stage two: feeds
 
 ```bash
-cce archive project feed --root "$STORE/archive-all" --out "$STORE/archive-all/feed"
+cce archive project feed --root "$STORE/archive-all" --out "$STORE/archive-all"
 ```
+
+The feeds sit flat in the archive folder, not in a subfolder, because `cce archive verify-names` walks
+every entry under `archive-all/` and a folder named `feed` is not a minted name. Writing there touches
+nothing else: the command replaces only `feed-<provider>-prompts.jsonl` and removes only that provider's
+older `receipt-<provider>-prompts-*` files.
 
 Each provider gets `feed-<provider>-prompts.jsonl`, one row per ask the person typed, and
 `receipt-<provider>-prompts-<16hex>-<yyyymmdd>.json`. The command refuses an output folder inside a
@@ -78,7 +83,7 @@ accepts the pair.
 
 ```bash
 uv run --project cli --extra test python scripts/prompt-atom-ledger.py \
-  --root . --private-root "$PRIVATE" --archive-feed "$FEEDS/feed-<provider>-prompts.jsonl" --write
+  --root . --private-root "$PRIVATE" --archive-feed "$STORE/archive-all/feed-<provider>-prompts.jsonl" --write
 uv run --project cli --extra test python scripts/prompt-recurring-forms.py \
   --root . --private-root "$PRIVATE" --write
 ```
@@ -114,9 +119,11 @@ last line is `ALIVE <16hex>`, `NOT ALIVE: <check name>` or `UNUSABLE: <reason>`.
 
 ```bash
 python3 scripts/check-knowledge-alive.py --fixture
-python3 scripts/check-knowledge-alive.py --live --store-root "$STORE" --feed-dir "$FEEDS" \
+python3 scripts/check-knowledge-alive.py --live --store-root "$STORE" \
   --private-root "$PRIVATE" --project-root "$STORE" --write-receipt
 ```
+
+`--feed-dir` defaults to the archive root, where the feeds and receipts are.
 
 The fixture run uses synthetic exports in a temporary folder and never reads private data. The live
 run reads the real store and ledger and writes only the receipt, and only when it is missing. The
