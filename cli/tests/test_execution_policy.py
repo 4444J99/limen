@@ -89,3 +89,15 @@ def test_small_policy_stays_legacy_json_and_large_incompressible_policy_is_rejec
     with pytest.raises(ValueError, match="binding_too_large"):
         encode_policy_binding({"data": "".join(random_source.choices(
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=12000))})
+
+
+def test_compressed_binding_requires_deployed_reader_capability():
+    from limen.execution_policy import policy_binding_for_runtime
+
+    policy = {"mode": "recovery", "approved_priorities": [], "retained": "private" * 1000}
+    with pytest.raises(ValueError, match="storage_reader_not_deployed"):
+        policy_binding_for_runtime(policy, {})
+    payload = policy_binding_for_runtime(policy, {"supported_storage_encodings": ["json", "gzip+base64"]})
+    assert json.loads(payload)["encoding"] == "gzip+base64"
+    small = {"mode": "recovery", "approved_priorities": []}
+    assert json.loads(policy_binding_for_runtime(small, {})) == small
