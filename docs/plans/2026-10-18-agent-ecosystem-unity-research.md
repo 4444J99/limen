@@ -1,7 +1,7 @@
 # Plan: agent ecosystem unity — deep research, tiered, landing through the owners (2026-10-18)
 
 Issue: #2848
-PR: (pending)
+PR: #3081
 Status: executed 2026-10-18 — see the Execution record at the end. Written in plan mode on Fable and approved
 by the operator; executed after `/model sonnet`.
 
