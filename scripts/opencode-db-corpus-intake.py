@@ -15,17 +15,18 @@ import hashlib
 import json
 import os
 import sqlite3
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+from limen.session_sources import resolve_opencode_db  # noqa: E402
 
 HOME = Path(os.environ.get("HOME", str(Path.home()))).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
-DB_PATH = Path(os.environ.get("LIMEN_OPENCODE_DB", HOME / ".local/share/opencode/opencode.db")).expanduser()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+DB_PATH = resolve_opencode_db()
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_BASE = PRIVATE_ROOT / "lifecycle" / "opencode-db-intake"
 ARCHIVE_BASE = Path(
     os.environ.get("LIMEN_OPENCODE_DB_ARCHIVE_ROOT", "/Volumes/Archive4T/limen-private/opencode-db-intake")

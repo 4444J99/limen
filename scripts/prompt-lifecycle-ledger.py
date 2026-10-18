@@ -31,6 +31,7 @@ import yaml
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 from limen.runtime_config import RUNTIME_URL_ENV_ORDER, runtime_api_url  # noqa: E402
+from limen.session_sources import resolve_opencode_db  # noqa: E402
 
 # Doc artifacts belong to the repo this script lives in — never to the runtime root — so a
 # dev/worktree run cannot silently dirty the live checkout (LIMEN_ROOT keeps owning the board).
@@ -45,7 +46,7 @@ EVERY_ASK_CURATED_BEGIN = "<!-- CURATED:BEGIN -->"
 EVERY_ASK_CURATED_END = "<!-- CURATED:END -->"
 TASKS_PATH = ROOT / "tasks.yaml"
 WORKTREE_ROOT = ROOT.parent / ".limen-worktrees"
-OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
+OPENCODE_DB = resolve_opencode_db()
 AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
 AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
 AGY_CLI_CONVERSATIONS = AGY_CLI_ROOT / "conversations"

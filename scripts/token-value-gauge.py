@@ -40,6 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen import harness_paths
+from limen.session_sources import resolve_opencode_db
 OUT_MD = ROOT / "organs" / "financial" / "token-usage.md"
 OUT_JSON = ROOT / "organs" / "financial" / "token-usage.json"
 
@@ -154,7 +155,7 @@ def scan_claude() -> tuple[dict, float, float]:
 
 def scan_opencode() -> tuple[dict, float, float, float]:
     """Per-model token sums + vendor-reported cost from the opencode SQLite session table."""
-    db = Path.home() / ".local" / "share" / "opencode" / "opencode.db"
+    db = resolve_opencode_db()
     if not db.exists():
         return {}, 0.0, 0.0, 0.0
     con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)

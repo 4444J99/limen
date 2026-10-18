@@ -14,10 +14,14 @@ import json
 import os
 import re
 import sqlite3
+import sys
 import unicodedata
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Iterator
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+from limen.session_sources import resolve_opencode_db  # noqa: E402
 
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -34,7 +38,7 @@ CODEX_SESSIONS = HOME / ".codex" / "sessions"
 CODEX_HISTORY = HOME / ".codex" / "history.jsonl"
 CLAUDE_PROJECTS = HOME / ".claude" / "projects"
 CLAUDE_TASKS = HOME / ".claude" / "tasks"
-OPENCODE_DB = HOME / ".local" / "share" / "opencode" / "opencode.db"
+OPENCODE_DB = resolve_opencode_db()
 GEMINI_TMP = HOME / ".gemini" / "tmp"
 AGY_CLI_ROOT = HOME / ".gemini" / "antigravity-cli"
 AGY_CLI_HISTORY = AGY_CLI_ROOT / "history.jsonl"
@@ -850,7 +854,7 @@ def extract_opencode(agg: Aggregator, writer: Any) -> None:
     if not OPENCODE_DB.exists():
         return
     try:
-        con = sqlite3.connect(f"file:{OPENCODE_DB}?immutable=1", uri=True)
+        con = sqlite3.connect(f"file:{OPENCODE_DB}?mode=ro", uri=True)
     except sqlite3.Error:
         return
     con.row_factory = sqlite3.Row

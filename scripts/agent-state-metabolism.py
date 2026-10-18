@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 from limen.agent_state.custody import run_custody_verification_campaign
+from limen.session_sources import resolve_opencode_db
 from limen.agent_state.pipeline import RETIREMENT_AUTHORIZATION_REQUIRED, run_opencode_campaign
 from limen.agent_state.tree import plan_cloud_materializations, plan_exact_retention, plan_retention
 from limen.agent_state.tree_pipeline import (
@@ -30,7 +31,7 @@ def parser() -> argparse.ArgumentParser:
     opencode.add_argument(
         "--source",
         type=Path,
-        default=HOME / ".local" / "share" / "opencode" / "opencode.db",
+        default=resolve_opencode_db(),
     )
     opencode.add_argument(
         "--vault-root",

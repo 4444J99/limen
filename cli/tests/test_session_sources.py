@@ -8,6 +8,7 @@ from limen.session_sources import (
     child_identity_environment,
     discover_sources,
     read_session_records,
+    resolve_opencode_db,
     resolve_session,
 )
 
@@ -92,6 +93,68 @@ def test_all_primary_native_session_adapters_are_readable(tmp_path: Path) -> Non
     assert "OpenCode ask" in text_by_agent["opencode"]
     assert "Agy ask" in text_by_agent["agy"]
     assert resolve_session(None, source_agent="opencode", home=tmp_path).session_id == "open-run"
+
+
+def _legacy_and_live(home: Path) -> tuple[Path, Path]:
+    legacy = home / ".local" / "share" / "opencode" / "opencode.db"
+    live = home / "Workspace" / "limen" / ".agent-runtime" / "opencode" / "data" / "opencode" / "opencode.db"
+    return legacy, live
+
+
+def test_resolve_opencode_db_prefers_the_runtime_store_over_the_legacy_copy(tmp_path: Path) -> None:
+    legacy, live = _legacy_and_live(tmp_path)
+    _open_code_db(legacy)
+    _open_code_db(live)
+
+    assert resolve_opencode_db(tmp_path) == live
+
+
+def test_resolve_opencode_db_falls_back_to_legacy_and_reports_a_missing_store(tmp_path: Path) -> None:
+    legacy, _live = _legacy_and_live(tmp_path)
+
+    assert resolve_opencode_db(tmp_path) == legacy
+    assert not legacy.exists(), "a missing store must be returned as missing, never invented"
+    _open_code_db(legacy)
+    assert resolve_opencode_db(tmp_path) == legacy
+
+
+def test_explicit_home_ignores_the_process_environment(tmp_path: Path, monkeypatch) -> None:
+    legacy, _live = _legacy_and_live(tmp_path)
+    monkeypatch.setenv("LIMEN_OPENCODE_DB", "/nonexistent/real-host.db")
+    monkeypatch.setenv("LIMEN_AGENT_RUNTIME_ROOT", "/nonexistent/real-runtime")
+
+    assert resolve_opencode_db(tmp_path) == legacy
+
+    custom = tmp_path / "custom.db"
+    assert resolve_opencode_db(tmp_path, {"LIMEN_OPENCODE_DB": str(custom)}) == custom
+
+
+def test_no_arguments_consults_the_process_environment(tmp_path: Path, monkeypatch) -> None:
+    runtime = tmp_path / "rt"
+    live = runtime / "opencode" / "data" / "opencode" / "opencode.db"
+    _open_code_db(live)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("LIMEN_OPENCODE_DB", raising=False)
+    monkeypatch.setenv("LIMEN_AGENT_RUNTIME_ROOT", str(runtime))
+
+    assert resolve_opencode_db() == live
+
+    pinned = tmp_path / "pinned.db"
+    monkeypatch.setenv("LIMEN_OPENCODE_DB", str(pinned))
+    assert resolve_opencode_db() == pinned
+
+
+def test_discover_sources_reads_the_live_opencode_store_not_the_legacy_copy(tmp_path: Path) -> None:
+    legacy, live = _legacy_and_live(tmp_path)
+    _open_code_db(legacy)
+    _open_code_db(live)
+    with sqlite3.connect(live) as db:
+        db.execute("UPDATE session SET id = 'live-run', time_updated = 900")
+
+    source = discover_sources(tmp_path)["opencode"]
+
+    assert source is not None and source.session_id == "live-run"
+    assert str(live) in source.locator
 
 
 def test_child_identity_replaces_initiator_and_preserves_lineage() -> None:
