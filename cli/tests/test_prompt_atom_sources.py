@@ -2924,6 +2924,118 @@ def test_agy_wal_only_prompt_append_invalidates_cached_conversation(tmp_path: Pa
     assert second["processed"] != first["processed"]
 
 
+@pytest.mark.parametrize("change", ["database_replacement", "content_metadata", "unsafe_sidecar"])
+def test_agy_reader_initialization_does_not_admit_changed_custody(tmp_path: Path, monkeypatch, change: str):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "initialization.db"
+    _agy_database(database, "bounded fixture prompt")
+    original_connect = sqlite3.connect
+
+    class ChangedDuringInitialization(sqlite3.Connection):
+        def rollback(self):
+            super().rollback()
+            if change == "database_replacement":
+                replacement = root / "replacement"
+                replacement.write_bytes(database.read_bytes())
+                replacement.replace(database)
+            elif change == "content_metadata":
+                before = database.stat()
+                os.utime(database, ns=(before.st_atime_ns, before.st_mtime_ns + 1))
+            else:
+                Path(f"{database}-journal").symlink_to(database)
+
+    monkeypatch.setattr(
+        sources.sqlite3,
+        "connect",
+        lambda *args, **kwargs: original_connect(*args, **kwargs, factory=ChangedDuringInitialization),
+    )
+    events, result = sources.scan_agy_conversations(
+        _agy_lifecycle(sources, root), {"files": {}}, days=None, budget=sources.ScanBudget(limit=1)
+    )
+    assert events == []
+    assert result["processed"] == {}
+    assert "during reader initialization" in "\n".join(result["errors"])
+
+
+def test_agy_wal_ctime_change_during_actual_snapshot_still_fails_closed(tmp_path: Path, monkeypatch):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "snapshot.db"
+    _agy_database(database, "bounded fixture prompt")
+    writer = sqlite3.connect(database)
+    writer.execute("PRAGMA journal_mode=WAL")
+    writer.execute("UPDATE steps SET step_payload='updated fixture prompt'")
+    writer.commit()
+    wal = Path(f"{database}-wal")
+    original_schema_check = sources.agy_steps_schema_error
+
+    def change_wal_metadata(connection):
+        result = original_schema_check(connection)
+        wal.chmod(wal.stat().st_mode & 0o777)
+        return result
+
+    monkeypatch.setattr(sources, "agy_steps_schema_error", change_wal_metadata)
+    try:
+        events, result = sources.scan_agy_conversations(
+            _agy_lifecycle(sources, root), {"files": {}}, days=None, budget=sources.ScanBudget(limit=1)
+        )
+    finally:
+        writer.close()
+    assert events == []
+    assert result["processed"] == {}
+    assert "database or WAL changed during scan" in "\n".join(result["errors"])
+
+
+@pytest.mark.parametrize("case", ["restored_mtime_rewrite", "bounded_wal"])
+def test_agy_reader_initialization_binds_bounded_wal_content(tmp_path: Path, monkeypatch, case: str):
+    sources = _load()
+    root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
+    root.mkdir(parents=True)
+    database = root / "wal-integrity.db"
+    _agy_database(database, "bounded fixture prompt")
+    writer = sqlite3.connect(database)
+    writer.execute("PRAGMA journal_mode=WAL")
+    writer.execute("UPDATE steps SET step_payload='updated fixture prompt'")
+    writer.commit()
+    wal = Path(f"{database}-wal")
+    original_connect = sqlite3.connect
+
+    class RewrittenDuringInitialization(sqlite3.Connection):
+        def rollback(self):
+            super().rollback()
+            if case == "restored_mtime_rewrite":
+                before = wal.stat()
+                payload = bytearray(wal.read_bytes())
+                payload[-1] ^= 1
+                wal.write_bytes(payload)
+                os.utime(wal, ns=(before.st_atime_ns, before.st_mtime_ns))
+                assert wal.stat().st_size == before.st_size
+                assert wal.stat().st_mtime_ns == before.st_mtime_ns
+
+    monkeypatch.setattr(
+        sources.sqlite3,
+        "connect",
+        lambda *args, **kwargs: original_connect(*args, **kwargs, factory=RewrittenDuringInitialization),
+    )
+    try:
+        events, result = sources.scan_agy_conversations(
+            _agy_lifecycle(sources, root),
+            {"files": {}},
+            days=None,
+            budget=sources.ScanBudget(limit=1),
+            limits=_agy_limits(sources, source_bytes=64 if case == "bounded_wal" else 32 * 1024 * 1024),
+        )
+    finally:
+        writer.close()
+    assert events == []
+    assert result["processed"] == {}
+    expected = "WAL content changed" if case == "restored_mtime_rewrite" else "bounded reader initialization ceiling"
+    assert expected in "\n".join(result["errors"])
+
+
 def test_agy_cache_hit_rechecks_wal_generation_before_convergence(tmp_path: Path, monkeypatch):
     sources = _load()
     root = tmp_path / ".gemini" / "antigravity-cli" / "conversations"
