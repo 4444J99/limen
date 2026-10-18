@@ -744,16 +744,36 @@ def check_feed_receipts(ctx: Context, state: State) -> CheckResult:
     return CheckResult(True, f"{len(loaded)} feeds bound to the fingerprint")
 
 
+@contextlib.contextmanager
+def scratch_directory(ctx: Context) -> Iterator[Path]:
+    """A private, empty directory for re-projected feeds, removed on the way out even after a failure.
+
+    Fixture mode uses the work directory. Live mode uses <private root>/scratch/, created mode 0700, because
+    the feeds hold private text and the system temporary directory is outside the private root.
+    """
+    if ctx.work_dir is not None:
+        parent = ctx.work_dir
+    else:
+        parent = ctx.private_root / "scratch"
+        parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    path = Path(tempfile.mkdtemp(prefix=f"knowledge-alive-reproject-{os.getpid()}-", dir=parent))
+    path.chmod(0o700)
+    try:
+        yield path
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
+
+
 def reprojection_problem(ctx: Context, state: State) -> str | None:
     """Re-project the feeds from the archive and compare bytes: the feed content is bound to the archive.
 
     Counts alone cannot tell a feed from the same number of different rows. The engine claims two runs write
-    identical bytes, and this makes that claim a tested property of the live archive. The temporary directory
-    sits under the work directory (the system temporary directory in live mode) and is always removed.
+    identical bytes, and this makes that claim a tested property of the live archive. The scratch directory
+    sits under the work directory in fixture mode and under the private root in live mode, so private text
+    never leaves the private root. It is always removed.
     """
     feeds: dict[str, dict[str, Any]] = state["feeds"]
-    with tempfile.TemporaryDirectory(prefix="knowledge-alive-reproject-", dir=ctx.work_dir) as directory:
-        out = Path(directory)
+    with scratch_directory(ctx) as out:
         arguments = ["archive", "project", "feed", "--root", str(ctx.archive_root), "--out", str(out)]
         if ctx.engine.run(arguments, label="project feed").returncode != 0:
             return "the engine cannot reproject the feeds"

@@ -410,7 +410,7 @@ def test_fixture_mode_is_alive_with_the_real_recurring_form_builder(stubs):
     assert re.fullmatch(r"ALIVE [0-9a-f]{16}", lines[-1])
 
 
-def test_output_is_deterministic_and_carries_no_text_ids_titles_or_paths(stubs):
+def test_output_is_deterministic_and_carries_only_counts_names_and_the_engine_path(stubs):
     first = _run(stubs, "--fixture")
     second = _run(stubs, "--fixture")
     assert first.returncode == 0 and second.returncode == 0, first.stdout + first.stderr
@@ -763,6 +763,63 @@ def test_the_receipt_carries_the_naming_version_the_engine_reported(module, stub
     monkeypatch.setenv("STUB_FAULT", "")
     assert module.main(_live_arguments(context, repo)) == 1
     capsys.readouterr()
+
+
+def _record_reprojection_targets(module, monkeypatch) -> list[Path]:
+    """Spy on the engine: the --out directory of every feed projection, and whether it existed at the time."""
+    targets: list[Path] = []
+    original = module.Engine.run
+
+    def spy(self, args, **keywords):
+        if args[:3] == ["archive", "project", "feed"]:
+            out = Path(args[args.index("--out") + 1])
+            targets.append(out)
+        return original(self, args, **keywords)
+
+    monkeypatch.setattr(module.Engine, "run", spy)
+    return targets
+
+
+def test_live_reprojection_scratch_is_inside_the_private_root_and_gone_afterwards(
+    module, stubs, tmp_path, monkeypatch, capsys
+):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    _patch_registry(monkeypatch, context, tmp_path)
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    targets = _record_reprojection_targets(module, monkeypatch)
+    assert module.main(_live_arguments(context, repo, "--write-receipt")) == 0
+    capsys.readouterr()
+    assert len(targets) >= 2  # once per pass
+    private = context.private_root.resolve()
+    for target in targets:
+        assert target.resolve().is_relative_to(private / "scratch")
+        assert target.name.startswith("knowledge-alive-reproject-")
+        assert not target.exists()
+    assert list((private / "scratch").iterdir()) == []
+    assert (private / "scratch").stat().st_mode & 0o777 == 0o700
+
+
+def test_live_reprojection_scratch_is_removed_when_the_engine_fails(module, stubs, tmp_path, monkeypatch, capsys):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    _patch_registry(monkeypatch, context, tmp_path)
+    repo = tmp_path / "repo"
+    _write_public_files(repo)
+    targets = _record_reprojection_targets(module, monkeypatch)
+    monkeypatch.setenv("STUB_FAULT", "reproject-differs")
+    assert module.main(_live_arguments(context, repo)) == 1
+    assert capsys.readouterr().out.splitlines()[-1] == "NOT ALIVE: ledger binding"
+    assert len(targets) == 1 and not targets[0].exists()
+    assert list((context.private_root / "scratch").iterdir()) == []
+
+
+def test_fixture_reprojection_scratch_stays_in_the_work_directory(module, stubs, tmp_path, monkeypatch):
+    context = _build_loop(module, stubs, tmp_path, monkeypatch)
+    targets = _record_reprojection_targets(module, monkeypatch)
+    lines, code = module.evaluate(context)
+    assert code == 0, lines
+    assert targets and all(target.resolve().is_relative_to(context.work_dir.resolve()) for target in targets)
+    assert not any(target.exists() for target in targets)
 
 
 def test_a_file_inside_the_private_root_is_not_public_but_a_leak_in_docs_is(
