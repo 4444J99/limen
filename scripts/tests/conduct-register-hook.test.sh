@@ -26,6 +26,7 @@ case "${LIMEN_CONDUCT_TOKEN:-}" in
   LANESECRET) label=lane ;; LEGACYSECRET) label=legacy ;; "") label=none ;; *) label=other ;;
 esac
 printf 'bearer:%s\n' "$label" >> "$CALLS_ENV"        # a label, never the value
+[ -z "${FAKE_BROKER_STDOUT:-}" ] || printf '%s\n' "$FAKE_BROKER_STDOUT"   # the broker's reply text
 exit "${FAKE_BROKER_EXIT:-0}"
 FAKE
 chmod +x "$FIX/bin/limen"
@@ -126,6 +127,35 @@ check "broker failure -> logged as NOT registered" "$(ok grep -q 'NOT registered
 run S3 "$WT1"
 unset FAKE_BROKER_EXIT
 check "failed attempt is also throttled (no retry storm)" "$(ok is_zero "$(calls)" 1)"
+
+# ── Spent broker write quota: hold until the daily reset instead of re-spawning every interval ──
+# Observed 2026-10-18: with the Cloudflare free-tier write cap spent, every background session
+# re-ran python + limen every 120 s against a broker that could not accept a write before 00:00 UTC.
+reset
+export FAKE_BROKER_EXIT=1 LIMEN_CONDUCT_REGISTER_INTERVAL_SECS=0
+export FAKE_BROKER_STDOUT='BrokerQuotaExhausted: conduct broker rejected request (500): {"detail": "Exceeded allowed rows written in Durable Objects free tier."}'
+run S9 "$WT1"
+check "quota spent -> exactly one attempt" "$(ok is_zero "$(calls)" 1)"
+check "quota spent -> exit 0, silent stdout" "$(ok sh -c "[ '$RC' = 0 ] && [ -z '$OUT' ]")"
+check "quota spent -> hold logged with the reset time and the owner" "$(ok grep -q 'holding registration until .*limen#2054' "$CLAUDE_JOB_DIR/tmp/conduct-register.log")"
+check "quota spent -> stamp holds until a future epoch" "$(ok sh -c "[ \"\$(awk '{print \$4}' '$CLAUDE_JOB_DIR/tmp/conduct-register.stamp')\" -gt \"\$(date +%s)\" ]")"
+check "quota spent -> attempt scratch file removed" "$(ok test ! -e "$CLAUDE_JOB_DIR/tmp/conduct-register.attempt")"
+unset FAKE_BROKER_EXIT FAKE_BROKER_STDOUT
+run S9 "$WT1"
+check "quota hold -> no further attempt even with the interval disabled" "$(ok is_zero "$(calls)" 1)"
+check "quota hold -> exit 0, silent stdout" "$(ok sh -c "[ '$RC' = 0 ] && [ -z '$OUT' ]")"
+run S9 "$WT2"
+check "quota hold -> a worktree change still registers (the hold is per stamp)" "$(ok is_zero "$(calls)" 2)"
+printf '%s %s %s %s\n' S9 "$WT1" 1 1 > "$CLAUDE_JOB_DIR/tmp/conduct-register.stamp"
+run S9 "$WT1"
+check "expired hold -> registers again" "$(ok is_zero "$(calls)" 3)"
+reset
+export FAKE_BROKER_EXIT=7
+run S10 "$WT1"
+run S10 "$WT1"
+unset FAKE_BROKER_EXIT LIMEN_CONDUCT_REGISTER_INTERVAL_SECS
+check "non-quota failure -> still retries after the interval (no hold)" "$(ok is_zero "$(calls)" 2)"
+check "non-quota failure -> stamp hold field stays 0" "$(ok sh -c "[ \"\$(awk '{print \$4}' '$CLAUDE_JOB_DIR/tmp/conduct-register.stamp')\" = 0 ]")"
 
 # ── Identity: the broker labels a session by its BEARER's principal, whatever --agent says ──
 # The default LIMEN_CONDUCT_TOKEN is the legacy codex-direct-legacy bearer; registering a Claude job
