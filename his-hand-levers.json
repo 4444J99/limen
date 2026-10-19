@@ -5498,6 +5498,44 @@
         "historical_gate_requires_verification": "Whether the charter's plan-first enforcement is worth its ceremony cost for reversible work is a product decision no predicate can derive.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-CLAUDE-CREDENTIAL-DENY-APPLY",
+      "label": "Apply the expanded Claude credential-read deny list (domus #542, #543 and #544, merged at 70870811): name the chezmoi apply for the runtime settings.json, and copy the staged settings.local.json over the project-local one. Until then the deployed runtime list is the 6-entry version from #542, which misses the active XDG AWS and kube credentials paths.",
+      "owner": "yours",
+      "cost": "~1 min, reversible (the previous local file is kept as a .before copy)",
+      "gate": "the auto-mode classifier requires the operator to name a chezmoi apply of agent settings (Self-Modification); the worktree guard blocks agent edits to the shared-checkout .claude/settings.local.json, so it needs a ! copy",
+      "unlocks": "Read of the 17 declared credential paths (including ~/.config/aws, ~/.config/kube and ~/.config/gcloud) refused by the Read tool in every future session, even under the broad Read(//Users/4jp/**) grant",
+      "source_task": "domus-genoma-private #542, #543 and #544; Codex review findings on #542 and #543 (XDG AWS and kube paths)",
+      "note": "Exact preview, apply and verification commands are in the issue. Acceptance: jq -e '.permissions.deny | length == 17' on the deployed runtime settings.json exits 0 and the local file carries the same 17 denials. Undeclared candidates (CARGO_HOME credentials.toml, GRADLE_USER_HOME, CURL_HOME) are deliberately not denied: widening the declared sensitive set is the operator's call.",
+      "issue": 3127,
+      "status": "open",
+      "diagnosed_at": "2026-10-19T15:31:30Z",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Apply the merged chezmoi modify script to the runtime settings.json from a clean checkout of the merged tree, and install the staged project-local settings, so both layers deny Read of the 17 declared credential paths.",
+        "rationale": "The source change is merged and narrowing-only; the remaining steps are a live write to an agent settings surface that the auto-mode classifier reserves for an operator-named apply, and a shared-checkout file the worktree guard keeps agents out of.",
+        "evidence_refs": [
+          "https://github.com/4444J99/limen/issues/3127",
+          "https://github.com/4444J99/domus-genoma-private/pull/542",
+          "https://github.com/4444J99/domus-genoma-private/pull/543",
+          "https://github.com/4444J99/domus-genoma-private/pull/544"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#standing-autonomy--compliant-gate-reroute",
+          "AGENTS.md#session-discipline"
+        ],
+        "owner": "domus-genoma-private #542, #543 and #544; Codex review findings on #542 and #543 (XDG AWS and kube paths)",
+        "acceptance": {
+          "condition": "The deployed runtime settings.json carries all 17 denials and the project-local settings carry the same list.",
+          "predicate": "jq -e '.permissions.deny | length == 17' \"$CLAUDE_CONFIG_DIR/settings.json\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [],
+        "remaining_human_action": "Name the chezmoi apply of the runtime settings.json, and run the ! copy of the staged settings.local.json.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }
