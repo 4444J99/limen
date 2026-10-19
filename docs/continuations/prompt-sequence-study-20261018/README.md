@@ -21,6 +21,9 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Expanded contextual comparison](context-expanded-v1.md): 36 more retained file
+  sequences, with all 218 post-opener positions dispositioned against v5.
+  Composite intents, shared replies and unresolved payload/authority stay explicit.
 - [Four further contextual sequences](context-tranche-v1.md): 26 later positions,
   reported results versus verification, relayed permission questions and
   state-dependent next-step bindings; same-coder review without new operations.
