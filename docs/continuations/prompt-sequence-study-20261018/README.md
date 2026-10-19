@@ -21,6 +21,12 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Independent review admission](independent-review-admission-v1.md): one bounded reservation
+  rejected by the broker with HTTP 409; no independent reviewer was launched.
+- [Native fork-boundary census](native-prefix-census-v1.md): 37 additional source prefixes,
+  19 explicit forks and source support for R01's parent/local boundary; gaps remain explicit.
+- [Native prefix lineage](native-prefix-lineage-v1.md): L08 and L22 visible openers exactly
+  match their first retained native candidate bodies and turn IDs at source line 9.
 - [Native source recovery](native-source-recovery-v1.md): the reader matched 50 of 58 views;
   44 were paged to the end, with all gaps retained. Shared history
   is counted separately from independent prompts.
