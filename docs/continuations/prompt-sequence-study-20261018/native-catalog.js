@@ -25,6 +25,7 @@ function render() {
       node("p", session.prompts.every(p => p.retained_complete === true) ?
         "All retained bodies marked complete. Logical-session completeness unproven." :
         "Retained-body gaps or unknown completeness: do not assume the opener survived."));
+    if (session.parentLineage) header.append(node("p", "Declared parent " + session.parentLineage.alias + "; native fork views: " + session.parentLineage.views.join(", ") + ". Retained parent context; logical-session completeness unproven.", "meta"));
     column.append(header);
     if (session.frames?.length) {
       const context = node("details");
@@ -67,11 +68,12 @@ function filter() {
   const query = search.value.toLowerCase();
   for (const option of picker.options) {
     const session = data.sessions[Number(option.value)];
-    option.hidden = !(session.id + " " + session.cwd + " " + session.prompts.map(prompt => prompt.text).join(" ") + " " + (session.annotations || []).join(" ")).toLowerCase().includes(query);
+    option.hidden = !(session.id + " " + session.cwd + " " + session.prompts.map(prompt => prompt.text).join(" ") + " " + (session.annotations || []).join(" ") + " " + (session.parentLineage ? session.parentLineage.alias + " " + session.parentLineage.views.join(" ") : "")).toLowerCase().includes(query);
   }
 }
 data.sessions.forEach((session, index) => {
   const option = node("option", (session.alias || session.id.slice(0, 8)) + " | " + session.cwd + " | " + session.prompts.length + " prompts");
+  if (session.parentLineage) option.textContent += " | parent " + session.parentLineage.alias + " of " + session.parentLineage.views.join(", ");
   option.value = index;
   option.selected = ["S1", "S3", "S8"].includes(session.alias);
   picker.append(option);

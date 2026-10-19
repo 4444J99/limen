@@ -57,6 +57,21 @@ overlay = (BASE / "catalog-source-notes.js").read_text().replace(
     "__SOURCE_NOTES__", json.dumps(source_notes).replace("<", "\\u003c")
     .replace(">", "\\u003e").replace("&", "\\u0026"))
 script = script.replace("const picker =", overlay + "const picker =", 1)
+lineage_public = json.loads((BASE / "native-prefix-census-v1.json").read_text())
+lineage_private = json.loads((PRIVATE / "native-prefix-census-bindings-v1.json").read_text())
+lineage_bindings = {entry["alias"]: entry for entry in lineage_private["rows"]}
+assert set(lineage_bindings) == {entry["source_alias"] for entry in lineage_public["rows"]}
+lineage_rows = [
+    {"alias": entry["source_alias"], "parent_alias": entry["declared_parent_alias"],
+     "parent_id": lineage_bindings[entry["source_alias"]]["metadata"].get("forked_from_id"),
+     "local_line": entry["first_local_candidate_source_line"],
+     "reader_positions": entry["reader_user_positions_in_same_turn"],
+     "attribution": entry["attribution"], "body_match": entry["prompt_body_matches"]}
+    for entry in lineage_public["rows"]
+]
+lineage_payload = json.dumps({"rows": lineage_rows}, indent=2).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+lineage_script = (BASE / "catalog-lineage.js").read_text().replace("__LINEAGE_DATA__", lineage_payload)
+script = script.replace("const picker =", lineage_script + "const picker =", 1)
 page = (
     """<!doctype html><html lang="en"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -73,12 +88,14 @@ header{padding:14px;background:#25344b}header p,small{font-size:12px;overflow-wr
 h2{font-size:19px;margin:0}ol{padding:0 16px 0 38px}li{padding:16px 0;border-bottom:1px solid #435572}
 strong{color:#8ee4c2}pre{font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto}
 .meta{font-size:12px;color:#bac9dd}summary{cursor:pointer}.warning{border-left:4px solid #edc46f;padding:12px;background:#202c3e}
+#lineage{overflow:auto;max-height:340px}#lineage table{border-collapse:collapse;min-width:760px;font-size:12px}#lineage th,#lineage td{padding:8px;text-align:left;border-bottom:1px solid #435572}#lineage-panel{margin:14px 0;padding:12px;background:#202c3e;border-radius:8px}
 </style><h1>Native prompts, one file sequence per column</h1>
 <p>Choose whole sequences to compare. Every captured prompt stays in order; filtering selects sessions, never individual turns. Select all matching sequences to place the entire captured set next to one another.</p>
 <p class="warning">All 509 direct-session candidate files were visited. 383 yielded multi-prompt captures; 100 had fewer than two candidate prompts; 26 exceeded explicit per-file or per-record bounds. The raw snapshot contains 3,496 prompt rows. This view excludes this study and its two related study sessions to avoid circular evidence. Retention, attachments, forks, resumed history and original openers still require reconciliation. The catalog also includes one independently read Claude source file with 11 prompts. Most follow-ups remain uncoded; 78 follow-ups across 20 file sequences have contextual annotations. This includes a frozen nine-sequence, 27-follow-up source holdout assessed by one coder; four authority-sensitive requests remain unresolved as bare controls. This is not blind independent validation. Native turn IDs now bind replies; shared turns and unbound adjacency remain visible. Derived frames are retained separately. No installed commands or complete-corpus equivalence is claimed.</p>
 <div class="controls"><label>Find a session <input id="search" placeholder="Directory, session ID or opener"></label>
 <select multiple size="6" id="picker" aria-label="Native file sequences"></select>
 <button id="compare">Compare selected</button><button id="all">Compare all matching</button></div>
+<details id="lineage-panel"><summary>Native view lineage and parent context</summary><div id="lineage"></div></details>
 <p id="selection" aria-live="polite"></p><main id="board" aria-label="Side-by-side native sequences"></main>
 <script type="application/json" id="dataset">"""
     + payload

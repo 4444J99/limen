@@ -21,6 +21,8 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Lineage in the comparison](catalog-lineage-v1.md): 37 source rows, parent-column labels
+  and fork-alias search, with shared-turn and prefix gaps kept visible.
 - [Independent review admission](independent-review-admission-v1.md): one bounded reservation
   rejected by the broker with HTTP 409; no independent reviewer was launched.
 - [Native fork-boundary census](native-prefix-census-v1.md): 37 additional source prefixes,
@@ -53,7 +55,9 @@ cannot be shortened to a bare verb without retaining that information or its imm
 The existing private native-catalog.html places whole captured sequences in columns and keeps
 every retained prompt in order. Search selects complete columns. It contains 382 displayed file
 sequences and 3,500 prompt rows. Its current glossary displays v5; U3 marks the six managed
-inputs while preserving the captured dataset. The frozen v2 glossary remains historical.
+inputs while preserving the captured dataset. Its lineage panel includes 37 checked reader views;
+seven captured parent columns are labelled and searchable by their fork aliases. Parents outside
+the file columns and unresolved attribution remain visible. The frozen v2 glossary stays historical.
 See the [metadata update and verification](catalog-metadata-v1.md).
 
 The original file-based review accounts for 102 post-first positions across 23 files, with six now

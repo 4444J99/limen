@@ -13,7 +13,11 @@ class Element {
   get options() { return this.children; }
   get selectedOptions() { return this.children.filter(child => child.selected); }
 }
-const ids = Object.fromEntries(["dataset", "picker", "board", "search", "selection", "compare", "all"].map(id => [id, new Element(id)]));
+const ids = Object.fromEntries(["dataset", "picker", "board", "search", "selection", "compare", "all", "lineage"].map(id => [id, new Element(id)]));
+for (const id of Object.keys(ids)) {
+  const markupIds = page.match(new RegExp('\\bid="' + id + '"', "g")) || [];
+  assert.equal(markupIds.length, 1, "the actual page must contain one " + id + " element");
+}
 ids.dataset.textContent = jsonText;
 const document = { getElementById: id => ids[id], createElement: tag => new Element(tag) };
 const runtime = page.match(/<script>([\s\S]*?)<\/script>/)[1];
@@ -44,4 +48,21 @@ assert.equal(managedRows.length, 10);
 const managedLabels = managedRows.map(row => walk(row).find(item => item.tagName === "strong").textContent);
 assert.equal(managedLabels.filter(text => text.startsWith("Managed recovery input;")).length, 6);
 assert.ok(managedLabels.slice(4, 10).every(text => text.startsWith("Managed recovery input;")));
-console.log(JSON.stringify({ columns: ids.board.children.length, originalPromptsPreserved: actual.sessions.reduce((n,s) => n+s.prompts.length,0), currentOperations: currentNames.length, managedInputs: 6, browserVisualInspection: "not performed" }));
+const lineageRows = walk(ids.lineage).filter(item => item.tagName === "tr");
+assert.equal(lineageRows.length, 38, "the lineage table must display all 37 checked views");
+const lineageCells = walk(ids.lineage).filter(item => item.tagName === "td");
+assert.equal(lineageCells.filter(item => item.textContent === "Declared fork").length, 19);
+assert.equal(lineageCells.filter(item => item.textContent === "Shared turn: input unresolved").length, 8);
+assert.equal(lineageCells.filter(item => item.textContent === "Prefix limit reached").length, 2);
+const parentNotes = walk(ids.board).filter(item => typeof item.textContent === "string" && item.textContent.startsWith("Declared parent "));
+assert.equal(parentNotes.length, 7, "all seven captured parent columns must show their fork relations");
+assert.ok(parentNotes.some(item => item.textContent.includes("P05") && item.textContent.includes("M24")));
+assert.ok(walk(ids.lineage).some(item => typeof item.textContent === "string" && item.textContent.includes("7 of 13 declared parents")));
+assert.ok(walk(ids.lineage).some(item => typeof item.textContent === "string" && item.textContent.includes("7 context inputs + 26 local inputs")));
+ids.search.value = "M15";
+ids.search.handlers.input();
+const matchingParent = ids.picker.options.find(item => item.textContent.includes("parent P06"));
+assert.ok(matchingParent && !matchingParent.hidden, "a fork alias must find its captured parent column");
+ids.all.handlers.click();
+assert.ok(walk(ids.board).some(item => item.tagName === "h2" && item.textContent === "P06"));
+console.log(JSON.stringify({ columns: actual.sessions.length, lineageViews: 37, capturedParents: 7, originalPromptsPreserved: actual.sessions.reduce((n,s) => n+s.prompts.length,0), currentOperations: currentNames.length, managedInputs: 6, browserVisualInspection: "not performed" }));
