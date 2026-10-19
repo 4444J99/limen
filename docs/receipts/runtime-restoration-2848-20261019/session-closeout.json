@@ -1,0 +1,58 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a154c1-f69f-7013-979c-69516316a258",
+  "repository": "4444J99/limen",
+  "worktree_name": "agent-ecosystem-unity-research-20261018",
+  "base_head": "50126824b95581a5296e294d9cdf9c8d52aa8774",
+  "publication_branch": "docs/agent-ecosystem-unity-research-20261018",
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "disposition": "handoff",
+  "owned_paths": [
+    ".codex/plans/2026-10-19-runtime-restoration-2848.md",
+    "cli/src/limen/cli.py",
+    "cli/tests/test_workstream_command.py",
+    "scripts/start-worktree-session.sh",
+    "institutio/governance/parameters.yaml",
+    "docs/receipts/runtime-restoration-2848-20261019/"
+  ],
+  "retained_work": [
+    {
+      "paths": [
+        ".limen-private/custody-staging/"
+      ],
+      "owner_url": "https://github.com/4444J99/limen/issues/2848",
+      "reason": "Private native evidence, archive, drafts and generated caches retained; independent custody remains unverified"
+    }
+  ],
+  "verification": [
+    {
+      "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_workstream_command.py -q",
+      "head": "356e1329f73185584d8e9f429f66431b94bf9bde",
+      "exit_code": 0,
+      "evidence": "docs/receipts/runtime-restoration-2848-20261019/workstream-file-tests.txt",
+      "sha256": "a13bc9103b4f1e561a7127be8b7c2127e4ccdf1671b16364f6907bf20545687f"
+    },
+    {
+      "command": "bash scripts/verify-scoped.sh --total-timeout-seconds 240",
+      "head": "356e1329f73185584d8e9f429f66431b94bf9bde",
+      "exit_code": 75,
+      "evidence": "docs/receipts/runtime-restoration-2848-20261019/verification-corrected.txt",
+      "sha256": "19243e4edfccfcadb203c21cdd418a4173ba8d5e7a9639f16f53fb80d47e7952",
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/issues/2848"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "head": "356e1329f73185584d8e9f429f66431b94bf9bde",
+      "exit_code": 0,
+      "evidence": "docs/receipts/runtime-restoration-2848-20261019/credential-wall.txt",
+      "sha256": "abd053642cd7d66adf54335e7530c7869f78e073c8b766171fd5924a9fb377a6"
+    }
+  ],
+  "custody": {
+    "verified": false,
+    "evidence": "docs/receipts/runtime-restoration-2848-20261019/custody.json",
+    "sha256": "e75b3f6cc86dfafc389f9af5621e8e92b1ab1608c453b68f37b2d3e4c4d0e4fd"
+  },
+  "limits": "Draft PR #3130 owns source repair and remaining verification. Installed restoration evidence is verified; controller records, broad tests, config repairs, independent custody and cleanup remain unfinished. Retain both checkout and private custody; no task completion, session release or retirement claim."
+}
