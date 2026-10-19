@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
-from limen.session_sources import resolve_opencode_db  # noqa: E402
+from limen.session_sources import opencode_session_table, resolve_opencode_db  # noqa: E402
 
 HOME = Path(os.environ.get("HOME", str(Path.home()))).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", HOME / "Workspace" / "limen")).expanduser()
@@ -36,6 +36,7 @@ LOG_PATH = ROOT / "logs" / "opencode-db-corpus-intake.jsonl"
 
 COUNT_TABLES = (
     "session",
+    "session_v2",
     "message",
     "part",
     "session_message",
@@ -141,7 +142,8 @@ def session_rollups(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
 def export_session_index(conn: sqlite3.Connection, out_path: Path) -> dict[str, Any]:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     rollups = session_rollups(conn)
-    columns = table_columns(conn, "session")
+    table = opencode_session_table(conn)
+    columns = table_columns(conn, table)
     allowed = [
         column
         for column in (
@@ -179,7 +181,7 @@ def export_session_index(conn: sqlite3.Connection, out_path: Path) -> dict[str, 
     # NB: build the quoted-column list outside the f-string — a nested f-string containing
     # backslash escapes is a SyntaxError before Python 3.12 (breaks the python-311 CI job).
     quoted_columns = ", ".join(f'"{column}"' for column in allowed)
-    query = f'SELECT {quoted_columns} FROM "session" ORDER BY time_updated DESC'
+    query = f'SELECT {quoted_columns} FROM "{table}" ORDER BY time_updated DESC'
     rows = 0
     with gzip.open(out_path, "wt", encoding="utf-8") as fh:
         for row in conn.execute(query):
@@ -234,7 +236,7 @@ def build_snapshot(*, archive: bool, hash_archive: bool, run_id: str | None = No
         session_bounds = conn.execute(
             "SELECT min(time_created), max(time_updated), round(sum(cost),4), "
             "sum(tokens_input), sum(tokens_output), sum(tokens_reasoning), "
-            "sum(tokens_cache_read), sum(tokens_cache_write) FROM session"
+            f"sum(tokens_cache_read), sum(tokens_cache_write) FROM {opencode_session_table(conn)}"
         ).fetchone()
         private_dir = PRIVATE_BASE / run_id
         session_index = export_session_index(conn, private_dir / "session-index.jsonl.gz")

@@ -41,6 +41,22 @@ def resolve_opencode_db(home: Path | None = None, env: Mapping[str, str] | None 
     return home / ".local" / "share" / "opencode" / "opencode.db"
 
 
+OPENCODE_V2_TABLES = frozenset({"session_v2", "session_message"})
+
+
+def opencode_session_table(db: sqlite3.Connection) -> str:
+    """Return the table holding every session of this OpenCode store.
+
+    OpenCode 2.x moved sessions to ``session_v2`` / ``session_message`` on 2026-10-01 and froze the legacy
+    ``session`` / ``message`` / ``part`` tables. ``session_v2`` is a strict superset of ``session`` (the same ids
+    plus every session since the freeze), so a reader on a v2 store that queries ``session`` silently drops recent
+    work. Stores without both v2 tables (older copies, fixtures) keep the legacy table.
+    """
+
+    names = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+    return "session_v2" if OPENCODE_V2_TABLES <= names else "session"
+
+
 @dataclass(frozen=True)
 class SessionSource:
     agent: str
@@ -72,8 +88,9 @@ def _sqlite_latest(path: Path, agent: str) -> SessionSource | None:
     try:
         with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as db:
             if agent == "opencode":
+                table = opencode_session_table(db)  # a constant from the helper above, never user input
                 row = db.execute(
-                    "SELECT id, time_updated FROM session ORDER BY time_updated DESC, id DESC LIMIT 1"
+                    f"SELECT id, time_updated FROM {table} ORDER BY time_updated DESC, id DESC LIMIT 1"
                 ).fetchone()
                 if row:
                     return SessionSource(
@@ -259,6 +276,13 @@ def _read_opencode(source: SessionSource) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     try:
         with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as db:
+            if opencode_session_table(db) == "session_v2":
+                v2_rows = db.execute(
+                    "SELECT type, data FROM session_message WHERE session_id = ? ORDER BY seq, time_created, id",
+                    (source.session_id,),
+                ).fetchall()
+                if v2_rows:
+                    return _opencode_v2_records(v2_rows)
             rows = db.execute(
                 "SELECT m.id, m.data, p.data "
                 "FROM message AS m LEFT JOIN part AS p ON p.message_id = m.id "
@@ -287,6 +311,30 @@ def _read_opencode(source: SessionSource) -> list[dict[str, Any]]:
             part = {}
         record["content"].extend(_content_text(part))
     records.extend(grouped.values())
+    return records
+
+
+def _opencode_v2_records(rows: Iterable[tuple[str, str]]) -> list[dict[str, Any]]:
+    """Render ``session_message`` rows as conversation records.
+
+    v2 keeps a user turn's text at the top level of ``data`` and an assistant turn's text in typed ``content``
+    blocks; the other row types (``idle``, ``system``, ``compaction``, ...) are not conversation turns.
+    """
+
+    records: list[dict[str, Any]] = []
+    for kind, raw in rows:
+        if kind not in ("user", "assistant"):
+            continue
+        try:
+            data = json.loads(raw)
+        except (TypeError, json.JSONDecodeError):
+            data = {}
+        if not isinstance(data, dict):
+            data = {}
+        body = data.get("text") if kind == "user" else data.get("content")
+        records.append(
+            {"timestamp": (data.get("time") or {}).get("created"), "role": kind, "content": _content_text(body)}
+        )
     return records
 
 

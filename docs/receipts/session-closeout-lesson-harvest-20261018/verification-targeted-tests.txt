@@ -1,0 +1,7 @@
+........................................................................ [ 72%]
+...........................                                              [100%]
+99 passed in 0.36s
+command: scripts/run-pytest-hermetic.sh cli/tests/test_lesson_harvest.py cli/tests/test_vendor_insights.py cli/tests/test_check_his_hand.py -q -rs
+interpreter: Python 3.14.8 (compression.zstd and the zstd binary both present, so neither decoder branch is skipped)
+head: 4b2f97df644f3b04ee0709b752aff3fd1cdc688f (clean tree)
+exit: 0

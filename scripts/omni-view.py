@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _board_custody
 from _board_custody import board_path  # noqa: E402
-from _ships_24h import read_ships_24h  # noqa: E402
+from _ships_24h import read_ships_24h_status  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -102,7 +102,9 @@ def build_view():
     corpus = _load_json(LOGS / "corpus-view.json", {})
     ingest = _load_json(LOGS / "ingest-coverage.json", {})  # Strand 3 writes this; fail-open
     ticks = _ticks()
-    ships_total, _ships_by_repo, recent_refs = read_ships_24h(ROOT)
+    ships = read_ships_24h_status(ROOT)
+    ships_total = ships["total"] if ships["available"] else None
+    recent_refs = ships["recent"] if ships["available"] else []
 
     fleet = {
         n: {"health": i.get("health"), "headroom_pct": i.get("headroom_pct"), "runway_h": i.get("runway_h")}
@@ -314,7 +316,7 @@ def render_html(v):
   <div class="card"><div class="lab">past · trend</div>
     <div>done <span class="spark">{_esc(past.get("done_spark"))}</span></div>
     <div>open <span class="spark">{_esc(past.get("open_spark"))}</span></div>
-    <div class="mut" style="margin-top:6px">ships 24h: <b>{past.get("ships_24h", 0)}</b>
+    <div class="mut" style="margin-top:6px">ships 24h: <b>{past["ships_24h"] if past.get("ships_24h") is not None else "unavailable"}</b>
       · {_esc(" ".join(past.get("recent_ships") or []) or "—")}</div></div>
   <div class="card"><div class="lab">future · knowledge</div><div>{_esc(ing_s)}</div>
     <div class="mut" style="margin-top:6px">{_esc((corp.get("one") or "")[:160])}</div></div>

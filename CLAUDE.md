@@ -49,7 +49,7 @@ contracts; everything internal loads at runtime from a Cloudflare Worker (or the
 Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud
 Run/Next.js/FastAPI can be swapped.
 
-**Components:** one directory per component (`cli/`, `web/api/`, `web/worker/`, `web/app/`, `mcp/`, `ianva/`, `moneta/`, `spec/contracts/`, `scripts/`, `organs/`, `apps/`, `studium/`, `censor/`); each owns its remaining work (see [Closeout Definition](#closeout-definition)) and its README/manifest is the build reference. Gotchas the tree cannot tell you:
+**Components:** each component directory (layout: `AGENTS.md` → Working in This Repo) owns its remaining work (see [Closeout Definition](#closeout-definition)) and its README/manifest is the build reference. Gotchas the tree cannot tell you:
 
 - `limen init` is retired and fails closed; the live verb/flag table is `README.md`.
 - **MONETA** unconfigured *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set.
@@ -60,13 +60,6 @@ plus GitHub Contents projection is the durable hosted keeper. Agents never treat
 `LIMEN_TASKS` file as an independent writer. Persona tokens: `LIMEN_OWNER_TOKEN`/
 `LIMEN_API_TOKEN`, `LIMEN_CLIENT_TOKEN`; absent → local owner-scoped dev mode.
 
-**Common commands** (beyond the [CI Gate Matrix](#worktree-isolation--ci-gate-matrix)):
-
-```bash
-python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva  # lint (config: root .ruff.toml — py311, line-length 120; version pin: cli/pyproject.toml [test])
-scripts/verify-whole.sh                              # whole-system predicate (exit 0 ⟺ green)
-limen dispatch --agent jules         # dry-run preview; add --live to dispatch for real
-```
 ## Session Phase Entry
 
 **A session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
@@ -89,31 +82,15 @@ transcript records every `permissionMode` transition instead, and `scripts/harne
 already reads that field. The default binds, the exit is cheap, and the exit is observable.
 
 **Session model cadence — open cheap, escalate deliberately.** Interactive sessions OPEN on
-Sonnet (the `"model": "sonnet"` pin staged in `docs/keys/fable-guard-settings-snippet.json`,
-human-armed via lever `L-FABLE-GUARD-ARM` — an agent never arms settings). The first message —
-usually a chaotic brainstorm — is structured into the plan chain *in plan mode on Sonnet*;
-`/model opus` is the deliberate escalation for ratifying a genuinely hard plan, and Fable is
-never a session default — only an explicit `/model` escalation under a live
-`docs/fable-allotment.md` acceptance receipt. After plan approval, drop back (`/model sonnet`)
-and execute through the tiered fleet (`.claude/agents/` pins + the `model_selection.py` ladder —
-do not restate it here). The harness routes models per *session*, never per message (verified
-2026-08-07: hooks cannot switch models), so enforcement is the three real layers: the opening
-pin (prevention), `scripts/fable-session-guard.py` at SessionStart (loud warning on Fable
-over-cap/unaccepted), and the `claude-workflow-guard.py audit-transcript` beat audit (unaccepted
-Fable burn is a violation).
+Sonnet (the `"model": "sonnet"` pin, human-armed via lever `L-FABLE-GUARD-ARM` — an agent never
+arms settings); `/model opus` is the deliberate escalation for ratifying a genuinely hard plan,
+and Fable is never a session default — only an explicit `/model` escalation under a live
+`docs/fable-allotment.md` acceptance receipt. The pin is a default, not a lock: `/model` persists
+outside `settings.json` and can silently invert it, so never describe it as enforcement —
+detection (`scripts/fable-session-guard.py` at SessionStart, the `claude-workflow-guard.py
+audit-transcript` beat audit) is what holds the line. Full rationale:
+[detail doc](docs/architecture/merge-and-branch-protocol-detail.md#session-model-cadence-and-the-opening-pin).
 
-**The opening pin is a default, not a lock — and `/model` overwrites it.** `/model` is manual,
-but it is *not* session-scoped: it reports "saved as your default for new sessions" and persists
-outside `settings.json` (absent from `~/.claude/settings.json`, `settings.local.json`, and every
-plain key of `~/.claude.json` — the store is harness-internal, so no predicate can read it back).
-Two consequences, and they run opposite ways. **Cheap:** setting the opening tier costs one
-keystroke — `/model sonnet` arms the cadence's prevention layer with no settings paste at all;
-the staged snippet's paste is then only needed for the SessionStart guard hook. **Leaky:** one
-`/model opus` at any time silently re-arms an expensive default for *every* future session, and
-it leaves no artifact a gate can inspect. So prevention is the weakest of the three layers by
-construction — detection (SessionStart guard) and the after-the-fact beat audit are what actually
-hold the line. Never describe the pin as an enforcement mechanism; it is a good default that a
-single keystroke, made months earlier and long forgotten, can invert.
 Do not replace plan-mode entry with an auto-mode entry plus a hand-built plan-first hook: plan
 mode already *is* that enforcement, and the cost objection dissolves once the opening model is
 cheap.

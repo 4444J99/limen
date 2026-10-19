@@ -18,6 +18,10 @@ acceptance predicate passes. Session release does not authorize checkout retirem
    `limen.session_closeout.v1`, or v2 with explicit roots for multi-repository sessions
    (see `docs/session-closeout.md`). Unknown ownership fails
    closed. Commit and publish the receipt and owned artifacts through the normal PR rail.
+   Check a receipt with `jq empty FILE` and cite committed content by blob id
+   (`git ls-files -s FILE`); an inline interpreter (`python3 -c`), a hash tool, or an
+   `rm` is an improvised command that prompts outside a checkout with an allowlist.
+   Any scratch probe lives under `mktemp -d` outside the worktree, so nothing needs removal.
 3. Reuse passing verification for unchanged implementation. Run implicated scoped gates
    once per changed tree, including credential-wall evidence for secrets used by the
    session. Whole-repository verification is required only for a whole-repository claim.
@@ -50,7 +54,10 @@ acceptance predicate passes. Session release does not authorize checkout retirem
    With v2, keep `--worktree` bound to the native caller and supply every declared
    `--scope-root ID=PATH`; never substitute a child repository for the native anchor.
    This read-only predicate checks publication, ownership, custody, scoped verification,
-   retained broker obligations and surviving processes. Exit 2 is unmeasured, never pass.
+   retained broker obligations and surviving processes. Exit 2 is unmeasured, never pass: before naming why,
+   read the log of the producer that feeds it (for broker registration `$CLAUDE_JOB_DIR/tmp/conduct-register.log`;
+   a session in the shared checkout writes none) and `docs/session-closeout.md`, and label any remaining
+   inference as an inference (`PREC-2026-10-18-read-the-feeding-log-before-naming-a-blocker`).
    No-argument `no-tasks-on-me.sh` and `closeout-fast.sh` remain estate diagnostics.
 7. Idempotence is two runs: run the session predicate twice and quote both bare exit
    codes (never through a pipe). Both must be 0, and the second creates no files, issues,

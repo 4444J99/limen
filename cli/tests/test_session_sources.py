@@ -5,8 +5,10 @@ import sqlite3
 from pathlib import Path
 
 from limen.session_sources import (
+    SessionSource,
     child_identity_environment,
     discover_sources,
+    opencode_session_table,
     read_session_records,
     resolve_opencode_db,
     resolve_session,
@@ -155,6 +157,104 @@ def test_discover_sources_reads_the_live_opencode_store_not_the_legacy_copy(tmp_
 
     assert source is not None and source.session_id == "live-run"
     assert str(live) in source.locator
+
+
+def _open_code_v2_db(path: Path, *, legacy_has_v2_rows: bool = True) -> None:
+    """A store shaped like OpenCode 2.x: legacy tables frozen, ``session_v2`` a superset of ``session``."""
+    _open_code_db(path)  # legacy: session 'open-run' (time_updated 500) with one message and part
+    with sqlite3.connect(path) as db:
+        db.executescript(
+            """
+            CREATE TABLE session_v2 (id TEXT PRIMARY KEY, time_updated INTEGER);
+            CREATE TABLE session_message (
+              id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INTEGER, time_created INTEGER, data TEXT
+            );
+            """
+        )
+        db.execute("INSERT INTO session_v2 VALUES ('open-run', 500), ('v2-only-run', 900)")
+        turns = [
+            ("v2-a", "v2-only-run", "user", 1, 900, {"text": "V2 ask", "time": {"created": 900}}),
+            (
+                "v2-b",
+                "v2-only-run",
+                "assistant",
+                2,
+                901,
+                {
+                    "content": [
+                        {"type": "text", "text": "V2 answer"},
+                        {"type": "tool", "state": {"input": "SECRET-TOOL-ARGUMENTS"}},
+                    ],
+                    "time": {"created": 901},
+                },
+            ),
+            ("v2-c", "v2-only-run", "idle", 3, 902, {"time": {"created": 902}}),
+        ]
+        if legacy_has_v2_rows:
+            turns.append(("v2-d", "open-run", "user", 1, 500, {"text": "Migrated ask", "time": {"created": 500}}))
+        for row_id, session_id, kind, seq, created, data in turns:
+            db.execute(
+                "INSERT INTO session_message VALUES (?, ?, ?, ?, ?, ?)",
+                (row_id, session_id, kind, seq, created, json.dumps(data)),
+            )
+
+
+def test_opencode_session_table_prefers_v2_only_when_both_v2_tables_exist(tmp_path: Path) -> None:
+    legacy_only, v2, half = tmp_path / "a.db", tmp_path / "b.db", tmp_path / "c.db"
+    _open_code_db(legacy_only)
+    _open_code_v2_db(v2)
+    _open_code_db(half)
+    with sqlite3.connect(half) as db:
+        db.execute("CREATE TABLE session_v2 (id TEXT PRIMARY KEY, time_updated INTEGER)")
+    names = {}
+    for label, path in (("legacy", legacy_only), ("v2", v2), ("half", half)):
+        with sqlite3.connect(path) as db:
+            names[label] = opencode_session_table(db)
+
+    assert names == {"legacy": "session", "v2": "session_v2", "half": "session"}
+
+
+def test_v2_store_discovers_the_newest_session_across_the_superset(tmp_path: Path) -> None:
+    _open_code_v2_db(tmp_path / ".local" / "share" / "opencode" / "opencode.db")
+
+    source = discover_sources(tmp_path)["opencode"]
+
+    assert source is not None and source.session_id == "v2-only-run", "a v2-only session must be found"
+    assert source.updated_ns == 900 * 1_000_000
+
+
+def test_v2_store_renders_user_and_assistant_turns_and_skips_the_rest(tmp_path: Path) -> None:
+    path = tmp_path / "opencode.db"
+    _open_code_v2_db(path)
+    source = SessionSource("opencode", f"{path}#session:v2-only-run", "v2-only-run", "opencode-sqlite", 0)
+
+    records = read_session_records(source)
+
+    assert [record["role"] for record in records] == ["user", "assistant"], "idle rows are not conversation turns"
+    assert records[0]["content"] == ["V2 ask"]
+    assert records[1]["content"] == ["V2 answer"]
+    assert "SECRET-TOOL-ARGUMENTS" not in json.dumps(records), "tool block state must not leak into rendered text"
+    assert records[0]["timestamp"] == 900
+
+
+def test_v2_store_reads_a_migrated_session_from_session_message(tmp_path: Path) -> None:
+    path = tmp_path / "opencode.db"
+    _open_code_v2_db(path)
+    source = SessionSource("opencode", f"{path}#session:open-run", "open-run", "opencode-sqlite", 0)
+
+    records = read_session_records(source)
+
+    assert records and records[0]["content"] == ["Migrated ask"], "v2 rows win once the store is v2"
+
+
+def test_v2_store_falls_back_to_legacy_messages_when_a_session_has_no_v2_rows(tmp_path: Path) -> None:
+    path = tmp_path / "opencode.db"
+    _open_code_v2_db(path, legacy_has_v2_rows=False)
+    source = SessionSource("opencode", f"{path}#session:open-run", "open-run", "opencode-sqlite", 0)
+
+    records = read_session_records(source)
+
+    assert "OpenCode ask" in json.dumps(records), "a session with no session_message rows keeps its v1 messages"
 
 
 def test_child_identity_replaces_initiator_and_preserves_lineage() -> None:

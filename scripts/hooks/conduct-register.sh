@@ -56,7 +56,22 @@ case "$cwd" in
     [ -n "$name" ] || exit 0
     wt="${cwd%%/.claude/worktrees/*}/.claude/worktrees/$name"
     ;;
-  *) exit 0 ;;                                               # shared checkout: claim nothing
+  *)                                                         # shared checkout: claim nothing
+    # ...but say so ONCE per session in the job log. Exiting silently leaves a session that can never
+    # be claimed or released with no trace at all, indistinguishable from a healthy one (issue 3102).
+    # Log only: SessionStart stdout is injected as model context, so this must stay off stdout.
+    skip_dir="$CLAUDE_JOB_DIR/tmp"
+    skip_mark="$skip_dir/conduct-register.skipped"
+    if [ "$(cat "$skip_mark" 2>/dev/null)" != "$sid" ]; then
+      {
+        mkdir -p "$skip_dir" &&
+          printf '%s skipped session=%s: cwd is the shared checkout, which no job owns; this session cannot be claimed or released by the broker. Enter .claude/worktrees/<name> (EnterWorktree) to become claimable.\n' \
+            "$(date -u +%FT%TZ)" "$sid" >>"$skip_dir/conduct-register.log" &&
+          printf '%s' "$sid" >"$skip_mark"
+      } 2>/dev/null || true
+    fi
+    exit 0
+    ;;
 esac
 
 state_dir="$CLAUDE_JOB_DIR/tmp"
@@ -65,17 +80,34 @@ log="$state_dir/conduct-register.log"
 interval="${LIMEN_CONDUCT_REGISTER_INTERVAL_SECS:-120}"
 now="$(date +%s)"
 
+# Stamp: <session-id> <worktree> <attempt-epoch> <hold-until-epoch>. The 4th field is 0 unless the
+# broker answered the last attempt with a spent write quota (Cloudflare free tier, resets 00:00 UTC;
+# owner 4444J99/limen#2054): until that epoch no attempt can succeed, so none is made — no python,
+# no limen process, nothing appended to the log. Registration resumes by itself at the reset.
 if [ -f "$stamp" ]; then
-  read -r s_sid s_wt s_epoch < "$stamp" 2>/dev/null || true
-  if [ "${s_sid:-}" = "$sid" ] && [ "${s_wt:-}" = "$wt" ] && [ -n "${s_epoch:-}" ] \
-     && [ $((now - s_epoch)) -lt "$interval" ] 2>/dev/null; then
-    exit 0                                                   # fresh registration for this worktree
+  read -r s_sid s_wt s_epoch s_hold < "$stamp" 2>/dev/null || true
+  if [ "${s_sid:-}" = "$sid" ] && [ "${s_wt:-}" = "$wt" ]; then
+    if [ -n "${s_hold:-}" ] && [ "$s_hold" -gt "$now" ] 2>/dev/null; then
+      exit 0                                                 # broker write quota spent: holding
+    fi
+    if [ -n "${s_epoch:-}" ] && [ $((now - s_epoch)) -lt "$interval" ] 2>/dev/null; then
+      exit 0                                                 # fresh registration for this worktree
+    fi
   fi
 fi
 
+next_utc_midnight() {  # epoch of the next 00:00 UTC (the daily reset); 0 when no date flavour parses
+  local today base
+  today="$(date -u +%Y-%m-%d)"
+  base="$(date -u -j -f '%Y-%m-%d %H:%M:%S' "$today 00:00:00" +%s 2>/dev/null)" \
+    || base="$(date -u -d "$today 00:00:00" +%s 2>/dev/null)" \
+    || base=""
+  case "$base" in ''|*[!0-9]*) echo 0 ;; *) echo $((base + 86400)) ;; esac
+}
+
 mkdir -p "$state_dir" 2>/dev/null || exit 0
 # Record the attempt first so a failing broker costs at most one attempt per interval.
-printf '%s %s %s\n' "$sid" "$wt" "$now" > "$stamp" 2>/dev/null || true
+printf '%s %s %s %s\n' "$sid" "$wt" "$now" 0 > "$stamp" 2>/dev/null || true
 
 # shellcheck source=scripts/lib/workstream-capsule.sh
 source "$ROOT/scripts/lib/workstream-capsule.sh" >>"$log" 2>&1 || exit 0
@@ -112,12 +144,24 @@ from limen.census import by_name
 print(" ".join(sorted(by_name("claude").execution.capabilities)))' 2>/dev/null)" || caps=""
 [ -n "$caps" ] || caps="code conduct review"                 # the launcher's own fallback set
 
+# The function sets workstream_protected_registration in THIS shell, so its output goes to a file
+# (a command substitution would run it in a subshell and lose the flag). The file holds the same
+# text the log already receives — broker error text, never the bearer — and is read once for the
+# quota verdict, then appended and removed.
+attempt="$state_dir/conduct-register.attempt"
 workstream_protected_registration=0
-LIMEN_SESSION_ID="$sid" workstream_register_conduct_session claude "$wt" "$caps" >>"$log" 2>&1
+LIMEN_SESSION_ID="$sid" workstream_register_conduct_session claude "$wt" "$caps" >"$attempt" 2>&1
 rc=$?
+cat "$attempt" >>"$log" 2>/dev/null
 if [ "$rc" -eq 0 ] && [ "${workstream_protected_registration:-0}" = 1 ]; then
   printf '%s registered session=%s worktree=%s\n' "$(date -u +%FT%TZ)" "$sid" "$wt" >>"$log"
+elif grep -qE 'BrokerQuotaExhausted|Exceeded allowed rows written' "$attempt" 2>/dev/null; then
+  hold="$(next_utc_midnight)"
+  printf '%s %s %s %s\n' "$sid" "$wt" "$now" "$hold" > "$stamp" 2>/dev/null || true
+  printf '%s NOT registered session=%s worktree=%s rc=%s: broker write quota spent; holding registration until %s (owner 4444J99/limen#2054)\n' \
+    "$(date -u +%FT%TZ)" "$sid" "$wt" "$rc" "$(date -u -r "$hold" +%FT%TZ 2>/dev/null || date -u -d "@$hold" +%FT%TZ 2>/dev/null || echo "epoch $hold")" >>"$log"
 else
   printf '%s NOT registered session=%s worktree=%s rc=%s\n' "$(date -u +%FT%TZ)" "$sid" "$wt" "$rc" >>"$log"
 fi
+rm -f "$attempt" 2>/dev/null
 exit 0

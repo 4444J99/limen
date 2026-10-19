@@ -54,11 +54,77 @@ def expected_sources(here: Path) -> dict[str, str]:
     return result
 
 
-def check(data: dict, expected: dict[str, str], root: Path = ROOT) -> dict:
+def check(data: dict, expected: dict[str, str], root: Path = ROOT, *, candidate_count: int | None = None) -> dict:
+    try:
+        return _check(data, expected, root, candidate_count=candidate_count)
+    except (KeyError, TypeError, AttributeError, ValueError, OSError, subprocess.SubprocessError):
+        return {"schema": "limen.recovery_completion_result.v1", "status": "FAIL",
+                "source_count": 0, "intent_count": 0, "delivered_intent_count": 0,
+                "errors": ["malformed completion evidence"]}
+
+
+def _check(data: dict, expected: dict[str, str], root: Path = ROOT, *, candidate_count: int | None = None) -> dict:
     errors: list[str] = []
+    def invalid(message):
+        return {"schema": "limen.recovery_completion_result.v1", "status": "FAIL",
+                "source_count": 0, "intent_count": 0, "delivered_intent_count": 0,
+                "errors": [message]}
+
+    if not isinstance(data, dict):
+        return invalid("completion must be an object")
     sources = data.get("sources", [])
     atoms = data.get("atoms", [])
+    for rows, key in ((sources, "source_id"), (atoms, "atom_id")):
+        if not isinstance(rows, list) or any(
+            not isinstance(row, dict) or not isinstance(row.get(key), str) or not row[key]
+            for row in rows
+        ):
+            return invalid(f"malformed {key} inventory")
     by_id = {a["atom_id"]: a for a in atoms}
+    # Source coverage alone cannot detect an intent removed from both sides of
+    # the mapping. Bind reconciliation to the separately frozen extraction.
+    try:
+        extraction = artifact(root, data["candidate_inventory"])
+        lineage = extraction.get("private_extraction_sha256")
+        if not isinstance(lineage, dict) or set(lineage) != {"source-findings", "review-findings", "branch-pr-findings"}:
+            raise ValueError("missing extraction digests")
+        if any(not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value)
+               for value in lineage.values()):
+            raise ValueError("invalid extraction digest")
+        if lineage != data.get("private_extraction_sha256"):
+            raise ValueError("extraction lineage mismatch")
+        candidates = extraction["candidates"]
+        if not isinstance(candidates, list) or not candidates:
+            raise ValueError("empty or malformed candidate inventory")
+        if candidate_count is not None and len(candidates) != candidate_count:
+            raise ValueError("candidate denominator differs from frozen extraction")
+        for candidate in candidates:
+            if (not isinstance(candidate, dict) or not isinstance(candidate.get("candidate_id"), str)
+                    or not candidate["candidate_id"]):
+                raise ValueError("malformed candidate identity")
+            ids = candidate.get("source_ids")
+            if (not isinstance(ids, list) or not ids or any(not isinstance(sid, str) for sid in ids)
+                    or len(ids) != len(set(ids)) or not set(ids).issubset(expected)):
+                raise ValueError("malformed candidate source lineage")
+        candidate_ids = [c["candidate_id"] for c in candidates]
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("duplicate extracted candidate")
+        mapped = {}
+        for atom in atoms:
+            for cid in atom.get("candidate_ids", []):
+                if cid in mapped:
+                    raise ValueError("candidate assigned more than once")
+                mapped[cid] = atom
+        if set(mapped) != set(candidate_ids):
+            raise ValueError("extracted candidate coverage differs from reconciliation")
+        for candidate in candidates:
+            atom = mapped[candidate["candidate_id"]]
+            if not set(candidate["source_ids"]).issubset(atom.get("source_ids", [])):
+                raise ValueError("candidate source lineage omitted")
+        if data.get("count_status") != "reconciled":
+            raise ValueError("distinct intent count remains provisional")
+    except (KeyError, TypeError, ValueError, OSError, subprocess.SubprocessError) as exc:
+        errors.append(f"invalid extracted candidate coverage: {exc}")
     source_ids = [s["source_id"] for s in sources]
     if len(source_ids) != len(set(source_ids)) or set(source_ids) != set(expected):
         errors.append("source coverage differs from frozen 44-source cohort")
@@ -163,7 +229,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=Path(__file__).with_name("completion.json"))
     args = parser.parse_args()
     try:
-        result = check(json.loads(args.manifest.read_text()), expected_sources(Path(__file__).parent))
+        result = check(json.loads(args.manifest.read_text()), expected_sources(Path(__file__).parent), candidate_count=1150)
     except (KeyError, TypeError, ValueError, OSError) as exc:
         result = {"status": "FAIL", "errors": [f"invalid completion input: {exc}"]}
     result["error_count"] = len(result.get("errors", []))

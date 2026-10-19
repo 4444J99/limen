@@ -1,0 +1,31 @@
+Session a89fb304-ecdf-45a7-aef4-2cebe27d2309 (Claude, bg job; second worktree "docs-manifest-gate-coverage") — scoped verification, 2026-10-18 UTC
+This receipt covers the work done AFTER the first receipt (docs/receipts/session-closeout-pickup-2961-landing-20261018, merged as #3055, merge commit faf27d7b5f21e8287db1337cc6fe2bafaabb02fc). Every command below was run bare; its own exit code was read.
+
+WHY A SECOND RECEIPT
+After the first closeout passed twice, the session ran /lesson-harvest in a new worktree. scripts/hooks/conduct-register.sh re-binds a background job to the worktree of its current cwd, so the broker's binding moved here. Measured at the start of this closeout: no-tasks-on-me.sh against the first receipt exits 2, "broker session/worktree binding mismatch"; session_audit shows session_present true, 0 runs, 0 leases, and the binding at this worktree (heartbeat aged, healthy false, which the checker does not read). That is the issue 3044 coupling. The first result was real when issued; this receipt re-establishes the fixed point for the binding that now exists.
+
+RECEIPT BASE
+This branch was cut from 88debb9b (below), found 11 commits behind origin/main when the merge predicate was about to run (past the drain's stale-base threshold), so origin/main was merged in by a plain merge commit and base_head set to the main tip d853547f5e5e790c20b437aee95b1ecf37f4dd4a; the only paths this branch adds over that base are this receipt's three files. The predicate was run (twice, exit 0) on the earlier head 6a1deea5 and is re-run on the final head after this change.
+
+PRE-MERGE — exact-tree verification at PR 3073's final head 88debb9b53937a9d199aa380a6d66124a07bf00f (the squash-merged PR head being verified; an ancestor of this branch)
+- scripts/tests/verify-resolver.test.sh (PATH with the test venv first) -> "verify-resolver: all selection fixtures pass" (49 cases incl. the new pin new-toplevel-docs-dir-nested-file), exit 0
+- same test against the PARENT registry (origin/main's gates.yaml swapped in; the fix marker asserted absent, grep count 0) -> 23 case(s) FAILED, including the new pin, whose actual output omits check-docs-manifest for a nested file under a new top-level docs directory; exit 1 (expected). My version restored afterwards; diff was exactly gates.yaml plus the test.
+- scripts/check-gates.py -> OK, 180 gates, exit 0
+- scripts/verify.py --explain docs/brand-new-toplevel-dir/2026-10-18-x/README.md -> before the change: syntax-changed diff-hygiene check-docs-exports check-note-links; after: check-docs-manifest is selected
+- scripts/verify-scoped.sh -> "WAVE cheap: PASS" (verify-resolver-test PASS, check-gates PASS), exit 0; no heavy gate implicated; the branch was 0 commits behind origin/main at push
+
+MERGE AND LANDING (measured after a fetch)
+- git merge-base --is-ancestor 3a6771534155df31951aaff5ef2b735ae6b70595 origin/main -> exit 0 (PR 3073, merged)
+- git grep on origin/main:institutio/governance/gates.yaml finds the docs/*, docs/** paths -> count 1
+
+INVENTORY AT CLOSEOUT (steps 4 and 5 of the canonical procedure)
+- Open PRs from this session's branches: none. The open-PR list for this account holds only other sessions' branches.
+- reap-branches.py --check (LIMEN_ROOT pinned to the live checkout): FAIL listing exactly one lingering branch, worktree-heal-evolve-opencode-20261018, which belongs to another session; none of this session's.
+- check-live-checkout.py (pinned): state=drift, behind origin/main by 2, dirty 0; owned by scripts/sync-release.sh (the beat's rung), not hand-fast-forwarded. Earlier in the day it read 4 behind, so the beat is converging.
+- check-runtime-lag.py -> OK, scheduled runtime 056262dab21c is 4 commits behind origin/main (0.0d old), exit 0.
+
+NOT RUN / NOT CLAIMED
+- lesson-harvest.py --check at the end of the tranche: claude 181 unprocessed / 0 processed; this session marked NOTHING by agreement with the peer that is the single cursor writer; 14 vendors have no enumerator (backlog unknown, not zero). The backlog is not drained.
+- The go-live of the MCP door (reported in the first receipt) is still not run; unchanged.
+- The first receipt's predicate can no longer be re-run as written, for the binding reason above.
+- The session closeout predicate for THIS receipt is measured separately and is not asserted by this file.

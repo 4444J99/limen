@@ -5,13 +5,16 @@ live vendor stores), plus the exit-code honesty of `render` and the codex
 resume-grouping semantics observed live on 2026-08-06 (resumed rollout files share
 the parent session_meta.session_id and must aggregate, not drop)."""
 
+import base64
 import glob
 import importlib.util
 import json
+import re
 import sqlite3
 import sys
 import types
 from datetime import datetime, timedelta, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -28,6 +31,7 @@ _ispec.loader.exec_module(ingest)
 
 OLD = datetime.now(timezone.utc) - timedelta(days=365)
 WINDOW = datetime.now(timezone.utc) - timedelta(days=30)
+TRUNCATED = "[... truncated at max-chars ...]\n"
 
 
 def _fake_mod(**registry) -> types.SimpleNamespace:
@@ -163,6 +167,20 @@ def _write_rollout(day_dir: Path, name: str, sid: str, n_user=1, n_assistant=2, 
     (day_dir / name).write_text("\n".join(json.dumps(rec) for rec in lines))
 
 
+def _write_rollout_messages(day_dir: Path, name: str, sid: str, messages: list[tuple[str, str]]):
+    """A rollout holding exactly the given (role, text) response_item messages."""
+    day_dir.mkdir(parents=True, exist_ok=True)
+    lines = [{"type": "session_meta", "payload": {"session_id": sid, "cwd": "/repo"}}]
+    for role, text in messages:
+        lines.append(
+            {
+                "type": "response_item",
+                "payload": {"type": "message", "role": role, "content": [{"type": "input_text", "text": text}]},
+            }
+        )
+    (day_dir / name).write_text("\n".join(json.dumps(rec) for rec in lines))
+
+
 def _codex_mod(tmp_path: Path):
     return _fake_mod(
         codex={
@@ -195,6 +213,159 @@ def test_codex_cat_concatenates_all_rollouts_of_a_session(tmp_path):
     assert text is not None
     assert text.count("===== rollout file:") == 2
     assert "[tool: shell]" in text
+
+
+# A genuine zstd frame holding one session_meta (id "sid-zst"), one user turn and one assistant turn, so
+# the reader is exercised against real compressed bytes without needing an encoder at test time.
+_ZST_ROLLOUT_B64 = (
+    "KLUv/WCOAPUFAGILIh1wJ2oDgHjVLwnTlqbYEeKzxatKPlEiojnS6vTBBMRahRWgpL7AdA3xb5WQ"
+    "Hou76ObZ438K6wYMiT8iQ7zKGqV7TMzJ2g9jTcKcFQZeY5eUSGDFbXpTD+Uviiobzm+EvGj4qelW"
+    "xFqnyUqAOfYHAAj+8GDFIUeV5qQzwp01MlLx98+Kc2r2DgETAKA2GMounDJ6oGw5ZGS4UszqlQCA"
+    "uWeq9TNGFK+HUMuQvsAU6EthT83GSC3LXKyvTTI="
+)
+
+
+def _write_zst_rollout(dir_: Path, name: str, payload: bytes | None = None):
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_bytes(base64.b64decode(_ZST_ROLLOUT_B64) if payload is None else payload)
+
+
+def _force_decoder(monkeypatch, decoder: str):
+    """Pin which zstd decoder the reader may use. A decoder this interpreter/host lacks is a visible skip,
+    never a silent pass: python needs 3.14+, cli needs the zstd binary, none removes both."""
+    if decoder == "python":
+        if vi._zstd_module() is None:
+            pytest.skip("compression.zstd needs Python 3.14+ (this interpreter predates it)")
+        monkeypatch.setattr(vi, "_zstd_binary", lambda: None)
+    elif decoder == "cli":
+        if vi._zstd_binary() is None:
+            pytest.skip("the zstd binary is not installed on this host")
+        monkeypatch.setattr(vi, "_zstd_module", lambda: None)
+    else:
+        monkeypatch.setattr(vi, "_zstd_module", lambda: None)
+        monkeypatch.setattr(vi, "_zstd_binary", lambda: None)
+
+
+@pytest.mark.parametrize("decoder", ["python", "cli"])
+@pytest.mark.parametrize("named_by_sid", [True, False], ids=["name-carries-sid", "header-match"])
+def test_codex_cat_reads_a_zst_compressed_rollout(tmp_path, monkeypatch, decoder, named_by_sid):
+    # Codex compresses old sessions to rollout-*.jsonl.zst. The reader globbed only *.jsonl, so 8 of 85
+    # indexed codex sessions read as "not found" (limen#3083). A resumed session's file name carries its
+    # own id, so the header-match case must decompress to find the parent session_id.
+    _force_decoder(monkeypatch, decoder)
+    name = (
+        "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst" if named_by_sid else "rollout-2026-10-10T12-48-38-aaa.jsonl.zst"
+    )
+    _write_zst_rollout(tmp_path / "archived_sessions", name)
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+    assert "--- user ---\nwhy was the history reported missing?" in text
+    assert "it was compressed to jsonl.zst" in text
+
+
+@pytest.mark.parametrize("decoder", ["python", "cli"])
+def test_codex_cat_corrupt_zst_fails_loudly_never_renders_empty(tmp_path, monkeypatch, decoder):
+    _force_decoder(monkeypatch, decoder)
+    _write_zst_rollout(
+        tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst", b"this is not a zstd frame"
+    )
+    with pytest.raises(RuntimeError, match="zstd could not decompress"):
+        vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+
+
+def test_codex_cat_zst_without_a_decompressor_fails_loudly(tmp_path, monkeypatch):
+    _force_decoder(monkeypatch, "none")
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst")
+    with pytest.raises(RuntimeError, match="no decompressor is available"):
+        vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+
+
+def test_codex_uninspectable_zst_neighbour_does_not_break_a_plain_session(tmp_path, monkeypatch):
+    # Without a decompressor an unrelated archived file cannot be header-peeked; that must not turn an
+    # ordinary plain-text session into an error.
+    _force_decoder(monkeypatch, "none")
+    _write_rollout(
+        tmp_path / "sessions" / "2026" / "10" / "18", "rollout-2026-10-18T05-00-00-sid-plain.jsonl", "sid-plain"
+    )
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-other.jsonl.zst")
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-plain", 10_000)
+    assert "[tool: shell]" in text
+
+
+def test_codex_not_found_is_an_error_while_a_compressed_rollout_is_uninspectable(tmp_path, monkeypatch):
+    # Reporting "session not found" while blind to a compressed file is the original defect.
+    _force_decoder(monkeypatch, "none")
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-other.jsonl.zst")
+    with pytest.raises(RuntimeError, match="cannot be reported as not found"):
+        vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000)
+
+
+def test_cat_session_exits_1_with_a_named_error_when_the_decompressor_is_missing(tmp_path, monkeypatch, capsys):
+    _force_decoder(monkeypatch, "none")
+    _write_zst_rollout(tmp_path / "archived_sessions", "rollout-2026-10-10T12-48-38-sid-zst.jsonl.zst")
+    assert vi.cmd_cat(_codex_mod(tmp_path), "codex", "sid-zst", 10_000) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "ERROR:" in captured.err and "no decompressor is available" in captured.err
+
+
+def test_codex_session_files_ignore_non_rollout_suffixes(tmp_path):
+    (tmp_path / "archived_sessions").mkdir()
+    (tmp_path / "archived_sessions" / "rollout-2026-10-10T12-48-38-sid-zst.jsonl.bak").write_bytes(b"x")
+    assert vi._codex_session_files(_codex_mod(tmp_path), "sid-zst") == []
+    assert vi._cat_codex(_codex_mod(tmp_path), "sid-zst", 10_000) is None
+
+
+def test_codex_cat_omits_harness_injected_context_and_keeps_the_operator_turn(tmp_path):
+    # Measured 2026-10-18: the first operator turn sat a median 67,627 chars into a codex render,
+    # so a bounded read of 40 of 68 sessions held no operator speech. The injected blocks are
+    # named with their size and omitted, so the cap is spent on the conversation.
+    day = tmp_path / "sessions" / "2026" / "10" / "18"
+    _write_rollout_messages(
+        day,
+        "rollout-2026-10-18T05-00-00-aaa.jsonl",
+        "sid-injected",
+        [
+            ("developer", "D" * 60_000),
+            ("user", "# AGENTS.md instructions for /home/x\n" + "A" * 9_000),
+            ("project-doc", "P" * 4_000),
+            ("user", '<external_codex_apps_open_page>{"page_id":null}</external_codex_apps_open_page>'),
+            ("user", "<environment_context>\n  <cwd>/repo</cwd>\n</environment_context>"),
+            ("user", "why does the gate go red on a clean tree?"),
+            ("assistant", "the cache key omits the lockfile"),
+        ],
+    )
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-injected", 2_000)
+    assert "why does the gate go red on a clean tree?" in text
+    assert "the cache key omits the lockfile" in text
+    assert "DDDDDDDD" not in text and "AAAAAAAA" not in text and "PPPPPPPP" not in text
+    assert "[omitted harness-injected developer message: 60000 chars]" in text
+    assert "[omitted harness-injected project-doc message: 4000 chars]" in text
+    assert text.count("[omitted harness-injected user message:") == 3
+    assert TRUNCATED not in text  # once the preamble is named rather than rendered, the conversation fits
+
+
+def test_codex_cat_keeps_an_operator_turn_that_only_quotes_injected_markup(tmp_path):
+    # The filter is a prefix test on the message, never a substring test: an operator who
+    # mentions AGENTS.md mid-sentence must still be read.
+    day = tmp_path / "sessions" / "2026" / "10" / "18"
+    _write_rollout_messages(
+        day,
+        "rollout-2026-10-18T05-00-00-bbb.jsonl",
+        "sid-quote",
+        [("user", "please read # AGENTS.md instructions for me"), ("assistant", "ok")],
+    )
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-quote", 2_000)
+    assert "please read # AGENTS.md instructions for me" in text
+    assert "[omitted" not in text
+
+
+def test_codex_cat_cap_clips_the_message_that_crosses_it(tmp_path):
+    # --max-chars 1200 once returned 55.8 KB: the whole message was appended before the cap was tested.
+    day = tmp_path / "sessions" / "2026" / "10" / "18"
+    _write_rollout_messages(day, "rollout-2026-10-18T05-00-00-ccc.jsonl", "sid-big", [("assistant", "x" * 10_000)])
+    text = vi._cat_codex(_codex_mod(tmp_path), "sid-big", 500)
+    assert text.endswith(TRUNCATED)
+    assert len(text) == 500 + len(TRUNCATED)
 
 
 # ─── copilot adapter (authoritative session-state, stub honesty) ─────
@@ -345,6 +516,74 @@ def test_opencode_index_and_cat(tmp_path):
     assert "[tool: read]" in text
 
 
+def _make_opencode_v2_db(db_path: Path):
+    """v2 schema as measured 2026-10-18: user/synthetic/system keep `text` at the TOP LEVEL of data,
+    only assistant rows carry `content` blocks."""
+    con = sqlite3.connect(db_path)
+    con.execute(
+        "CREATE TABLE session_v2 (id TEXT PRIMARY KEY, directory TEXT, title TEXT, model TEXT, cost REAL, "
+        "tokens_input INT, tokens_output INT, time_created INT, time_updated INT)"
+    )
+    con.execute(
+        "CREATE TABLE session_message (id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INT, "
+        "time_created INT, time_updated INT, data TEXT)"
+    )
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    con.execute("INSERT INTO session_v2 VALUES ('v2s', '/repo', 't', 'm', 0, 1, 1, ?, ?)", (now_ms, now_ms + 1000))
+    rows = [
+        ("m1", "system", {"text": "S" * 3_000}),
+        ("m2", "user", {"text": "why is the gate red on a clean tree?", "agents": [], "files": []}),
+        ("m3", "synthetic", {"text": "<system-reminder>\nYou are in Plan mode. " + "R" * 400 + "\n</system-reminder>"}),
+        ("m3b", "synthetic", {"text": "The following shell command was executed by the user: git status"}),
+        (
+            "m4",
+            "assistant",
+            {
+                "content": [
+                    {"type": "text", "text": "the cache key omits the lockfile"},
+                    {"type": "tool", "name": "read"},
+                ]
+            },
+        ),
+    ]
+    for seq, (mid, kind, data) in enumerate(rows):
+        con.execute(
+            "INSERT INTO session_message VALUES (?, 'v2s', ?, ?, ?, ?, ?)",
+            (mid, kind, seq, now_ms + seq, now_ms + seq, json.dumps(data)),
+        )
+    con.commit()
+    con.close()
+
+
+def test_opencode_v2_cat_renders_top_level_user_text_and_omits_injected_system(tmp_path):
+    # Measured 2026-10-18: 206 user messages across 59 opencode sessions were never rendered, because the
+    # reader walked only data["content"]. Operator turns (where corrections live) were invisible.
+    db = tmp_path / "opencode.db"
+    _make_opencode_v2_db(db)
+    text = vi._cat_opencode(_fake_mod(opencode={"path": db}), "v2s", 10_000)
+    assert "--- user ---\nwhy is the gate red on a clean tree?" in text
+    assert "--- synthetic ---\nThe following shell command was executed by the user: git status" in text
+    assert "the cache key omits the lockfile" in text and "[tool: read]" in text
+    assert "SSSSSSSS" not in text
+    assert "[omitted harness-injected system message: 3000 chars]" in text
+    # a synthetic row that is the harness's own <system-reminder> wrapper is omitted too, while a
+    # synthetic row recording a shell command the operator ran (asserted above) stays visible
+    assert "RRRRRRRR" not in text
+    assert "[omitted harness-injected synthetic message:" in text
+
+
+def test_opencode_cat_cap_clips_the_message_that_crosses_it(tmp_path):
+    db = tmp_path / "opencode.db"
+    _make_opencode_db(db)
+    con = sqlite3.connect(db)
+    con.execute("UPDATE part SET data = ? WHERE id = 'p1'", (json.dumps({"type": "text", "text": "h" * 5_000}),))
+    con.commit()
+    con.close()
+    text = vi._cat_opencode(_fake_mod(opencode={"path": db}), "s1", 300)
+    assert text.endswith(TRUNCATED)
+    assert len(text) == 300 + len(TRUNCATED)
+
+
 # ─── gemini adapter ──────────────────────────────────────────────────
 
 
@@ -381,6 +620,18 @@ def test_gemini_index_and_cat(tmp_path):
     text = vi._cat_gemini(mod, "gsid", 10_000)
     assert "question" in text
     assert "[tool: read_file]" in text
+
+
+def test_gemini_cat_cap_clips_the_message_that_crosses_it(tmp_path):
+    _write_gemini_session(tmp_path / "proj-slug", "gsid-big")
+    path = tmp_path / "proj-slug" / "chats" / "session-gsid-big.jsonl"
+    lines = path.read_text().splitlines()
+    big = json.loads(lines[1])
+    big["content"] = [{"text": "q" * 5_000}]
+    path.write_text("\n".join([lines[0], json.dumps(big), *lines[2:]]))
+    text = vi._cat_gemini(_fake_mod(gemini={"path": tmp_path}), "gsid-big", 300)
+    assert text.endswith(TRUNCATED)
+    assert len(text) == 300 + len(TRUNCATED)
 
 
 def test_gemini_window_uses_header_time_not_file_mtime(tmp_path):
@@ -574,6 +825,413 @@ def test_render_escapes_html_in_narrative(tmp_path, monkeypatch):
     html_text = (vdir / "report.html").read_text()
     assert "<script>alert(1)</script>" not in html_text
     assert "&lt;script&gt;" in html_text
+
+
+# ─── render: full /insights report shape (both narrative shapes) ─────
+
+_VOID = frozenset({"meta", "link", "input", "br", "hr", "img"})
+_FULL_SECTION_IDS = (
+    "section-work",
+    "section-usage",
+    "section-wins",
+    "section-friction",
+    "section-features",
+    "section-patterns",
+    "section-horizon",
+    "section-coverage",
+)
+_PAYLOAD = "<img src=x onerror=alert(1)>"
+
+# The full shape: every key the built-in /insights narrative carries.
+_FULL_NARRATIVE = {
+    "at_a_glance": {
+        "whats_working": "You verify **everything** before closing.",
+        "whats_hindering": "Hooks denied writes " + _PAYLOAD,
+        "quick_wins": "Add a closeout skill.",
+        "ambitious_workflows": "A self-healing closeout loop.",
+    },
+    "project_areas": {
+        "areas": [
+            {"name": "Merge rail", "session_count": 19, "description": "Gates and **closeout**."},
+            {"name": "Dotfiles", "session_count": "~6", "description": None},
+        ]
+    },
+    "interaction_style": {
+        "narrative": "You steer through **standing rules**.\n\nSecond paragraph about <delegation> habits.",
+        "key_pattern": "Verification-first operator.",
+    },
+    "what_works": {
+        "intro": "Across 96 sessions.",
+        "impressive_workflows": [{"title": "Verify then close", "description": "Predicates must exit 0."}],
+    },
+    "friction_analysis": {
+        "intro": "Most friction is the host.",
+        "categories": [
+            {"category": "Guard denials", "description": "Writes blocked.", "examples": ["ex one", "ex <two>"]},
+            {"category": "No examples", "description": "d", "examples": []},
+        ],
+    },
+    "suggestions": {
+        "claude_md_additions": [
+            {
+                "addition": '## Closeout\n- Never claim "live" until probed.',
+                "why": "Four sessions pushed back.",
+                "prompt_scaffold": "Add under a ## Closeout heading.",
+            }
+        ],
+        "features_to_try": [
+            {
+                "feature": "Custom Skills",
+                "one_liner": "Package the merge ritual.",
+                "why_for_you": "15 sessions merged PRs.",
+                "example_code": "# SKILL.md\nname: ship-pr  <b>raw</b>",
+            },
+            {"feature": "Headless Mode", "one_liner": "Run predicates on a schedule.", "why_for_you": None},
+        ],
+        "usage_patterns": [
+            {
+                "title": "Inventory first",
+                "suggestion": "List leftovers before predicates.",
+                "detail": "Pushback became a step.",
+                "copyable_prompt": "Before /closeout list every hanging item.",
+            }
+        ],
+    },
+    "on_the_horizon": {
+        "intro": "A governed fleet.",
+        "opportunities": [
+            {
+                "title": "Self-healing closeout",
+                "whats_possible": "Loop until idempotent.",
+                "how_to_try": "Wrap in a Stop hook.",
+                "copyable_prompt": "Run an autonomous closeout loop.",
+            }
+        ],
+    },
+    "fun_ending": {"headline": "Hooks locked Claude out", "detail": "It staged a script."},
+    "coverage_notes": ["96 of 108 sessions analysed.", "12 transcripts read in part."],
+    "verification": {
+        "summary": "Largely trustworthy as lower bounds.",
+        "rounds": 3,
+        "issues_found": 172,
+        "issues_fixed": 161,
+        "residuals": ["[low] one residual", "[medium] another"],
+    },
+}
+
+# The thin shape, exactly the key set a pre-parity narrative.json carries.
+_THIN_NARRATIVE = {
+    "tldr": "One line summary.",
+    "at_a_glance": {
+        "whats_working": "Capsules.",
+        "whats_hindering": "Churn.",
+        "quick_wins": "Pin the root.",
+        "ambitious_workflows": "A queue.",
+    },
+    "areas": [{"name": "Campaign", "session_count": 2, "description": "desc"}],
+    "interaction_style": "Terse and directive.",
+    "friction": [{"category": "churn", "description": "d", "examples": ["e1", "e2"]}],
+    "suggestions": [{"title": "Pin it", "detail": "Set the root per call."}],
+    "coverage_notes": ["Sampled 2 of 3."],
+}
+
+_REPORT_FACETS = [
+    {
+        "session_id": "a",
+        "outcome": "fully_achieved",
+        "agent_helpfulness": "very_helpful",
+        "session_type": "multi_task",
+        "friction_counts": {"buggy_code": 2},
+        "user_satisfaction_counts": {"likely_satisfied": 3},
+        "goal_categories": {"merge_pr": 1},
+    },
+    {
+        "session_id": "b",
+        "outcome": "mostly_achieved",
+        "session_type": "single_task",
+        "friction_counts": {"environment_blocked": 1},
+        "user_satisfaction_counts": {"dissatisfied": 1},
+        "goal_categories": {"status_check": 2},
+    },
+]
+
+
+class _Structure(HTMLParser):
+    """Collect element balance, ids, anchors and attributes from a rendered report."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack: list[str] = []
+        self.errors: list[str] = []
+        self.ids: list[str] = []
+        self.hrefs: list[str] = []
+        self.data_text: list[str] = []
+        self.text: list[str] = []
+        self._skip = 0
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if "id" in a:
+            self.ids.append(a["id"])
+        if tag == "a" and a.get("href", "").startswith("#"):
+            self.hrefs.append(a["href"][1:])
+        if "data-text" in a:
+            self.data_text.append(a["data-text"])
+        if tag in ("style", "script"):
+            self._skip += 1
+        if tag not in _VOID:
+            self.stack.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag in ("style", "script"):
+            self._skip -= 1
+        if not self.stack or self.stack[-1] != tag:
+            self.errors.append(f"unbalanced </{tag}> over {self.stack[-3:]}")
+            return
+        self.stack.pop()
+
+    def handle_data(self, data):
+        if not self._skip:
+            self.text.append(data)
+
+
+def _structure(html_text: str) -> _Structure:
+    parser = _Structure()
+    parser.feed(html_text)
+    parser.close()
+    return parser
+
+
+def _render_report(tmp_path, monkeypatch, narrative, facets=_REPORT_FACETS, vendor="claude") -> str:
+    monkeypatch.setattr(vi, "OUT_ROOT", tmp_path)
+    vdir = tmp_path / vendor
+    (vdir / "facets").mkdir(parents=True)
+    index = {
+        "vendor": vendor,
+        "window": {"start": "2026-10-11T00:00:00", "end": "2026-10-18T00:00:00"},
+        "sessions": [
+            {
+                "id": "a",
+                "started_at": "2026-10-16T10:00:00Z",
+                "user_msgs": 4,
+                "assistant_msgs": 9,
+                "tool_calls": 12,
+                "models": ["claude-opus-4-8"],
+            },
+            {
+                "id": "b",
+                "started_at": "2026-10-17T10:00:00Z",
+                "user_msgs": 2,
+                "assistant_msgs": 3,
+                "tool_calls": 3,
+                "models": ["claude-opus-4-8", "claude-haiku-4-5"],
+            },
+        ],
+    }
+    (vdir / "index.json").write_text(json.dumps(index))
+    for f in facets:
+        (vdir / "facets" / f"{f['session_id']}.json").write_text(json.dumps(f))
+    (vdir / "narrative.json").write_text(json.dumps(narrative))
+    assert vi.cmd_render(vendor) == 0
+    return (vdir / "report.html").read_text()
+
+
+def _assert_well_formed(html_text: str) -> _Structure:
+    s = _structure(html_text)
+    assert not s.errors, s.errors
+    assert s.stack == [], f"unclosed elements: {s.stack}"
+    prose = " ".join(s.text)
+    assert not re.search(r"\b(None|undefined|null|NaN)\b", prose), re.findall(
+        r".{30}\b(?:None|undefined|null|NaN)\b.{30}", prose
+    )
+    assert len(s.ids) == len(set(s.ids)), "duplicate ids"
+    for target in s.hrefs:
+        assert target in s.ids, f"dangling anchor #{target}"
+    return s
+
+
+def test_render_full_shape_has_every_section_in_builtin_order(tmp_path, monkeypatch):
+    html_text = _render_report(tmp_path, monkeypatch, _FULL_NARRATIVE)
+    s = _assert_well_formed(html_text)
+    for sid in _FULL_SECTION_IDS:
+        assert f'id="{sid}"' in html_text, sid
+    positions = [html_text.index(f'id="{sid}"') for sid in _FULL_SECTION_IDS]
+    assert positions == sorted(positions), "sections out of the built-in order"
+    # The built-in page's chrome: at-a-glance, nav, stats row, in that order, before section-work.
+    chrome = [
+        html_text.index(c) for c in ('class="at-a-glance"', 'class="nav-toc"', 'class="stats-row"', 'id="section-work"')
+    ]
+    assert chrome == sorted(chrome)
+    for css_class in (
+        "project-area",
+        "key-insight",
+        "big-win",
+        "friction-category",
+        "friction-examples",
+        "claude-md-item",
+        "cmd-checkbox",
+        "feature-card",
+        "pattern-card",
+        "copyable-prompt",
+        "horizon-card",
+        "pattern-prompt",
+        "fun-ending",
+        "collapsible-section",
+    ):
+        assert f'class="{css_class}' in html_text or f" {css_class}" in html_text, css_class
+    # Every at-a-glance see-more link and nav link resolves (asserted generically above) and the
+    # four see-more targets are the sections the built-in page links to.
+    for target in ("section-wins", "section-friction", "section-features", "section-horizon"):
+        assert f'href="#{target}" class="see-more"' in html_text
+    assert s.hrefs.count("section-coverage") == 1
+
+
+def test_render_full_shape_prose_is_escaped_then_marked_up(tmp_path, monkeypatch):
+    html_text = _render_report(tmp_path, monkeypatch, _FULL_NARRATIVE)
+    assert _PAYLOAD not in html_text
+    assert "&lt;img src=x onerror=alert(1)&gt;" in html_text
+    # **bold** becomes <strong> only after escaping.
+    assert "<strong>everything</strong>" in html_text
+    assert "<strong>standing rules</strong>" in html_text
+    assert "**" not in html_text.split("<script>")[0].split("</style>")[1]
+    # Blank-line paragraphs split; an angle-bracket word is text, not markup.
+    narrative = html_text.split('<div class="narrative">')[1].split("</div>")[0]
+    assert narrative.count("<p>") == 2
+    assert "&lt;delegation&gt;" in narrative
+    # A null description renders nothing rather than the word None.
+    assert '<div class="area-desc"></div>' in html_text
+
+
+def test_render_full_shape_code_fields_stay_literal_and_copyable(tmp_path, monkeypatch):
+    html_text = _render_report(tmp_path, monkeypatch, _FULL_NARRATIVE)
+    s = _assert_well_formed(html_text)
+    # prompt_scaffold rides in data-text only; the visible code block is the addition itself.
+    assert s.data_text == ['Add under a ## Closeout heading.\n\n## Closeout\n- Never claim "live" until probed.']
+    visible = html_text.split('class="cmd-code">')[1].split("</code>")[0]
+    assert "Add under a" not in visible
+    assert "&quot;live&quot;" in visible
+    # example_code is escaped literal text, never interpreted (no **bold**, no live <b>).
+    assert "&lt;b&gt;raw&lt;/b&gt;" in html_text
+    assert "<b>raw</b>" not in html_text
+    # Optional code blocks are omitted, not rendered empty.
+    assert html_text.count('class="example-code"') == 1
+    assert html_text.count('class="copyable-prompt"') == 1
+    assert 'onclick="copyText(this)"' in html_text
+    assert "function copyText" in html_text and "function copyCmdItem" in html_text
+
+
+def test_render_full_shape_names_verification_and_coverage(tmp_path, monkeypatch):
+    html_text = _render_report(tmp_path, monkeypatch, _FULL_NARRATIVE)
+    coverage = html_text.split('id="section-coverage"')[1]
+    for needle in (
+        "96 of 108 sessions analysed.",
+        "Largely trustworthy as lower bounds.",
+        "Verification rounds: 3 | Issues found: 172 | Issues fixed: 161",
+        "[low] one residual",
+        "[medium] another",
+    ):
+        assert needle in coverage
+    # Deterministic notes still append: 2 of 2 faceted, so no unfaceted line; no section absent.
+    assert "Narrative sections absent" not in html_text
+
+
+def test_render_full_shape_hosts_charts_under_their_sections(tmp_path, monkeypatch):
+    html_text = _render_report(tmp_path, monkeypatch, _FULL_NARRATIVE)
+    wins = html_text.split('id="section-wins"')[1].split('id="section-friction"')[0]
+    friction = html_text.split('id="section-friction"')[1].split('id="section-features"')[0]
+    work = html_text.split('id="section-work"')[1].split('id="section-usage"')[0]
+    assert "Outcomes" in wins and 'title="fully_achieved"' in wins and "Helpfulness" in wins
+    assert 'title="buggy_code"' in friction and 'title="likely_satisfied"' in friction
+    assert 'title="merge_pr"' in work and 'title="multi_task"' in work
+    # Charts are hosted in their sections, so no orphan aggregate block is needed.
+    assert 'id="section-aggregates"' not in html_text
+    # Bar widths are bounded, rounded percentages.
+    widths = [float(w) for w in re.findall(r"width:([0-9.]+)%", html_text)]
+    assert widths and max(widths) == 100.0 and all(0 <= w <= 100 for w in widths)
+
+
+def test_render_thin_shape_still_renders_and_links_only_what_exists(tmp_path, monkeypatch):
+    html_text = _render_report(tmp_path, monkeypatch, _THIN_NARRATIVE, vendor="codex")
+    s = _assert_well_formed(html_text)
+    # Sections the thin shape can fill render with the built-in ids...
+    for sid in ("section-work", "section-usage", "section-friction", "section-patterns", "section-coverage"):
+        assert f'id="{sid}"' in html_text, sid
+    # ...and the ones it cannot are absent, with no dangling nav or see-more link to them.
+    for sid in ("section-wins", "section-features", "section-horizon"):
+        assert f'id="{sid}"' not in html_text
+        assert f'href="#{sid}"' not in html_text
+    assert 'href="#section-friction" class="see-more"' in html_text
+    assert "One line summary." in html_text and 'id="section-tldr"' in html_text
+    assert "Terse and directive." in html_text
+    # suggestions[{title, detail}] are drawn as pattern-cards.
+    assert "Pin it" in html_text
+    assert "Set the root per call." in html_text
+    assert "<li>e1</li>" in html_text and "<li>e2</li>" in html_text
+    assert "Sampled 2 of 3." in html_text
+    # The sections it cannot fill are named, and Outcomes (no wins section to host it) is not lost.
+    assert "Narrative sections absent:" in html_text and "what_works" in html_text and "on_the_horizon" in html_text
+    assert 'id="section-aggregates"' in html_text and 'title="fully_achieved"' in html_text
+    assert "Codex Insights" in html_text and "Claude Code" not in html_text
+    assert "section-aggregates" in s.ids
+
+
+def test_render_nothing_but_index_renders_a_well_formed_page(tmp_path, monkeypatch):
+    # No narrative sections at all (only a tldr) and no facets: still balanced, still honest.
+    html_text = _render_report(tmp_path, monkeypatch, {"tldr": "x"}, facets=[{"session_id": "a"}])
+    _assert_well_formed(html_text)
+    assert 'id="section-work"' not in html_text
+    assert "at_a_glance" in html_text and "project_areas" in html_text  # named as absent
+
+
+def test_render_tolerates_nulls_and_odd_types_in_either_shape(tmp_path, monkeypatch):
+    hostile = {
+        "at_a_glance": {"whats_working": None, "quick_wins": 7},
+        "project_areas": {"areas": [{"name": None, "session_count": None, "description": ["a", "b"]}, "not a dict"]},
+        "interaction_style": {"narrative": None, "key_pattern": None},
+        "what_works": {"intro": None, "impressive_workflows": [{"title": "t", "description": None}]},
+        "friction_analysis": {"intro": None, "categories": [{"category": "c", "examples": "single string"}]},
+        "suggestions": {
+            "claude_md_additions": [{"addition": "x"}],
+            "features_to_try": [{"feature": "f"}],
+            "usage_patterns": [{"title": "p"}],
+        },
+        "on_the_horizon": {"opportunities": [{"title": "h"}]},
+        "fun_ending": {"headline": None, "detail": "only detail"},
+        "coverage_notes": "one note as a string",
+        "verification": {"summary": None, "rounds": 0, "issues_found": None, "residuals": None},
+    }
+    html_text = _render_report(tmp_path, monkeypatch, hostile)
+    _assert_well_formed(html_text)
+    assert "one note as a string" in html_text
+    assert "Verification rounds: 0" in html_text
+    assert "single string" in html_text and "only detail" in html_text
+
+
+@pytest.mark.parametrize("raw", [None, [], "text", 3, {"areas": "nope", "friction": 4, "suggestions": "x"}])
+def test_normalize_narrative_never_raises_on_a_wrong_shape(raw):
+    nar = vi._normalize_narrative(raw)
+    assert nar["areas"] == [] and nar["claude_md"] == [] and nar["horizon"]["items"] == []
+
+
+def test_normalize_narrative_maps_thin_keys_onto_full_shape():
+    nar = vi._normalize_narrative(_THIN_NARRATIVE)
+    assert [a["name"] for a in nar["areas"]] == ["Campaign"]
+    assert nar["style"] == {"narrative": "Terse and directive.", "key_pattern": ""}
+    assert nar["friction"]["categories"][0]["category"] == "churn"
+    assert nar["patterns"] == [{"title": "Pin it", "detail": "Set the root per call."}]
+    assert nar["claude_md"] == [] and nar["features"] == []
+    full = vi._normalize_narrative(_FULL_NARRATIVE)
+    assert [a["name"] for a in full["areas"]] == ["Merge rail", "Dotfiles"]
+    assert full["style"]["key_pattern"] == "Verification-first operator."
+    assert full["verification"]["rounds"] == "3" and full["verification"]["residuals"] == [
+        "[low] one residual",
+        "[medium] another",
+    ]
+
+
+def test_aggregate_facets_counts_helpfulness_labels():
+    agg = vi._aggregate_facets(_REPORT_FACETS + [{"claude_helpfulness": "very_helpful"}, {"agent_helpfulness": "  "}])
+    assert agg["helpfulness"] == {"very_helpful": 2}
 
 
 # ─── index honesty: population, cap, ordering (R3) ───────────────────

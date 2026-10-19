@@ -13,13 +13,13 @@ import shutil
 import stat
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from limen.host_admission import AdmissionController, AdmissionStateError
 from limen.prima_materia import ResourceClaimV1
-from limen.storage_claim_census import broker_storage_claims
 from limen.resource_envelope import (
     ResourceGraphError,
     ResourceTelemetryUnavailable,
@@ -27,6 +27,7 @@ from limen.resource_envelope import (
     load_task_graph_claims,
     observe_resource_telemetry,
 )
+from limen.storage_claim_census import SNAPSHOT_NAME, broker_storage_claims, read_claim_snapshot
 
 SCHEMA = "limen.runtime_pool.v1"
 MAX_AGE_SECONDS = 120
@@ -37,11 +38,71 @@ class PoolUnavailable(RuntimeError):
     """A typed, path-free admission failure."""
 
 
-def selected_claims() -> tuple[ResourceClaimV1, ...]:
+@dataclass(frozen=True)
+class ClaimSelection:
+    """The claims the pool reserves against, and which broker ledger they came from.
+
+    ``broker_ledger`` is ``None`` when the caller supplied the claims itself, ``{"broker_ledger":
+    "live"}`` after a successful broker read, and the frozen marker (``broker_ledger``, ``frozen_at``,
+    ``reason``) when the claims came from the last-good snapshot. The pool copies it onto every
+    decision, so ``scripts/runtime-pool.py --json`` carries it to the launcher unchanged.
+    """
+
+    claims: tuple[ResourceClaimV1, ...]
+    broker_ledger: dict[str, str] | None = None
+
+
+def _broker_claims(
+    snapshot_path: Path | None, now: datetime | None
+) -> tuple[tuple[ResourceClaimV1, ...], dict[str, str]]:
+    """Live broker claims — or, while the keeper's write quota is spent, the frozen last-good set.
+
+    Why memory is exact here and nowhere else. The keeper is a Cloudflare Durable Object on the free
+    tier: once its daily WRITE cap trips (4444J99/limen#2054), the keeper refuses every write until
+    the 00:00 UTC reset — and its reads fail with the same refusal, which is how this path is reached
+    at all. Nothing can register, heartbeat, release, or expire a claim on a keeper that accepts no
+    writes, so from the instant the wall went up the broker's claim set is frozen. The snapshot that
+    the last successful read wrote is therefore not a stale cache of a moving ledger: for the whole
+    outage it IS the ledger. (The one thing it cannot see is a claim written in the gap between that
+    read and the wall. Every agent launch reads, so the gap is the launch cadence, and the pool still
+    measures free disk live — a missed claim narrows the margin, it does not blind the gate.)
+
+    That is also why there is no max-age cutoff beyond each claim's own ``rollback_until``. Honouring
+    a remembered claim to its own expiry can only over-reserve: a claim the broker would have released
+    early cannot be released while writes are refused, and a claim past ``rollback_until`` is dropped
+    here exactly as the broker's own census drops it. Every OTHER broker failure — network, auth, an
+    incomplete, stale or conflicting census — says nothing about whether the ledger moved, so memory
+    would be a guess; those still fail closed, byte-for-byte as before.
+    """
     try:
-        machine = broker_storage_claims()
+        return broker_storage_claims(snapshot_path), {"broker_ledger": "live"}
+    except Exception as exc:
+        # Lazy, like storage_claim_census: keeps the conduct package off this module's import path.
+        from limen.conduct.client import BrokerQuotaExhausted
+
+        snapshot = (
+            read_claim_snapshot(snapshot_path)
+            if isinstance(exc, BrokerQuotaExhausted) and snapshot_path is not None
+            else None
+        )
+        if snapshot is None:
+            # Every other failure — and a quota wall with nothing remembered — fails closed exactly
+            # as before; selected_claims() names the reason.
+            raise
+        instant = now if now is not None else datetime.now(UTC)
+        claims = tuple(claim for claim in snapshot.claims if claim.rollback_until > instant)
+        return claims, {
+            "broker_ledger": "frozen",
+            "frozen_at": snapshot.observed_at.isoformat(),
+            "reason": "broker_quota_exhausted",
+        }
+
+
+def selected_claims(snapshot_path: Path | None = None, *, now: datetime | None = None) -> ClaimSelection:
+    try:
+        machine, ledger = _broker_claims(snapshot_path, now)
         if not os.environ.get("LIMEN_RESOURCE_TASK_GRAPH"):
-            return machine
+            return ClaimSelection(machine, ledger)
         selected = load_task_graph_claims(expected_run_id=os.environ.get("LIMEN_RESOURCE_TASK_GRAPH_RUN_ID") or None)
         path = Path(os.environ["LIMEN_RESOURCE_TASK_GRAPH"])
         if not 0 <= time.time() - path.stat().st_mtime <= MAX_AGE_SECONDS:
@@ -51,10 +112,18 @@ def selected_claims() -> tuple[ResourceClaimV1, ...]:
             if claim.claim_id in claims and claims[claim.claim_id] != claim:
                 raise PoolUnavailable("resource_claim_conflict")
             claims[claim.claim_id] = claim
-        return tuple(claims.values())
+        return ClaimSelection(tuple(claims.values()), ledger)
     except PoolUnavailable:
         raise
     except Exception as exc:
+        # Lazy, like storage_claim_census: keeps the conduct package off this module's import path.
+        from limen.conduct.client import BrokerQuotaExhausted
+
+        if isinstance(exc, BrokerQuotaExhausted):
+            # The keeper's storage plan is spent (4444J99/limen#2054), not the disk and not a bug in
+            # the census, and nothing was remembered to stand in for it. The gate still fails closed;
+            # only the reason stops reading as a census fault.
+            raise PoolUnavailable("broker_quota_exhausted") from exc
         reason = (
             str(exc)
             if isinstance(exc, ValueError) and str(exc).startswith("broker_storage_census_")
@@ -69,6 +138,16 @@ class RuntimePool(AdmissionController):
     @property
     def pool_path(self) -> Path:
         return self.root / "runtime-pool.json"
+
+    @property
+    def snapshot_path(self) -> Path:
+        # Beside the pool file: the same private 0700 root, the same owner, the same lock. Not a new root.
+        return self.root / SNAPSHOT_NAME
+
+    def _select(self, claims: tuple | None) -> ClaimSelection:
+        if claims is not None:
+            return ClaimSelection(tuple(claims))
+        return selected_claims(self.snapshot_path, now=datetime.fromtimestamp(self.clock(), UTC))
 
     def _read_pool(self) -> dict[str, Any]:
         try:
@@ -133,7 +212,7 @@ class RuntimePool(AdmissionController):
             )
         ]
 
-    def _observe(self, path: Path, rows: list[dict], claims: tuple) -> dict:
+    def _observe(self, path: Path, rows: list[dict], claims: tuple, *, ledger: dict[str, str] | None = None) -> dict:
         instant = datetime.fromtimestamp(self.clock(), UTC)
         telemetry = observe_resource_telemetry()
         age = (instant - telemetry.observed_at).total_seconds()
@@ -158,7 +237,7 @@ class RuntimePool(AdmissionController):
             reserved += max(0, row["bytes"] - included)
         free = shutil.disk_usage(path).free
         available = free - envelope.required_free_bytes - reserved
-        return {
+        decision: dict[str, Any] = {
             "schema": SCHEMA,
             "pool_mode": "shared_disk_aware",
             "observed_at": telemetry.observed_at.isoformat(),
@@ -181,12 +260,16 @@ class RuntimePool(AdmissionController):
             "allowed": available > 0,
             "denial_reasons": [] if available > 0 else ["shared_pool_exhausted"],
         }
+        if ledger:
+            decision.update(ledger)
+        return decision
 
     def observe(self, path: Path, *, claims: tuple | None = None) -> dict:
         try:
             with self._locked():
                 rows = self._retained(self._read_pool()["reservations"])
-                return self._observe(path, rows, selected_claims() if claims is None else claims)
+                selection = self._select(claims)
+                return self._observe(path, rows, selection.claims, ledger=selection.broker_ledger)
         except (
             ResourceGraphError,
             ResourceTelemetryUnavailable,
@@ -229,7 +312,8 @@ class RuntimePool(AdmissionController):
         with self._locked():
             state = self._read_pool()
             rows = self._retained(state["reservations"])
-            selected = selected_claims() if claims is None else claims
+            selection = self._select(claims)
+            selected = selection.claims
             if claim_id is not None:
                 if not any(claim.claim_id == claim_id for claim in selected):
                     raise PoolUnavailable("reservation_claim_missing")
@@ -246,7 +330,7 @@ class RuntimePool(AdmissionController):
                 "claim_id": claim_id,
                 "claims": [claim.model_dump(mode="json") for claim in selected],
             }
-            decision = self._observe(path, [*rows, row], selected)
+            decision = self._observe(path, [*rows, row], selected, ledger=selection.broker_ledger)
             if decision["available_growth_bytes"] < 0:
                 decision.update(allowed=False, denial_reasons=["shared_pool_exhausted"])
                 return decision

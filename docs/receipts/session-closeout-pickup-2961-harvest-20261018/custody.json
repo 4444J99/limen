@@ -1,0 +1,36 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "a89fb304-ecdf-45a7-aef4-2cebe27d2309",
+  "supersedes_binding_of": "docs/receipts/session-closeout-pickup-2961-landing-20261018 (merged as #3055, merge commit faf27d7b5f21e8287db1337cc6fe2bafaabb02fc): its merged work stands; only the broker binding moved to this worktree after the lesson-harvest run",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3073, "merge_commit": "3a6771534155df31951aaff5ef2b735ae6b70595", "what": "check-docs-manifest now selects nested paths (docs/** added), so a new top-level docs directory cannot slip past it; pinned by a resolver fixture that fails against the parent registry"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2961",
+    "https://github.com/4444J99/limen/issues/3044"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/3044#issuecomment-6248626047"
+    ],
+    "lesson_harvest": "Two sessions read and judged none-found (074855e1, 081ca049); one new lesson codified at its base by the merged PR above. By agreement with the peer session that is the single writer of the harvest cursor, precedents and memory tickets, this session marked nothing and created no ledger line; the peer holds the finished judgments for all queued sessions and will cite PR 3073 for this session when it is quiet. Backlog at the end of the tranche: claude 181 unprocessed, 0 processed.",
+    "broker_registration": "registered by scripts/hooks/conduct-register.sh as a protected direct claude session; at closeout the broker binds it to this receipt's worktree. Audit: session_present true, retained_run_count 0, active_lease_count 0. No lease, run, child or fanout was ever reserved."
+  },
+  "session_worktrees": {
+    "receipt_worktree": "docs-manifest-gate-coverage (this checkout, kept)",
+    "prior_worktree": "pickup-2961-landing (kept; its receipt is merged; it holds no unmerged work)",
+    "not_touched": "every peer checkout and the locked worktree of the credential-consumer author"
+  },
+  "not_owned_by_this_session": [
+    "the lesson-harvest cursor, the precedents file and the memory tickets: the peer session is the single writer by explicit agreement",
+    "worktree-heal-evolve-opencode-20261018, the one landed branch the reaper lists as lingering: another session's",
+    "the live checkout's catch-up to origin/main: scripts/sync-release.sh owns it (2 commits behind at closeout)"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/2961", "what": "go-live of the MCP door is still NOT run: per-lane upstream design, a pre-fetched gateway backend, and a reinstall of the limen-mcp tool from merged main. Status stays merged, not live. Execution-policy row and host admission remain owner-gated."},
+    {"owner": "https://github.com/4444J99/limen/issues/3044", "what": "the registration hook re-binds a finished background job to its current worktree, which is why this second receipt exists; the keep-awake helper finding of the first closeout is the same defect family"},
+    {"owner": "https://github.com/4444J99/limen/issues/3003", "what": "the dead CI credential for the private witness checkout: human-gated, untouched"}
+  ],
+  "local_only_state": "Nothing durable exists only locally: the one code change (PR 3073) is merged on origin/main and every finding is in a git-tracked or GitHub-hosted owner. Disposable scratch lives in the gitignored .agent-runtime/scratch of the two retained worktrees (proof harness, PR body files, an SHA checker, a queue snapshot) and in a private test venv under the job directory; no restore copy is claimed. No credential value was read into any file, comment or log.",
+  "host_effects": "None. No host configuration, tool, gateway, lease, policy or secret store was changed in this stretch of work."
+}
