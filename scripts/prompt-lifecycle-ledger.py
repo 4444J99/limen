@@ -31,7 +31,12 @@ import yaml
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 from limen.runtime_config import RUNTIME_URL_ENV_ORDER, runtime_api_url  # noqa: E402
-from limen.session_sources import resolve_opencode_db  # noqa: E402
+from limen.session_sources import (  # noqa: E402
+    opencode_has_legacy_messages,
+    opencode_session_table,
+    opencode_v2_tail,
+    resolve_opencode_db,
+)
 
 # Doc artifacts belong to the repo this script lives in — never to the runtime root — so a
 # dev/worktree run cannot silently dirty the live checkout (LIMEN_ROOT keeps owning the board).
@@ -427,14 +432,20 @@ def session_meta_from_records(source: str, row: dict[str, Any], records: list[di
 
 
 def opencode_part_texts(parts: list[sqlite3.Row]) -> list[str]:
-    texts: list[str] = []
+    datas: list[dict[str, Any]] = []
     for part in parts:
         try:
             data = json.loads(part["data"]) if part["data"] else {}
         except (TypeError, ValueError):
             continue
-        if not isinstance(data, dict):
-            continue
+        if isinstance(data, dict):
+            datas.append(data)
+    return opencode_part_data_texts(datas)
+
+
+def opencode_part_data_texts(datas: list[dict[str, Any]]) -> list[str]:
+    texts: list[str] = []
+    for data in datas:
         typ = data.get("type")
         if typ in ("text", "compaction"):
             text = data.get("text") or data.get("summary")
@@ -459,13 +470,14 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
         return []
     con.row_factory = sqlite3.Row
     try:
+        session_table = opencode_session_table(con)
         where = "WHERE time_updated >= ?" if cutoff_ms is not None else ""
         params: tuple[Any, ...] = (cutoff_ms,) if cutoff_ms is not None else ()
         sessions = con.execute(
             "SELECT id, title, directory, time_created, time_updated, summary_additions, "
             "summary_deletions, summary_files, summary_diffs, cost, tokens_input, "
             "tokens_output, tokens_reasoning, tokens_cache_read, tokens_cache_write, model "
-            f"FROM session {where} ORDER BY time_created, id",
+            f"FROM {session_table} {where} ORDER BY time_created, id",
             params,
         ).fetchall()
     except sqlite3.Error:
@@ -477,35 +489,37 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
     for session in sessions:
         sid = str(session["id"])
         try:
-            messages = con.execute(
-                "SELECT id, time_created, time_updated, data FROM message WHERE session_id=? ORDER BY time_created, id",
-                (sid,),
-            ).fetchall()
+            messages: list[sqlite3.Row] = []
             parts_by_message: dict[str, list[sqlite3.Row]] = defaultdict(list)
             part_count = 0
-            for part in con.execute(
-                "SELECT message_id, time_created, time_updated, data FROM part WHERE session_id=? "
-                "ORDER BY time_created, id",
-                (sid,),
-            ):
-                parts_by_message[str(part["message_id"])].append(part)
-                part_count += 1
+            if opencode_has_legacy_messages(con):
+                messages = con.execute(
+                    "SELECT id, time_created, time_updated, data FROM message "
+                    "WHERE session_id=? ORDER BY time_created, id",
+                    (sid,),
+                ).fetchall()
+                for part in con.execute(
+                    "SELECT message_id, time_created, time_updated, data FROM part WHERE session_id=? "
+                    "ORDER BY time_created, id",
+                    (sid,),
+                ):
+                    parts_by_message[str(part["message_id"])].append(part)
+                    part_count += 1
+            # Legacy rows are authoritative for what they hold; v2 adds only the turns they lack.
+            v2_tail = opencode_v2_tail(con, sid) if session_table == "session_v2" else []
         except sqlite3.Error:
             continue
 
+        event_count = len(messages) + part_count + len(v2_tail)
         event_times = [
             ts
             for ts in (
                 iso_from_epoch_ms(row["time_created"])
-                for row in list(messages) + [p for ps in parts_by_message.values() for p in ps]
+                for row in list(messages) + [p for ps in parts_by_message.values() for p in ps] + v2_tail
             )
             if ts
         ]
-        prompt_hashes: list[str] = []
-        task_body_hashes: list[str] = []
-        body_kind_counts: Counter[str] = Counter()
-        prompt_bytes = 0
-        task_body_bytes = 0
+        user_texts: list[str] = []
         for message in messages:
             try:
                 data = json.loads(message["data"]) if message["data"] else {}
@@ -513,8 +527,17 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
                 continue
             if not isinstance(data, dict) or data.get("role") != "user":
                 continue
-            texts = opencode_part_texts(parts_by_message.get(str(message["id"]), []))
-            text = "\n\n".join(texts)
+            user_texts.append("\n\n".join(opencode_part_texts(parts_by_message.get(str(message["id"]), []))))
+        user_texts.extend(
+            "\n\n".join(opencode_part_data_texts(turn["parts"])) for turn in v2_tail if turn["role"] == "user"
+        )
+
+        prompt_hashes: list[str] = []
+        task_body_hashes: list[str] = []
+        body_kind_counts: Counter[str] = Counter()
+        prompt_bytes = 0
+        task_body_bytes = 0
+        for text in user_texts:
             if not text.strip():
                 continue
             fingerprint = prompt_fingerprint(text)
@@ -545,7 +568,7 @@ def opencode_virtual_sessions(days: int | None) -> list[dict[str, Any]]:
                 "virtual_source": True,
                 "size": 0,
                 "mtime": iso_from_epoch_ms(session["time_updated"]),
-                "event_count": len(messages) + part_count,
+                "event_count": event_count,
                 "first_event": min(event_times) if event_times else None,
                 "last_event": max(event_times) if event_times else None,
                 "cwd": session["directory"],

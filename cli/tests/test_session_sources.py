@@ -8,7 +8,10 @@ from limen.session_sources import (
     SessionSource,
     child_identity_environment,
     discover_sources,
+    opencode_has_legacy_messages,
     opencode_session_table,
+    opencode_v2_tail,
+    opencode_v2_turns,
     read_session_records,
     resolve_opencode_db,
     resolve_session,
@@ -305,3 +308,41 @@ def test_child_identity_includes_actual_lease_and_execution_envelope() -> None:
         "LIMEN_EXECUTION_HASH": "execution-hash",
         "LIMEN_LEASE_TOKEN": "secret-token",
     }
+
+
+def test_v2_tail_is_every_turn_of_a_v2_only_session_and_only_post_freeze_turns_of_a_migrated_one(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "opencode.db"
+    _open_code_v2_db(path)  # legacy 'open-run' updated at 500; v2 holds its migrated turn at 500
+    with sqlite3.connect(path) as db:
+        assert [t["role"] for t in opencode_v2_tail(db, "v2-only-run")] == ["user", "assistant"]
+        assert opencode_v2_tail(db, "open-run") == [], "a turn the legacy tables already hold is not a tail"
+        db.execute(
+            "INSERT INTO session_message VALUES ('v2-e', 'open-run', 'user', 2, 600, ?)",
+            (json.dumps({"text": "After the freeze"}),),
+        )
+        tail = opencode_v2_tail(db, "open-run")
+
+    assert [t["parts"] for t in tail] == [[{"type": "text", "text": "After the freeze"}]]
+    assert tail[0]["time_created"] == 600
+
+
+def test_v2_turns_carry_legacy_shaped_parts_and_skip_non_turns(tmp_path: Path) -> None:
+    path = tmp_path / "opencode.db"
+    _open_code_v2_db(path)
+    with sqlite3.connect(path) as db:
+        turns = opencode_v2_turns(db, "v2-only-run")
+
+    assert [t["role"] for t in turns] == ["user", "assistant"], "idle rows are not conversation turns"
+    assert turns[0]["parts"] == [{"type": "text", "text": "V2 ask"}]
+    assert [p["type"] for p in turns[1]["parts"]] == ["text", "tool"], "tool blocks are kept as stored"
+
+
+def test_opencode_has_legacy_messages_tracks_the_frozen_tables(tmp_path: Path) -> None:
+    path = tmp_path / "opencode.db"
+    _open_code_db(path)
+    with sqlite3.connect(path) as db:
+        assert opencode_has_legacy_messages(db)
+        db.execute("DROP TABLE part")
+        assert not opencode_has_legacy_messages(db)

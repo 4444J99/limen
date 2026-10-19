@@ -53,8 +53,17 @@ def opencode_session_table(db: sqlite3.Connection) -> str:
     work. Stores without both v2 tables (older copies, fixtures) keep the legacy table.
     """
 
-    names = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
-    return "session_v2" if OPENCODE_V2_TABLES <= names else "session"
+    return "session_v2" if OPENCODE_V2_TABLES <= _opencode_table_names(db) else "session"
+
+
+def _opencode_table_names(db: sqlite3.Connection) -> set[str]:
+    return {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+
+
+def opencode_has_legacy_messages(db: sqlite3.Connection) -> bool:
+    """Whether the frozen ``message`` / ``part`` tables are still present in this store."""
+
+    return {"message", "part"} <= _opencode_table_names(db)
 
 
 @dataclass(frozen=True)
@@ -336,6 +345,54 @@ def _opencode_v2_records(rows: Iterable[tuple[str, str]]) -> list[dict[str, Any]
             {"timestamp": (data.get("time") or {}).get("created"), "role": kind, "content": _content_text(body)}
         )
     return records
+
+
+def opencode_v2_turns(db: sqlite3.Connection, session_id: str, after: int | None = None) -> list[dict[str, Any]]:
+    """The user and assistant turns of one ``session_v2`` session, in order, created after ``after`` (ms).
+
+    Each turn is ``{"role", "time_created", "parts"}``. ``parts`` are dicts shaped like the legacy ``part`` rows
+    (``{"type": "text", "text": ...}``; assistant ``text``/``reasoning``/``tool`` blocks as stored), so a reader
+    written against ``message``/``part`` keeps its per-part logic. Other row types (``idle``, ``system``,
+    ``compaction``, ``synthetic``, ...) are not turns and are not returned.
+    """
+
+    turns: list[dict[str, Any]] = []
+    for kind, created, raw in db.execute(
+        "SELECT type, time_created, data FROM session_message "
+        "WHERE session_id = ? AND type IN ('user', 'assistant') AND time_created > ? ORDER BY seq, time_created, id",
+        (session_id, -1 if after is None else after),
+    ):
+        try:
+            data = json.loads(raw)
+        except (TypeError, json.JSONDecodeError):
+            data = {}
+        if not isinstance(data, dict):
+            data = {}
+        if kind == "user":
+            text = data.get("text")
+            parts = [{"type": "text", "text": text}] if isinstance(text, str) else []
+        else:
+            blocks = data.get("content")
+            parts = [block for block in blocks if isinstance(block, dict)] if isinstance(blocks, list) else []
+        turns.append({"role": kind, "time_created": created, "parts": parts})
+    return turns
+
+
+def opencode_v2_tail(db: sqlite3.Connection, session_id: str) -> list[dict[str, Any]]:
+    """The v2 turns of a session that the frozen legacy tables do not already hold.
+
+    The v2 migration is not lossless. Across the sessions both generations hold, the legacy ``message``/``part``
+    rows still carry assistant text, reasoning, user-side synthetic text and ``patch`` parts that
+    ``session_message`` lacks, and nothing exists only in v2 for them. So legacy rows stay authoritative for what
+    they cover and v2 supplies the rest: every turn of a v2-only session, and the turns created after a migrated
+    session's last legacy update.
+    """
+
+    cutoff = None
+    if "session" in _opencode_table_names(db):
+        row = db.execute("SELECT time_updated FROM session WHERE id = ?", (session_id,)).fetchone()
+        cutoff = row[0] if row else None
+    return opencode_v2_turns(db, session_id, after=cutoff)
 
 
 def _read_agy(source: SessionSource) -> list[dict[str, Any]]:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sqlite3
 from pathlib import Path
 
 
@@ -106,3 +107,43 @@ tasks:
     assert snap["dispatched_with_pr_receipt"] == 1
     assert snap["chronic_reopen_candidates"] == 1
     assert snap["done_with_pr_receipt"] == 1
+
+
+def _ledger_sessions(store: Path) -> tuple[dict[str, dict], object]:
+    pll = _load()
+    pll.OPENCODE_DB = store
+    return {s["session_id_hash"]: s for s in pll.opencode_virtual_sessions(None)}, pll
+
+
+def test_opencode_ledger_keeps_legacy_rows_authoritative_and_adds_the_v2_tail(opencode_migrated_store: Path) -> None:
+    sessions, pll = _ledger_sessions(opencode_migrated_store)
+    frozen = sessions[pll.stable_hash("frozen", 20)]
+    v2_only = sessions[pll.stable_hash("v2-only", 20)]
+
+    # The migrated session keeps the legacy prompt exactly as the ledger already recorded it (synthetic text
+    # included), then gains the post-freeze turn that only v2 holds.
+    assert frozen["prompt_hashes"] == [pll.full_hash("Frozen ask\n\nInjected note"), pll.full_hash("Tail ask")]
+    assert frozen["event_count"] == 2 + 4 + 1, "legacy messages + parts + the v2 tail"
+    # A v2-only session was invisible to the legacy readers; its idle row is not a turn.
+    assert v2_only["prompt_hashes"] == [pll.full_hash("V2 ask")]
+    assert v2_only["event_count"] == 2
+
+
+def test_opencode_ledger_on_a_legacy_only_store_sees_no_v2_sessions(opencode_migrated_store: Path) -> None:
+    with sqlite3.connect(opencode_migrated_store) as db:
+        db.execute("DROP TABLE session_v2")
+        db.execute("DROP TABLE session_message")
+    sessions, pll = _ledger_sessions(opencode_migrated_store)
+
+    assert set(sessions) == {pll.stable_hash("frozen", 20)}
+    assert sessions[pll.stable_hash("frozen", 20)]["prompt_hashes"] == [pll.full_hash("Frozen ask\n\nInjected note")]
+
+
+def test_opencode_ledger_survives_dropped_legacy_message_tables(opencode_migrated_store: Path) -> None:
+    with sqlite3.connect(opencode_migrated_store) as db:
+        db.execute("DROP TABLE message")
+        db.execute("DROP TABLE part")
+    sessions, pll = _ledger_sessions(opencode_migrated_store)
+
+    assert sessions[pll.stable_hash("v2-only", 20)]["prompt_hashes"] == [pll.full_hash("V2 ask")]
+    assert sessions[pll.stable_hash("frozen", 20)]["prompt_hashes"] == [pll.full_hash("Tail ask")]
