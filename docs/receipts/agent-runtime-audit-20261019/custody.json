@@ -1,0 +1,19 @@
+{
+  "kind": "session-artifact-custody-observation",
+  "session_id": "01a15441-853a-71c3-88a5-8be937e7a18d",
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "produced_artifacts": [
+    "docs/plans/2026-10-18-agent-surface-reconciliation-v3.md",
+    "docs/receipts/agent-runtime-audit-20261019/README.md",
+    "docs/receipts/agent-runtime-audit-20261019/observations.json",
+    "docs/receipts/agent-runtime-audit-20261019/verification.txt",
+    "docs/receipts/agent-runtime-audit-20261019/custody.json",
+    "docs/receipts/agent-runtime-audit-20261019/session-closeout.json"
+  ],
+  "private_payloads_produced": [],
+  "private_render_handling": "Settings were rendered into an automatically removed mode-0700 temporary directory with mode-0600 files. Only changed-key/byte-equality summaries entered the report. Peer instruction renders were captured privately and only equality results reported.",
+  "retained_native_state": "Existing conversations, databases/WAL/SHM, memories, archives, prior custody attempts, app preferences and dirty worktrees preserved. Existing native state remains with its vendor/custody owner; this receipt does not prove restoration.",
+  "secrets": "Only existing authenticated connector/cache mechanisms used; no secret values copied into repository or output. Credential-wall --check exited 0 with 32 registered atoms.",
+  "publication": "All produced repository artifacts are committed/pushed through the audit branch; live exact-ref readback is checked by the session predicate.",
+  "checkout_disposition": "Retain the managed audit attachment with its durable audit owner; this receipt grants no native-state deletion or retirement authority."
+}
