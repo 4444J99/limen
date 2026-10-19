@@ -21,6 +21,9 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Four further contextual sequences](context-tranche-v1.md): 26 later positions,
+  reported results versus verification, relayed permission questions and
+  state-dependent next-step bindings; same-coder review without new operations.
 - [Original request and reference audit](original-request-audit-v1.md): source-qualified scope,
   explicit incomplete requirements and separately attributed archive/Claude comparisons.
 
