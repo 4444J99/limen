@@ -35,10 +35,27 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    brief_summary`. Facets must be PII-clean: no verbatim personal content, no secrets, no
    third-party names — summaries and counts only. Dispatch-lane sessions: the first "user"
    turn is usually an injected AGENTS.md/plan, not a human — read past it before judging goals.
-3. **Narrate.** Write `logs/vendor-insights/<v>/narrative.json`:
-   `tldr, at_a_glance{whats_working, whats_hindering, quick_wins, ambitious_workflows},
-   areas[{name, session_count, description}], interaction_style, friction[{category,
-   description, examples[]}], suggestions[{title, detail}], coverage_notes[]`.
+3. **Narrate.** Write `logs/vendor-insights/<v>/narrative.json` in the full `/insights` shape.
+   The renderer draws each key as the matching section of the built-in report, in its order
+   (work, usage, wins, friction, features, patterns, horizon), and names any key you leave out in
+   the report's coverage block rather than hiding it:
+   - `at_a_glance{whats_working, whats_hindering, quick_wins, ambitious_workflows}`
+   - `project_areas{areas[{name, session_count, description}]}`
+   - `interaction_style{narrative, key_pattern}` (`narrative`: blank-line-separated paragraphs)
+   - `what_works{intro, impressive_workflows[{title, description}]}`
+   - `friction_analysis{intro, categories[{category, description, examples[]}]}`
+   - `suggestions{claude_md_additions[{addition, why, prompt_scaffold}], features_to_try[{feature,
+     one_liner, why_for_you, example_code}], usage_patterns[{title, suggestion, detail,
+     copyable_prompt}]}`
+   - `on_the_horizon{intro, opportunities[{title, whats_possible, how_to_try, copyable_prompt}]}`
+   - `fun_ending{headline, detail}`
+   - `coverage_notes[]` and `verification{summary, rounds, issues_found, issues_fixed, residuals[]}`
+
+   Prose fields accept `**bold**` (escaped first, then converted); `addition`, `prompt_scaffold`,
+   `example_code` and `copyable_prompt` are literal code and take no markup. The older thin shape
+   (`tldr`, `areas[]`, `interaction_style` as a string, `friction[]`, `suggestions[{title, detail}]`)
+   still renders, with its suggestions drawn as usage patterns, but it can fill only four of the
+   seven sections: write the full shape.
    Ground every claim in the index numbers or a read transcript — the Data Grounding rules in
    `CLAUDE.md` apply in full (state denominators: "N of M sessions read"; a window is not the
    corpus; speech acts are not events). **The denominator is `meta.total_in_window`, not
