@@ -86,8 +86,9 @@ than converging. Precedent: `PREC-2026-08-12-advisory-review-loop-has-no-fixed-p
 
 # Other relocated charter detail
 
-These three blocks were also moved out of `CLAUDE.md` for the size cap; they sit in other sections
-there (Never Over-Claim Completion, Parallel Exploration & Fan-Out, Worktree Isolation & CI Gate Matrix).
+These four blocks were also moved out of `CLAUDE.md` for the size cap; they sit in other sections
+there (Never Over-Claim Completion, Parallel Exploration & Fan-Out, Worktree Isolation & CI Gate Matrix,
+Session Phase Entry).
 
 ## A/B a change against its own parent commit
 
@@ -128,3 +129,32 @@ block. Every consumer that reads a sensor fact derives it from the registry, not
 (`omega_eligible`, `armed_valve_type`, `args_when`, `cadence`/`timeout`) are read by capability, never
 by sensor id — consumers work unchanged if an id is renamed. See `docs/IDEAL-FORMS-LEDGER.md` →
 IF-SENSOR-REGISTRY.
+
+## Session model cadence and the opening pin
+
+**Session model cadence — open cheap, escalate deliberately.** Interactive sessions OPEN on
+Sonnet (the `"model": "sonnet"` pin staged in `docs/keys/fable-guard-settings-snippet.json`,
+human-armed via lever `L-FABLE-GUARD-ARM` — an agent never arms settings). The first message —
+usually a chaotic brainstorm — is structured into the plan chain *in plan mode on Sonnet*;
+`/model opus` is the deliberate escalation for ratifying a genuinely hard plan, and Fable is
+never a session default — only an explicit `/model` escalation under a live
+`docs/fable-allotment.md` acceptance receipt. After plan approval, drop back (`/model sonnet`)
+and execute through the tiered fleet (`.claude/agents/` pins + the `model_selection.py` ladder —
+do not restate it here). The harness routes models per *session*, never per message (verified
+2026-08-07: hooks cannot switch models), so enforcement is the three real layers: the opening
+pin (prevention), `scripts/fable-session-guard.py` at SessionStart (loud warning on Fable
+over-cap/unaccepted), and the `claude-workflow-guard.py audit-transcript` beat audit (unaccepted
+Fable burn is a violation).
+
+**The opening pin is a default, not a lock — and `/model` overwrites it.** `/model` is manual,
+but it is *not* session-scoped: it reports "saved as your default for new sessions" and persists
+outside `settings.json` (absent from `~/.claude/settings.json`, `settings.local.json`, and every
+plain key of `~/.claude.json` — the store is harness-internal, so no predicate can read it back).
+Two consequences, and they run opposite ways. **Cheap:** setting the opening tier costs one
+keystroke — `/model sonnet` arms the cadence's prevention layer with no settings paste at all;
+the staged snippet's paste is then only needed for the SessionStart guard hook. **Leaky:** one
+`/model opus` at any time silently re-arms an expensive default for *every* future session, and
+it leaves no artifact a gate can inspect. So prevention is the weakest of the three layers by
+construction — detection (SessionStart guard) and the after-the-fact beat audit are what actually
+hold the line. Never describe the pin as an enforcement mechanism; it is a good default that a
+single keystroke, made months earlier and long forgotten, can invert.
