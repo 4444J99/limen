@@ -5536,6 +5536,60 @@
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-STOP-GOVERNOR-ARM",
+      "label": "Arm the stop governor: paste one Stop entry into .claude/settings.json and one into .codex/hooks.json so the recurring follow-ups (continue, verify, closeout, next, status, merge) fire without being typed.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-19",
+      "cost": "one paste into two tracked files plus one Codex hook-trust accept; the agent commits, opens the PR and merges around it",
+      "source_task": "https://github.com/4444J99/limen/issues/3128 (operator, 2026-10-19: the repeated asks across Claude and Codex sessions are redundant and should happen without input; in docs/prompt-control-vocabulary-study.md section 3 the CONT, CLOSE, VERIFY, EXPLAIN, NEXT, STATUS, MERGE and REPORT classes sum to 540 of 1,503 post-opener turns, Claude transcripts only)",
+      "gate": "Arming a hook is the harness self-modification boundary: an agent may not edit its own hook configuration. The staged snippet is docs/keys/stop-governor-settings-snippet.json; every rule ships in shadow, so arming changes nothing visible until a promotion block makes a rule live.",
+      "unlocks": "The stop governor starts logging would_block rows to logs/stop-governor/events.jsonl on real stops; once a rule carries declared promotion evidence (dated replay or shadow numbers and an existing non-empty receipt file, self-attested until a measure tool exists) or an explicit operator decision citing a GitHub issue or PR, it goes live and the follow-up arrives without typing.",
+      "steps": [
+        "(human) In a worktree, paste the `claude.hooks.Stop` array of docs/keys/stop-governor-settings-snippet.json into .claude/settings.json and the `codex.hooks.Stop[0]` group into the Stop array of .codex/hooks.json; accept Codex's persisted hook trust for the new entry.",
+        "(agent) Commit, open the PR, and merge it through scripts/merge-policy.sh.",
+        "(agent) Confirm with python3 scripts/check-stop-governor.py --require-armed and scripts/armed-valve-audit.py --offline that both vendors read armed.",
+        "(agent) After shadow rows accumulate, produce replay evidence (the measure tool is a follow-up on the issue) and open a promotion PR per rule; a live rule needs a promotion block (declared evidence or an operator decision citing a GitHub URL)."
+      ],
+      "note": "Fail-open and reversible: touch logs/STOP_GOVERNOR_OFF in the main checkout or export LIMEN_STOP_GOVERNOR=0 to stop it without editing a settings file. Codex coverage depends on the installed immutable runtime, Codex's permission_mode values and how two Stop handlers aggregate, all unverified here; interactive Claude Code has not been run.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "issue": 3128,
+      "diagnosed_at": "2026-10-19T12:00:00Z",
+      "diagnosis_provenance": "stop-governor-design-20261019.synthesis",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Once the operator pastes the staged Stop entries into .claude/settings.json and .codex/hooks.json and accepts Codex hook trust, the agent commits, opens the PR and merges it; the governor then logs shadow rows, and each rule is promoted by a declared-evidence registry PR or by an explicit operator decision citing a GitHub URL.",
+        "rationale": "Arming a hook is the harness self-modification boundary, so the paste is the operator's; every rule ships in shadow, so arming is reversible and changes nothing visible until a promotion block exists.",
+        "evidence_refs": [
+          "docs/plans/2026-10-19-stop-governor.md",
+          "docs/keys/stop-governor-settings-snippet.json",
+          "docs/prompt-control-vocabulary-study.md",
+          "https://github.com/4444J99/limen/issues/3128",
+          "https://github.com/4444J99/limen/pull/3134"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#standing-autonomy--compliant-gate-reroute",
+          "CLAUDE.md#engage-the-real-problem-first"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3128",
+        "acceptance": {
+          "condition": "Both vendors' Stop entries are present in the tracked settings files; Codex persisted hook trust is accepted (not observable from a file).",
+          "predicate": "python3 scripts/check-stop-governor.py --require-armed",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Operator paste of the staged snippet",
+          "Codex persisted hook trust acceptance",
+          "Installed immutable runtime refresh for the Codex Stop shape fix"
+        ],
+        "remaining_human_action": "Paste the staged claude and codex Stop entries and accept Codex hook trust.",
+        "historical_gate_requires_verification": "Whether the Codex Stop entry takes effect (hook trust, permission_mode values, how two Stop handlers aggregate) is observable only in a live Codex session.",
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }

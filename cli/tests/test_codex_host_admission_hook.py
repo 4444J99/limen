@@ -931,8 +931,9 @@ def test_stop_allows_at_most_one_explicit_closeout_continuation(tmp_path: Path) 
         owner_pid=101,
         closeout_probe=lambda _cwd: True,
     )
-    assert first["continue"] is False
-    assert "One bounded closeout pass" in first["stopReason"]
+    assert first["decision"] == "block"
+    assert "One bounded closeout pass" in first["reason"]
+    assert "continue" not in first and "stopReason" not in first
     assert "systemMessage" not in first
     assert len(service.status(probe=False)["leases"]) == 1
 
@@ -944,6 +945,28 @@ def test_stop_allows_at_most_one_explicit_closeout_continuation(tmp_path: Path) 
     )
     assert final is None
     assert service.status(probe=False)["leases"] == []
+
+
+def test_stop_verdict_validator_accepts_continuation_and_skew_and_rejects_the_rest() -> None:
+    hook = load_hook()
+    valid = hook._valid_delegate_verdict
+    # The continuation shape, and the legacy halt shape an older installed runtime still emits.
+    assert valid({"decision": "block", "reason": "one more pass"}, "Stop")
+    assert valid({"continue": False, "stopReason": "one more pass"}, "Stop")
+    assert valid({"systemMessage": "note"}, "Stop")
+    # A block without a reason is a hook failure in Codex; anything outside the Stop schema is rejected.
+    assert not valid({"decision": "block"}, "Stop")
+    assert not valid({"decision": "block", "reason": ""}, "Stop")
+    assert not valid({"decision": "approve", "reason": "x"}, "Stop")
+    assert not valid({"reason": "x"}, "Stop")
+    assert not valid({"hookSpecificOutput": {"hookEventName": "Stop"}}, "Stop")
+    # The decision/reason keys do not widen the other events.
+    assert not valid({"decision": "block", "reason": "x"}, "UserPromptSubmit")
+    assert not valid({"decision": "block", "reason": "x"}, "PreToolUse")
+    assert valid(
+        {"systemMessage": "m", "hookSpecificOutput": {"hookEventName": "SubagentStart"}},
+        "SubagentStart",
+    )
 
 
 def test_hook_config_wires_required_events_and_dynamic_worktree_root() -> None:

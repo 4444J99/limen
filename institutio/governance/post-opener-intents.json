@@ -1,0 +1,410 @@
+{
+  "schema_version": "0.1",
+  "_doc": [
+    "POST-OPENER INTENTS - the operator's recurring follow-up asks, declared as data (the registry half of the stop governor; the drift predicate is scripts/check-stop-governor.py, the executable half is scripts/stop-governor.py).",
+    "intents: one row per family of the study's section 3 table (docs/prompt-control-vocabulary-study.md), with the study's n. The predicate holds the ids and counts in parity with that table, so a re-counted study is a red check, not a memory chore.",
+    "rules: the executable behaviors. A rule fires at the turn-end boundary and emits ONE bounded continuation written in the operator's own lowercase lexicon. Every rule ships in mode shadow: it logs would_block and changes nothing. mode live needs a promotion block, and the predicate refuses a live rule without one. That is a DECLARED-EVIDENCE gate, not a verified one: replay/shadow numbers are self-attested (the predicate requires them, a receipt path that is an existing non-empty file inside the repo, and the precision floor, but cannot recompute them until stop-governor-measure.py exists); an operator promotion must cite a GitHub issue or pull-request URL.",
+    "Hooks cannot type a slash command (Claude hooks docs), so a rule fires the PROMPT BODY the command would carry. Names come from the operator's lexicon: each rule's text must contain one of its own lexicon phrases, and each phrase must appear verbatim in the study.",
+    "Nothing here arms a settings file. Arming is one paste, staged at docs/keys/stop-governor-settings-snippet.json and filed as lever L-STOP-GOVERNOR-ARM."
+  ],
+  "study_ref": {
+    "path": "docs/prompt-control-vocabulary-study.md",
+    "section": 3,
+    "total": 1503
+  },
+  "scope_marker": "institutio/governance/post-opener-intents.json",
+  "permission_modes": {
+    "claude": ["default", "acceptEdits", "auto"],
+    "codex": ["default", "acceptEdits"]
+  },
+  "gate_clause": "if a step sends, deletes, spends or leaks: say BLOCKED: <atom> once and stop.",
+  "status_suffix": "end w: merged / live / observed / left · tldr · what you need to do: none or the one atom.",
+  "lexicon": {
+    "_doc": [
+      "Detection vocabulary for scripts/stop-governor.py. Phrase lists match whole words, case-insensitively; *_patterns are regex fragments anchored at a word start and a word end.",
+      "permission_questions fire CONT only when the message ENDS in a question mark; handbacks (menus, 'run this yourself') need none. Offers such as 'let me know if' and 'you can run' are deliberately absent: they appear on ordinary completion messages where nothing is pending.",
+      "deny_patterns gate CONT only, the one rule that pushes new work. They are a BEST-EFFORT lexical filter, not a guarantee: the litmus is destroying, sending, spending or irreversibly leaking, plus the production guardrail, and the gate clause in every continuation (BLOCKED: <atom> once) is the backstop behind them. A new outward verb found in shadow samples is added here before any promotion. Roots are written to catch inflections that drop a final e (delet-, remov-, wip-). Shipment steps (commit, push) are standing grants and are not here; 'merge' is, because the MERGE rule and scripts/merge-policy.sh own that decision.",
+      "negation, failure_terms and hold_patterns keep a completion claim, exit evidence and a merge ask honest: 'not done', '3 passed, 2 failed' and 'do not merge yet' do not count."
+    ],
+    "permission_questions": [
+      "want me to",
+      "should i",
+      "shall i",
+      "would you like me to",
+      "do you want me to",
+      "which would you prefer"
+    ],
+    "handbacks": [
+      "option 1",
+      "options:",
+      "run this yourself"
+    ],
+    "deny_patterns": [
+      "send\\w*",
+      "sent",
+      "e-?mail\\w*",
+      "mail(?:s|ed|ing)?",
+      "post(?:s|ed|ing)?",
+      "publish\\w*",
+      "tweet\\w*",
+      "invit\\w*",
+      "delet\\w*",
+      "remov\\w*",
+      "wip(?:e|es|ed|ing)",
+      "purg\\w*",
+      "drop(?:s|ped|ping)?",
+      "truncat\\w*",
+      "rm\\s+-\\w*[rf]\\w*",
+      "reset\\s+--hard",
+      "force\\w*",
+      "overwrit\\w*",
+      "overwrote",
+      "deploy\\w*",
+      "releas\\w*",
+      "production",
+      "spen[dt]\\w*",
+      "purchas\\w*",
+      "buy\\w*",
+      "bought",
+      "pay(?:s|ing|ed|ment|ments)?",
+      "invoice\\w*",
+      "transfer\\w*",
+      "billing",
+      "credential\\w*",
+      "password\\w*",
+      "secret\\w*",
+      "tokens?",
+      "api\\s+key\\w*",
+      "mint\\w*",
+      "leak\\w*",
+      "revok\\w*",
+      "rotat\\w*",
+      "merg\\w*",
+      "archive\\s+the\\s+repo",
+      "destroy\\w*",
+      "terminat\\w*",
+      "cancel\\w*",
+      "charg\\w*",
+      "notif\\w*",
+      "upload\\w*",
+      "shar(?:e|es|ed|ing)",
+      "expos\\w*",
+      "public(?:ly)?",
+      "kill\\w*",
+      "uninstall\\w*",
+      "refund\\w*",
+      "withdraw\\w*",
+      "unsubscrib\\w*",
+      "deactivat\\w*",
+      "announc\\w*",
+      "broadcast\\w*",
+      "messag\\w*",
+      "slack",
+      "repl(?:y|ies|ied|ying)",
+      "respond\\w*",
+      "submit\\w*",
+      "sign(?:s|ed|ing)?",
+      "comment(?:s|ed|ing)?",
+      "push\\w*\\s+(?:\\S+\\s+){0,3}(?:\\S*[:/])?(?:main|master)",
+      "push\\s+(?:\\S+\\s+){0,4}?-f",
+      "push\\w*\\s+\\S+\\s+:\\S+",
+      "branch\\s+-D",
+      "clean\\s+-\\w*f\\w*",
+      "--live",
+      "dispatch\\w*\\s+(?:\\S+\\s+){0,5}?(?:live|for\\s+real)",
+      "prod",
+      "chezmoi\\s+apply",
+      "prun\\w*",
+      "reap\\w*",
+      "reset\\s+(?:the\\s+)?(?:db|database)",
+      "amend\\w*",
+      "clos\\w*\\s+(?:the\\s+)?(?:issue|pr|pull)",
+      "\\.env\\w*",
+      "spawn\\w*\\s+\\d+"
+    ],
+    "merge_domain_roots": [
+      "merg\\w*"
+    ],
+    "completion_claim": [
+      "done",
+      "complete",
+      "completed",
+      "finished",
+      "all green",
+      "all set",
+      "fixed",
+      "healed",
+      "shipped",
+      "nothing left",
+      "addressed",
+      "resolved",
+      "implemented",
+      "landed",
+      "wrapped up"
+    ],
+    "negation": [
+      "not",
+      "n't",
+      "never",
+      "yet to",
+      "no longer"
+    ],
+    "exit_evidence": [
+      "exit 0",
+      "exited 0",
+      "exits 0",
+      "exit code 0",
+      "exit status 0",
+      "rc=0",
+      "passed",
+      "ok \u2014"
+    ],
+    "failure_terms": [
+      "failed",
+      "failing",
+      "failure",
+      "failures",
+      "error",
+      "errors",
+      "red",
+      "not passed",
+      "regression",
+      "regressions"
+    ],
+    "pr_patterns": [
+      "pull\\s+request",
+      "pr\\s*#?\\s*\\d+"
+    ],
+    "hold_patterns": [
+      "(?:do\\s+not|don't|dont|not\\s+yet|never)\\s+merge",
+      "wait(?:ing)?",
+      "await(?:ing)?",
+      "on\\s+hold",
+      "hold\\s+off",
+      "blocked",
+      "red",
+      "failing",
+      "failed",
+      "needs?\\s+review",
+      "review\\s+(?:needed|required|pending)",
+      "pending\\s+review",
+      "draft",
+      "merged",
+      "queue[ds]?",
+      "queuing",
+      "conflict\\w*",
+      "pending",
+      "in\\s+progress",
+      "not\\s+(?:yet\\s+)?ready",
+      "should\\s+not",
+      "holds?\\s+the\\s+merge",
+      "closed",
+      "supersed\\w*",
+      "rebase\\w*",
+      "behind",
+      "cancel\\w*",
+      "running"
+    ],
+    "next_line": "(?im)^[ \\t>*_\\-]*next\\b[^\\n:]{0,20}:",
+    "needs_you_line": "what you need to do:"
+  },
+  "rules": {
+    "CONT": {
+      "intent": "CONT",
+      "mode": "shadow",
+      "cap": 2,
+      "deny_gated": true,
+      "suffix": true,
+      "lexicon": ["proceed w ur suggestion", "you do it", "fix all"],
+      "text": "proceed w ur suggestion--you do it. take the reversible best option and fix all inside this ask; dont ask again. anything past the ask goes on a next: line, not done.",
+      "promotion": null
+    },
+    "VERIFY": {
+      "intent": "VERIFY",
+      "mode": "shadow",
+      "cap": 1,
+      "deny_gated": false,
+      "suffix": false,
+      "lexicon": ["were all of the findings healed and addressed?", "anything strange?"],
+      "text": "were all of the findings healed and addressed? run scripts/verify-scoped.sh bare on this exact tree and read its own exit code. anything strange? heal it root-to-leaf.",
+      "promotion": null
+    },
+    "CLOSE": {
+      "intent": "CLOSE",
+      "mode": "shadow",
+      "cap": 1,
+      "deny_gated": false,
+      "suffix": true,
+      "lexicon": ["closeout means closeout, nothing hanging", "safe to archive session?"],
+      "text": "closeout means closeout, nothing hanging: .agents/skills/closeout/SKILL.md steps 4-7. session release, task completion, estate health and deletion eligibility are distinct claims--report an inherited red on its own estate: line. print the terminal line only on a bare exit 0. safe to archive session? say yes or no w the evidence.",
+      "promotion": null
+    },
+    "MERGE": {
+      "intent": "MERGE",
+      "mode": "shadow",
+      "cap": 1,
+      "deny_gated": false,
+      "suffix": true,
+      "lexicon": ["merge it if the baseline passes"],
+      "text": "merge it if the baseline passes: read logs/AUTONOMY_PAUSED first, run scripts/merge-policy.sh <pr> and follow the printed MERGE-MODE and MERGE-HEAD once. on exit 2 or 3 say the verdict once and stop. no waiting, no polling.",
+      "promotion": null
+    },
+    "NEXT": {
+      "intent": "NEXT",
+      "mode": "shadow",
+      "cap": 1,
+      "deny_gated": false,
+      "suffix": false,
+      "lexicon": ["whats next ostensibly and extensibly alpha to omega/root to leaf re:this-workstream?"],
+      "text": "whats next ostensibly and extensibly alpha to omega/root to leaf re:this-workstream? say the ideal-form next step on a next: line; if its reversible and inside the ask, do it.",
+      "promotion": null
+    },
+    "STATUS": {
+      "intent": "STATUS+STALL",
+      "mode": "shadow",
+      "cap": 1,
+      "deny_gated": false,
+      "suffix": false,
+      "lexicon": ["tldr and eli5", "what do i need to do", "status update--what's merged and what's left?"],
+      "text": "tldr and eli5--status update--what's merged and what's left? give percent complete. what do i need to do? answer on one line: what you need to do: none or the one atom.",
+      "promotion": null
+    }
+  },
+  "intents": {
+    "HARNESS": {
+      "n": 422,
+      "class": "owner-elsewhere",
+      "owner": "harness built-ins (/compact /model /effort /voice /loop /goal); no hook can run a built-in. The governor is written to yield to /loop (the payload's session_crons, assumed from the field rather than captured from a live run) and to any active continuation.",
+      "claude_binding": "none",
+      "codex_binding": "none",
+      "evidence": "study section 3: /compact x265"
+    },
+    "SHELL": {
+      "n": 157,
+      "class": "owner-elsewhere",
+      "owner": "Hypothesis, not established by the study (it lists only phrasings such as !gh pr merge and !chezmoi apply): typed shell is the operator doing what a permission prompt blocked. Related owners: lever L-AGENT-BASH-PROMPT (the trust hook scripts/hooks/allow-trusted-cd-git.sh) and the Codex action admission.",
+      "claude_binding": "none",
+      "codex_binding": "none",
+      "evidence": "study section 3: SHELL (! prefix)"
+    },
+    "CORRECT": {
+      "n": 140,
+      "class": "owner-elsewhere",
+      "owner": "AGENTS.md Standing Corrections and the existing PreToolUse guards; the detectable families (handed-back work, permission-seeking, claim without evidence, inherited-red closeout) are covered by the CONT, VERIFY and CLOSE rules. The CORRECT rate after arming is the governor's misfire signal.",
+      "claude_binding": "via the CONT, VERIFY and CLOSE rules",
+      "codex_binding": "via the CONT, VERIFY and CLOSE rules",
+      "evidence": "study sections 3 and 5: 9 of 15 correction families restate a written rule (section 5 counts about 122 correction turns, section 3 counts 140; unreconciled)"
+    },
+    "CONT": {
+      "n": 129,
+      "class": "stop",
+      "rules": ["CONT"],
+      "owner": "scripts/stop-governor.py, rule CONT",
+      "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
+      "codex_binding": "staged Stop entry -> codex-hook-runner.sh stop-governor (per openai/codex main-branch source, Codex joins the reasons when host admission also blocks one stop; not verified live)",
+      "evidence": "study section 3: continue / proceed / go / you do it / fix all"
+    },
+    "CLOSE": {
+      "n": 127,
+      "class": "stop",
+      "rules": ["CLOSE"],
+      "owner": "scripts/stop-governor.py, rule CLOSE; body is .agents/skills/closeout/SKILL.md steps 4-7",
+      "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
+      "codex_binding": "staged Stop entry (per openai/codex main-branch source, Codex joins the reasons when host admission also blocks one stop; not verified live)",
+      "evidence": "study sections 3 and 6: safe to archive session? x16; 20 of 105 closeout turns were followed within two turns by a complaint or \"continue\" (section 6 counts 105 closeout turns, section 3 counts 127 CLOSE; the study does not reconcile them)"
+    },
+    "PASTE": {
+      "n": 108,
+      "class": "deferred",
+      "owner": "the payload (the dump, report or image) is the operator's; only the label is automatable. Standing paste defaults need a SessionStart or prompt-submit injection, deferred to the plan's follow-up (unverified latency and Codex developer-message clutter).",
+      "claude_binding": "deferred",
+      "codex_binding": "deferred",
+      "evidence": "study section 7: 48 labelled, 46 unlabelled, 12 images"
+    },
+    "VERIFY": {
+      "n": 105,
+      "class": "stop",
+      "rules": ["VERIFY"],
+      "owner": "scripts/stop-governor.py, rule VERIFY -> scripts/verify-scoped.sh",
+      "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
+      "codex_binding": "staged Stop entry (per openai/codex main-branch source, Codex joins the reasons when host admission also blocks one stop; not verified live)",
+      "evidence": "study section 3: /verify, were all of the findings healed and addressed?"
+    },
+    "NEWTASK": {
+      "n": 73,
+      "class": "irreducible",
+      "owner": "the operator: a genuinely new directive has no prior form to automate",
+      "claude_binding": "none",
+      "codex_binding": "none",
+      "evidence": "study section 3: new content"
+    },
+    "EXPLAIN": {
+      "n": 56,
+      "class": "stop",
+      "rules": ["STATUS"],
+      "owner": "scripts/stop-governor.py, rule STATUS, plus the status suffix on the CONT, CLOSE and MERGE continuations",
+      "claude_binding": "staged Stop entry (shadow)",
+      "codex_binding": "staged Stop entry (shadow)",
+      "evidence": "study section 3: what do i need to do x8; section 8: tldr and eli5 x13, typed with /tldr installed (the install window is not dated)"
+    },
+    "NEXT": {
+      "n": 49,
+      "class": "stop",
+      "rules": ["NEXT"],
+      "owner": "scripts/stop-governor.py, rule NEXT",
+      "claude_binding": "staged Stop entry (shadow)",
+      "codex_binding": "staged Stop entry (shadow)",
+      "evidence": "study section 3: whats next ostensibly and extensibly alpha to omega x16"
+    },
+    "CONVO/INFO": {
+      "n": 45,
+      "class": "irreducible",
+      "owner": "the operator: personal and injected facts; never read, quoted or logged by the governor",
+      "claude_binding": "none",
+      "codex_binding": "none",
+      "evidence": "study preamble (before section 1): personal-thread turns are counted, never quoted"
+    },
+    "STATUS+STALL": {
+      "n": 40,
+      "class": "stop",
+      "rules": ["STATUS"],
+      "owner": "scripts/stop-governor.py, rule STATUS. The STALL half has no established owner: study section 4 attributes every inspected stall to the agent's own waiting or granularity, and the no-hand-poll guard (which denies hand-rolled PR/CI poll loops) is a related guard, not a proven owner.",
+      "claude_binding": "staged Stop entry (shadow); existing PreToolUse no-hand-poll guard",
+      "codex_binding": "staged Stop entry (shadow); existing PreToolUse no-hand-poll hook",
+      "evidence": "study section 3: percentage complete and status report x5; section 4: every inspected stall was the agent's own waiting"
+    },
+    "MERGE": {
+      "n": 30,
+      "class": "stop",
+      "rules": ["MERGE"],
+      "owner": "scripts/stop-governor.py, rule MERGE; the decision stays with scripts/merge-policy.sh (CLAUDE.md Merge Authority)",
+      "claude_binding": "staged Stop entry (shadow)",
+      "codex_binding": "staged Stop entry (shadow)",
+      "evidence": "study section 3: /ship, merge it, merge it once checks are green"
+    },
+    "TIER": {
+      "n": 12,
+      "class": "owner-elsewhere",
+      "owner": ".claude/agents pins and cli/src/limen/model_selection.py; Codex max_threads and max_depth in .codex/config.toml. scripts/claude-workflow-guard.py is not wired in the tracked project settings (user-scope settings were not readable here; filed as a follow-up).",
+      "claude_binding": "none",
+      "codex_binding": "existing SubagentStart bounds",
+      "evidence": "study section 3: assign all tasks to haiku/sonnet/opus logically"
+    },
+    "CODIFY": {
+      "n": 6,
+      "class": "owner-elsewhere",
+      "owner": "the lesson-harvest sensor and skill (institutio/governance/sensors.yaml)",
+      "claude_binding": "none",
+      "codex_binding": "none",
+      "evidence": "study section 3: let's make this a hook"
+    },
+    "REPORT": {
+      "n": 4,
+      "class": "owner-elsewhere",
+      "owner": "rides on the CLOSE rule's status suffix (merged / live / observed / left); a standalone report request is not pre-empted",
+      "claude_binding": "via the CLOSE rule",
+      "codex_binding": "via the CLOSE rule",
+      "evidence": "study section 3: provide a report of all work done in this session"
+    }
+  }
+}

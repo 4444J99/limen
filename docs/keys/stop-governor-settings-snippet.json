@@ -1,0 +1,46 @@
+{
+  "_README": [
+    "STAGED arming for the stop governor (lever L-STOP-GOVERNOR-ARM). Do NOT let an agent arm settings.json or hooks.json: the repo charter treats hook arming as a self-modification boundary.",
+    "What it does: at the turn-end boundary the governor reads the Stop payload plus read-only git state and, when a registered rule matches, emits ONE bounded continuation written in your own lowercase lexicon (continue / verify / closeout / next / status / merge), so the ask arrives without being typed. Registry: institutio/governance/post-opener-intents.json. Every rule ships in SHADOW: it logs would_block to logs/stop-governor/events.jsonl and changes nothing until a promotion block makes it live.",
+    "Scope is a limen checkout only. The governor stays silent in plan, dontAsk and bypassPermissions modes, in dispatch lanes (the fleet env markers LIMEN_WORK_KEY, LIMEN_TASK_ID, LIMEN_ATTEMPT_DEADLINE), in any run that sets CLAUDE_CODE_SESSION_ATTENDED=0 (observed on Claude Code 2.1.303 `-p`, undocumented, used only to yield), while the payload shows active session_crons or background_tasks, in a background job (CLAUDE_JOB_DIR), while a stop-hook continuation is already running, and under a logs/AUTONOMY_PAUSED wall. The /loop and background-job guards are assumed from payload fields and an env var, not captured from a live run.",
+    "Apply, in a worktree on a topic branch (project scope, one human paste for both vendors):",
+    "  1. claude: add the `claude.hooks.Stop` array below as a new `Stop` key under `hooks` in .claude/settings.json (there is no Stop key today).",
+    "  2. codex: append the `codex.hooks.Stop[0]` group below to the existing `Stop` array in .codex/hooks.json (keep the host-admission entry), then accept Codex's persisted hook trust for the new entry when it asks.",
+    "  3. the agent commits, opens the PR, and merges through scripts/merge-policy.sh.",
+    "Verify (read-only, offline): python3 scripts/check-stop-governor.py --require-armed is the lever's acceptance predicate (both vendors armed and the governor runs under this machine's python3); --armed prints the same report without changing the exit code; python3 scripts/armed-valve-audit.py --offline shows STOP_GOVERNOR_CLAUDE_STOP_WIRED and STOP_GOVERNOR_CODEX_STOP_WIRED armed once the live checkout carries the merge.",
+    "Expect: after a block, Claude Code `-p` (the only mode run) printed a 'Stop hook error occurred' banner and still continued the turn; that banner is how this hook shape surfaces and is not a fault. Interactive Claude Code has not been run.",
+    "Requirements: python3 3.9 or newer on the hook's PATH. A failing interpreter leaves one line in logs/stop-governor/wrapper-errors.log under the checkout whose wrapper ran (the live checkout once armed there; a worktree's own logs/ otherwise); the hook itself always exits 0. In a worktree the hook runs that worktree's governor and registry while the ledger and kill file live in the main checkout, so a worktree on an older commit applies its older rules against the shared ledger.",
+    "Disarm without editing a settings file: touch logs/STOP_GOVERNOR_OFF in the main checkout, or export LIMEN_STOP_GOVERNOR=0. Revert by deleting the two entries.",
+    "Codex note: the repo's own host-admission Stop hook had emitted the halt shape ({continue:false}) instead of a continuation; this change set fixes it, but a live Codex session sees the fix only after the installed immutable runtime refreshes. Codex has no yield rule here: multiple Stop handlers' block reasons are joined, so the host-admission closeout pass and this governor can both speak on one stop (read from openai/codex main-branch source; the installed build is unverified)."
+  ],
+  "claude": {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "timeout": 10,
+              "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/stop-governor.sh\" ] && \"$PROJECT_ROOT/scripts/hooks/stop-governor.sh\" --vendor claude --event Stop || true"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "codex": {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "timeout": 10,
+              "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" stop-governor --event Stop"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

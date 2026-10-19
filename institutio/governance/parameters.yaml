@@ -2967,6 +2967,24 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/no-hand-poll-guard.sh: 1 disables only a false-positive deny of a hand-rolled PR/CI-shaped loop. It never permits the retired scripts/await-pr.sh path. Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0."
+  LIMEN_STOP_GOVERNOR:
+    default: "1"
+    env: LIMEN_STOP_GOVERNOR
+    self_update: none
+    owner: lifecycle
+    note: "Kill switch for scripts/stop-governor.py: 0 makes every Stop hook a silent allow without editing a settings file. A file kill switch (logs/STOP_GOVERNOR_OFF in the main checkout) does the same mid-session. Every rule also ships in shadow mode, so 1 changes nothing visible until a rule carries a promotion block."
+  LIMEN_STOP_GOVERNOR_MAX_SESSION:
+    default: 4
+    env: LIMEN_STOP_GOVERNOR_MAX_SESSION
+    self_update: none
+    owner: lifecycle
+    note: "Maximum continuations the stop governor may emit in one session across all rules (per-rule caps in post-opener-intents.json bind inside it). The Claude Code documentation describes its own continuation ceiling; it was read through a summarizing fetcher and has not been observed, and Codex documents none, so these caps are the only bound this repo can prove."
+  LIMEN_STOP_GOVERNOR_DAILY_CAP:
+    default: 40
+    env: LIMEN_STOP_GOVERNOR_DAILY_CAP
+    self_update: none
+    owner: lifecycle
+    note: "Maximum continuations the stop governor may emit per UTC day across every session and vendor sharing the main checkout's logs/stop-governor ledger; the runaway backstop behind the per-session cap."
   LIMEN_OUTBOUND_REGISTRY:
     default: "institutio/governance/outbound-effectors.yaml"
     env: LIMEN_OUTBOUND_REGISTRY

@@ -44,6 +44,22 @@
       "expected_any": ["sonnet", "haiku"],
       "lever": "L-FABLE-GUARD-ARM",
       "what": "interactive sessions OPEN at or below the cadence floor (CLAUDE.md Session Phase Entry: open cheap on sonnet, escalate deliberately). The weakest of the three cadence layers by construction — `/model` persists its own default to a harness-internal store no predicate can read, so one `/model opus` months ago silently re-arms an expensive default for every future session and leaves no artifact. This row therefore measures only the DECLARED pin; detection (the SessionStart guard) and the beat audit are what hold the line. Absent pin + cited lever = PARKED, not SILENT-OFF."
+    },
+    {
+      "id": "STOP_GOVERNOR_CLAUDE_STOP_WIRED",
+      "kind": "file_json",
+      "path": "~/Workspace/limen/.claude/settings.json",
+      "needle": "stop-governor.sh",
+      "lever": "L-STOP-GOVERNOR-ARM",
+      "what": "the stop governor is wired as a Claude Stop hook in the live checkout's tracked project settings. Staged at docs/keys/stop-governor-settings-snippet.json because an agent never arms its own hook configuration; every rule ships in shadow, so an unarmed governor is byte-identical to an armed one that found nothing, and this read-only probe is what tells them apart. Absent + cited lever = PARKED, not SILENT-OFF."
+    },
+    {
+      "id": "STOP_GOVERNOR_CODEX_STOP_WIRED",
+      "kind": "file_json",
+      "path": "~/Workspace/limen/.codex/hooks.json",
+      "needle": "stop-governor",
+      "lever": "L-STOP-GOVERNOR-ARM",
+      "what": "the stop governor is wired as a Codex Stop hook in the live checkout's tracked .codex/hooks.json (Codex additionally needs its persisted hook trust accepted, which no file probe can see). Same staging and PARKED semantics as the Claude row."
     }
   ],
   "safety": [
