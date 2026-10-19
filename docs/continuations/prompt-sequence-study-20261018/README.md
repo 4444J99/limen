@@ -3,7 +3,8 @@
 Owner: [#3056](https://github.com/4444J99/limen/issues/3056).
 Publication: [draft #3087](https://github.com/4444J99/limen/pull/3087).
 
-The current proposal is [vocabulary-v5.json](vocabulary-v5.json): **21 operator operations**.
+The current proposal is [vocabulary-v6.json](vocabulary-v6.json): **22 research operations**.
+See [the V6 authoring rationale](vocabulary-v6.md). All 21 V5 contracts remain unchanged.
 It is research evidence, not an installed command pack. The goal remains active.
 
 **Reply-order warning:** 29 captured reply associations across 19 columns precede
@@ -12,6 +13,7 @@ not yet repaired; see [the source-confirmed defect and owner](reply-order-findin
 
 | Purpose | Proposed operations |
 |---|---|
+| Author a requested content artifact | compose |
 | Advance or reshape authorized work | continue, goal, plan, fix, correct |
 | Resolve context and orientation | status, next, explain, recall, context |
 | Assess evidence | review, verify |
@@ -24,6 +26,12 @@ A common operation can have different outputs as those inputs change. Supplying 
 cannot be shortened to a bare verb without retaining that information or its immutable reference.
 
 ## Review the evidence
+
+- [Authoring and task boundaries](authoring-boundary-review-v1.md): nine retained views,
+  36 source positions, four context-only records, 23 post-first task-bearing positions,
+  and explicitly separated initial-task controls; two source positions support `/compose`.
+- [Source-key namespaces](source-key-namespace-v1.md): checked mappings between legacy
+  path keys, canonical snapshot columns and header keys for 36 source views.
 
 - [Nine unknown-retention sequences](unknown-retention-review-v1.md): 47 exact native
   input comparisons, 38 contextual follow-ups and four cross-sequence intent groups;
@@ -95,6 +103,13 @@ It is kept separate from the file-based count while original opener and source-o
 remain unresolved.
 
 ## Version and acceptance boundaries
+
+V6 adds one same-coder authoring proposal with two post-first supporting positions,
+one a previously reviewed anchor. Three PDF requests are initial-task controls.
+A retained-text census identifies 24 complete operating prefaces; four were checked
+against original native sources in this tranche. No whole-corpus operator denominator
+is inferred, and the captured dataset remains unchanged. The existing HTML glossary
+still embeds V5; V6 is reviewed through the linked contract and comparison documents.
 
 V2 remains the frozen evaluation baseline. V3 proposed an exact-response operator based on six
 then-unattributed probe inputs. V4 preserves that research history but excludes the operation

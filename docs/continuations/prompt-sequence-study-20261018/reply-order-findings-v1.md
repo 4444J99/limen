@@ -6,6 +6,8 @@ Owner: [#3056](https://github.com/4444J99/limen/issues/3056). Publication: [draf
 
 The census covers existing primary prompt rows (3,500 total, including the separate eleven-row Claude example), not derived context frames. All 29 affected pairs are native Codex records.
 
+The `column` values in this version are captured-path fingerprints. [The checked namespace crosswalk](source-key-namespace-v1.md) maps them to the native-header-plus-snapshot keys used by the ordered storage-view graph; original keys and source positions are preserved.
+
 ## Root cause and scope
 
 `project_rows` in [capture-native-projection.py](capture-native-projection.py) selects finals for a whole native turn and assigns the same list to every input in that turn. Native turn identity alone therefore permits a prior final to become the alleged result of a later follow-up. It can also suppress the later input's commentary fallback if the only explicit final belongs to its past.
@@ -16,7 +18,7 @@ No affected column has all captured retention flags true. The earlier seven-sour
 
 ## Confirmed source pairs
 
-| Column | Input position | Input native ordinal | Earlier reply native ordinal |
+| Legacy path key | Input position | Input native ordinal | Earlier reply native ordinal |
 |---|---:|---:|---:|
 | 22e9905c43b0 | 20 | 825 | 822 |
 | 3dde40cedc8f | 17 | 18446 | 18443 |

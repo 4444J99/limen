@@ -6,6 +6,8 @@ This review reads **47 retained source positions and 38 follow-ups** across nine
 
 [The ordered cases and source evidence](unknown-retention-review-v1.json) preserve each prompt/reply reference, required binding and limitation. These are same-coder candidates, not independent substitutions or an operator-origin count. V5 remains at 21 operations. **One follow-up has only a partial V5 fit:** showing the preparation materials maps to `/open`, while creating the newly requested multilingual matrix still needs its substantive authoring brief.
 
+The `column` values in this version are captured-path fingerprints. [The checked namespace crosswalk](source-key-namespace-v1.md) maps them to the native-header-plus-snapshot keys used by the ordered storage-view graph; original keys and source positions are preserved.
+
 ## Sequences side by side
 
 Positions remain in their full captured order. The opening position supplies context rather than a follow-up classification. The complete literal source bodies remain in the existing private comparison; these tables use redacted references and semantic descriptions.

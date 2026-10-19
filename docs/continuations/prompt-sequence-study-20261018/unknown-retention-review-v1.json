@@ -1,5 +1,10 @@
 {
   "schema": "limen.unknown-retention-sequence-review.v1",
+  "column_key_namespace": {
+    "field": "column",
+    "rule": "Legacy first-12 SHA256 of captured source path; not the native header-plus-snapshot namespace.",
+    "canonical_crosswalk": "source-key-namespace-v1.json"
+  },
   "date": "2026-10-19",
   "owner": "https://github.com/4444J99/limen/issues/3056",
   "publication": "https://github.com/4444J99/limen/pull/3087",
