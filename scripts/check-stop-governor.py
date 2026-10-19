@@ -9,9 +9,9 @@ holds the registry to the study that motivated it (docs/prompt-control-vocabular
                        study's total; every class carries what it must (stop rows name rules; the rest name
                        an owner); the rule set equals the governor's detector set
   B  promotion         a rule may be live only with a DECLARED-EVIDENCE promotion block: replay or shadow
-                       numbers (n >= 30, precision >= 0.80, MERGE >= 0.90) plus a tracked receipt that exists,
-                       or an operator decision citing a GitHub issue/PR URL. The numbers are self-attested:
-                       this cannot recompute them until stop-governor-measure.py exists
+                       numbers (n >= 30, precision >= 0.80, MERGE >= 0.90) plus a receipt that is an existing
+                       non-empty file in the repo, or an operator decision citing a GitHub issue/PR URL. The
+                       numbers are self-attested: this cannot recompute them until stop-governor-measure.py exists
   C  text discipline   continuation texts are bounded, lowercase (operator voice), name only existing paths,
                        never name a slash command as the mechanism, and each carries one of the rule's own
                        lexicon phrases, every one of which appears verbatim in the study; every detection
@@ -32,11 +32,12 @@ holds the registry to the study that motivated it (docs/prompt-control-vocabular
                        their declared defaults
   I  lever and valves  L-STOP-GOVERNOR-ARM and the two armed-valve rows exist and cite each other
 
-Arming state (is the Stop entry present in the tracked settings yet?) is REPORTED by --armed and is never
+Arming state (is a well-formed Stop handler for the governor in the tracked settings yet?) is REPORTED by --armed and is never
 part of the gate's exit code: an unarmed governor is a filed lever, not a failing build. --require-armed is the
 lever's ACCEPTANCE form (only the lever's acceptance.predicate names it): exit 1 until both vendors are wired
 AND the governor actually runs under this machine's python3, so a hook that reads ARMED but dies at import
-cannot pass. The verification gate never runs it.
+cannot pass. ARMED is structural (a command handler naming the shipped entry points, timeout <= 10 s, not async);
+it cannot see Codex's persisted hook trust. The verification gate never runs it.
 
 Stdlib only. Writes nothing outside a temp dir. Run it bare and read its own exit code.
 """
@@ -168,6 +169,9 @@ def check_registry_parity(reg: dict[str, Any], study_text: str, governor: Any) -
     if not isinstance(intents, dict) or not isinstance(rules, dict):
         fail("A", "registry lacks intents or rules")
         return
+    marker = reg.get("scope_marker")
+    if not isinstance(marker, str) or not marker or not (ROOT / marker).is_file():
+        fail("A", f"scope_marker {marker!r} is not a file in this repo (the governor would be out of scope forever)")
     registry_n = {k: v.get("n") for k, v in intents.items()}
     if set(registry_n) != set(study):
         fail(
@@ -246,8 +250,10 @@ def check_promotion(reg: dict[str, Any]) -> None:
                 or ".." in Path(receipt).parts
             ):
                 fail("B", f"rule {name}: promotion needs a repo-relative receipt path")
-            elif not (ROOT / receipt).is_file():
-                fail("B", f"rule {name}: promotion receipt {receipt} does not exist")
+            else:
+                target = (ROOT / receipt).resolve()
+                if not target.is_relative_to(ROOT.resolve()) or not target.is_file() or target.stat().st_size == 0:
+                    fail("B", f"rule {name}: promotion receipt {receipt} is not an existing non-empty file in the repo")
         elif source == "operator":
             ref = promo.get("decision_ref")
             if not isinstance(ref, str) or not GITHUB_REF.match(ref):
@@ -684,19 +690,46 @@ def check_lever_and_valves() -> None:
 # --------------------------------------------------------------------------- armed (report only)
 
 
+HOOK_TIMEOUT_CEILING = 10  # seconds; the governor's own alarm is 6 and the wrapper's ceiling 8
+
+
+def _stop_handlers(path: Path) -> list[dict[str, Any]]:
+    """The handler objects of every Stop group in a settings file; anything malformed contributes none."""
+    try:
+        hooks = json.loads(path.read_text(encoding="utf-8")).get("hooks", {})
+    except (OSError, ValueError, AttributeError):
+        return []
+    groups = hooks.get("Stop", []) if isinstance(hooks, dict) else []
+    handlers: list[dict[str, Any]] = []
+    for group in groups if isinstance(groups, list) else []:
+        inner = group.get("hooks") if isinstance(group, dict) else None
+        handlers += [h for h in inner if isinstance(h, dict)] if isinstance(inner, list) else []
+    return handlers
+
+
+def _wired(handler: dict[str, Any], tokens: tuple[str, ...]) -> bool:
+    """A handler the harness would actually run as this vendor's governor: a command handler, naming the
+    shipped entry points, with a bounded timeout and not async."""
+    command, timeout = handler.get("command"), handler.get("timeout")
+    return (
+        handler.get("type") == "command"
+        and isinstance(command, str)
+        and all(token in command for token in tokens)
+        and isinstance(timeout, (int, float))
+        and not isinstance(timeout, bool)
+        and 0 < timeout <= HOOK_TIMEOUT_CEILING
+        and not handler.get("async")
+    )
+
+
 def armed_state(claude_settings: Path, codex_hooks: Path) -> dict[str, bool]:
-    """Whether each vendor's tracked Stop entry names the governor. Absent or unparseable means not armed."""
-    state: dict[str, bool] = {}
-    for label, path, needle in (
-        ("claude", claude_settings, "stop-governor.sh"),
-        ("codex", codex_hooks, "stop-governor"),
-    ):
-        try:
-            hooks = json.loads(path.read_text(encoding="utf-8")).get("hooks", {})
-            state[label] = needle in json.dumps(hooks.get("Stop", []))
-        except (OSError, ValueError, AttributeError):
-            state[label] = False
-    return state
+    """Whether each vendor's tracked Stop entry is a well-formed governor handler (not merely a file that
+    mentions one). Absent, unparseable or malformed means not armed. It cannot see Codex's persisted hook trust."""
+    needles = {
+        "claude": (claude_settings, ("scripts/hooks/stop-governor.sh", "--vendor claude")),
+        "codex": (codex_hooks, ("codex-hook-runner.sh", "stop-governor")),
+    }
+    return {label: any(_wired(h, tokens) for h in _stop_handlers(path)) for label, (path, tokens) in needles.items()}
 
 
 def report_armed(state: dict[str, bool], claude_settings: Path, codex_hooks: Path) -> None:

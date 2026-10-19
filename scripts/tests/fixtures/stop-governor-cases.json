@@ -2831,5 +2831,1420 @@
     }
    }
   }
+ },
+ {
+  "id": "fp-withheld-is-not-terminal",
+  "note": "naming the closeout line while withholding it is not the fixed point",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed and pushed. I am not claiming CLOSEOUT COMPLETE."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "fp-markdown-terminal",
+  "note": "the terminal line may carry markdown emphasis",
+  "expect": {
+   "action": "allow",
+   "code": "fixed_point"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done.\n**CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items**"
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    },
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "fp-not-last-line",
+  "note": "the fixed point is the LAST line: text after it means the agent went on",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items\nThen I kept going and it is done."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "blocked-mid-line-is-not-a-statement",
+  "note": "a quoted BLOCKED: inside a sentence is not the once-stated atom",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done. Earlier output included `BLOCKED: L-CARD` from the parser fixture. Pushed."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "blocked-line-start-is-once",
+  "note": "BLOCKED: at a line start stays terminal",
+  "expect": {
+   "action": "allow",
+   "code": "blocked_once"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done.\n> BLOCKED: paste the snippet"
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gate-reads-the-whole-plan",
+  "note": "a destructive step early in a long plan still gates the closing question",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Plan:\n1. Force-push the rebased branch over the shared remote and delete the old one.\n2. Update the section 2 notes in the README and re-run the linter over the touched files.\n3. Update the section 3 notes in the README and re-run the linter over the touched files.\n4. Update the section 4 notes in the README and re-run the linter over the touched files.\n5. Update the section 5 notes in the README and re-run the linter over the touched files.\n6. Update the section 6 notes in the README and re-run the linter over the touched files.\n7. Update the section 7 notes in the README and re-run the linter over the touched files.\n8. Update the section 8 notes in the README and re-run the linter over the touched files.\n9. Update the section 9 notes in the README and re-run the linter over the touched files.\n10. Update the section 10 notes in the README and re-run the linter over the touched files.\n11. Update the section 11 notes in the README and re-run the linter over the touched files.\n12. Update the section 12 notes in the README and re-run the linter over the touched files.\n13. Update the section 13 notes in the README and re-run the linter over the touched files.\n\nWant me to proceed with the plan?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-force-flag",
+  "note": "a charter-named human-gated action is never auto-continued: run `git push -f origin feat/x`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `git push -f origin feat/x`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-push-origin-main",
+  "note": "a charter-named human-gated action is never auto-continued: push to origin/main",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to push to origin/main?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-push-origin-space-main",
+  "note": "a charter-named human-gated action is never auto-continued: run git push origin main",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run git push origin main?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-push-head-main",
+  "note": "a charter-named human-gated action is never auto-continued: run `git push origin HEAD:main`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `git push origin HEAD:main`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-push-delete-ref",
+  "note": "a charter-named human-gated action is never auto-continued: run `git push origin :feat/old`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `git push origin :feat/old`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-rm-fr",
+  "note": "a charter-named human-gated action is never auto-continued: run `rm -fr build/`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `rm -fr build/`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-branch-D",
+  "note": "a charter-named human-gated action is never auto-continued: run `git branch -D feat/old`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `git branch -D feat/old`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-clean-fdx",
+  "note": "a charter-named human-gated action is never auto-continued: run `git clean -fdx`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `git clean -fdx`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-dispatch-live",
+  "note": "a charter-named human-gated action is never auto-continued: run `limen dispatch --agent jules --live`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `limen dispatch --agent jules --live`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-dispatch-for-real",
+  "note": "a charter-named human-gated action is never auto-continued: dispatch the jules lane for real",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to dispatch the jules lane for real?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-chezmoi-apply",
+  "note": "a charter-named human-gated action is never auto-continued: run `chezmoi apply`",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to run `chezmoi apply`?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-ship-prod",
+  "note": "a charter-named human-gated action is never auto-continued: ship it to prod",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to ship it to prod?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-close-issue",
+  "note": "a charter-named human-gated action is never auto-continued: close issue #3128",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to close issue #3128?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-reap-branches",
+  "note": "a charter-named human-gated action is never auto-continued: reap the landed branches",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to reap the landed branches?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-prune-worktrees",
+  "note": "a charter-named human-gated action is never auto-continued: prune the stale worktrees",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to prune the stale worktrees?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-reset-db",
+  "note": "a charter-named human-gated action is never auto-continued: reset the database",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to reset the database?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-amend-pushed",
+  "note": "a charter-named human-gated action is never auto-continued: amend the pushed commit",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to amend the pushed commit?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-cat-env",
+  "note": "a charter-named human-gated action is never auto-continued: cat .env and paste it here",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to cat .env and paste it here?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "gated-spawn-many",
+  "note": "a charter-named human-gated action is never auto-continued: spawn 20 subagents",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to spawn 20 subagents?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-gate-benign-fires",
+  "note": "an ordinary engineering ask still continues",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The change is staged and verified locally. Want me to re-run the unit tests?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-merged",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 merged (squash, head fcc4668). ",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 merged (squash, head fcc4668). Branch reap is a separate receipt."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-queued",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: Submitted PR #3134 to the merge queue: Q",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Submitted PR #3134 to the merge queue: QUEUED, not MERGED. Nothing more to do from this session."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-running",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 is up; CI is still running.",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 is up; CI is still running."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-not-ready",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 is not ready to merge: two find",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 is not ready to merge: two findings open."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-should-not",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 should not be merged until the ",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 should not be merged until the operator releases the pause."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-operator-holds",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: Opened PR #3134. Operator holds the merg",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Opened PR #3134. Operator holds the merge."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-conflicts",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 has merge conflicts with main.",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 has merge conflicts with main."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-pending",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 checks: 4 pending, 1 in progres",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 checks: 4 pending, 1 in progress."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-rebase",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR 3134 needs a rebase before it can lan",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR 3134 needs a rebase before it can land."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-hold-closed",
+  "note": "a PR that is merged, queued, running, conflicted or held is not a merge ask: PR #3134 was closed as superseded by #31",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #3134 was closed as superseded by #3140."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-question-is-merge-domain",
+  "note": "a merge question is MERGE's to answer even though 'merge' is a deny root",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "MERGE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #4242 is up and the checks are green. Want me to merge it?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    },
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-beside-outward-ask-live-cont",
+  "note": "an outward ask beside a PR number is not a merge ask: gated, nothing continues",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #4242 is up. Want me to email the client the link to PR #4242?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    },
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-beside-outward-ask-shadow-cont",
+  "note": "the same ask with CONT in shadow: MERGE does not inherit it",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "PR #4242 is up. Want me to force-push the rebased head and delete the old branch?"
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-option-mid-sentence",
+  "note": "'option 1' inside a sentence is not a menu",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I went with Option 1 (the minimal diff) as you suggested; tests pass, exit 0."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-options-colon-mid-sentence",
+  "note": "'options:' inside a sentence is not a menu",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Heads up: the lockfile has two options: pinned and floating."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-menu-header-line",
+  "note": "'Options:' that begins a line is a menu",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Two ways forward.\nOptions:\n1. patch it\n2. rewrite it"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-menu-after-completion-evidence",
+  "note": "a completion with exit evidence is not a hand-back even beside a menu header",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done and verified: the tests passed, exit 0.\nOptions: --dry-run, --format"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-long-menu-header-beyond-the-tail",
+  "note": "a long menu pushes its 'Options:' header out of the 400-char tail: still a menu",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Two ways forward.\nOptions:\n1. approach number 1 with a deliberately long description of what it touches\n2. approach number 2 with a deliberately long description of what it touches\n3. approach number 3 with a deliberately long description of what it touches\n4. approach number 4 with a deliberately long description of what it touches\n5. approach number 5 with a deliberately long description of what it touches\n6. approach number 6 with a deliberately long description of what it touches\n7. approach number 7 with a deliberately long description of what it touches\n8. approach number 8 with a deliberately long description of what it touches\n9. approach number 9 with a deliberately long description of what it touches\n"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "completion-addressed",
+  "note": "'addressed' is the operator's own verify word",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ],
+   "shadow_has": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All findings addressed; the branch is pushed."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "completion-landed-negated",
+  "note": "'has not landed yet' is no completion claim",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The fix has not landed yet."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claim-new-turn-is-not-a-duplicate",
+  "note": "a byte-identical message in a LATER turn is a new stop, not a duplicate registration",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "prompt_id": "p2"
+  },
+  "ledger_pre": {
+   "claim_current": true,
+   "claim_turn": "p1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claim-same-turn-is-a-duplicate",
+  "note": "the same turn registered twice stays silent",
+  "expect": {
+   "action": "allow",
+   "code": "dup_claim"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "prompt_id": "p1"
+  },
+  "ledger_pre": {
+   "claim_current": true
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claim-codex-turn-id",
+  "note": "Codex's turn_id separates stops the same way",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "turn_id": "t2"
+  },
+  "ledger_pre": {
+   "claim_current": true,
+   "claim_turn": "t1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claim-prompt-id-same-turn-explicit",
+  "note": "a prior claim for turn p1 makes a second p1 registration a duplicate",
+  "expect": {
+   "action": "allow",
+   "code": "dup_claim"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "prompt_id": "p1"
+  },
+  "ledger_pre": {
+   "claim_current": true,
+   "claim_turn": "p1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claim-codex-turn-id-same-turn-explicit",
+  "note": "Codex's turn_id is read: a prior claim for t1 makes a second t1 registration a duplicate",
+  "expect": {
+   "action": "allow",
+   "code": "dup_claim"
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "turn_id": "t1"
+  },
+  "ledger_pre": {
+   "claim_current": true,
+   "claim_turn": "t1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-plan-codex",
+  "note": "Codex honors the same modes: plan",
+  "expect": {
+   "action": "allow",
+   "code": "mode:plan"
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "plan",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-dontask-codex",
+  "note": "Codex honors the same modes: dontAsk",
+  "expect": {
+   "action": "allow",
+   "code": "mode:dontAsk"
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "dontAsk",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-bypasspermissions-codex",
+  "note": "Codex honors the same modes: bypassPermissions",
+  "expect": {
+   "action": "allow",
+   "code": "mode:bypassPermissions"
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "bypassPermissions",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "next-live",
+  "note": "a verified completion with no next: line draws the NEXT ask",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: the tests passed."
+  },
+  "registry_patch": {
+   "rules": {
+    "NEXT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "next-dirty-skips",
+  "note": "NEXT never fires over unpublished work",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: the tests passed."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "NEXT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "status-live",
+  "note": "a completion claim with no needs-you line draws the STATUS ask",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "STATUS"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  },
+  "registry_patch": {
+   "rules": {
+    "STATUS": {
+     "mode": "live"
+    }
+   }
+  }
  }
 ]

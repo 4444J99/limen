@@ -3,7 +3,7 @@
   "_doc": [
     "POST-OPENER INTENTS - the operator's recurring follow-up asks, declared as data (the registry half of the stop governor; the drift predicate is scripts/check-stop-governor.py, the executable half is scripts/stop-governor.py).",
     "intents: one row per family of the study's section 3 table (docs/prompt-control-vocabulary-study.md), with the study's n. The predicate holds the ids and counts in parity with that table, so a re-counted study is a red check, not a memory chore.",
-    "rules: the executable behaviors. A rule fires at the turn-end boundary and emits ONE bounded continuation written in the operator's own lowercase lexicon. Every rule ships in mode shadow: it logs would_block and changes nothing. mode live needs a promotion block, and the predicate refuses a live rule without one. That is a DECLARED-EVIDENCE gate, not a verified one: replay/shadow numbers are self-attested (the predicate requires them, a tracked receipt path that exists, and the precision floor, but cannot recompute them until stop-governor-measure.py exists); an operator promotion must cite a GitHub issue or pull-request URL.",
+    "rules: the executable behaviors. A rule fires at the turn-end boundary and emits ONE bounded continuation written in the operator's own lowercase lexicon. Every rule ships in mode shadow: it logs would_block and changes nothing. mode live needs a promotion block, and the predicate refuses a live rule without one. That is a DECLARED-EVIDENCE gate, not a verified one: replay/shadow numbers are self-attested (the predicate requires them, a receipt path that is an existing non-empty file inside the repo, and the precision floor, but cannot recompute them until stop-governor-measure.py exists); an operator promotion must cite a GitHub issue or pull-request URL.",
     "Hooks cannot type a slash command (Claude hooks docs), so a rule fires the PROMPT BODY the command would carry. Names come from the operator's lexicon: each rule's text must contain one of its own lexicon phrases, and each phrase must appear verbatim in the study.",
     "Nothing here arms a settings file. Arming is one paste, staged at docs/keys/stop-governor-settings-snippet.json and filed as lever L-STOP-GOVERNOR-ARM."
   ],
@@ -54,7 +54,7 @@
       "purg\\w*",
       "drop(?:s|ped|ping)?",
       "truncat\\w*",
-      "rm\\s+-rf",
+      "rm\\s+-\\w*[rf]\\w*",
       "reset\\s+--hard",
       "force\\w*",
       "overwrit\\w*",
@@ -105,7 +105,25 @@
       "submit\\w*",
       "sign(?:s|ed|ing)?",
       "comment(?:s|ed|ing)?",
-      "push\\w*\\s+(?:\\w+\\s+){0,3}(?:to|onto)\\s+(?:main|master)"
+      "push\\w*\\s+(?:\\S+\\s+){0,3}(?:\\S*[:/])?(?:main|master)",
+      "push\\s+(?:\\S+\\s+){0,4}?-f",
+      "push\\w*\\s+\\S+\\s+:\\S+",
+      "branch\\s+-D",
+      "clean\\s+-\\w*f\\w*",
+      "--live",
+      "dispatch\\w*\\s+(?:\\S+\\s+){0,5}?(?:live|for\\s+real)",
+      "prod",
+      "chezmoi\\s+apply",
+      "prun\\w*",
+      "reap\\w*",
+      "reset\\s+(?:the\\s+)?(?:db|database)",
+      "amend\\w*",
+      "clos\\w*\\s+(?:the\\s+)?(?:issue|pr|pull)",
+      "\\.env\\w*",
+      "spawn\\w*\\s+\\d+"
+    ],
+    "merge_domain_roots": [
+      "merg\\w*"
     ],
     "completion_claim": [
       "done",
@@ -117,7 +135,12 @@
       "fixed",
       "healed",
       "shipped",
-      "nothing left"
+      "nothing left",
+      "addressed",
+      "resolved",
+      "implemented",
+      "landed",
+      "wrapped up"
     ],
     "negation": [
       "not",
@@ -165,7 +188,22 @@
       "needs?\\s+review",
       "review\\s+(?:needed|required|pending)",
       "pending\\s+review",
-      "draft"
+      "draft",
+      "merged",
+      "queue[ds]?",
+      "queuing",
+      "conflict\\w*",
+      "pending",
+      "in\\s+progress",
+      "not\\s+(?:yet\\s+)?ready",
+      "should\\s+not",
+      "holds?\\s+the\\s+merge",
+      "closed",
+      "supersed\\w*",
+      "rebase\\w*",
+      "behind",
+      "cancel\\w*",
+      "running"
     ],
     "next_line": "(?im)^[ \\t>*_\\-]*next\\b[^\\n:]{0,20}:",
     "needs_you_line": "what you need to do:"
@@ -236,7 +274,7 @@
     "HARNESS": {
       "n": 422,
       "class": "owner-elsewhere",
-      "owner": "harness built-ins (/compact /model /effort /voice /loop /goal); no hook can run a built-in. The governor yields to /loop (session_crons) and to any active continuation.",
+      "owner": "harness built-ins (/compact /model /effort /voice /loop /goal); no hook can run a built-in. The governor is written to yield to /loop (the payload's session_crons, assumed from the field rather than captured from a live run) and to any active continuation.",
       "claude_binding": "none",
       "codex_binding": "none",
       "evidence": "study section 3: /compact x265"
@@ -263,7 +301,7 @@
       "rules": ["CONT"],
       "owner": "scripts/stop-governor.py, rule CONT",
       "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
-      "codex_binding": "staged Stop entry -> codex-hook-runner.sh stop-governor (Codex joins the reasons when host admission also blocks one stop)",
+      "codex_binding": "staged Stop entry -> codex-hook-runner.sh stop-governor (per openai/codex main-branch source, Codex joins the reasons when host admission also blocks one stop; not verified live)",
       "evidence": "study section 3: continue / proceed / go / you do it / fix all"
     },
     "CLOSE": {
@@ -272,8 +310,8 @@
       "rules": ["CLOSE"],
       "owner": "scripts/stop-governor.py, rule CLOSE; body is .agents/skills/closeout/SKILL.md steps 4-7",
       "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
-      "codex_binding": "staged Stop entry (Codex joins the reasons when host admission also blocks one stop)",
-      "evidence": "study sections 3 and 6: safe to archive session? x16; 20 of 105 closeout turns drew a complaint (section 6 counts 105 closeout turns, section 3 counts 127 CLOSE; the study does not reconcile them)"
+      "codex_binding": "staged Stop entry (per openai/codex main-branch source, Codex joins the reasons when host admission also blocks one stop; not verified live)",
+      "evidence": "study sections 3 and 6: safe to archive session? x16; 20 of 105 closeout turns were followed within two turns by a complaint or \"continue\" (section 6 counts 105 closeout turns, section 3 counts 127 CLOSE; the study does not reconcile them)"
     },
     "PASTE": {
       "n": 108,
@@ -289,7 +327,7 @@
       "rules": ["VERIFY"],
       "owner": "scripts/stop-governor.py, rule VERIFY -> scripts/verify-scoped.sh",
       "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
-      "codex_binding": "staged Stop entry (Codex joins the reasons when host admission also blocks one stop)",
+      "codex_binding": "staged Stop entry (per openai/codex main-branch source, Codex joins the reasons when host admission also blocks one stop; not verified live)",
       "evidence": "study section 3: /verify, were all of the findings healed and addressed?"
     },
     "NEWTASK": {
@@ -304,7 +342,7 @@
       "n": 56,
       "class": "stop",
       "rules": ["STATUS"],
-      "owner": "scripts/stop-governor.py, rule STATUS, plus the status suffix on every continuation",
+      "owner": "scripts/stop-governor.py, rule STATUS, plus the status suffix on the CONT, CLOSE and MERGE continuations",
       "claude_binding": "staged Stop entry (shadow)",
       "codex_binding": "staged Stop entry (shadow)",
       "evidence": "study section 3: what do i need to do x8; section 8: tldr and eli5 x13, typed with /tldr installed (the install window is not dated)"

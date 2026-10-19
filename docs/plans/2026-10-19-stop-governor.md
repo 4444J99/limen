@@ -34,7 +34,7 @@ the synthesis was checked against the repo and bent where the evidence said so (
   unverified), a registry with no hook (removes nothing).
 - **D2 - shadow first, declared-evidence promotion, and an operator decision is evidence.** Every rule ships
   `mode: shadow` (logs `would_block`, changes nothing). `live` needs a promotion block: declared replay or shadow
-  evidence (an ISO date, n >= 30, precision >= 0.80, MERGE >= 0.90, and an existing tracked receipt file) or an
+  evidence (an ISO date, n >= 30, precision >= 0.80, MERGE >= 0.90, and an existing non-empty receipt file in the repo) or an
   explicit operator decision citing a GitHub issue or PR URL. The numbers are self-attested: nothing in this repo
   measures them until the follow-up measure tool exists, so the predicate holds the form of the evidence, not its
   truth. This resolves "without my input" against "unmeasured live behavior": the operator can go live with one
@@ -52,19 +52,28 @@ the synthesis was checked against the repo and bent where the evidence said so (
   shape through version skew and rejects `hookSpecificOutput` on Stop. Live only after the installed immutable
   runtime refreshes.
 - **D6 - deviations from the judged synthesis, each from a test or a read of the code.**
-  1. The send/delete/spend/leak deny filter (66 regex roots) gates CONT only and is best-effort, a lexical filter
-     and not a safety boundary. VERIFY, CLOSE and STATUS verify or report and carry the gate clause; NEXT and MERGE
-     can act, and rely on that clause plus `merge-policy.sh` (MERGE needs a clean, pushed, non-main branch and a PR
-     reference with no hold phrase). Gating the others would silence the completion stops this exists for.
+  1. The send/delete/spend/leak deny filter (81 regex roots, reading the last 20,000 characters because it only ever
+     suppresses) gates CONT only and is best-effort, a lexical filter and not a safety boundary. VERIFY, CLOSE and
+     STATUS verify or report and carry the gate clause; NEXT and MERGE can act, and rely on that clause plus
+     `merge-policy.sh` (MERGE needs a clean, pushed, non-main branch and a PR reference with no hold phrase; the
+     hold list covers merged, queued, running, conflicted, pending, held and closed PRs). A merge question is MERGE's
+     even though `merge` is a deny root (`merge_domain_roots`), but an ask that names any other outward action
+     beside a PR number is gated for both rules. Gating the others would silence the completion stops this exists
+     for.
   2. An absent `stop_hook_active` counts as not continuing; `true` or a non-boolean yields. Requiring an explicit
      `false` would make a harness that omits the field a silent, undetectable no-op; loops stay bounded by per-rule
      caps (CONT 2, others 1), the session cap (4) and the daily cap (40). Claude Code documents its own
      continuation ceiling, read through a summarizing fetcher and not observed; Codex documents none, so only the
      repo's caps are proven.
-  3. A question outranks a completion word: an agent asking to continue is not finishing. Found by writing the
-     fixtures (the synthetic CONT message contained "fixed"). Completion claims are negation-aware.
+  3. While CONT is live and under its cap, a question outranks a completion word: an agent asking to continue is
+     not finishing. Found by writing the fixtures (the synthetic CONT message contained "fixed"). A shadow or spent
+     CONT collapses nothing. Completion claims are negation-aware. A handback (a menu, "run this yourself") counts
+     only when it begins a line and the message is not a completion carrying exit evidence. The fixed point is the
+     LAST line in the charter's form, and `BLOCKED:` counts only at a line start, so a message that names the
+     phrase while withholding it is not mistaken for either.
   4. The fingerprint is vendor-free so one stop yields identical text on both vendors; the claim key is
-     per-vendor.
+     per-vendor and carries the turn identity when the payload has one (`prompt_id` on Claude, `turn_id` on Codex,
+     the latter read from source), so a later stop ending in a byte-identical message is not a duplicate.
   5. No SessionStart standing-text mode, no per-intent demotion file, no measure script in this PR (below).
   6. The shadow log creates its own directory. The first test run found that nothing did, so no shadow evidence
      would ever have accrued.
@@ -82,7 +91,7 @@ the synthesis was checked against the repo and bent where the evidence said so (
 
 1. Done: Codex Stop shape fix, with an A/B against the parent commit (`8089973`).
 2. Done: `post-opener-intents.json`, `stop-governor.py`, `hooks/stop-governor.sh`, the `codex-hook-runner.sh` arm,
-   `check-stop-governor.py` (letters A-J), the 108-case fixture matrix, `test_stop_governor.py` (302 tests), two
+   `check-stop-governor.py` (letters A-J), the 165-case fixture matrix, `test_stop_governor.py` (432 tests), two
    gates, three parameters, the staged snippet, the lever and the two armed-valve rows. Round-1 adversarial review
    fixes (single probe, atomic reserve, lexicon rebuild, attended variable, deny roots, hermetic arming tests) are
    folded in.
@@ -117,6 +126,8 @@ the synthesis was checked against the repo and bent where the evidence said so (
   checked; the governor fails quiet.
 - The hook runs on whatever python3 the machine has; the governor parses as Python 3.9 syntax and imports no 3.11
   name (predicate J). A failing interpreter leaves a breadcrumb in `logs/stop-governor/wrapper-errors.log`.
+- An armed hook on a machine where git is missing, too old, or refuses the checkout (dubious ownership) or times out
+  is silent and writes no row, the same as outside a limen checkout; `events.jsonl` staying empty has that cause too.
 - Other headless `claude -p` callers (for example `scripts/quicken.py`) are not dispatch lanes; they are covered only
   by the `CLAUDE_CODE_SESSION_ATTENDED=0` yield, which is observed on one version and undocumented.
 - The Codex half of "the studies in Codex and Claude" is not in this repo: the study is Claude-only. Codex gets a
@@ -126,6 +137,31 @@ the synthesis was checked against the repo and bent where the evidence said so (
 - Child agents were not broker-reserved (`limen conduct split` cannot run here: missing dependency, no run to split
   from). Every worker was read-only and explicitly tiered; recorded as a deviation, the same as
   `docs/research/agent-ecosystem-unity/report.md`.
+
+## Review record
+
+Two adversarial rounds ran (the charter's bound); neither was a gate, and no third round runs. Round 1 (47 findings
+verified, 43 confirmed) is folded into the first rewrite. Round 2 (final) returned 32 candidates from six lenses
+(state machine, git/env hazards, detector precision, claims, predicate and tests, vendor contract), each tried by two
+skeptics. Triage by hand, not by vote:
+
+- **Fixed:** the terminal-line and `BLOCKED:` anchoring (D5); the deny gate reading the whole message and the
+  charter-named outward actions it missed (D1, D3: 81 roots now, one fixture per action); MERGE's hold list and its
+  arbitration with a deny-gated ask (D2); handbacks anchored to a line start (D4); the completion vocabulary gaining
+  `addressed`, `resolved`, `implemented`, `landed`, `wrapped up` (D6); the claim key carrying the turn identity
+  (SM-1); `--require-armed` parsing the Stop handlers structurally with forged-paste tests (R2-P1); the decide-CLI
+  test inheriting the ambient headless environment (R2-P2); lock overlap, hung-git and ignored-logs tests (R2-P3,
+  P7, P8); the receipt and scope-marker checks (R2-P4, R2-P6); the claims findings C1-C4, C6, C8, G1, V1.
+- **Left, deliberately (each a lexical-tuning or hardening item that shadow data should drive, none breaking
+  fail-open, shadow-first or at-most-one-block):** D7 (more negation forms), D8 (exit-evidence word classes), D9 (more
+  permission phrasings), D10 (deny roots over-gating ordinary asks), D11 (more next/needs-you line forms); a bare PR
+  mention still reads as a merge ask when no hold phrase is present (D2, residual); G2 (a separate git dir that is
+  itself named `.git` outside the work tree resolves the canonical root to its parent); G3 (a failed probe is
+  unlogged, stated in the premortem instead); R2-P5 (the other deny roots are pinned by the outward-ask fixtures,
+  not one by one); R2-P9, R2-P10 (some documented constants carry no boundary assertion).
+- **Survivors of the mutation pass:** the git budget constant (4.5 s) survives as an equivalent mutant: the per-call
+  timeout bounds a hung call first, and the budget only binds a sequence of slow but answering calls, which no test
+  fakes.
 
 ## Verification
 
@@ -137,8 +173,9 @@ the synthesis was checked against the repo and bent where the evidence said so (
   worktree.
 - Observed once, 2026-10-19, Claude Code 2.1.303, `-p` mode, throwaway repo: the Stop payload fields, a block
   continuing the turn, and the error banner above. Not observed: interactive Claude Code, any Codex build.
-- Mutation testing of `stop-governor.py` is re-run against the rewritten governor after a clean baseline; the earlier
-  count (23 mutants of the first cut) is not carried forward as evidence for this version.
+- Mutation testing against the round-2 behavior, each run only after a clean baseline: 30 mutants across the
+  governor, the registry and the predicate; 29 killed, 1 survivor (the git budget constant, an equivalent mutant,
+  see the review record). The earlier 23-mutant count for the first cut is not carried forward.
 - Status words are separate claims: "merged" = on origin/main; "live" = the paste is in the tracked files and the
   immutable runtime carries the Codex fix; "observed" = a non-shadow decision row from a real session plus a
   promotion PR.

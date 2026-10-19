@@ -57,7 +57,9 @@ GIT_CALL_TIMEOUT_SECONDS = 2
 GIT_BUDGET_SECONDS = 4.5
 LOCK_WAIT_SECONDS = 1.0
 TAIL_CHARS = 400
-GATED_TAIL_CHARS = 600
+# The deny gate only ever SUPPRESSES, so it reads far more of the message than the detectors do: a destructive step
+# early in a long numbered plan that ends in 'want me to proceed?' must still stop the continuation.
+GATED_TAIL_CHARS = 20000
 SEARCH_CHARS = 2000
 DEFAULT_MAX_SESSION = 4
 DEFAULT_DAILY_CAP = 40
@@ -119,6 +121,9 @@ class Lexical:
     message: str
     wanted: tuple[str, ...]
     gated: bool
+    # gated by a root OTHER than the merge roots: an outward ask that is not MERGE's domain (merge-policy decides
+    # merges; it does not decide an email or a force-push that happens to sit beside a PR number).
+    gated_other: bool = False
 
 
 @dataclass(frozen=True)
@@ -460,12 +465,20 @@ def compose_reason(reg: dict[str, Any], rules: tuple[str, ...], fp: str) -> str:
     return f"{PREFIX}{'+'.join(rules)}@{fp}] " + " ".join(parts)
 
 
-def stop_key(vendor: str, session: str, message: str) -> tuple[str, str]:
+def stop_key(vendor: str, session: str, message: str, turn: str = "") -> tuple[str, str]:
     """(claim key, fingerprint). The claim key is per vendor, so a Claude and a Codex hook on one stop do not
-    collide; the fingerprint is vendor-free, so the same stop yields byte-identical reason text on both."""
+    collide, and carries the turn identity when the payload has one (prompt_id on Claude, turn_id on Codex), so a
+    later, separate stop that ends in a byte-identical message is not mistaken for a duplicate registration of
+    this one. The fingerprint is vendor-free, so the same stop yields byte-identical reason text on both."""
     digest = hashlib.sha256(message.encode()).hexdigest()
-    key = hashlib.sha256(f"{vendor}|{session}|{digest}".encode()).hexdigest()
+    key = hashlib.sha256(f"{vendor}|{session}|{turn}|{digest}".encode()).hexdigest()
     return key, hashlib.sha256(f"{session}|{digest}".encode()).hexdigest()[:8]
+
+
+def _turn_of(payload: dict[str, Any]) -> str:
+    """The turn identity a payload carries, if any: prompt_id on Claude, turn_id on Codex (read from source)."""
+    turn = payload.get("prompt_id") or payload.get("turn_id")
+    return turn if isinstance(turn, str) else ""
 
 
 def _int_env(env: dict[str, str], name: str, default: int) -> int:
@@ -484,7 +497,8 @@ def pause_state(canonical: Path | None) -> tuple[str, bool]:
 
     Reads logs/AUTONOMY_PAUSED with the class parse scripts/session-orient.py uses: an explicit `class:
     fence|wall` wins; a legacy marker without one is a fence only when its reason names a peer. A wall, an
-    unreadable marker, or anything unparseable suppresses every rule; a fence suppresses only MERGE.
+    unreadable marker, or anything unparseable suppresses every rule; a fence suppresses MERGE only when its prohibitions name merge (a fence
+    without that line leaves every rule running).
     """
     if canonical is None:
         return "none", False
@@ -521,6 +535,17 @@ def _allow(
     key: str = "",
 ) -> Decision:
     return Decision("allow", code, log=log, fp=fp, shadow=shadow, ledger=ledger, key=key)
+
+
+_MARKUP = re.compile(r"^[\s>*_`\-]+")
+_BLOCKED_LINE = re.compile(r"(?m)^[ \t>*_`\-]*BLOCKED:")
+
+
+def _terminal_statement(message: str) -> bool:
+    """The closeout fixed point is the LAST line, in the form the charter prescribes. A message that names the
+    phrase while withholding it ('I am not claiming CLOSEOUT COMPLETE') is not the fixed point."""
+    last = message.rstrip().rsplit("\n", 1)[-1]
+    return _MARKUP.sub("", last).startswith("CLOSEOUT COMPLETE")
 
 
 def _claims_completion(tail: str, lex: dict[str, Any]) -> bool:
@@ -570,9 +595,9 @@ def prefilter(
     message = message if isinstance(message, str) else ""
     if not message.strip():
         return _allow("empty")
-    if "CLOSEOUT COMPLETE" in message:
+    if _terminal_statement(message):
         return _allow("fixed_point")
-    if "BLOCKED:" in message:
+    if _BLOCKED_LINE.search(message):
         return _allow("blocked_once")
 
     lex = registry["lexicon"]
@@ -582,8 +607,16 @@ def prefilter(
     failed = bool(_phrase_rx(lex["failure_terms"]).search(tail))
     evidence = bool(_phrase_rx(lex["exit_evidence"]).search(tail)) and not failed
     asks_question = bool(re.search(r"\?[\s*_\"')\]>`]*\Z", message))
-    cont = (asks_question and bool(_phrase_rx(lex["permission_questions"]).search(tail))) or bool(
-        _phrase_rx(lex["handbacks"]).search(tail)
+    # A handback is a menu or a hand-over that BEGINS a line ('Options:', 'Option 1: ...'), looked for over the
+    # wider window because a long menu pushes its header out of the tail. An informational mention mid-sentence
+    # ('the new CLI options: ...', 'I went with option 1') is not one, and neither is a completion that already
+    # carries exit evidence.
+    handback_rx = re.compile(
+        r"(?im)^[ \t>*_\-\d.)]*(?:" + "|".join(re.escape(t).replace(r"\ ", r"\s+") for t in lex["handbacks"]) + r")"
+        r"(?![A-Za-z0-9])"
+    )
+    cont = (asks_question and bool(_phrase_rx(lex["permission_questions"]).search(tail))) or (
+        bool(handback_rx.search(recent)) and not (claim and evidence)
     )
     names_pr = bool(_pattern_rx(lex["pr_patterns"]).search(tail)) and not _pattern_rx(lex["hold_patterns"]).search(tail)
     next_given = bool(re.search(lex["next_line"], recent))
@@ -598,8 +631,14 @@ def prefilter(
     wanted = tuple(r for r in DETECTORS if candidates[r] and r in registry["rules"])
     if not wanted:
         return _allow("no_signal")
-    gated = bool(_pattern_rx(lex["deny_patterns"]).search(message[-GATED_TAIL_CHARS:]))
-    return Lexical(message, wanted, gated)
+    window = message[-GATED_TAIL_CHARS:]
+    deny = lex["deny_patterns"]
+    gated = bool(_pattern_rx(deny).search(window))
+    gated_other = False
+    if gated:
+        merge_roots = set(lex.get("merge_domain_roots") or [])
+        gated_other = bool(_pattern_rx([p for p in deny if p not in merge_roots]).search(window))
+    return Lexical(message, wanted, gated, gated_other)
 
 
 def decide_with_state(
@@ -623,7 +662,7 @@ def decide_with_state(
 
     session = payload.get("session_id")
     sid = str(session) if session else ""
-    key, fp = stop_key(vendor, sid, lexical.message)
+    key, fp = stop_key(vendor, sid, lexical.message, _turn_of(payload))
     ledger = ledger_factory(git)
     if ledger is None:
         return _allow("no_ledger")
@@ -649,6 +688,8 @@ def decide_with_state(
         cont = rules["CONT"]
         live_open = cont.get("mode") == "live" and int(used.get("CONT", 0)) < int(cont.get("cap", 1))
         gated = bool(cont.get("deny_gated")) and lexical.gated
+        if "MERGE" in matched and bool(cont.get("deny_gated")) and lexical.gated_other:
+            matched.remove("MERGE")  # the ask names an outward action besides the merge: not MERGE's to answer
         if "MERGE" in matched:
             matched.remove("CONT")  # a merge question is MERGE's domain; scripts/merge-policy.sh decides
         elif live_open:
@@ -802,7 +843,8 @@ def run_case(case: dict[str, Any], workdir: Path, registry: dict[str, Any] | Non
             ledger._write(ledger._day(now), {"total": pre["day_total"]})
         if pre.get("claim_current"):
             message = case["payload"].get("last_assistant_message") or ""
-            ledger.claim(stop_key(vendor, sid, message)[0][:24])
+            turn = pre["claim_turn"] if "claim_turn" in pre else _turn_of(case["payload"])
+            ledger.claim(stop_key(vendor, sid, message, turn)[0][:24])
     decision = decide(
         case["payload"],
         vendor=vendor,

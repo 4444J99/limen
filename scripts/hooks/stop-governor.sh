@@ -7,7 +7,9 @@
 # always-exit-0 guarantee. The hook payload arrives on stdin and is passed through untouched.
 #
 # A failing interpreter (an old python3 that cannot import the governor, a crash) leaves ONE line in
-# logs/stop-governor/wrapper-errors.log beside the governor's own ledger, so "armed but dead" is findable.
+# logs/stop-governor/wrapper-errors.log under the checkout whose wrapper ran. When armed from the live checkout that
+# is beside the governor's ledger; a worktree's wrapper writes into that worktree's own logs/, so "armed but dead"
+# is findable only where the armed wrapper lives.
 set -uo pipefail
 
 HOOK_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)"

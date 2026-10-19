@@ -29,6 +29,10 @@ PREDICATE = ROOT / "scripts" / "check-stop-governor.py"
 REGISTRY = ROOT / "institutio" / "governance" / "post-opener-intents.json"
 FIXTURES = ROOT / "scripts" / "tests" / "fixtures" / "stop-governor-cases.json"
 CONT = "I fixed the first two. Want me to also fix the other two?"
+EMPTY_FILE = next(
+    (str(p.relative_to(ROOT)) for p in sorted((ROOT / "cli" / "src" / "limen").glob("*.py")) if p.stat().st_size == 0),
+    None,
+)
 
 
 def _load():
@@ -523,6 +527,77 @@ def test_the_session_cap_holds_across_concurrent_processes_with_different_stops(
     assert blocks == 2  # CONT's per-rule cap, enforced atomically
 
 
+def _hold_ledger_lock(state: Path) -> int:
+    import fcntl
+
+    fd = os.open(state / ".lock", os.O_CREAT | os.O_RDWR, 0o600)
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    return fd
+
+
+def test_reserve_waits_for_a_held_lock_and_then_proceeds(tmp_path):
+    """The twelve-process tests never overlap inside the critical section (interpreter start-up dwarfs it), so the
+    lock is exercised here by holding it: skipping the lock returns at once, a zero wait gives up, neither waits."""
+    pytest.importorskip("fcntl")
+    import threading
+
+    ledger = sg.FileLedger(tmp_path / "state")
+    assert ledger.ready()
+    fd = _hold_ledger_lock(ledger.dir)
+    threading.Timer(0.3, os.close, args=(fd,)).start()  # closing the descriptor releases the lock
+    started = time.monotonic()
+    verdict = ledger.reserve("claude", "s", ("CONT",), "k" * 24, 1_700_000_000.0, {"CONT": 2}, 4, 40)
+    assert verdict == "ok"
+    assert time.monotonic() - started >= 0.25
+
+
+def test_reserve_fails_open_and_charges_nothing_when_the_lock_never_frees(tmp_path, monkeypatch):
+    pytest.importorskip("fcntl")
+    monkeypatch.setattr(sg, "LOCK_WAIT_SECONDS", 0.2)
+    ledger = sg.FileLedger(tmp_path / "state")
+    assert ledger.ready()
+    fd = _hold_ledger_lock(ledger.dir)
+    try:
+        assert ledger.reserve("claude", "s", ("CONT",), "k" * 24, 1_700_000_000.0, {"CONT": 2}, 4, 40) == "no_ledger"
+    finally:
+        os.close(fd)
+    assert ledger.session("claude", "s") == {} and not (ledger.dir / "claims" / ("k" * 24)).exists()
+
+
+def test_a_hung_git_fails_open_quietly_inside_the_hook_budget(tmp_path):
+    repo = _limen_like_repo(tmp_path)
+    fake = tmp_path / "fakebin"
+    fake.mkdir()
+    (fake / "git").write_text("#!/bin/sh\nexec sleep 30\n", encoding="utf-8")
+    (fake / "git").chmod(0o755)
+    env = _env(tmp_path)
+    env["PATH"] = f"{fake}{os.pathsep}{env['PATH']}"
+    reg = _registry_file(tmp_path, "CONT")
+    started = time.monotonic()
+    proc = subprocess.run(
+        [
+            "bash",
+            str(WRAPPER),
+            "--vendor",
+            "claude",
+            "--event",
+            "Stop",
+            "--registry",
+            str(reg),
+            "--state-dir",
+            str(tmp_path / "s"),
+        ],
+        input=json.dumps(_payload(CONT, cwd=str(repo))).encode(),
+        capture_output=True,
+        cwd=ROOT,
+        env=env,
+        timeout=30,
+        check=False,
+    )
+    assert proc.returncode == 0 and proc.stdout == b""
+    assert time.monotonic() - started < 4  # one hung call is cut at GIT_CALL_TIMEOUT_SECONDS, not at the budget
+
+
 def test_prefilter_pays_for_no_git_when_nothing_could_fire(tmp_path):
     reg = copy.deepcopy(REGISTRY_DATA)
 
@@ -652,6 +727,7 @@ def test_decide_cli_is_a_dry_run_that_writes_no_ledger(tmp_path):
         text=True,
         check=False,
         cwd=tmp_path,
+        env=_scrubbed_env(),  # the ambient CLAUDE_CODE_SESSION_ATTENDED=0 / CLAUDE_JOB_DIR of a headless run must not leak in
     )
     assert proc.returncode == 0, proc.stderr
     result = json.loads(proc.stdout)
@@ -688,13 +764,24 @@ def _status() -> str:
     ).stdout
 
 
+def _logs_tree() -> list[tuple[str, int]]:
+    """logs/ is gitignored, so `git status` cannot see the one place the hook family writes."""
+    base = ROOT / "logs" / "stop-governor"
+    return (
+        sorted((str(p.relative_to(base)), p.stat().st_size) for p in base.rglob("*") if p.is_file())
+        if base.exists()
+        else []
+    )
+
+
 def test_predicate_is_green_and_idempotent_and_writes_nothing():
-    before = _status()
+    before, logs_before = _status(), _logs_tree()
     first, second = _run_predicate(), _run_predicate()
     assert first.returncode == 0, first.stdout
     assert second.returncode == 0, second.stdout
     assert "check-stop-governor: OK" in first.stdout
     assert _status() == before
+    assert _logs_tree() == logs_before
 
 
 @pytest.mark.parametrize(
@@ -715,6 +802,7 @@ def test_predicate_is_green_and_idempotent_and_writes_nothing():
         ("cap raised", "D", lambda r: r["rules"]["CONT"].update(cap=9)),
         ("plan mode allowed", "D", lambda r: r["permission_modes"]["claude"].append("plan")),
         ("fleet dontAsk allowed", "D", lambda r: r["permission_modes"]["claude"].append("dontAsk")),
+        ("a scope marker that does not exist", "A", lambda r: r.update(scope_marker="institutio/governance/nope.json")),
     ],
 )
 def test_predicate_goes_red_when_the_registry_is_wrong(tmp_path, label, tag, mutate):
@@ -779,6 +867,15 @@ def test_predicate_accepts_a_declared_evidence_promotion_of_either_kind(tmp_path
         (
             "replay with a receipt that does not exist",
             {"source": "replay", "date": "2026-10-19", "n": 40, "precision": 0.9, "receipt": "docs/receipts/nope.json"},
+        ),
+        (
+            "replay with a receipt that is a directory",
+            {"source": "replay", "date": "2026-10-19", "n": 40, "precision": 0.9, "receipt": "docs"},
+        ),
+        pytest.param(
+            "replay with an empty receipt file",
+            {"source": "replay", "date": "2026-10-19", "n": 40, "precision": 0.9, "receipt": EMPTY_FILE},
+            marks=pytest.mark.skipif(EMPTY_FILE is None, reason="no empty tracked file to point a receipt at"),
         ),
         (
             "replay with an absolute receipt",
@@ -976,6 +1073,57 @@ def test_require_armed_is_the_lever_acceptance_and_the_paste_simulation_arms_bot
     pasted = json.loads(codex_path.read_text(encoding="utf-8"))["hooks"]["Stop"]
     assert any("host-admission" in json.dumps(group) for group in pasted)
     assert any("stop-governor" in json.dumps(group) for group in pasted)
+
+
+def _edit_json(path: Path, mutate) -> None:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    mutate(data)
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def _claude_handler(data: dict) -> dict:
+    return data["hooks"]["Stop"][0]["hooks"][0]
+
+
+def _codex_handler(data: dict) -> dict:
+    return next(g for g in data["hooks"]["Stop"] if "stop-governor" in json.dumps(g))["hooks"][0]
+
+
+def _claude_flatten(data: dict) -> None:
+    data["hooks"]["Stop"] = [data["hooks"]["Stop"][0]["hooks"][0]]
+
+
+def _codex_gets_the_claude_group(data: dict) -> None:
+    snippet = json.loads((ROOT / "docs" / "keys" / "stop-governor-settings-snippet.json").read_text(encoding="utf-8"))
+    data["hooks"]["Stop"] = [g for g in data["hooks"]["Stop"] if "stop-governor" not in json.dumps(g)]
+    data["hooks"]["Stop"] += snippet["claude"]["hooks"]["Stop"]
+
+
+FORGED_PASTES = [
+    ("claude", lambda d: _claude_handler(d).update(command="echo scripts/hooks/stop-governor.sh"), "an echo"),
+    ("claude", lambda d: _claude_handler(d).update(command="scripts/hooks/stop-governor.sh"), "no vendor flag"),
+    ("claude", _claude_flatten, "a flattened entry with no inner hooks list"),
+    ("claude", lambda d: _claude_handler(d).pop("timeout"), "no timeout"),
+    ("claude", lambda d: _claude_handler(d).update(timeout=60), "a timeout beyond the budget"),
+    ("claude", lambda d: _claude_handler(d).update(**{"async": True}), "an async handler"),
+    ("claude", lambda d: _claude_handler(d).update(type="prompt"), "a non-command handler"),
+    ("codex", _codex_gets_the_claude_group, "the claude fragment pasted into the codex file"),
+    (
+        "codex",
+        lambda d: _codex_handler(d).update(command="echo hi", statusMessage="stop-governor (disabled)"),
+        "a status message that only mentions the governor",
+    ),
+    ("codex", lambda d: _codex_handler(d).update(timeout=60), "a codex timeout beyond the budget"),
+]
+
+
+@pytest.mark.parametrize("label,mutate,why", FORGED_PASTES, ids=[w for _, _, w in FORGED_PASTES])
+def test_require_armed_refuses_a_stop_entry_that_cannot_run(tmp_path, label, mutate, why):
+    claude_path, codex_path = _paste_snippet(tmp_path)
+    _edit_json(claude_path if label == "claude" else codex_path, mutate)
+    proc = _run_predicate("--require-armed", "--claude-settings", str(claude_path), "--codex-hooks", str(codex_path))
+    assert proc.returncode == 1, f"{why} read as armed:\n{proc.stdout}"
+    assert f"[ARMED] {label}" in proc.stdout
 
 
 def test_require_armed_needs_both_vendors_and_a_governor_that_runs(tmp_path):
