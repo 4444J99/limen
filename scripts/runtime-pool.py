@@ -47,6 +47,9 @@ def main():
             "allowed": False,
             "denial_reasons": [str(exc) if isinstance(exc, PoolUnavailable) else type(exc).__name__],
         }
+    # The decision carries `broker_ledger`: "live" after a broker read, or "frozen" plus `frozen_at`
+    # and `reason` while the keeper's write quota is spent and the last-good snapshot stands in for
+    # it (runtime_pool._broker_claims). It is passed through verbatim so the launcher can print it.
     print(json.dumps(result, sort_keys=True))
     return 0 if result.get("allowed", result.get("released", False)) else 75
 
