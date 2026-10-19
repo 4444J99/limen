@@ -280,3 +280,28 @@ nothing, including the Agentic AI Foundation, standardizes a home directory. XDG
 traceback (limen#3078); workflow reservation, `advisor` and `Bash` reachability (limen#3079). Verification update
 since this plan merged: `domus-home-guard --check` now exits 0 (the `.grokbot` route is applied and the stray
 `visual_dashboard.html` is in custody).
+
+## 2026-10-19 audit reconciliation (append-only)
+
+The [current audit receipt](../receipts/agent-runtime-audit-20261019/README.md)
+rechecks this plan against local and remote state, with two read-only peers.
+It is an audit and bounded implementation handoff, not a live cutover approval.
+
+- Five settings renders are semantically equal; ten selected active instruction
+  surfaces are byte-equal. Broad configuration reapplication is not justified.
+- Cursor MCP source/consumer paths, OpenCode JSONC ownership/repair, and Copilot's
+  launcher-added agent-council layer need source-owned reconciliation.
+- Claude now has zero of sixteen listed plugins enabled; flags are app-owned.
+  Legacy global MCP injection was deliberately retired; fresh readiness is unmeasured.
+- Limen #3029 is merged. October OpenCode archive staging exists without a complete
+  manifest/publication/restore receipt. The bare intake command in item 3 writes an
+  index and does not archive; its reviewed owner invocation needs explicit roots,
+  archive/hash/write flags and acceptance checks before execution.
+- Current accounting uses a shared disk-aware pool, not fixed vendor quotas.
+  The original watch's failed coverage and unverified native restoration remain
+  explicit. Shared .recode state still needs producing-app/consumer classification.
+- Same-volume clones preserve shared extents but are not independent custody.
+  Apparent accounting changes and actual physical reclaim require separate measurements.
+
+Existing owner: [#2848](https://github.com/4444J99/limen/issues/2848).
+No native state was deleted, moved or restored by this audit.

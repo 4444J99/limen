@@ -1,0 +1,292 @@
+{
+  "observed_at": "2026-10-19T13:22:01.776337+00:00",
+  "mode": "audit-and-convergence-plan-only",
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "runtime_check": {
+    "command": "domus-agent-runtime check --json",
+    "exit_code": 0,
+    "status": "ok",
+    "census_complete": true,
+    "census_files_scanned": 177961,
+    "census_errors": [],
+    "unauthorized_legacy_roots": [],
+    "runtime_mode": "0700",
+    "pool_mode": "shared_disk_aware",
+    "total_size_bytes": 25535235725,
+    "agent_total_size_bytes": 16310255110,
+    "shared_size_bytes": 9224980615,
+    "agents": {
+      "claude": 3734023676,
+      "codex": 8828607621,
+      "gemini": 12228601,
+      "opencode": 3735395212
+    },
+    "pool": {
+      "filesystem_free_bytes": 14367776768,
+      "required_reserve_bytes": 0,
+      "outstanding_growth_bytes": 201326592,
+      "available_growth_bytes": 14166450176,
+      "reservation_count": 3,
+      "storage_claim_count": 0
+    }
+  },
+  "allocated_kib": {
+    "observed_at": "2026-10-19T13:20:26Z",
+    "method": "du -sk; allocated blocks; separate observation, not apparent-byte quota census",
+    "claude": 3704984,
+    "codex": 8780500,
+    "gemini": 16928,
+    "opencode": 3744948,
+    "copilot": 1067536,
+    "cursor": 46388,
+    "recode": 2028964,
+    "shared": 960
+  },
+  "versions": {
+    "observed_at": "2026-10-19T13:23:47Z",
+    "claude": {
+      "version": "2.1.303",
+      "method": "--version",
+      "exit_code": 0
+    },
+    "codex_path": {
+      "version": "0.163.0",
+      "method": "--version",
+      "exit_code": 0
+    },
+    "codex_app": {
+      "version": "0.163.0-alpha.10.2",
+      "method": "--version",
+      "exit_code": 0
+    },
+    "gemini": {
+      "version": "0.61.0",
+      "method": "installed package.json"
+    },
+    "opencode": {
+      "version": "2.0.32",
+      "method": "--version",
+      "exit_code": 0
+    },
+    "copilot": {
+      "version": "1.0.98",
+      "method": "--version",
+      "exit_code": 0
+    },
+    "antigravity_cli": {
+      "version": "1.4.2",
+      "method": "--version",
+      "exit_code": 0
+    },
+    "cursor": {
+      "version": null,
+      "method": "No cursor/agent executable on PATH; no Cursor.app at two standard locations; retained state exists",
+      "status": "unverified"
+    }
+  },
+  "source_matches": {
+    "runtime_implementation": true,
+    "runtime_launcher": true
+  },
+  "render_comparisons": {
+    "claude": {
+      "exit": 0,
+      "stderr_present": false,
+      "stderr": "",
+      "semantic_changed_keys": [],
+      "byte_equal": false,
+      "live_bytes_unchanged_during_render": true
+    },
+    "codex": {
+      "exit": 0,
+      "stderr_present": false,
+      "stderr": "",
+      "semantic_changed_keys": [],
+      "byte_equal": true,
+      "live_bytes_unchanged_during_render": true
+    },
+    "gemini": {
+      "exit": 0,
+      "stderr_present": false,
+      "stderr": "",
+      "semantic_changed_keys": [],
+      "byte_equal": true,
+      "live_bytes_unchanged_during_render": true
+    },
+    "cursor": {
+      "exit": 0,
+      "stderr_present": false,
+      "stderr": "",
+      "semantic_changed_keys": [],
+      "byte_equal": true,
+      "live_bytes_unchanged_during_render": true
+    },
+    "copilot": {
+      "exit": 0,
+      "stderr_present": false,
+      "stderr": "",
+      "semantic_changed_keys": [],
+      "byte_equal": true,
+      "live_bytes_unchanged_during_render": true
+    },
+    "private_render": "temporary 0700 directory; rendered files 0600; removed automatically; no apply"
+  },
+  "skills_direct": {
+    "limits": "Immediate non-dot children only; excludes plugin skills, nested distributions, hidden .system and .trash. Link resolution is not native discovery.",
+    "home": {
+      "objects": 27,
+      "symlinks": 0,
+      "skill_md": 27
+    },
+    "runtime_shared": {
+      "objects": 28,
+      "symlinks": 0,
+      "skill_md": 28
+    },
+    "claude": {
+      "objects": 5,
+      "symlinks": 4,
+      "skill_md": 4
+    },
+    "codex": {
+      "objects": 11,
+      "symlinks": 7,
+      "skill_md": 11
+    },
+    "gemini": {
+      "objects": 4,
+      "symlinks": 4,
+      "skill_md": 4
+    },
+    "opencode": {
+      "objects": 4,
+      "symlinks": 4,
+      "skill_md": 4
+    },
+    "copilot": {
+      "objects": 1,
+      "symlinks": 0,
+      "skill_md": 1
+    },
+    "cursor": {
+      "objects": 26,
+      "symlinks": 0,
+      "skill_md": 26
+    },
+    "dangling_links_in_inspected_roots": 0
+  },
+  "configured_capabilities": {
+    "claude": {
+      "plugins_listed": 16,
+      "plugins_enabled": 0,
+      "hook_events": 4,
+      "live_global_mcp_names": [],
+      "legacy_global_mcp_names": [
+        "conductor",
+        "github",
+        "ianva",
+        "voice-scorer"
+      ],
+      "status": "Project/plugin/hosted precedence and auth not established by this file inventory"
+    },
+    "codex": {
+      "mcp_listed": 15,
+      "mcp_enabled_or_default": 14,
+      "plugins_listed": 19,
+      "plugins_enabled": 13
+    },
+    "gemini": {
+      "mcp_names": [
+        "ianva"
+      ],
+      "hooks": [
+        "BeforeTool",
+        "AfterTool"
+      ]
+    },
+    "opencode": {
+      "mcp_names": [
+        "ianva"
+      ],
+      "selected_config": "$HOME/.config/opencode/opencode.jsonc"
+    },
+    "copilot": {
+      "base_mcp_names": [
+        "ianva",
+        "context7",
+        "desktop-commander",
+        "github",
+        "playwright",
+        "serena",
+        "chrome-devtools",
+        "markitdown"
+      ],
+      "launcher_additional_mcp_names": [
+        "agent-council"
+      ]
+    },
+    "cursor": {
+      "runtime_mcp_file_present": false,
+      "hooks": [
+        "preToolUse",
+        "postToolUse"
+      ]
+    },
+    "antigravity": {
+      "mcp_names": [
+        "ianva",
+        "limen"
+      ]
+    }
+  },
+  "metadata": {
+    "opencode_live_db_bytes": 3072540672,
+    "opencode_legacy_db_bytes": 8257536,
+    "recode_db_bytes": 2077659136
+  },
+  "repositories": {
+    "limen": {
+      "live_head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
+      "audit_base_and_observed_remote_head": "b75de04851f815899b2ee28dc8f64f4ebcba5992",
+      "live_untracked": [
+        ".trunk/"
+      ]
+    },
+    "domus": {
+      "local_head": "dd00bfc569fee7315fde453f9bc90cf1afddcb9f",
+      "observed_remote_head": "a9495ce5958079f135ccd7d8285b7ee2116d0951",
+      "remote_ahead_by": 1,
+      "unrelated_dirty_paths": [
+        ".serena/project.yml"
+      ],
+      "remote_only_change": "Gemini extension install opt-in, deadline and separate consent (PR541)"
+    }
+  },
+  "broker": {
+    "native_session_registered": true,
+    "admission_packet_status": "conduct_rejected",
+    "http_status": 409,
+    "reason_detail": "not supplied",
+    "accepted_runs": 0,
+    "native_team": "Two read-only audit peers explicitly requested by the user after the broker rejection; no remote child-run receipt claimed"
+  },
+  "limits": [
+    "Filesystem observations from different timestamps are not atomic.",
+    "No live configuration apply, cleanup, session restore, or agent restart was authorized or performed.",
+    "Configured, enabled, loaded, authenticated, reachable and exercised are separate claims.",
+    "Raw configuration values, credential values, process arguments and conversation contents were excluded."
+  ],
+  "instruction_render_comparisons": {
+    "selected": 10,
+    "byte_equal": 10,
+    "renderer": "chezmoi cat; stdout captured privately",
+    "native_fresh_session_retrieval": "not_tested",
+    "peer": "config_audit"
+  },
+  "peer_findings": {
+    "cursor": "MCP template renders outside documented global/project consumer paths; native alternative discovery untested",
+    "opencode": "Actual JSONC config lacks config-ownership entry and repair seeds historical JSON",
+    "copilot": "Additional agent-council MCP layer omitted from base-file inventory; runtime readiness untested",
+    "storage": "October DB-family staging present without private manifest or tracked receipt; no archive/restore acceptance"
+  }
+}
