@@ -46,6 +46,25 @@ def digest(value: object) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
+# The harness wraps each tool call in `caffeinate -i -t N`; the child inherits the shell's cwd, so a checker run from
+# inside a session sees it "in" the worktree (see conduct/liveness.py). Bounded by the harness's own timeout.
+KEEPAWAKE_MAX_SECONDS = 300
+
+
+def is_checker_keepawake(process: Process, excluded: set[int]) -> bool:
+    """True only for the exact keep-awake wrapper spawned by the checker's own ancestry.
+
+    Invocation shape plus parentage is the evidence: a `caffeinate` anywhere else, with other flags, or with an
+    unbounded timeout stays unknown, so the rule cannot hide a real survivor.
+    """
+    argv = tuple(process.argv)
+    if process.parent not in excluded or len(argv) != 4:
+        return False
+    if os.path.basename(argv[0]) != "caffeinate" or argv[1:3] != ("-i", "-t"):
+        return False
+    return re.fullmatch(r"[0-9]{1,3}", argv[3]) is not None and 0 < int(argv[3]) <= KEEPAWAKE_MAX_SECONDS
+
+
 def native_details(pid: int) -> tuple[tuple[str, ...], dict[str, str]]:
     """Read bounded native arguments; retain ONLY allowlisted environment keys."""
     if sys.platform == "darwin":
@@ -319,6 +338,9 @@ def assess(
         if process.pid in excluded:
             if in_scope:
                 rows.append({"pid": process.pid, "category": "checker", "reason": "checker_ancestry"})
+            continue
+        if in_scope and is_checker_keepawake(process, excluded):
+            rows.append({"pid": process.pid, "category": "checker", "reason": "checker_keepawake"})
             continue
         subject_tagged = process.env.get("CODEX_SESSION_ID") == session_id
         if not in_scope and not thread and not subject_tagged and process.pid not in evidence_index:
