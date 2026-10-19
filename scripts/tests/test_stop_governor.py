@@ -526,6 +526,45 @@ def test_armed_report_never_changes_the_exit_code():
     assert "armed[claude]" in proc.stdout and "armed[codex]" in proc.stdout
 
 
+def _paste_snippet(tmp_path: Path) -> tuple[Path, Path]:
+    """Apply the staged snippet to copies of the real tracked files, the way the operator's paste would."""
+    snippet = json.loads((ROOT / "docs" / "keys" / "stop-governor-settings-snippet.json").read_text(encoding="utf-8"))
+    settings = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    settings.setdefault("hooks", {}).update(snippet["claude"]["hooks"])
+    hooks = json.loads((ROOT / ".codex" / "hooks.json").read_text(encoding="utf-8"))
+    hooks["hooks"]["Stop"] = hooks["hooks"]["Stop"] + snippet["codex"]["hooks"]["Stop"]
+    claude_path, codex_path = tmp_path / "settings.json", tmp_path / "hooks.json"
+    claude_path.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+    codex_path.write_text(json.dumps(hooks, indent=2), encoding="utf-8")
+    return claude_path, codex_path
+
+
+def test_require_armed_is_the_lever_acceptance_and_the_paste_simulation_arms_both(tmp_path):
+    parked = _run_predicate("--require-armed")
+    assert parked.returncode == 1 and "STOP-GOVERNOR NOT ARMED" in parked.stdout
+    assert parked.stdout.count("[ARMED]") == 2
+    claude_path, codex_path = _paste_snippet(tmp_path)
+    armed = _run_predicate("--require-armed", "--claude-settings", str(claude_path), "--codex-hooks", str(codex_path))
+    assert armed.returncode == 0, armed.stdout
+    assert "armed[claude]: ARMED" in armed.stdout and "armed[codex]: ARMED" in armed.stdout
+    # The existing host-admission Stop entry survives the paste, and the pasted file is still valid JSON.
+    pasted = json.loads(codex_path.read_text(encoding="utf-8"))["hooks"]["Stop"]
+    assert any("host-admission" in json.dumps(group) for group in pasted)
+    assert any("stop-governor" in json.dumps(group) for group in pasted)
+
+
+def test_require_armed_needs_both_vendors(tmp_path):
+    claude_path, codex_path = _paste_snippet(tmp_path)
+    codex_path.write_text(json.dumps({"hooks": {"Stop": []}}), encoding="utf-8")
+    proc = _run_predicate("--require-armed", "--claude-settings", str(claude_path), "--codex-hooks", str(codex_path))
+    assert proc.returncode == 1
+    assert "[ARMED] codex" in proc.stdout and "[ARMED] claude" not in proc.stdout
+    missing = _run_predicate(
+        "--require-armed", "--claude-settings", str(tmp_path / "absent.json"), "--codex-hooks", str(codex_path)
+    )
+    assert missing.returncode == 1 and "[ARMED] claude" in missing.stdout
+
+
 def test_a_wrapper_run_stays_inside_the_hook_budget(tmp_path):
     reg = _registry_file(tmp_path, "CONT")
     started = time.monotonic()

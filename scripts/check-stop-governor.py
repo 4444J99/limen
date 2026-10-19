@@ -28,7 +28,9 @@ holds the registry to the study that motivated it (docs/prompt-control-vocabular
   I  lever and valves  L-STOP-GOVERNOR-ARM and the two armed-valve rows exist and cite each other
 
 Arming state (is the Stop entry present in the tracked settings yet?) is REPORTED by --armed and is never
-part of the exit code: an unarmed governor is a filed lever, not a failing build.
+part of the gate's exit code: an unarmed governor is a filed lever, not a failing build. --require-armed is the
+lever's ACCEPTANCE form: it adds the arming state to the exit code (exit 1 until both vendors are wired), and
+is run by the operator-gates and the lever, never by the verification gate.
 
 Stdlib only. Writes nothing outside a temp dir. Run it bare and read its own exit code.
 """
@@ -575,16 +577,26 @@ def check_lever_and_valves() -> None:
 # --------------------------------------------------------------------------- armed (report only)
 
 
-def report_armed() -> None:
+def armed_state(claude_settings: Path, codex_hooks: Path) -> dict[str, bool]:
+    """Whether each vendor's tracked Stop entry names the governor. Absent or unparseable means not armed."""
+    state: dict[str, bool] = {}
     for label, path, needle in (
-        ("claude", ROOT / ".claude" / "settings.json", "stop-governor.sh"),
-        ("codex", ROOT / ".codex" / "hooks.json", "stop-governor"),
+        ("claude", claude_settings, "stop-governor.sh"),
+        ("codex", codex_hooks, "stop-governor"),
     ):
         try:
-            armed = needle in json.dumps(json.loads(path.read_text(encoding="utf-8")).get("hooks", {}).get("Stop", []))
-        except (OSError, ValueError):
-            armed = False
-        print(f"armed[{label}]: {'ARMED' if armed else 'PARKED (lever ' + LEVER_ID + ')'} - {path.relative_to(ROOT)}")
+            hooks = json.loads(path.read_text(encoding="utf-8")).get("hooks", {})
+            state[label] = needle in json.dumps(hooks.get("Stop", []))
+        except (OSError, ValueError, AttributeError):
+            state[label] = False
+    return state
+
+
+def report_armed(state: dict[str, bool], claude_settings: Path, codex_hooks: Path) -> None:
+    paths = {"claude": claude_settings, "codex": codex_hooks}
+    for label, armed in state.items():
+        shown = paths[label].relative_to(ROOT) if paths[label].is_relative_to(ROOT) else paths[label]
+        print(f"armed[{label}]: {'ARMED' if armed else 'PARKED (lever ' + LEVER_ID + ')'} - {shown}")
 
 
 # --------------------------------------------------------------------------- main
@@ -604,6 +616,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--snippet", default=str(SNIPPET))
     ap.add_argument("--cases", default=str(FIXTURES))
     ap.add_argument("--armed", action="store_true", help="also report whether each vendor's Stop entry is wired")
+    ap.add_argument(
+        "--require-armed",
+        action="store_true",
+        help="lever acceptance: exit 1 unless both vendors' Stop entries are wired (implies --armed)",
+    )
+    ap.add_argument("--claude-settings", default=str(ROOT / ".claude" / "settings.json"))
+    ap.add_argument("--codex-hooks", default=str(ROOT / ".codex" / "hooks.json"))
     args = ap.parse_args(argv)
 
     reg = load_json(Path(args.registry), "A")
@@ -625,10 +644,16 @@ def main(argv: list[str] | None = None) -> int:
     guarded("G", check_snippet, Path(args.snippet))
     guarded("I", check_lever_and_valves)
 
-    if args.armed:
-        report_armed()
+    claude_settings, codex_hooks = Path(args.claude_settings), Path(args.codex_hooks)
+    armed = armed_state(claude_settings, codex_hooks)
+    if args.armed or args.require_armed:
+        report_armed(armed, claude_settings, codex_hooks)
+    if args.require_armed:
+        for label, wired in armed.items():
+            if not wired:
+                fail("ARMED", f"{label} Stop entry is not wired (lever {LEVER_ID} is still open)")
     if failures:
-        print("STOP-GOVERNOR DRIFT")
+        print("STOP-GOVERNOR NOT ARMED" if all(f.startswith("[ARMED]") for f in failures) else "STOP-GOVERNOR DRIFT")
         for line in failures:
             print(f"  {line}")
         print("FAILED: check-stop-governor")
