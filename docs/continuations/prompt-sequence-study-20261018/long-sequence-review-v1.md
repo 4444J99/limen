@@ -111,3 +111,8 @@ checkout. The documented explicit git -C scope admitted this report in the exist
 worktree. The catalog-render command was denied; the original catalog remains unchanged.
 Freshly read host admission records vitals-shed. Full scoped verification was not rerun
 under that denial. No guard, process, execution policy or sibling checkout was changed.
+
+The documentation and vocabulary checkpoint was pushed at d7b41684. Updating the PR description
+with its prepared body file was also denied by shared-checkout-write; that command was not retried
+through another surface. The new files are available on the existing PR branch, while its older
+description remains unchanged. This metadata limitation does not retract the published review.
