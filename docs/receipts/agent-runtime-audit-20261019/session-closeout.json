@@ -1,0 +1,31 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a15441-853a-71c3-88a5-8be937e7a18d",
+  "repository": "4444J99/limen",
+  "worktree_name": "limen",
+  "base_head": "b75de04851f815899b2ee28dc8f64f4ebcba5992",
+  "publication_branch": "docs/agent-runtime-audit-20261019",
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "disposition": "handoff",
+  "owned_paths": [
+    "docs/plans/2026-10-18-agent-surface-reconciliation-v3.md",
+    "docs/receipts/agent-runtime-audit-20261019/README.md",
+    "docs/receipts/agent-runtime-audit-20261019/observations.json"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "bash scripts/verify-scoped.sh; git diff --cached --check; jq empty observations.json; python3 scripts/credential-wall.py --check",
+      "head": "054ac114045c8cb721c9cd4eda450b8540d696fe",
+      "exit_code": 0,
+      "evidence": "docs/receipts/agent-runtime-audit-20261019/verification.txt",
+      "sha256": "b4e003116e60b734055a72222e5ee77bcb01e29bd5cb695bf7435959cde617ba"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/agent-runtime-audit-20261019/custody.json",
+    "sha256": "22e4d47dc64bc94d2e696c73b3c31e047e8928e966c75e52c97a2d556065bc66"
+  },
+  "limits": "Audit artifacts and source-owned implementation handoff only. Larger rollout, native acceptance, custody recovery and cleanup remain unfinished with the existing owner. Retain the managed audit checkout; this receipt grants no deletion authority."
+}
