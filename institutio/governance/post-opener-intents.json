@@ -3,7 +3,7 @@
   "_doc": [
     "POST-OPENER INTENTS - the operator's recurring follow-up asks, declared as data (the registry half of the stop governor; the drift predicate is scripts/check-stop-governor.py, the executable half is scripts/stop-governor.py).",
     "intents: one row per family of the study's section 3 table (docs/prompt-control-vocabulary-study.md), with the study's n. The predicate holds the ids and counts in parity with that table, so a re-counted study is a red check, not a memory chore.",
-    "rules: the executable behaviors. A rule fires at the turn-end boundary and emits ONE bounded continuation written in the operator's own lowercase lexicon. Every rule ships in mode shadow: it logs would_block and changes nothing. mode live needs a promotion block (replay or shadow evidence, or an explicit operator decision reference); the predicate refuses a live rule without one.",
+    "rules: the executable behaviors. A rule fires at the turn-end boundary and emits ONE bounded continuation written in the operator's own lowercase lexicon. Every rule ships in mode shadow: it logs would_block and changes nothing. mode live needs a promotion block, and the predicate refuses a live rule without one. That is a DECLARED-EVIDENCE gate, not a verified one: replay/shadow numbers are self-attested (the predicate requires them, a tracked receipt path that exists, and the precision floor, but cannot recompute them until stop-governor-measure.py exists); an operator promotion must cite a GitHub issue or pull-request URL.",
     "Hooks cannot type a slash command (Claude hooks docs), so a rule fires the PROMPT BODY the command would carry. Names come from the operator's lexicon: each rule's text must contain one of its own lexicon phrases, and each phrase must appear verbatim in the study.",
     "Nothing here arms a settings file. Arming is one paste, staged at docs/keys/stop-governor-settings-snippet.json and filed as lever L-STOP-GOVERNOR-ARM."
   ],
@@ -20,59 +20,92 @@
   "gate_clause": "if a step sends, deletes, spends or leaks: say BLOCKED: <atom> once and stop.",
   "status_suffix": "end w: merged / live / observed / left · tldr · what you need to do: none or the one atom.",
   "lexicon": {
-    "permission_allowlist": [
+    "_doc": [
+      "Detection vocabulary for scripts/stop-governor.py. Phrase lists match whole words, case-insensitively; *_patterns are regex fragments anchored at a word start and a word end.",
+      "permission_questions fire CONT only when the message ENDS in a question mark; handbacks (menus, 'run this yourself') need none. Offers such as 'let me know if' and 'you can run' are deliberately absent: they appear on ordinary completion messages where nothing is pending.",
+      "deny_patterns gate CONT only, the one rule that pushes new work. They are a BEST-EFFORT lexical filter, not a guarantee: the litmus is destroying, sending, spending or irreversibly leaking, plus the production guardrail, and the gate clause in every continuation (BLOCKED: <atom> once) is the backstop behind them. A new outward verb found in shadow samples is added here before any promotion. Roots are written to catch inflections that drop a final e (delet-, remov-, wip-). Shipment steps (commit, push) are standing grants and are not here; 'merge' is, because the MERGE rule and scripts/merge-policy.sh own that decision.",
+      "negation, failure_terms and hold_patterns keep a completion claim, exit evidence and a merge ask honest: 'not done', '3 passed, 2 failed' and 'do not merge yet' do not count."
+    ],
+    "permission_questions": [
       "want me to",
       "should i",
       "shall i",
       "would you like me to",
       "do you want me to",
-      "let me know if",
+      "which would you prefer"
+    ],
+    "handbacks": [
       "option 1",
       "options:",
-      "which would you prefer",
-      "you can run",
-      "run this yourself",
-      "you'll need to"
+      "run this yourself"
     ],
-    "deny_terms": [
-      "send",
-      "email",
-      "mail",
-      "post",
-      "publish",
-      "tweet",
-      "invite",
-      "delete",
-      "remove",
-      "wipe",
-      "purge",
-      "drop",
-      "truncate",
-      "rm -rf",
-      "reset --hard",
-      "force",
-      "overwrite",
-      "deploy",
-      "release",
+    "deny_patterns": [
+      "send\\w*",
+      "sent",
+      "e-?mail\\w*",
+      "mail(?:s|ed|ing)?",
+      "post(?:s|ed|ing)?",
+      "publish\\w*",
+      "tweet\\w*",
+      "invit\\w*",
+      "delet\\w*",
+      "remov\\w*",
+      "wip(?:e|es|ed|ing)",
+      "purg\\w*",
+      "drop(?:s|ped|ping)?",
+      "truncat\\w*",
+      "rm\\s+-rf",
+      "reset\\s+--hard",
+      "force\\w*",
+      "overwrit\\w*",
+      "overwrote",
+      "deploy\\w*",
+      "releas\\w*",
       "production",
-      "spend",
-      "purchase",
-      "buy",
-      "pay",
-      "invoice",
-      "transfer",
+      "spen[dt]\\w*",
+      "purchas\\w*",
+      "buy\\w*",
+      "bought",
+      "pay(?:s|ing|ed|ment|ments)?",
+      "invoice\\w*",
+      "transfer\\w*",
       "billing",
-      "credential",
-      "password",
-      "secret",
-      "token",
-      "api key",
-      "mint",
-      "leak",
-      "revoke",
-      "rotate",
-      "merge",
-      "archive the repo"
+      "credential\\w*",
+      "password\\w*",
+      "secret\\w*",
+      "tokens?",
+      "api\\s+key\\w*",
+      "mint\\w*",
+      "leak\\w*",
+      "revok\\w*",
+      "rotat\\w*",
+      "merg\\w*",
+      "archive\\s+the\\s+repo",
+      "destroy\\w*",
+      "terminat\\w*",
+      "cancel\\w*",
+      "charg\\w*",
+      "notif\\w*",
+      "upload\\w*",
+      "shar(?:e|es|ed|ing)",
+      "expos\\w*",
+      "public(?:ly)?",
+      "kill\\w*",
+      "uninstall\\w*",
+      "refund\\w*",
+      "withdraw\\w*",
+      "unsubscrib\\w*",
+      "deactivat\\w*",
+      "announc\\w*",
+      "broadcast\\w*",
+      "messag\\w*",
+      "slack",
+      "repl(?:y|ies|ied|ying)",
+      "respond\\w*",
+      "submit\\w*",
+      "sign(?:s|ed|ing)?",
+      "comment(?:s|ed|ing)?",
+      "push\\w*\\s+(?:\\w+\\s+){0,3}(?:to|onto)\\s+(?:main|master)"
     ],
     "completion_claim": [
       "done",
@@ -86,20 +119,55 @@
       "shipped",
       "nothing left"
     ],
+    "negation": [
+      "not",
+      "n't",
+      "never",
+      "yet to",
+      "no longer"
+    ],
     "exit_evidence": [
       "exit 0",
+      "exited 0",
       "exits 0",
       "exit code 0",
+      "exit status 0",
       "rc=0",
       "passed",
-      "ok —"
+      "ok \u2014"
     ],
-    "pr_mention": [
-      "pull request",
-      "pr #",
-      "pr#"
+    "failure_terms": [
+      "failed",
+      "failing",
+      "failure",
+      "failures",
+      "error",
+      "errors",
+      "red",
+      "not passed",
+      "regression",
+      "regressions"
     ],
-    "next_line": "next:",
+    "pr_patterns": [
+      "pull\\s+request",
+      "pr\\s*#?\\s*\\d+"
+    ],
+    "hold_patterns": [
+      "(?:do\\s+not|don't|dont|not\\s+yet|never)\\s+merge",
+      "wait(?:ing)?",
+      "await(?:ing)?",
+      "on\\s+hold",
+      "hold\\s+off",
+      "blocked",
+      "red",
+      "failing",
+      "failed",
+      "needs?\\s+review",
+      "review\\s+(?:needed|required|pending)",
+      "pending\\s+review",
+      "draft"
+    ],
+    "next_line": "(?im)^[ \\t>*_\\-]*next\\b[^\\n:]{0,20}:",
     "needs_you_line": "what you need to do:"
   },
   "rules": {
@@ -176,7 +244,7 @@
     "SHELL": {
       "n": 157,
       "class": "owner-elsewhere",
-      "owner": "lever L-AGENT-BASH-PROMPT (the trust hook scripts/hooks/allow-trusted-cd-git.sh) and the Codex action admission; typed shell is the operator doing what a permission prompt blocked.",
+      "owner": "Hypothesis, not established by the study (it lists only phrasings such as !gh pr merge and !chezmoi apply): typed shell is the operator doing what a permission prompt blocked. Related owners: lever L-AGENT-BASH-PROMPT (the trust hook scripts/hooks/allow-trusted-cd-git.sh) and the Codex action admission.",
       "claude_binding": "none",
       "codex_binding": "none",
       "evidence": "study section 3: SHELL (! prefix)"
@@ -187,7 +255,7 @@
       "owner": "AGENTS.md Standing Corrections and the existing PreToolUse guards; the detectable families (handed-back work, permission-seeking, claim without evidence, inherited-red closeout) are covered by the CONT, VERIFY and CLOSE rules. The CORRECT rate after arming is the governor's misfire signal.",
       "claude_binding": "via the CONT, VERIFY and CLOSE rules",
       "codex_binding": "via the CONT, VERIFY and CLOSE rules",
-      "evidence": "study sections 3 and 5: 9 of 15 correction families restate a written rule"
+      "evidence": "study sections 3 and 5: 9 of 15 correction families restate a written rule (section 5 counts about 122 correction turns, section 3 counts 140; unreconciled)"
     },
     "CONT": {
       "n": 129,
@@ -195,7 +263,7 @@
       "rules": ["CONT"],
       "owner": "scripts/stop-governor.py, rule CONT",
       "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
-      "codex_binding": "staged Stop entry -> codex-hook-runner.sh stop-governor; yields to host admission on a first stop with unpublished work",
+      "codex_binding": "staged Stop entry -> codex-hook-runner.sh stop-governor (Codex joins the reasons when host admission also blocks one stop)",
       "evidence": "study section 3: continue / proceed / go / you do it / fix all"
     },
     "CLOSE": {
@@ -204,8 +272,8 @@
       "rules": ["CLOSE"],
       "owner": "scripts/stop-governor.py, rule CLOSE; body is .agents/skills/closeout/SKILL.md steps 4-7",
       "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
-      "codex_binding": "staged Stop entry; host admission owns a first stop with unpublished work, the governor owns the rest",
-      "evidence": "study sections 3 and 6: safe to archive session? x16; 20 of 105 closeout turns drew a complaint"
+      "codex_binding": "staged Stop entry (Codex joins the reasons when host admission also blocks one stop)",
+      "evidence": "study sections 3 and 6: safe to archive session? x16; 20 of 105 closeout turns drew a complaint (section 6 counts 105 closeout turns, section 3 counts 127 CLOSE; the study does not reconcile them)"
     },
     "PASTE": {
       "n": 108,
@@ -221,7 +289,7 @@
       "rules": ["VERIFY"],
       "owner": "scripts/stop-governor.py, rule VERIFY -> scripts/verify-scoped.sh",
       "claude_binding": "staged Stop entry -> scripts/hooks/stop-governor.sh --vendor claude",
-      "codex_binding": "staged Stop entry; host admission owns a first stop with unpublished work",
+      "codex_binding": "staged Stop entry (Codex joins the reasons when host admission also blocks one stop)",
       "evidence": "study section 3: /verify, were all of the findings healed and addressed?"
     },
     "NEWTASK": {
@@ -239,7 +307,7 @@
       "owner": "scripts/stop-governor.py, rule STATUS, plus the status suffix on every continuation",
       "claude_binding": "staged Stop entry (shadow)",
       "codex_binding": "staged Stop entry (shadow)",
-      "evidence": "study section 3: tldr and eli5 x13, what do i need to do x8"
+      "evidence": "study section 3: what do i need to do x8; section 8: tldr and eli5 x13, typed with /tldr installed (the install window is not dated)"
     },
     "NEXT": {
       "n": 49,
@@ -256,13 +324,13 @@
       "owner": "the operator: personal and injected facts; never read, quoted or logged by the governor",
       "claude_binding": "none",
       "codex_binding": "none",
-      "evidence": "study section 1: personal-thread turns are counted, never quoted"
+      "evidence": "study preamble (before section 1): personal-thread turns are counted, never quoted"
     },
     "STATUS+STALL": {
       "n": 40,
       "class": "stop",
       "rules": ["STATUS"],
-      "owner": "scripts/stop-governor.py, rule STATUS; the STALL half is owned by the no-hand-poll guard on both vendors",
+      "owner": "scripts/stop-governor.py, rule STATUS. The STALL half has no established owner: study section 4 attributes every inspected stall to the agent's own waiting or granularity, and the no-hand-poll guard (which denies hand-rolled PR/CI poll loops) is a related guard, not a proven owner.",
       "claude_binding": "staged Stop entry (shadow); existing PreToolUse no-hand-poll guard",
       "codex_binding": "staged Stop entry (shadow); existing PreToolUse no-hand-poll hook",
       "evidence": "study section 3: percentage complete and status report x5; section 4: every inspected stall was the agent's own waiting"
@@ -279,7 +347,7 @@
     "TIER": {
       "n": 12,
       "class": "owner-elsewhere",
-      "owner": ".claude/agents pins and cli/src/limen/model_selection.py; Codex max_threads and max_depth in .codex/config.toml. scripts/claude-workflow-guard.py is not wired by any hook (filed as a follow-up).",
+      "owner": ".claude/agents pins and cli/src/limen/model_selection.py; Codex max_threads and max_depth in .codex/config.toml. scripts/claude-workflow-guard.py is not wired in the tracked project settings (user-scope settings were not readable here; filed as a follow-up).",
       "claude_binding": "none",
       "codex_binding": "existing SubagentStart bounds",
       "evidence": "study section 3: assign all tasks to haiku/sonnet/opus logically"

@@ -2978,7 +2978,7 @@ parameters:
     env: LIMEN_STOP_GOVERNOR_MAX_SESSION
     self_update: none
     owner: lifecycle
-    note: "Maximum continuations the stop governor may emit in one session across all rules (per-rule caps in post-opener-intents.json bind inside it). The harness separately ends a turn after eight consecutive Stop-hook continuations with no tool call."
+    note: "Maximum continuations the stop governor may emit in one session across all rules (per-rule caps in post-opener-intents.json bind inside it). The Claude Code documentation describes its own continuation ceiling; it was read through a summarizing fetcher and has not been observed, and Codex documents none, so these caps are the only bound this repo can prove."
   LIMEN_STOP_GOVERNOR_DAILY_CAP:
     default: 40
     env: LIMEN_STOP_GOVERNOR_DAILY_CAP

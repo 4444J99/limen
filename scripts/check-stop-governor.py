@@ -8,17 +8,22 @@ holds the registry to the study that motivated it (docs/prompt-control-vocabular
   A  registry parity   16 intent ids and counts equal the study's section 3 table; the counts sum to the
                        study's total; every class carries what it must (stop rows name rules; the rest name
                        an owner); the rule set equals the governor's detector set
-  B  promotion         a rule may be live only with a promotion block: replay or shadow evidence (n >= 30,
-                       precision >= 0.80, MERGE >= 0.90) or an explicit operator decision reference
+  B  promotion         a rule may be live only with a DECLARED-EVIDENCE promotion block: replay or shadow
+                       numbers (n >= 30, precision >= 0.80, MERGE >= 0.90) plus a tracked receipt that exists,
+                       or an operator decision citing a GitHub issue/PR URL. The numbers are self-attested:
+                       this cannot recompute them until stop-governor-measure.py exists
   C  text discipline   continuation texts are bounded, lowercase (operator voice), name only existing paths,
                        never name a slash command as the mechanism, and each carries one of the rule's own
-                       lexicon phrases, every one of which appears verbatim in the study
+                       lexicon phrases, every one of which appears verbatim in the study; every detection
+                       list is present and every pattern compiles and cannot match the empty string
   D  behavior          every fixture in scripts/tests/fixtures/stop-governor-cases.json holds through the
                        real decide(); every decision code is covered; the same stop yields byte-identical
                        output on Claude and Codex; forcing every rule to shadow silences every case
   E  hook contract     the real wrapper and the Codex runner arm print nothing on garbage, empty or oversize
                        input, an unwritable ledger or a shadow rule, and exactly one {decision, reason}
                        object when a live rule fires
+  J  portability       the governor parses as Python 3.9 syntax and imports no 3.11-only name (the hook runs on
+                       whatever python3 the user's machine has; macOS ships 3.9)
   F  codex shape       the host-admission Stop continuation is {decision: block, reason}, with the legacy
                        halt shape tolerated through version skew and hookSpecificOutput rejected on Stop
   G  staged snippet    docs/keys/stop-governor-settings-snippet.json wires only Stop, fail-open, with a
@@ -29,8 +34,9 @@ holds the registry to the study that motivated it (docs/prompt-control-vocabular
 
 Arming state (is the Stop entry present in the tracked settings yet?) is REPORTED by --armed and is never
 part of the gate's exit code: an unarmed governor is a filed lever, not a failing build. --require-armed is the
-lever's ACCEPTANCE form: it adds the arming state to the exit code (exit 1 until both vendors are wired), and
-is run by the operator-gates and the lever, never by the verification gate.
+lever's ACCEPTANCE form (only the lever's acceptance.predicate names it): exit 1 until both vendors are wired
+AND the governor actually runs under this machine's python3, so a hook that reads ARMED but dies at import
+cannot pass. The verification gate never runs it.
 
 Stdlib only. Writes nothing outside a temp dir. Run it bare and read its own exit code.
 """
@@ -38,9 +44,12 @@ Stdlib only. Writes nothing outside a temp dir. Run it bare and read its own exi
 from __future__ import annotations
 
 import argparse
+import ast
 import importlib.util
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -85,7 +94,9 @@ REQUIRED_CODES = {
     "would_block",
     "continue",
     "gated_tail",
-    "codex_admission_owns",
+    "fleet_lane",
+    "unattended",
+    "background_tasks",
     "no_session",
     "intent_cap",
     "session_cap",
@@ -200,6 +211,10 @@ def check_registry_parity(reg: dict[str, Any], study_text: str, governor: Any) -
 # --------------------------------------------------------------------------- B
 
 
+GITHUB_REF = re.compile(r"^https://github\.com/[\w.-]+/[\w.-]+/(?:issues|pull)/\d+(?:#[\w-]+)?$")
+ISO_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
 def check_promotion(reg: dict[str, Any]) -> None:
     for name, rule in (reg.get("rules") or {}).items():
         mode = rule.get("mode")
@@ -215,17 +230,31 @@ def check_promotion(reg: dict[str, Any]) -> None:
             fail("B", f"rule {name}: mode live without a promotion block")
             continue
         source = promo.get("source")
-        if not isinstance(promo.get("date"), str) or not promo["date"]:
-            fail("B", f"rule {name}: promotion has no date")
+        if not isinstance(promo.get("date"), str) or not ISO_DAY.match(promo["date"]):
+            fail("B", f"rule {name}: promotion needs an ISO date (YYYY-MM-DD)")
         if source in ("replay", "shadow"):
             floor = PRECISION_FLOOR.get(name, PRECISION_FLOOR["default"])
             if not isinstance(promo.get("n"), int) or promo["n"] < MIN_N:
                 fail("B", f"rule {name}: promotion evidence needs n >= {MIN_N}")
             if not isinstance(promo.get("precision"), (int, float)) or promo["precision"] < floor:
                 fail("B", f"rule {name}: promotion precision must be >= {floor}")
+            receipt = promo.get("receipt")
+            if (
+                not isinstance(receipt, str)
+                or not receipt
+                or Path(receipt).is_absolute()
+                or ".." in Path(receipt).parts
+            ):
+                fail("B", f"rule {name}: promotion needs a repo-relative receipt path")
+            elif not (ROOT / receipt).is_file():
+                fail("B", f"rule {name}: promotion receipt {receipt} does not exist")
         elif source == "operator":
-            if not isinstance(promo.get("decision_ref"), str) or not promo["decision_ref"].strip():
-                fail("B", f"rule {name}: an operator promotion needs a decision_ref")
+            ref = promo.get("decision_ref")
+            if not isinstance(ref, str) or not GITHUB_REF.match(ref):
+                fail(
+                    "B",
+                    f"rule {name}: an operator promotion needs a decision_ref that is a GitHub issue or pull-request URL",
+                )
         else:
             fail("B", f"rule {name}: promotion source {source!r} is not replay, shadow or operator")
 
@@ -286,6 +315,46 @@ def check_text(reg: dict[str, Any], study_text: str, governor: Any) -> None:
             fail("C", f"VERIFY+CLOSE composed reason is {len(composed)} chars (max {MAX_COMPOSED})")
 
 
+def check_lexicon(reg: dict[str, Any]) -> None:
+    """The detection vocabulary the governor reads: present, well-typed, and every regex safe to run."""
+    lex = reg.get("lexicon")
+    if not isinstance(lex, dict):
+        fail("C", "registry has no lexicon")
+        return
+    phrase_lists = (
+        "permission_questions",
+        "handbacks",
+        "completion_claim",
+        "negation",
+        "exit_evidence",
+        "failure_terms",
+    )
+    pattern_lists = ("deny_patterns", "pr_patterns", "hold_patterns")
+    for name in phrase_lists + pattern_lists:
+        value = lex.get(name)
+        if not isinstance(value, list) or not value or not all(isinstance(x, str) and x.strip() for x in value):
+            fail("C", f"lexicon.{name} must be a non-empty list of non-empty strings")
+    for name in pattern_lists:
+        for fragment in lex.get(name) or []:
+            try:
+                rx = re.compile(fragment, re.IGNORECASE)
+            except re.error as exc:
+                fail("C", f"lexicon.{name}: {fragment!r} does not compile ({exc})")
+                continue
+            if rx.match(""):
+                fail("C", f"lexicon.{name}: {fragment!r} can match the empty string")
+    for name in ("next_line", "needs_you_line"):
+        if not isinstance(lex.get(name), str) or not lex[name]:
+            fail("C", f"lexicon.{name} is empty")
+    try:
+        re.compile(str(lex.get("next_line", "")))
+    except re.error as exc:
+        fail("C", f"lexicon.next_line does not compile ({exc})")
+    for must in ("send\\w*", "delet\\w*", "remov\\w*", "merg\\w*", "spen[dt]\\w*"):
+        if must not in (lex.get("deny_patterns") or []):
+            fail("C", f"lexicon.deny_patterns lost the root {must!r} (the send/delete/spend/merge gate)")
+
+
 # --------------------------------------------------------------------------- D
 
 
@@ -334,8 +403,18 @@ def check_behavior(reg: dict[str, Any], governor: Any, cases_path: Path) -> int:
 # --------------------------------------------------------------------------- E
 
 
+def scrubbed_env() -> dict[str, str]:
+    """A minimal environment for the governor's subprocesses. The ambient one can carry CLAUDE_JOB_DIR, a fleet
+    marker, GIT_DIR or LIMEN_STOP_GOVERNOR=0, each of which is a legitimate setting that would make a clean tree
+    read red (the governor correctly stays silent under every one of them)."""
+    keep = ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL")
+    env = {k: v for k, v in os.environ.items() if k in keep}
+    env.update(GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_SYSTEM="/dev/null")
+    return env
+
+
 def run_wrapper(argv: list[str], stdin: bytes, cwd: Path) -> tuple[int, str]:
-    proc = subprocess.run(argv, input=stdin, capture_output=True, cwd=cwd, timeout=30, check=False)
+    proc = subprocess.run(argv, input=stdin, capture_output=True, cwd=cwd, env=scrubbed_env(), timeout=30, check=False)
     return proc.returncode, proc.stdout.decode("utf-8", "replace")
 
 
@@ -347,7 +426,7 @@ def check_hook_contract(reg: dict[str, Any]) -> None:
         marker = repo / reg.get("scope_marker", "")
         marker.parent.mkdir(parents=True)
         marker.write_text("{}", encoding="utf-8")
-        subprocess.run(["git", "init", "-q", str(repo)], check=False, capture_output=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=False, capture_output=True, env=scrubbed_env())
         shadow = json.loads(json.dumps(reg))
         for rule in shadow["rules"].values():
             rule["mode"] = "shadow"
@@ -427,6 +506,34 @@ def check_hook_contract(reg: dict[str, Any]) -> None:
             fail("E", f"Codex runner arm exited {code}")
         if claude_out and codex_out != claude_out:
             fail("E", "the Codex runner arm and the Claude wrapper must print byte-identical output for one stop")
+
+
+def check_portability() -> None:
+    """The hook runs on whatever python3 the user's machine has; macOS ships 3.9. A hook that fails to import
+    exits 0 silently, so the failure has to be caught here, statically."""
+    text = GOVERNOR.read_text(encoding="utf-8")
+    try:
+        ast.parse(text, feature_version=(3, 9))
+    except SyntaxError as exc:
+        fail("J", f"scripts/stop-governor.py is not valid Python 3.9 syntax ({exc.msg}, line {exc.lineno})")
+    for names in re.findall(r"from datetime import ([^\n]+)", text):
+        if re.search(r"\bUTC\b", names):
+            fail("J", "scripts/stop-governor.py imports datetime.UTC (3.11+); use datetime.timezone.utc")
+    for stdlib in ("tomllib", "ExceptionGroup", "StrEnum"):
+        if re.search(rf"\b{stdlib}\b", text):
+            fail("J", f"scripts/stop-governor.py uses {stdlib}, which needs Python 3.11 or newer")
+
+
+def governor_runs() -> tuple[bool, str]:
+    """Does the governor start under this machine's python3, the interpreter the wrapper will pick?"""
+    python = shutil.which("python3", path=scrubbed_env().get("PATH"))
+    if not python:
+        return False, "no python3 on PATH"
+    proc = subprocess.run(  # noqa: S603 - fixed argv
+        [python, str(GOVERNOR), "--list"], capture_output=True, text=True, env=scrubbed_env(), timeout=30, check=False
+    )
+    note = f"{python} exits {proc.returncode}" + (f": {proc.stderr.strip()[:120]}" if proc.returncode else "")
+    return proc.returncode == 0, note
 
 
 # --------------------------------------------------------------------------- F
@@ -637,9 +744,11 @@ def main(argv: list[str] | None = None) -> int:
         guarded("A", check_registry_parity, reg, study_text, governor)
         guarded("B", check_promotion, reg)
         guarded("C", check_text, reg, study_text, governor)
+        guarded("C", check_lexicon, reg)
         cases = guarded("D", check_behavior, reg, governor, Path(args.cases)) or 0
         guarded("E", check_hook_contract, reg)
         guarded("H", check_params, governor)
+    guarded("J", check_portability)
     guarded("F", check_codex_shape)
     guarded("G", check_snippet, Path(args.snippet))
     guarded("I", check_lever_and_valves)
@@ -652,6 +761,12 @@ def main(argv: list[str] | None = None) -> int:
         for label, wired in armed.items():
             if not wired:
                 fail("ARMED", f"{label} Stop entry is not wired (lever {LEVER_ID} is still open)")
+        runs, note = governor_runs()
+        if not runs:
+            fail(
+                "ARMED",
+                f"the governor does not run on this machine ({note}); an armed hook that dies at import is silent",
+            )
     if failures:
         print("STOP-GOVERNOR NOT ARMED" if all(f.startswith("[ARMED]") for f in failures) else "STOP-GOVERNOR DRIFT")
         for line in failures:

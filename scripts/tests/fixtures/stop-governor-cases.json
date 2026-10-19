@@ -1363,11 +1363,15 @@
   }
  },
  {
-  "id": "codex-yield",
-  "note": "host admission owns a first stop with unpublished work",
+  "id": "codex-dirty-block",
+  "note": "Codex has no yield: when host admission also blocks, Codex joins the reasons",
   "expect": {
-   "action": "allow",
-   "code": "codex_admission_owns"
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY",
+    "CLOSE"
+   ]
   },
   "vendor": "codex",
   "payload": {
@@ -1495,6 +1499,1334 @@
   "registry_patch": {
    "rules": {
     "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "background-tasks",
+  "note": "a stop with background work still running is not a stop",
+  "expect": {
+   "action": "allow",
+   "code": "background_tasks"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "background_tasks": [
+    {
+     "id": "b1"
+    }
+   ]
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "fleet-work-key",
+  "note": "a fleet lane is bounded and receipted: silent",
+  "expect": {
+   "action": "allow",
+   "code": "fleet_lane"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "LIMEN_WORK_KEY": "T-1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "fleet-task-id",
+  "note": "any fleet marker yields",
+  "expect": {
+   "action": "allow",
+   "code": "fleet_lane"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "LIMEN_TASK_ID": "T-1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "fleet-deadline",
+  "note": "any fleet marker yields",
+  "expect": {
+   "action": "allow",
+   "code": "fleet_lane"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "LIMEN_ATTEMPT_DEADLINE": "2026-10-19T00:00:00Z"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "kill-env-off",
+  "note": "the kill switch also reads off/false/no",
+  "expect": {
+   "action": "allow",
+   "code": "kill_switch"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "LIMEN_STOP_GOVERNOR": "off"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-should-improve",
+  "note": "'should improve' is not 'should i'",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed the bug; this should improve latency. Tests passed."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-let-me-know",
+  "note": "an offer is not a pending decision",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done. Let me know if you want changes."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-you-can-run",
+  "note": "information is not a handback",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "You can run pytest to reproduce."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-no-question-mark",
+  "note": "a permission phrase must end in a question",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to also fix the other two."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-menu-handback",
+  "note": "a menu needs no question mark",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Here are two ways forward.\nOption 1: patch it.\nOption 2: rewrite it."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-postgres-fires",
+  "note": "'post' is not 'postgres'",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Should I proceed with the postgres migration?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-payload-fires",
+  "note": "'pay' is not 'payload'",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to continue with the payload parser?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-tokenizer-fires",
+  "note": "'token' is not 'tokenizer'",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Should I keep going with the tokenizer?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-destroy-gated",
+  "note": "destroy is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Should I destroy the staging database?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-deleting-gated",
+  "note": "an inflection that drops the final e is still delete",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to start deleting the old branches?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-removing-gated",
+  "note": "removing is remove",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Should I keep removing the stale clones?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-wiping-gated",
+  "note": "wiping is wipe",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Shall I go ahead and start wiping the cache volume?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-charge-gated",
+  "note": "spending is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to charge the card for the overage?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-cancel-gated",
+  "note": "an irreversible account action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Should I cancel the customer's subscription?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-notify-gated",
+  "note": "reaching people is sending",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Shall I notify all 4,000 users about the outage?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-upload-gated",
+  "note": "exposing data is leaking",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to upload the report to the public bucket?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-not-finished",
+  "note": "an unfinished claim is not a completion claim",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Not finished: 2 of 5 files migrated; continuing next turn."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-isnt-done",
+  "note": "a contraction negates too",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "The migration isn't done yet."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-failed-keeps-verify",
+  "note": "a failing count is not evidence",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done. 3 passed, 2 failed."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-bypassed",
+  "note": "'bypassed' is not 'passed'",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done. I bypassed the cache."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-exited-evidence",
+  "note": "'exited 0' is exit-code evidence",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Done. verify-scoped exited 0."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-bold-next",
+  "note": "a bold Next: line answers NEXT",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: tests passed.\n\n**Next:** open the PR"
+  }
+ },
+ {
+  "id": "p-bullet-next",
+  "note": "a bulleted next: line answers NEXT",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: tests passed.\n- next: open the PR"
+  }
+ },
+ {
+  "id": "p-next-steps",
+  "note": "'Next steps:' answers NEXT",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: tests passed.\nNext steps: open the PR"
+  }
+ },
+ {
+  "id": "p-hold-merge",
+  "note": "a stated hold is not a merge ask",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Do not merge pull request 12 yet, CI is red."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-waiting-merge",
+  "note": "waiting on a human is a hold",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Opened PR #3128. Waiting on your review before anything merges."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-issue-ref",
+  "note": "a bare issue number is not a PR",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Tracked in #3128."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-merge-question-wins",
+  "note": "'want me to merge it?' is MERGE's, not CONT's",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "MERGE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed and opened PR #4242. Want me to merge it?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    },
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-merge-question-shadow",
+  "note": "with MERGE shadow the merge question is logged as MERGE, not gated CONT",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "MERGE"
+   ],
+   "shadow_missing": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed and opened PR #4242. Want me to merge it?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-shadow-cont-live-verify",
+  "note": "a shadow CONT must not suppress live rules",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY",
+    "CLOSE"
+   ],
+   "shadow_has": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and fixed. Want me to also open the docs?"
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-gated-shadow-cont-live-verify",
+  "note": "a gated shadow CONT is dropped and live rules still fire",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY",
+    "CLOSE"
+   ],
+   "shadow_missing": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and fixed. Want me to also publish the docs?"
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-spent-cont-live-verify",
+  "note": "a spent live CONT must not suppress live rules either",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY",
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and fixed. Want me to also open the docs?"
+  },
+  "git": {
+   "dirty": true
+  },
+  "ledger_pre": {
+   "session": {
+    "total": 2,
+    "rules": {
+     "CONT": 2
+    }
+   }
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    },
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-gone-upstream",
+  "note": "a squash-merged branch with a gone upstream is not unpublished work",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "has_upstream": false,
+   "upstream_gone": true,
+   "commits_vs_main": 5
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-no-upstream-commits",
+  "note": "commits on a branch with no upstream of its own are work",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "has_upstream": false,
+   "commits_vs_main": 2
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-ahead-is-work",
+  "note": "commits ahead of the branch's own upstream are work",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "ahead": 1
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-nonascii-reason",
+  "note": "every block is ASCII-only on the wire",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "unattended-zero",
+  "note": "Claude sets SESSION_ATTENDED=0 under claude -p (observed 2.1.303): a headless run is silent",
+  "expect": {
+   "action": "allow",
+   "code": "unattended"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "attended-one",
+  "note": "SESSION_ATTENDED=1 is an attended session: proceeds as usual",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "1"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "attended-absent-proceeds",
+  "note": "an absent variable never silences (it is only ever used to yield on an explicit 0)",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {},
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-push-main-gated",
+  "note": "an outward or irreversible action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to push this to main?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-slack-gated",
+  "note": "an outward or irreversible action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to message the client on Slack?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-reply-gated",
+  "note": "an outward or irreversible action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to reply to the thread?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-submit-gated",
+  "note": "an outward or irreversible action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to submit the form?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-sign-gated",
+  "note": "an outward or irreversible action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to sign the contract?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-comment-gated",
+  "note": "an outward or irreversible action is gated",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Should I comment on the customer's ticket?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "p-push-branch-fires",
+  "note": "pushing a topic branch is a standing grant: not gated",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to push the branch?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
      "mode": "live"
     }
    }
