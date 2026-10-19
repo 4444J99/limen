@@ -21,6 +21,9 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Original request and reference audit](original-request-audit-v1.md): source-qualified scope,
+  explicit incomplete requirements and separately attributed archive/Claude comparisons.
+
 - [Lineage in the comparison](catalog-lineage-v1.md): 37 source rows, parent-column labels
   and fork-alias search, with shared-turn and prefix gaps kept visible.
 - [Independent review admission](independent-review-admission-v1.md): one bounded reservation
