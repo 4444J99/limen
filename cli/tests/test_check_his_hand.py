@@ -103,7 +103,7 @@ def test_implementation_report_preserves_registry_bytes():
     before = path.read_bytes()
     result = module.report(path)
     assert result["covered"] == result["nonterminal"]
-    assert result["total"] == 116
+    assert result["total"] == 117
     assert path.read_bytes() == before
 
 

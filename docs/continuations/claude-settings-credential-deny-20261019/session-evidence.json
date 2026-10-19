@@ -1,0 +1,84 @@
+{
+  "session_id": "0f58eb87-cc6e-4ecd-b1ea-580a117644a2",
+  "summary": "A /update-config request became a Read-tool deny list for credential stores. Source of truth is the domus modify script (PRs #542, #543, #544, all merged); the runtime settings.json and the project-local settings.local.json are the two live layers, and their final apply is operator-gated.",
+  "verified_heads": {
+    "owner": "5ffb88a83897196343cc01c3d80e6b65faebfea4",
+    "subject": "70870811d437887ccbdd9b9ad290f3e35783451c"
+  },
+  "tests_reused": {
+    "subject_domus_genoma_private": "At the merged head 70870811 (clean detached checkout): pytest tests/test_modify_claude_settings.py tests/test_native_hook_registrations.py = 13 passed; check-config-ownership.py = OK (52 declarations held). The new reverse-direction test was A/B'd against the parent template and fails there with 'KUBECONFIG points at ~/.config/kube/config, which is not denied to the Read tool'.",
+    "owner_limen": "At the lever commit 5ffb88a8: the cheap wave of scripts/verify-scoped.sh passed all 11 gates (syntax-changed, diff-hygiene, operator-gates, his-hand-registry-test, check-params, check-test-hygiene, check-lifecycle, check-root-manifest, check-note-links, ruff-lint, ruff-format); check-his-hand.py --check = 117 levers, 0 violations; the 17 cli test files that read his-hand-levers.json = 299 passed; credential-wall.py --check = all 32 secret atoms registered. On the receipt-bearing branch tree the cheap wave grew to 13 gates (adding check-docs-manifest and check-docs-exports) and also passed."
+  },
+  "unadmitted_gates": [
+    {
+      "gate": "pytest-cli (the full cli suite, a heavy machine-serialized gate)",
+      "result": "scripts/verify-scoped.sh exited 75 on every run (two on the lever commit, then repeated runs on the receipt-bearing tree), each after a passing cheap wave: 'Host admission denied scoped heavy verification: heavy-lease-held'. The heavy slot was held by another session's verify-scoped run, which this session neither waited on, signalled nor displaced.",
+      "substitution": "The gate's own registry note names the dependency set as the test files that read his-hand-levers.json; all 17 of them were run at the exact head (299 passed). The rest of the suite does not read the changed paths and was not run.",
+      "implication": "Do not read this receipt as a green full cli suite."
+    }
+  ],
+  "review_dispositions": [
+    {
+      "pr": "domus-genoma-private#542",
+      "finding": "P1: deny the XDG AWS credentials path",
+      "disposition": "accepted; fixed in #543, which also widened the list from 6 to all 16 declared stores"
+    },
+    {
+      "pr": "domus-genoma-private#542",
+      "finding": "P1: test fixture cannot render the homeDir template token",
+      "disposition": "superseded; fixed in the follow-up commit that landed in the same squash"
+    },
+    {
+      "pr": "domus-genoma-private#542",
+      "finding": "P2: declare permissions.deny in the ownership registry",
+      "disposition": "superseded; fixed in the same follow-up commit"
+    },
+    {
+      "pr": "domus-genoma-private#543",
+      "finding": "P1: deny the XDG kube path (KUBECONFIG is exported from XDG_CONFIG_HOME)",
+      "disposition": "accepted, verified against the host env files; fixed in #544 with a reverse-direction test derived from the env file"
+    },
+    {
+      "pr": "domus-genoma-private#544",
+      "finding": "none had arrived when this receipt was written",
+      "disposition": "this is the second fix-on-review round; a later finding becomes an issue, not another PR"
+    }
+  ],
+  "process_candour": [
+    "PR #542 was merged on a CLEARED merge-policy verdict before its automated reviews were read; the unaddressed P1 on it was the reason #543 and #544 exist.",
+    "The #542 topic branch was amended and pushed with --force-with-lease before it was reviewed or merged.",
+    "The first deny list claimed to mirror the declared sensitive locations but covered 6 of 16, and protected the unused default path for AWS and kube. The runtime file was applied with that 6-entry list before the gaps were found."
+  ],
+  "undeclared_candidates_not_added": "CARGO_HOME credentials.toml, GRADLE_USER_HOME and CURL_HOME can hold secrets but are not in the operator's declared sensitive set; widening that set is the operator's decision.",
+  "observations": [
+    "Claude Code rewrites settings.json with timeout before onFailure on the guard hooks, while the modify script emits the opposite order, so chezmoi diff shows that cosmetic churn after any app write.",
+    "The app-owned model key was absent from the runtime settings.json before the first apply; the modify script cannot remove it."
+  ],
+  "custody": "All implementation is merged to origin/main of domus-genoma-private (#542 9c1088ae, #543 8e8e69f9, #544 70870811). The limen lever, test pin, receipt and this evidence are committed on the owner branch. The only local-only payloads are the per-checkout, gitignored .claude/settings.local.json and disposable scratch under the job directory; the local file's required change is specified deterministically by the jq recipe in the owner issue, so nothing unrecoverable is held only locally.",
+  "checkout_disposition": "Retained by contract: the owner worktree (native anchor and receipt root) and one clean detached domus checkout at 70870811 (the subject scope). Removed this session after proving landing: three spent domus worktrees and the three local topic branches (each local tip equalled its remote tip and its merged PR head). The three remote topic branches (fix/claude-credential-read-deny-20261019, fix/claude-credential-deny-full-sensitive-list-20261019, fix/claude-credential-deny-xdg-kube-20261019) remain: deleting a remote ref is on the confirm-first list. The shared domus checkout was never mutated; it is dirty with another session's file and behind origin/main.",
+  "handoff": "https://github.com/4444J99/limen/issues/3127 owns the two gated steps: the operator-named chezmoi apply of the runtime settings.json, and the jq update of the project-local settings.local.json. It is mirrored by the registry lever L-CLAUDE-CREDENTIAL-DENY-APPLY with a deterministic predicate: jq -e '.permissions.deny | length == 17' on the deployed settings.json.",
+  "external_effect_readbacks": {
+    "github-pr-542-merged": "merged 2026-10-19T15:13:23Z at 9c1088ae8c1dad6fb272663464d36a51a28e9696",
+    "github-pr-543-merged": "merged 2026-10-19T15:31:30Z at 8e8e69f92283c79a939897e64ddd996834e4df5c",
+    "github-pr-544-merged": "merged 2026-10-19T15:40:38Z at 70870811d437887ccbdd9b9ad290f3e35783451c",
+    "github-issue-3127-open": "limen issue 3127 exists and is open; body updated to the 17-entry final state",
+    "runtime-settings-apply-542": "chezmoi apply of the runtime settings.json from the merged #542 tree; readback jq -e '.permissions.deny | length == 6' = true, and a second chezmoi diff was empty at the time; the app later rewrote the file and reintroduced only the cosmetic key-order churn",
+    "runtime-settings-apply-final": "NOT performed. Rendered from the final source (chezmoi cat) the file carries 17 denials including the XDG AWS and kube paths; the live file still has 6. Operator-gated.",
+    "local-settings-install-542": "operator-run cp of the staged file; readback jq -e on the installed file = true (6 denials, 2 skillOverrides, 17 allow entries)",
+    "local-settings-install-final": "NOT performed. Operator-gated; recipe in the owner issue.",
+    "conduct-session-registration": "scripts/bind-running-claude-session.py returned status bound, agent claude, human_protected true after the session entered its worktree",
+    "push-notification": "the notification tool acknowledged the send; delivery to a device is not observable"
+  },
+  "own_paths": {
+    "owner_limen": [
+      "his-hand-levers.json",
+      "cli/tests/test_check_his_hand.py"
+    ],
+    "subject_domus_genoma_private": [
+      ".chezmoidata/config-ownership.json",
+      "Workspace/limen/private_dot_agent-runtime/private_claude/modify_private_settings.json.tmpl",
+      "tests/claude_settings_fixture.py",
+      "tests/test_modify_claude_settings.py"
+    ]
+  }
+}
