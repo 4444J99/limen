@@ -1,0 +1,4 @@
+Command: bash scripts/run-pytest-hermetic.sh cli/tests/test_workstream_command.py -q
+Resolved interpreter: /usr/local/bin/python3.13
+Result: exit 0; 37 passed in 61.24 seconds.
+Both inventory interpreter regressions failed before the fix and passed afterward.

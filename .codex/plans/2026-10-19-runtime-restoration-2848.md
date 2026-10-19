@@ -20,3 +20,7 @@ Broker read admission returned 409; no run, child or reservation was accepted.
 The released audit checkout still has a foreign local lease, so this inactive
 related checkout is reused. No new checkout or branch was created.
 No live history compression or native history deletion is authorized here.
+
+Observed source defect: CLI worktree inventory reservation falls back to PATH
+Python and loses the running CLI toolchain. Add a regression for new/existing
+branches and bind only inventory reservation calls to the CLI interpreter.

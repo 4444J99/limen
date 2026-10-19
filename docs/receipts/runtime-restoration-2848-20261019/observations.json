@@ -1,0 +1,220 @@
+{
+  "bootstrap_repair": {
+    "cause": "worktree inventory reservation used PATH Python instead of the running CLI interpreter",
+    "installed_runtime_changed": false,
+    "new_and_existing_branch_regressions": 2,
+    "status": "source_verified_broad_checks_held",
+    "workstream_tests_passed": 37,
+    "cheap_scoped_gates_passed": 19,
+    "scoped_exit_code": 75,
+    "broad_gate_hold": "heavy-lease-held",
+    "new_parameter_declared": true
+  },
+  "cleanup": {
+    "generated_cache_relocation": {
+      "paths_before": 14008,
+      "paths_after": 7783,
+      "unchanged_limit": 10000,
+      "two_mypy_caches_preserved": true,
+      "deletion_performed": false
+    },
+    "native_state_retained": true,
+    "physical_reclaim_attributed_bytes": 0,
+    "recode": {
+      "bytes": 2077659136,
+      "free_pages": 0,
+      "open_handles_observed": 0,
+      "owner_still_unresolved": true,
+      "page_size": 4096
+    },
+    "small_cache_check": {
+      "checked_paths": 3,
+      "eligible_candidates": 0,
+      "one_present_cache_active": true
+    }
+  },
+  "custody": {
+    "private_evidence_retained": true,
+    "archive_bytes": 7049282,
+    "new_vault_artifact_admitted": false,
+    "vault_gate": "artifact id has no public recovery admission proof",
+    "independent_custody_verified": false,
+    "owner": "4444J99/limen#2848"
+  },
+  "clock": {
+    "clock_modified": false,
+    "observed_at": "2026-10-19T15:27:57Z",
+    "offset_seconds": 0.054587,
+    "source": "sntp -t 2 time.apple.com",
+    "tolerance_modified": false,
+    "uncertainty_seconds": 0.032568
+  },
+  "controller": {
+    "first_attempt_reason": "heavy-lease-held",
+    "foreign_work_preserved": true,
+    "status": "pending_normal_heavy_admission"
+  },
+  "evidence": {
+    "baseline_sha256": "eb40499374cad2dca92b93c9d36aefa5a455eddb3af7d8e8501b3eb4bca28ac3",
+    "compatibility_receipt_sha256": "b491d05e4e11dc4e244f063d37e8763e064349bd1635be52c06f61b41093ab70",
+    "managed_receipt_sha256": "4dc02d0e36705eaf01b8b6271e1d3bc865f3dcc7faa5f8561ad412db38b3bc41",
+    "old_receipts_preserved": true,
+    "previous_receipt_sha256": {
+      "8d85d263c4b1736047d3d01b.json": "f7412352abd1fb8cfeec46fe8de2718cd94ff14c3ce3180cf114afd33a67d76c",
+      "codex-compatibility-8d85d263c4b1736047d3d01b.json": "406b1a61c7f48b78230f46367fd22e1dcfe288a07d67705cc37a2e0fb528e880",
+      "codex-managed-restoration-8d85d263c4b1736047d3d01b.json": "6675014385efbfa39d4e50357087a465aa8076e004d9cbe40feb1558c414c55e"
+    },
+    "receipt_max_age_seconds": 86400
+  },
+  "native_session_id": "01a154c1-f69f-7013-979c-69516316a258",
+  "observed_at": "2026-10-19T15:33:00Z",
+  "verification": {
+    "workstream_file_tests": 37,
+    "regressions_failed_before_fix": 2,
+    "regressions_passed_after_fix": 2,
+    "cheap_gates_passed": 19,
+    "corrected_scoped_exit": 75,
+    "credential_wall_atoms_passed": 32,
+    "remaining_broad_checks": ["pytest-cli", "pytest-api"]
+  },
+  "original_watch": {
+    "anchor": "2026-10-13T03:02:10.931617Z",
+    "coverage_backfilled": false,
+    "replacement_watch_created": false,
+    "status": "coverage_failure"
+  },
+  "owner": "https://github.com/4444J99/limen/issues/2848",
+  "readers": [
+    {
+      "binary_sha256": "8813367285524ac798dd96d1b071aea30d58708c7226fd236cd275cf1cfdee31",
+      "isolated_checks": {
+        "append": true,
+        "compressed_read": true,
+        "corrupt_rejected": true,
+        "fork_restore": true,
+        "plain_read": true,
+        "restart_read": true,
+        "resume": true,
+        "rollout_restore": true
+      },
+      "managed_checks": {
+        "append": true,
+        "managed_read": true,
+        "restart_read": true,
+        "resume": true
+      },
+      "surface": "standalone",
+      "version": "codex-cli 0.163.0"
+    },
+    {
+      "binary_sha256": "8813367285524ac798dd96d1b071aea30d58708c7226fd236cd275cf1cfdee31",
+      "isolated_checks": {
+        "append": true,
+        "compressed_read": true,
+        "corrupt_rejected": true,
+        "fork_restore": true,
+        "plain_read": true,
+        "restart_read": true,
+        "resume": true,
+        "rollout_restore": true
+      },
+      "managed_checks": {
+        "append": true,
+        "managed_read": true,
+        "restart_read": true,
+        "resume": true
+      },
+      "surface": "packaged_daemon",
+      "version": "codex-cli 0.163.0"
+    },
+    {
+      "binary_sha256": "1afb28c01d7d49e892bd75f11076b10f1451e34e0ee308a95e5ab7f69f9c84fe",
+      "isolated_checks": {
+        "append": true,
+        "compressed_read": true,
+        "corrupt_rejected": true,
+        "fork_restore": true,
+        "plain_read": true,
+        "restart_read": true,
+        "resume": true,
+        "rollout_restore": true
+      },
+      "managed_checks": {
+        "append": true,
+        "managed_read": true,
+        "restart_read": true,
+        "resume": true
+      },
+      "surface": "plugin",
+      "version": "codex-cli 0.163.0-alpha.10.2"
+    },
+    {
+      "binary_sha256": "9b47aa34d14c35d87fbe2702fc6c4163d965b30fd88b3defd19e80e780f40d8d",
+      "isolated_checks": {
+        "append": true,
+        "compressed_read": true,
+        "corrupt_rejected": true,
+        "fork_restore": true,
+        "plain_read": true,
+        "restart_read": true,
+        "resume": true,
+        "rollout_restore": true
+      },
+      "managed_checks": {
+        "append": true,
+        "managed_read": true,
+        "restart_read": true,
+        "resume": true
+      },
+      "surface": "vscode",
+      "version": "codex-cli 0.162.0-alpha.17.2"
+    },
+    {
+      "binary_sha256": "1afb28c01d7d49e892bd75f11076b10f1451e34e0ee308a95e5ab7f69f9c84fe",
+      "isolated_checks": {
+        "append": true,
+        "compressed_read": true,
+        "corrupt_rejected": true,
+        "fork_restore": true,
+        "plain_read": true,
+        "restart_read": true,
+        "resume": true,
+        "rollout_restore": true
+      },
+      "managed_checks": {
+        "append": true,
+        "managed_read": true,
+        "restart_read": true,
+        "resume": true
+      },
+      "surface": "chatgpt",
+      "version": "codex-cli 0.163.0-alpha.10.2"
+    }
+  ],
+  "result": {
+    "baseline_turn_count": 10,
+    "conversion_performed": false,
+    "elapsed_seconds": 156.41348770901095,
+    "gui_acceptance_claimed": false,
+    "history_deleted": false,
+    "isolated_compatibility": "verified",
+    "managed_native_restoration": "verified",
+    "managed_verification_turns": 5,
+    "receipts_installed": true
+  },
+  "retained_owners": [
+    {
+      "owner": "4444J99/limen#2848",
+      "work": "Finish controller acceptance, source-owned consumer-path repairs and evidence-gated cleanup"
+    },
+    {
+      "owner": "4444J99/limen#1703",
+      "work": "Native external permission and platform acceptance"
+    },
+    {
+      "owner": "4444J99/limen#2848",
+      "work": "Retain failed historical watch and private custody; no deletion eligibility follows from this proof"
+    }
+  ],
+  "schema": "limen.runtime_restoration_continuation.v1"
+}
