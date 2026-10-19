@@ -83,6 +83,10 @@ remain visible under their existing owners.
 
 ## Exact source-prefix evidence
 
+[Ordered storage-view references](native-storage-views-v1.json) now preserve seven
+cutoff-aware prompt/context views and their bounded reply references. This is
+reference reconstruction; native identity and whole-view semantic acceptance remain open.
+
 Seven files across three duplicate-header families were read within their
 recorded byte bounds. Every full decoded hash matched the captured source
 snapshot. All record ordinals were consecutive in each file.
