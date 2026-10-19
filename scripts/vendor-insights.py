@@ -43,6 +43,12 @@ Archived codex rollouts (`.jsonl.zst`) are read through the stdlib zstd (Python 
 binary; with neither, or on a corrupt frame, the reader raises instead of rendering an empty
 session (limen#3083).
 
+`render` draws the page of Claude Code's built-in /insights report (at-a-glance, nav, stats row,
+then work / usage / wins / friction / features / patterns / horizon, fun ending, coverage and
+verification). narrative.json takes the full /insights shape or the older thin shape (see
+`_normalize_narrative`); a section renders only when its narrative key is present, and the
+deterministic facet charts sit under the section they belong to or in a Facet Aggregates block.
+
 Exit codes: 0 ok · 1 error · 2 missing prerequisite (e.g. render before facets exist).
 All vendor stores are opened STRICTLY read-only (SQLite via file:...?mode=ro).
 """
@@ -2017,10 +2023,14 @@ def _aggregate_facets(facets: list[dict]) -> dict:
         "friction_counts": {},
         "satisfaction_counts": {},
         "goal_categories": {},
+        "helpfulness": {},
     }
     for f in facets:
         oc = f.get("outcome") or "unclear"
         agg["outcomes"][oc] = agg["outcomes"].get(oc, 0) + 1
+        hp = f.get("agent_helpfulness") or f.get("claude_helpfulness")
+        if isinstance(hp, str) and hp.strip():
+            agg["helpfulness"][hp] = agg["helpfulness"].get(hp, 0) + 1
         st = f.get("session_type") or "unknown"
         agg["session_types"][st] = agg["session_types"].get(st, 0) + 1
         for k, v in (f.get("friction_counts") or {}).items():
@@ -2032,28 +2042,609 @@ def _aggregate_facets(facets: list[dict]) -> dict:
     return agg
 
 
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.S)
+_VENDOR_LABELS = {
+    "claude": "Claude Code",
+    "codex": "Codex",
+    "copilot": "Copilot",
+    "opencode": "OpenCode",
+    "antigravity": "Antigravity",
+    "gemini": "Gemini CLI",
+}
+_BAR_LIMIT = 8
+
+
 def _esc(s) -> str:
     return html.escape(str(s if s is not None else ""))
 
 
-def _dl(d: dict) -> str:
-    items = sorted(d.items(), key=lambda kv: -kv[1])
-    rows = "".join(f"<tr><td>{_esc(k)}</td><td class='num'>{v}</td></tr>" for k, v in items)
-    return rows or "<tr><td colspan='2'>—</td></tr>"
+def _s(v) -> str:
+    """Prose-safe text for a narrative field. A missing value is "" (never the literal
+    None/undefined), and a list of strings reads as paragraphs."""
+    if v is None or isinstance(v, bool):
+        return ""
+    if isinstance(v, (str, int, float)):
+        return str(v).strip()
+    if isinstance(v, list):
+        return "\n\n".join(t for t in (_s(x) for x in v) if t)
+    return ""
+
+
+def _bold(escaped: str) -> str:
+    return _BOLD_RE.sub(r"<strong>\1</strong>", escaped)
+
+
+def _inline(v) -> str:
+    """Escape FIRST, then turn **bold** into <strong>, so the only markup in the output is ours.
+    Blank-line paragraph breaks become <br><br> for fields that live inside a card."""
+    return re.sub(r"\n\s*\n", "<br><br>", _bold(_esc(_s(v))))
+
+
+def _prose(v) -> str:
+    """Blank-line separated paragraphs, escaped, **bold** converted: the .narrative body."""
+    paras = [p.strip() for p in re.split(r"\n\s*\n", _s(v)) if p.strip()]
+    return "".join(f"<p>{_bold(_esc(p))}</p>" for p in paras)
+
+
+def _attr(text: str) -> str:
+    """An attribute value that survives a round trip: quotes escaped, newlines kept as &#10;."""
+    return html.escape(text, quote=True).replace("\n", "&#10;")
+
+
+def _pretty(key) -> str:
+    return str(key).replace("_", " ").strip().title()
+
+
+def _items(v) -> list[dict]:
+    return [x for x in v if isinstance(x, dict)] if isinstance(v, list) else []
+
+
+def _texts(v) -> list[str]:
+    seq = v if isinstance(v, list) else [v]
+    return [t for t in (_s(x) for x in seq) if t]
+
+
+def _vendor_label(vendor: str) -> str:
+    return _VENDOR_LABELS.get(vendor) or str(vendor).replace("-", " ").replace("_", " ").title()
+
+
+def _normalize_narrative(raw) -> dict:
+    """Map either narrative.json shape onto the one the renderer draws.
+
+    The thin shape (tldr, areas, interaction_style string, friction list, suggestions list of
+    {title, detail}) predates the full /insights shape (project_areas, interaction_style{narrative,
+    key_pattern}, what_works, friction_analysis, suggestions{claude_md_additions, features_to_try,
+    usage_patterns}, on_the_horizon, fun_ending, verification); both must keep rendering, so each key
+    is read by its TYPE rather than by which shape the file claims to be."""
+    n = raw if isinstance(raw, dict) else {}
+
+    def d(v) -> dict:
+        return v if isinstance(v, dict) else {}
+
+    pa = n.get("project_areas")
+    areas = _items(pa.get("areas") if isinstance(pa, dict) else pa) or _items(n.get("areas"))
+
+    ist = n.get("interaction_style")
+    style = {
+        "narrative": _s(d(ist).get("narrative") if isinstance(ist, dict) else ist),
+        "key_pattern": _s(d(ist).get("key_pattern")),
+    }
+
+    ww = d(n.get("what_works"))
+    fa = n.get("friction_analysis")
+    fa = fa if isinstance(fa, (dict, list)) else n.get("friction")
+    friction = {
+        "intro": _s(d(fa).get("intro")),
+        "categories": _items(fa.get("categories") if isinstance(fa, dict) else fa),
+    }
+
+    sg = n.get("suggestions")
+    if isinstance(sg, dict):
+        claude_md = _items(sg.get("claude_md_additions"))
+        features = _items(sg.get("features_to_try"))
+        patterns = _items(sg.get("usage_patterns"))
+    else:
+        claude_md, features = [], []
+        patterns = [{"title": i.get("title"), "detail": i.get("detail")} for i in _items(sg)]
+
+    hz = d(n.get("on_the_horizon"))
+    ver = n.get("verification")
+    ver = ver if isinstance(ver, dict) else {"summary": ver}
+    glance = d(n.get("at_a_glance"))
+    return {
+        "tldr": _s(n.get("tldr")),
+        "glance": {k: _s(glance.get(k)) for k in ("whats_working", "whats_hindering", "quick_wins", "ambitious_workflows")},
+        "areas": areas,
+        "style": style,
+        "wins": {"intro": _s(ww.get("intro")), "items": _items(ww.get("impressive_workflows"))},
+        "friction": friction,
+        "claude_md": claude_md,
+        "features": features,
+        "patterns": patterns,
+        "horizon": {"intro": _s(hz.get("intro")), "items": _items(hz.get("opportunities"))},
+        "fun": {"headline": _s(d(n.get("fun_ending")).get("headline")), "detail": _s(d(n.get("fun_ending")).get("detail"))},
+        "coverage_notes": _texts(n.get("coverage_notes")),
+        "verification": {
+            "summary": _s(ver.get("summary")),
+            "rounds": _s(ver.get("rounds")),
+            "issues_found": _s(ver.get("issues_found")),
+            "issues_fixed": _s(ver.get("issues_fixed")),
+            "residuals": _texts(ver.get("residuals")),
+        },
+    }
+
+
+# ---- deterministic charts (the built-in report's bar-row markup, drawn from index + facets) ----
+
+
+def _bar_card(title: str, counts: dict, color: str, *, limit: int | None = _BAR_LIMIT, ordered=False, pretty=True) -> str:
+    items = [(k, v) for k, v in counts.items() if v]
+    if not items:
+        return ""
+    if not ordered:
+        items.sort(key=lambda kv: (-kv[1], str(kv[0])))
+    shown = items[:limit] if limit else items
+    top = max(v for _, v in shown) or 1
+    rows = "".join(
+        '<div class="bar-row">'
+        f'<div class="bar-label" title="{_attr(k)}">{_esc(_pretty(k) if pretty else k)}</div>'
+        f'<div class="bar-track"><div class="bar-fill" style="width:{round(v / top * 100, 1)}%;background:{color}"></div></div>'
+        f'<div class="bar-value">{v}</div></div>'
+        for k, v in shown
+    )
+    hidden = len(items) - len(shown)
+    if hidden > 0:
+        rows += f'<div class="empty">+{hidden} more not shown</div>'
+    return f'<div class="chart-card"><div class="chart-title">{_esc(title)}</div>{rows}</div>'
+
+
+def _charts_row(cards: list[str]) -> str:
+    cards = [c for c in cards if c]
+    return "".join(f'<div class="charts-row">{"".join(cards[i : i + 2])}</div>' for i in range(0, len(cards), 2))
+
+
+# ---- narrative sections (ids, order and class names mirror the built-in /insights report) ----
+
+
+def _sec_work(areas: list[dict]) -> str:
+    if not areas:
+        return ""
+    cards = []
+    for a in areas:
+        count = _s(a.get("session_count"))
+        if re.fullmatch(r"~?\d[\d,]*", count):
+            count += " sessions"
+        badge = f'<span class="area-count">{_esc(count)}</span>' if count else ""
+        cards.append(
+            '<div class="project-area"><div class="area-header">'
+            f'<span class="area-name">{_esc(_s(a.get("name")))}</span>{badge}</div>'
+            f'<div class="area-desc">{_inline(a.get("description"))}</div></div>'
+        )
+    return f'<h2 id="section-work">What You Work On</h2><div class="project-areas">{"".join(cards)}</div>'
+
+
+def _sec_usage(style: dict, label: str) -> str:
+    if not (style["narrative"] or style["key_pattern"]):
+        return ""
+    key = (
+        f'<div class="key-insight"><strong>Key pattern:</strong> {_inline(style["key_pattern"])}</div>'
+        if style["key_pattern"]
+        else ""
+    )
+    return (
+        f'<h2 id="section-usage">How You Use {_esc(label)}</h2>'
+        f'<div class="narrative">{_prose(style["narrative"])}{key}</div>'
+    )
+
+
+def _intro(text: str) -> str:
+    return f'<p class="section-intro">{_inline(text)}</p>' if text else ""
+
+
+def _sec_wins(wins: dict) -> str:
+    cards = [
+        '<div class="big-win">'
+        f'<div class="big-win-title">{_esc(_s(w.get("title")))}</div>'
+        f'<div class="big-win-desc">{_inline(w.get("description"))}</div></div>'
+        for w in wins["items"]
+    ]
+    if not cards:
+        return ""
+    return (
+        '<h2 id="section-wins">Impressive Things You Did</h2>'
+        f'{_intro(wins["intro"])}<div class="big-wins">{"".join(cards)}</div>'
+    )
+
+
+def _sec_friction(friction: dict) -> str:
+    cats = []
+    for c in friction["categories"]:
+        examples = "".join(f"<li>{_inline(e)}</li>" for e in _texts(c.get("examples")))
+        ul = f'<ul class="friction-examples">{examples}</ul>' if examples else ""
+        cats.append(
+            '<div class="friction-category">'
+            f'<div class="friction-title">{_esc(_s(c.get("category")))}</div>'
+            f'<div class="friction-desc">{_inline(c.get("description"))}</div>{ul}</div>'
+        )
+    if not cats:
+        return ""
+    return (
+        '<h2 id="section-friction">Where Things Go Wrong</h2>'
+        f'{_intro(friction["intro"])}<div class="friction-categories">{"".join(cats)}</div>'
+    )
+
+
+def _copy_row(code_cls: str, text: str) -> str:
+    """A literal code block plus the Copy button copyText() reads (previousElementSibling)."""
+    open_tag = f'<code class="{code_cls}">' if code_cls else "<code>"
+    return f'{open_tag}{_esc(text)}</code><button class="copy-btn" onclick="copyText(this)">Copy</button>'
+
+
+def _sec_features(claude_md: list[dict], features: list[dict], label: str) -> str:
+    md_rows = [c for c in claude_md if _s(c.get("addition"))]
+    cards = [f for f in features if _s(f.get("feature"))]
+    if not (md_rows or cards):
+        return ""
+    out = [f'<h2 id="section-features">Existing {_esc(label)} Features to Try</h2>']
+    if md_rows:
+        items = []
+        for i, c in enumerate(md_rows):
+            addition, scaffold, why = _s(c.get("addition")), _s(c.get("prompt_scaffold")), _s(c.get("why"))
+            payload = f"{scaffold}\n\n{addition}" if scaffold else addition
+            why_html = f'<div class="cmd-why">{_inline(why)}</div>' if why else ""
+            items.append(
+                '<div class="claude-md-item">'
+                f'<input type="checkbox" id="cmd-{i}" class="cmd-checkbox" checked data-text="{_attr(payload)}">'
+                f'<label for="cmd-{i}"><code class="cmd-code">{_esc(addition)}</code>'
+                f'<button class="copy-btn" onclick="copyCmdItem({i})">Copy</button></label>{why_html}</div>'
+            )
+        out.append(
+            '<div class="claude-md-section"><h3>Suggested Instruction-File Additions</h3>'
+            '<p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">'
+            f"Just copy this into {_esc(label)} to add it to your instruction file.</p>"
+            '<div class="claude-md-actions"><button class="copy-all-btn" onclick="copyAllCheckedClaudeMd()">'
+            f'Copy All Checked</button></div>{"".join(items)}</div>'
+        )
+    if cards:
+        feats = []
+        for f in cards:
+            why = _s(f.get("why_for_you"))
+            code = _s(f.get("example_code"))
+            feats.append(
+                '<div class="feature-card">'
+                f'<div class="feature-title">{_esc(_s(f.get("feature")))}</div>'
+                + (f'<div class="feature-oneliner">{_inline(f.get("one_liner"))}</div>' if _s(f.get("one_liner")) else "")
+                + (f'<div class="feature-why"><strong>Why for you:</strong> {_inline(why)}</div>' if why else "")
+                + (
+                    '<div class="feature-examples"><div class="feature-example"><div class="example-code-row">'
+                    f'{_copy_row("example-code", code)}</div></div></div>'
+                    if code
+                    else ""
+                )
+                + "</div>"
+            )
+        hint = (
+            f"Just copy this into {_esc(label)} and it'll set it up for you."
+            if any(_s(f.get("example_code")) for f in cards)
+            else ""
+        )
+        hint_html = f'<p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">{hint}</p>' if hint else ""
+        out.append(f'{hint_html}<div class="features-section">{"".join(feats)}</div>')
+    return "".join(out)
+
+
+def _sec_patterns(patterns: list[dict], label: str) -> str:
+    cards = []
+    for p in patterns:
+        title = _s(p.get("title"))
+        if not title:
+            continue
+        prompt = _s(p.get("copyable_prompt"))
+        summary = _s(p.get("suggestion"))
+        detail = _s(p.get("detail"))
+        cards.append(
+            '<div class="pattern-card">'
+            f'<div class="pattern-title">{_esc(title)}</div>'
+            + (f'<div class="pattern-summary">{_inline(summary)}</div>' if summary else "")
+            + (f'<div class="pattern-detail">{_inline(detail)}</div>' if detail else "")
+            + (
+                '<div class="copyable-prompt-section">'
+                f'<div class="prompt-label">Paste into {_esc(label)}:</div>'
+                f'<div class="copyable-prompt-row">{_copy_row("copyable-prompt", prompt)}</div></div>'
+                if prompt
+                else ""
+            )
+            + "</div>"
+        )
+    if not cards:
+        return ""
+    hint = (
+        f"Just copy this into {_esc(label)} and it'll walk you through it."
+        if any(_s(p.get("copyable_prompt")) for p in patterns)
+        else ""
+    )
+    hint_html = f'<p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">{hint}</p>' if hint else ""
+    return f'<h2 id="section-patterns">New Ways to Use {_esc(label)}</h2>{hint_html}<div class="patterns-section">{"".join(cards)}</div>'
+
+
+def _sec_horizon(horizon: dict, label: str) -> str:
+    cards = []
+    for o in horizon["items"]:
+        title = _s(o.get("title"))
+        if not title:
+            continue
+        possible, how, prompt = _s(o.get("whats_possible")), _s(o.get("how_to_try")), _s(o.get("copyable_prompt"))
+        cards.append(
+            '<div class="horizon-card">'
+            f'<div class="horizon-title">{_esc(title)}</div>'
+            + (f'<div class="horizon-possible">{_inline(possible)}</div>' if possible else "")
+            + (f'<div class="horizon-tip"><strong>Getting started:</strong> {_inline(how)}</div>' if how else "")
+            + (
+                f'<div class="pattern-prompt"><div class="prompt-label">Paste into {_esc(label)}:</div>'
+                f'{_copy_row("", prompt)}</div>'
+                if prompt
+                else ""
+            )
+            + "</div>"
+        )
+    if not cards:
+        return ""
+    return f'<h2 id="section-horizon">On the Horizon</h2>{_intro(horizon["intro"])}<div class="horizon-section">{"".join(cards)}</div>'
+
+
+def _sec_fun(fun: dict) -> str:
+    headline, detail = fun["headline"], fun["detail"]
+    if not (headline or detail):
+        return ""
+    quoted = headline if headline[:1] in ('"', "“") else f'"{headline}"'
+    head_html = f'<div class="fun-headline">{_esc(quoted)}</div>' if headline else ""
+    detail_html = f'<div class="fun-detail">{_inline(detail)}</div>' if detail else ""
+    return f'<div class="fun-ending">{head_html}{detail_html}</div>'
+
+
+def _sec_coverage(notes: list[str], ver: dict) -> str:
+    body = ""
+    if notes:
+        lis = "".join(f"<li>{_inline(n)}</li>" for n in notes)
+        body += f'<div class="prompt-label">Coverage notes</div><ul class="friction-examples" style="margin-bottom: 16px;">{lis}</ul>'
+    counts = [
+        f"{label}: {ver[k]}"
+        for k, label in (("rounds", "Verification rounds"), ("issues_found", "Issues found"), ("issues_fixed", "Issues fixed"))
+        if ver[k]
+    ]
+    if ver["summary"] or counts or ver["residuals"]:
+        body += '<div class="prompt-label">Verification</div>'
+        if ver["summary"]:
+            body += f'<p class="section-intro" style="margin-bottom: 8px;">{_inline(ver["summary"])}</p>'
+        if counts:
+            body += f'<p class="section-intro" style="margin-bottom: 8px;">{_esc(" | ".join(counts))}</p>'
+        if ver["residuals"]:
+            lis = "".join(f"<li>{_inline(r)}</li>" for r in ver["residuals"])
+            body += (
+                '<div class="prompt-label" style="margin-top: 12px;">Residuals</div>'
+                f'<ul class="friction-examples" style="margin-bottom: 16px;">{lis}</ul>'
+            )
+    if not body:
+        return ""
+    return (
+        '<div class="collapsible-section" id="section-coverage">'
+        '<div class="collapsible-header open" onclick="toggleCollapsible(this)">'
+        '<span class="collapsible-arrow">&#9654;</span><h3>Coverage and verification</h3></div>'
+        f'<div class="collapsible-content open">{body}</div></div>'
+    )
+
+
+_REPORT_CSS = """
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #334155; line-height: 1.65; padding: 48px 24px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 32px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    h2 { font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 48px; margin-bottom: 16px; }
+    .subtitle { color: #64748b; font-size: 15px; margin-bottom: 8px; }
+    .subtitle:last-of-type { margin-bottom: 32px; }
+    .container p + p { margin-top: 8px; }
+    .nav-toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 32px 0; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .nav-toc a { font-size: 12px; color: #64748b; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #f1f5f9; transition: all 0.15s; }
+    .nav-toc a:hover { background: #e2e8f0; color: #334155; }
+    .stats-row { display: flex; gap: 24px; margin-bottom: 40px; padding: 20px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat[title] { cursor: help; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+    .at-a-glance { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+    .glance-title { font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 16px; }
+    .glance-sections { display: flex; flex-direction: column; gap: 12px; }
+    .glance-section { font-size: 14px; color: #78350f; line-height: 1.6; }
+    .glance-section strong { color: #92400e; }
+    .see-more { color: #b45309; text-decoration: none; font-size: 13px; white-space: nowrap; }
+    .see-more:hover { text-decoration: underline; }
+    .project-areas { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .project-area { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .area-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .area-name { font-weight: 600; font-size: 15px; color: #0f172a; }
+    .area-count { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; }
+    .area-desc { font-size: 14px; color: #475569; line-height: 1.5; }
+    .narrative { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .narrative p { margin-bottom: 12px; font-size: 14px; color: #475569; line-height: 1.7; }
+    .narrative p + p { margin-top: 0; }
+    .key-insight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-top: 12px; font-size: 14px; color: #166534; }
+    .section-intro { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+    .big-wins { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .big-win { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; }
+    .big-win-title { font-weight: 600; font-size: 15px; color: #166534; margin-bottom: 8px; }
+    .big-win-desc { font-size: 14px; color: #15803d; line-height: 1.5; }
+    .friction-categories { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .friction-category { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 16px; }
+    .friction-title { font-weight: 600; font-size: 15px; color: #991b1b; margin-bottom: 6px; }
+    .friction-desc { font-size: 13px; color: #7f1d1d; margin-bottom: 10px; }
+    .friction-examples { margin: 0 0 0 20px; font-size: 13px; color: #334155; }
+    .friction-examples li { margin-bottom: 4px; }
+    .claude-md-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .claude-md-section h3 { font-size: 14px; font-weight: 600; color: #1e40af; margin: 0 0 12px 0; }
+    .claude-md-actions { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dbeafe; }
+    .copy-all-btn { background: #2563eb; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .copy-all-btn:hover { background: #1d4ed8; }
+    .copy-all-btn.copied { background: #16a34a; }
+    .claude-md-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 10px 0; border-bottom: 1px solid #dbeafe; }
+    .claude-md-item:last-child { border-bottom: none; }
+    .cmd-checkbox { margin-top: 2px; }
+    .cmd-code { background: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; color: #1e40af; border: 1px solid #bfdbfe; font-family: monospace; display: block; white-space: pre-wrap; word-break: break-word; flex: 1; }
+    .cmd-why { font-size: 12px; color: #64748b; width: 100%; padding-left: 24px; margin-top: 4px; }
+    .features-section, .patterns-section { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+    .feature-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; }
+    .pattern-card { background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px; padding: 16px; }
+    .feature-title, .pattern-title { font-weight: 600; font-size: 15px; color: #0f172a; margin-bottom: 6px; }
+    .feature-oneliner { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    .pattern-summary { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    .feature-why, .pattern-detail { font-size: 13px; color: #334155; line-height: 1.5; }
+    .feature-examples { margin-top: 12px; }
+    .feature-example { padding: 8px 0; border-top: 1px solid #d1fae5; }
+    .feature-example:first-child { border-top: none; }
+    .example-code-row { display: flex; align-items: flex-start; gap: 8px; }
+    .example-code { flex: 1; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #334155; overflow-x: auto; white-space: pre-wrap; }
+    .copyable-prompt-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+    .copyable-prompt-row { display: flex; align-items: flex-start; gap: 8px; }
+    .copyable-prompt { flex: 1; background: #f8fafc; padding: 10px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #334155; border: 1px solid #e2e8f0; white-space: pre-wrap; line-height: 1.5; }
+    .pattern-prompt { background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #e2e8f0; }
+    .pattern-prompt code { font-family: monospace; font-size: 12px; color: #334155; display: block; white-space: pre-wrap; margin-bottom: 8px; }
+    .prompt-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+    .copy-btn { background: #e2e8f0; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #475569; flex-shrink: 0; }
+    .copy-btn:hover { background: #cbd5e1; }
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+    .chart-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .chart-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 12px; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 6px; }
+    .bar-label { width: 100px; font-size: 11px; color: #475569; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; margin: 0 8px; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-value { width: 28px; font-size: 11px; font-weight: 500; color: #64748b; text-align: right; }
+    .empty { color: #94a3b8; font-size: 13px; }
+    .horizon-section { display: flex; flex-direction: column; gap: 16px; }
+    .horizon-card { background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%); border: 1px solid #c4b5fd; border-radius: 8px; padding: 16px; }
+    .horizon-title { font-weight: 600; font-size: 15px; color: #5b21b6; margin-bottom: 8px; }
+    .horizon-possible { font-size: 14px; color: #334155; margin-bottom: 10px; line-height: 1.5; }
+    .horizon-tip { font-size: 13px; color: #6b21a8; background: rgba(255,255,255,0.6); padding: 8px 12px; border-radius: 4px; }
+    .fun-ending { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fbbf24; border-radius: 12px; padding: 24px; margin-top: 40px; text-align: center; }
+    .fun-headline { font-size: 18px; font-weight: 600; color: #78350f; margin-bottom: 8px; }
+    .fun-detail { font-size: 14px; color: #92400e; }
+    .collapsible-section { margin-top: 32px; }
+    .collapsible-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+    .collapsible-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #475569; }
+    .collapsible-arrow { font-size: 12px; color: #94a3b8; transition: transform 0.2s; }
+    .collapsible-content { display: none; padding-top: 16px; }
+    .collapsible-content.open { display: block; }
+    .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
+    @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } .stats-row { justify-content: center; } }
+"""
+
+_JS_TOGGLE = """
+    function toggleCollapsible(header) {
+      header.classList.toggle('open');
+      header.nextElementSibling.classList.toggle('open');
+    }
+"""
+_JS_COPY = """
+    function copyText(btn) {
+      navigator.clipboard.writeText(btn.previousElementSibling.textContent).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+"""
+_JS_COPY_CMD = """
+    function copyCmdItem(idx) {
+      const checkbox = document.getElementById('cmd-' + idx);
+      if (!checkbox) return;
+      navigator.clipboard.writeText(checkbox.dataset.text).then(() => {
+        const btn = checkbox.nextElementSibling.querySelector('.copy-btn');
+        if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); }
+      });
+    }
+    function copyAllCheckedClaudeMd() {
+      const texts = [];
+      document.querySelectorAll('.cmd-checkbox:checked').forEach(cb => { if (cb.dataset.text) { texts.push(cb.dataset.text); } });
+      const btn = document.querySelector('.copy-all-btn');
+      navigator.clipboard.writeText(texts.join('\\n')).then(() => {
+        if (!btn) return;
+        btn.textContent = 'Copied ' + texts.length + ' items!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy All Checked'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+"""
+
+_GLANCE_LINKS = (
+    ("whats_working", "What's working:", "section-wins", "Impressive Things You Did"),
+    ("whats_hindering", "What's hindering you:", "section-friction", "Where Things Go Wrong"),
+    ("quick_wins", "Quick wins to try:", "section-features", "Features to Try"),
+    ("ambitious_workflows", "Ambitious workflows:", "section-horizon", "On the Horizon"),
+)
+_NAV_LABELS = {
+    "section-work": "What You Work On",
+    "section-usage": "How You Use {label}",
+    "section-wins": "Impressive Things",
+    "section-friction": "Where Things Go Wrong",
+    "section-features": "Features to Try",
+    "section-patterns": "New Usage Patterns",
+    "section-horizon": "On the Horizon",
+    "section-aggregates": "Facet Aggregates",
+    "section-coverage": "Coverage",
+}
+
+
+def _stat(value: str, label: str, title: str) -> str:
+    title_attr = f' title="{_attr(title)}"' if title else ""
+    return (
+        f'<div class="stat"{title_attr}>'
+        f'<div class="stat-value">{_esc(value)}</div><div class="stat-label">{_esc(label)}</div></div>'
+    )
+
+
+def _coverage_notes(index: dict, facets: list[dict], narrative_notes: list[str], absent: list[str]) -> list[str]:
+    """The deterministic half of the coverage notes. No silent caps: name what was NOT covered."""
+    imeta = index.get("meta") or {}
+    n_sessions = len(index.get("sessions", []))
+    notes = list(narrative_notes)
+    if imeta.get("capped"):
+        notes.append(
+            f"Index cap: {imeta.get('shown', n_sessions)} of {imeta.get('total_in_window', '?')} in-window sessions were "
+            f"indexed (--max-sessions); those not shown are the OLDEST by {imeta.get('order_key') or 'the index order key'}."
+        )
+    for adapter_note in imeta.get("notes") or []:
+        notes.append(f"Store note: {adapter_note}")
+    churn = imeta.get("capsule_churn") or {}
+    if churn.get("mean_files_per_session", 0) > 1.0:
+        notes.append(
+            f"Capsule churn: {churn.get('logical_sessions', '?')} logical sessions span {churn.get('files_total', '?')} "
+            f"rollout files (mean {churn['mean_files_per_session']}, max {churn.get('max_files_in_one_session', '?')} in one)."
+        )
+    unfaceted = n_sessions - len(facets)
+    if unfaceted > 0:
+        notes.append(f"{unfaceted} of {n_sessions} indexed sessions were not faceted (sampling cap).")
+    if absent:
+        notes.append("Narrative sections absent: " + ", ".join(absent) + ".")
+    return notes
 
 
 def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) -> str:
+    """Render the report in the shape of Claude Code's built-in /insights page: at-a-glance, nav,
+    stats row, then work / usage / wins / friction / features / patterns / horizon, the fun ending and a
+    coverage-and-verification block. Narrative sections render only when the narrative has them (a
+    section id is never emitted for an empty body, and a nav or see-more link is only emitted for a
+    section that rendered); the deterministic facet charts sit under the section they belong to, or in
+    a Facet Aggregates block when that section has no narrative."""
     agg = _aggregate_facets(facets)
+    nar = _normalize_narrative(narrative)
+    label = _vendor_label(vendor)
     sessions = index.get("sessions", [])
     n_sessions = len(sessions)
     tool_calls = sum(s.get("tool_calls", 0) for s in sessions)
     user_msgs = sum(s.get("user_msgs", 0) for s in sessions)
-    models = sorted({m for s in sessions for m in s.get("models", [])})
+    models = Counter(m for s in sessions for m in s.get("models", []))
+    started = Counter(
+        s["started_at"][:10] for s in sessions if isinstance(s.get("started_at"), str) and len(s["started_at"]) >= 10
+    )
     window = index.get("window", {})
-
-    def sec(title: str, body: str) -> str:
-        return f"<section><h2>{_esc(title)}</h2>{body}</section>"
-
     imeta = index.get("meta") or {}
     if imeta.get("capped"):
         indexed_phrase = (
@@ -2061,127 +2652,116 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         )
     else:
         indexed_phrase = f"{n_sessions} sessions indexed"
-    parts: list[str] = []
-    parts.append(
-        f"<header><h1>{_esc(vendor)} · usage insights</h1>"
-        f"<p class='meta'>{_esc((window.get('start') or '?')[:10])} → {_esc((window.get('end') or '?')[:10])} · "
-        f"{indexed_phrase} · {len(facets)} faceted · "
-        f"{user_msgs} user messages · {tool_calls} tool calls · models: {_esc(', '.join(models) or '—')}</p></header>"
-    )
 
-    glance = narrative.get("at_a_glance") or {}
-    if glance:
-        rows = "".join(
-            f"<div class='card'><h3>{_esc(t)}</h3><p>{_esc(glance[k])}</p></div>"
-            for k, t in (
-                ("whats_working", "What's working"),
-                ("whats_hindering", "What's hindering"),
-                ("quick_wins", "Quick wins"),
-                ("ambitious_workflows", "On the horizon"),
-            )
-            if glance.get(k)
-        )
-        parts.append(sec("At a glance", f"<div class='cards'>{rows}</div>"))
-
-    if narrative.get("tldr"):
-        parts.append(sec("TL;DR", f"<p>{_esc(narrative['tldr'])}</p>"))
-
-    areas = narrative.get("areas") or []
-    if areas:
-        body = "".join(
-            f"<div class='area'><h3>{_esc(a.get('name'))} "
-            f"<span class='count'>{_esc(a.get('session_count', '?'))} sessions</span></h3>"
-            f"<p>{_esc(a.get('description'))}</p></div>"
-            for a in areas
-        )
-        parts.append(sec("Project areas", body))
-
-    parts.append(
-        sec(
-            "Facet aggregates (deterministic)",
-            "<div class='tables'>"
-            f"<table><caption>Outcomes</caption>{_dl(agg['outcomes'])}</table>"
-            f"<table><caption>Friction</caption>{_dl(agg['friction_counts'])}</table>"
-            f"<table><caption>Satisfaction</caption>{_dl(agg['satisfaction_counts'])}</table>"
-            f"<table><caption>Goal categories</caption>{_dl(agg['goal_categories'])}</table>"
-            "</div>",
-        )
-    )
-
-    if narrative.get("interaction_style"):
-        parts.append(sec("Interaction style", f"<p>{_esc(narrative['interaction_style'])}</p>"))
-
-    friction = narrative.get("friction") or []
-    if friction:
-        body = "".join(
-            f"<div class='area'><h3>{_esc(f.get('category'))}</h3><p>{_esc(f.get('description'))}</p>"
-            + "".join(f"<p class='ex'>· {_esc(e)}</p>" for e in (f.get("examples") or []))
-            + "</div>"
-            for f in friction
-        )
-        parts.append(sec("Where things go wrong", body))
-
-    suggestions = narrative.get("suggestions") or []
-    if suggestions:
-        body = "".join(
-            f"<div class='area'><h3>{_esc(s.get('title'))}</h3><p>{_esc(s.get('detail'))}</p></div>"
-            for s in suggestions
-        )
-        parts.append(sec("Suggestions", body))
-
-    # No silent caps: name what was NOT covered.
-    missing = [
-        k
-        for k in ("at_a_glance", "tldr", "areas", "interaction_style", "friction", "suggestions")
-        if not narrative.get(k)
+    cards = {
+        "work": [
+            _bar_card("What You Wanted", agg["goal_categories"], "#2563eb"),
+            _bar_card("Session Types", agg["session_types"], "#8b5cf6"),
+        ],
+        "usage": [
+            _bar_card("Sessions per Day", dict(sorted(started.items())), "#6366f1", limit=None, ordered=True, pretty=False),
+            _bar_card("Models", dict(models), "#0891b2", pretty=False),
+        ],
+        "wins": [
+            _bar_card("Outcomes", agg["outcomes"], "#8b5cf6"),
+            _bar_card("Helpfulness (model-estimated)", agg["helpfulness"], "#16a34a"),
+        ],
+        "friction": [
+            _bar_card("Friction Types", agg["friction_counts"], "#dc2626"),
+            _bar_card("Inferred Satisfaction (model-estimated)", agg["satisfaction_counts"], "#eab308"),
+        ],
+    }
+    bodies = [
+        ("section-work", "work", _sec_work(nar["areas"])),
+        ("section-usage", "usage", _sec_usage(nar["style"], label)),
+        ("section-wins", "wins", _sec_wins(nar["wins"])),
+        ("section-friction", "friction", _sec_friction(nar["friction"])),
+        ("section-features", None, _sec_features(nar["claude_md"], nar["features"], label)),
+        ("section-patterns", None, _sec_patterns(nar["patterns"], label)),
+        ("section-horizon", None, _sec_horizon(nar["horizon"], label)),
     ]
-    unfaceted = n_sessions - len(facets)
-    notes = list(narrative.get("coverage_notes") or [])
-    if imeta.get("capped"):
-        notes.append(
-            f"Index cap: {imeta.get('shown')} of {imeta.get('total_in_window')} in-window sessions were "
-            f"indexed (--max-sessions); those not shown are the OLDEST by {imeta.get('order_key')}."
-        )
-    for adapter_note in imeta.get("notes") or []:
-        notes.append(f"Store note: {adapter_note}")
-    churn = imeta.get("capsule_churn") or {}
-    if churn.get("mean_files_per_session", 0) > 1.0:
-        notes.append(
-            f"Capsule churn: {churn['logical_sessions']} logical sessions span {churn['files_total']} rollout "
-            f"files (mean {churn['mean_files_per_session']}, max {churn['max_files_in_one_session']} in one)."
-        )
-    if unfaceted > 0:
-        notes.append(f"{unfaceted} of {n_sessions} indexed sessions were not faceted (sampling cap).")
-    if missing:
-        notes.append("Narrative sections absent: " + ", ".join(missing) + ".")
-    if notes:
-        parts.append(sec("Coverage notes", "".join(f"<p>{_esc(n)}</p>" for n in notes)))
+    sections: list[tuple[str, str]] = []
+    orphans: list[str] = []
+    for sid, card_key, body in bodies:
+        if body:
+            sections.append((sid, body + (_charts_row(cards[card_key]) if card_key else "")))
+        elif card_key:
+            orphans.extend(cards[card_key])
+    orphan_html = _charts_row(orphans)
+    if orphan_html:
+        sections.append(("section-aggregates", f'<h2 id="section-aggregates">Facet Aggregates (deterministic)</h2>{orphan_html}'))
 
-    css = (
-        ":root { color-scheme: light dark; }"
-        "body { font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;"
-        " margin: 0 auto; max-width: 60rem; padding: 2rem 1.25rem; }"
-        "header h1 { margin: 0 0 .25rem; font-size: 1.6rem; }"
-        ".meta { color: #777; margin: 0 0 1.5rem; }"
-        "section { margin: 1.75rem 0; }"
-        "h2 { font-size: 1.15rem; border-bottom: 1px solid #8884; padding-bottom: .3rem; }"
-        ".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .75rem; }"
-        ".card { border: 1px solid #8883; border-radius: .5rem; padding: .75rem 1rem; }"
-        ".card h3, .area h3 { margin: .1rem 0 .4rem; font-size: 1rem; }"
-        ".count { color: #777; font-weight: normal; font-size: .85rem; }"
-        ".ex { color: #777; margin: .15rem 0 .15rem .75rem; font-size: .9rem; }"
-        ".tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .75rem; }"
-        "table { border-collapse: collapse; width: 100%; font-size: .9rem; }"
-        "caption { text-align: left; font-weight: 600; margin-bottom: .25rem; }"
-        "td { border-top: 1px solid #8883; padding: .2rem .4rem; }"
-        "td.num { text-align: right; font-variant-numeric: tabular-nums; }"
+    glance = nar["glance"]
+    rendered = {sid for sid, _ in sections}
+    glance_rows = ""
+    for key, title, target, link_text in _GLANCE_LINKS:
+        if glance[key]:
+            link = f' <a href="#{target}" class="see-more">{_esc(link_text)} →</a>' if target in rendered else ""
+            glance_rows += f'<div class="glance-section"><strong>{_esc(title)}</strong> {_inline(glance[key])}{link}</div>'
+    glance_html = (
+        f'<div class="at-a-glance"><div class="glance-title">At a Glance</div><div class="glance-sections">{glance_rows}</div></div>'
+        if glance_rows
+        else ""
     )
+
+    absent = [
+        name
+        for name, present in (
+            ("at_a_glance", bool(glance_rows)),
+            ("project_areas", bool(nar["areas"])),
+            ("interaction_style", bool(nar["style"]["narrative"])),
+            ("what_works", bool(nar["wins"]["items"])),
+            ("friction_analysis", bool(nar["friction"]["categories"])),
+            ("suggestions", bool(nar["claude_md"] or nar["features"] or nar["patterns"])),
+            ("on_the_horizon", bool(nar["horizon"]["items"])),
+        )
+        if not present
+    ]
+    notes = _coverage_notes(index, facets, nar["coverage_notes"], absent)
+    coverage_html = _sec_coverage(notes, nar["verification"])
+    if coverage_html:
+        rendered.add("section-coverage")
+
+    nav_ids = [sid for sid, _ in sections] + (["section-coverage"] if coverage_html else [])
+    nav = "".join(f'<a href="#{sid}">{_esc(_NAV_LABELS[sid].format(label=label))}</a>' for sid in nav_ids)
+    active_days = len(started)
+    stat_title = f"{len(facets)} faceted of {n_sessions} indexed" + (
+        f" ({imeta.get('total_in_window', '?')} in window)" if imeta.get("capped") else ""
+    )
+    stats = [
+        (f"{n_sessions:,}", "Sessions", stat_title),
+        (f"{user_msgs:,}", "User msgs", ""),
+        (f"{tool_calls:,}", "Tool calls", ""),
+        (f"{active_days:,}", "Active days", ""),
+        (f"{user_msgs / active_days:,.1f}" if active_days else "—", "Msgs/Day", ""),
+    ]
+    stats_html = "".join(_stat(v, lbl, t) for v, lbl, t in stats)
+
+    body = "".join(chunk for _, chunk in sections)
+    fun_html = _sec_fun(nar["fun"])
+    tldr_html = f'<div class="narrative" id="section-tldr">{_prose(nar["tldr"])}</div>' if nar["tldr"] else ""
+    scripts = (
+        (_JS_TOGGLE if coverage_html else "")
+        + (_JS_COPY if 'onclick="copyText(this)"' in body else "")
+        + (_JS_COPY_CMD if "copyCmdItem(" in body else "")
+    )
+    script_html = f"<script>{scripts}</script>" if scripts else ""
+    models_line = ", ".join(sorted(models)) or "—"
     return (
-        "<!doctype html><html><head><meta charset='utf-8'>"
-        f"<title>{_esc(vendor)} insights</title><style>{css}</style></head><body>"
-        + "".join(parts)
-        + f"<footer><p class='meta'>Generated {_iso()} by scripts/vendor-insights.py"
-        " (mechanical half of /vendor-insights).</p></footer></body></html>"
+        '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        f'<title>{_esc(label)} Insights</title><style>{_REPORT_CSS}</style></head><body><div class="container">'
+        f"<h1>{_esc(label)} Insights</h1>"
+        f'<p class="subtitle">{user_msgs:,} user messages across {_esc(indexed_phrase)} · {len(facets)} faceted | '
+        f"{_esc((window.get('start') or '?')[:10])} to {_esc((window.get('end') or '?')[:10])}</p>"
+        f'<p class="subtitle">Models: {_esc(models_line)}</p>'
+        f"{tldr_html}{glance_html}"
+        f'<nav class="nav-toc">{nav}</nav>'
+        f'<div class="stats-row">{stats_html}</div>'
+        f"{body}{fun_html}{coverage_html}"
+        f'<p class="empty" style="margin-top: 32px;">Generated {_iso()} by scripts/vendor-insights.py '
+        "(mechanical half of /vendor-insights).</p>"
+        f"</div>{script_html}</body></html>"
     )
 
 
