@@ -287,7 +287,7 @@
       "alias": null,
       "inputs": 2,
       "annotations": 0,
-      "owner": "duplicate native ID"
+      "owner": "branch-sequence-review-v1:a6ec9e820613"
     },
     {
       "key": "8d214cf3ae20",
@@ -315,7 +315,7 @@
       "alias": null,
       "inputs": 5,
       "annotations": 0,
-      "owner": "duplicate native ID"
+      "owner": "branch-sequence-review-v1:0479e9657ab3"
     },
     {
       "key": "325388a4989e",
@@ -357,21 +357,21 @@
       "alias": null,
       "inputs": 11,
       "annotations": 0,
-      "owner": "duplicate native ID"
+      "owner": "branch-sequence-review-v1:e9a469256c79"
     },
     {
       "key": "465717925324",
       "alias": null,
       "inputs": 5,
       "annotations": 0,
-      "owner": "duplicate native ID"
+      "owner": "branch-sequence-review-v1:129fc0393717"
     },
     {
       "key": "465717925324",
       "alias": null,
       "inputs": 3,
       "annotations": 0,
-      "owner": "duplicate native ID"
+      "owner": "branch-sequence-review-v1:66de6ccc61e4"
     },
     {
       "key": "e2cfe23d988b",
@@ -553,7 +553,7 @@
       "alias": null,
       "inputs": 4,
       "annotations": 0,
-      "owner": "duplicate native ID"
+      "owner": "branch-sequence-review-v1:2b3c94584076"
     }
   ],
   "source_segments": [
@@ -829,5 +829,5 @@
     "result": "list_turns is not supported yet",
     "limit": "Native app identity/turn readback for this handle remains unavailable; storage-prefix evidence is not substituted for that acceptance."
   },
-  "remaining": "Six explicitly complete file columns have duplicate header identities across three source families. Their four history-base boundaries require branch-aware reconstruction before whole logical-session coding; one reference token differs from its candidate parent's header ID. Do not concatenate parent tails or claim independently completed sessions. Earlier fork/parent, attachment, side-history and independent-substitution gaps remain separately open; this census does not close them."
+  "remaining": "The six explicitly complete duplicate-header columns and one naming parent now have cutoff-aware reference reconstruction and same-coder prompt/reply assessments in branch-sequence-review-v1.json. Native app identity and complete original logical sessions remain unproved; one reference token differs from its candidate parent's header ID. Excluded parent tails remain separate branches. Earlier fork/parent, attachment, side-history and independent-substitution gaps remain separately open; this census does not close them."
 }

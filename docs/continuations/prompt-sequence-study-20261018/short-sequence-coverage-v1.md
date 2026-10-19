@@ -74,7 +74,7 @@ flags true. Their current review owners reconcile as follows:
 | Four-sequence contextual review | 4 |
 | Expanded 218-position review | 36 |
 | This two-prompt review | 16 |
-| Duplicate-header families requiring branch reconstruction | 6 |
+| Branch-aware contextual review | 6 |
 | Total | 70 |
 
 This is coverage of captured file columns, not 70 complete original sessions,
@@ -85,7 +85,8 @@ remain visible under their existing owners.
 
 [Ordered storage-view references](native-storage-views-v1.json) now preserve seven
 cutoff-aware prompt/context views and their bounded reply references. This is
-reference reconstruction; native identity and whole-view semantic acceptance remain open.
+reference reconstruction with [same-coder prompt/reply review](branch-sequence-review-v1.md);
+native identity and complete original-session acceptance remain open.
 
 Seven files across three duplicate-header families were read within their
 recorded byte bounds. Every full decoded hash matched the captured source
@@ -104,8 +105,8 @@ parent snapshot was independently hash-bound again to the exact prefix evidence.
 
 The referenced prefixes omit later parent prompts in every case. Concatenating
 complete parent files with continuation files would therefore insert prompts
-outside the declared histories. The next reconstruction must keep the parent
-tail as a separate branch and use only the referenced prefix.
+outside the declared histories. The reconstructed views keep the parent tail
+as a separate branch and use only the referenced prefix.
 
 One reference token differs from its candidate parent's header ID. Its unique
 filename token and exact byte/ordinal boundary match, but that is not a complete

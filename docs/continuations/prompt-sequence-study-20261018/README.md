@@ -21,6 +21,10 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Three branch families side by side](branch-sequence-review-v1.md): 36 retained source
+  positions, 33 follow-up dispositions and seven cutoff-aware views; two embedded
+  screenshots inspected, with native identity and original completeness still unproved.
+
 - [Short sequences and source coverage](short-sequence-coverage-v1.md): 16 more
   follow-ups, three-valued completeness, all 70 complete-flag column owners,
   and exact prefix evidence showing why parent tails cannot be concatenated.
