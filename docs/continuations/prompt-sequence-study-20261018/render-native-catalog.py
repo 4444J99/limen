@@ -47,6 +47,16 @@ payload = (
     .replace("&", "\\u0026")
 )
 script = (BASE / "native-catalog.js").read_text()
+proof = json.loads((PRIVATE / "native-readback-bindings-v1.json").read_text())
+managed = next(entry for entry in proof["threads"] if entry["alias"] == "U3")
+positions = sorted(int(entry["case"].split(".")[1]) for entry in proof["recovery_records"])
+assert positions == [5, 6, 7, 8, 9, 10]
+source_notes = [{"id": managed["id"], "alias": "U3", "positions": positions,
+                 "label": "Managed recovery input; excluded from operator-intent evidence; original retained verbatim."}]
+overlay = (BASE / "catalog-source-notes.js").read_text().replace(
+    "__SOURCE_NOTES__", json.dumps(source_notes).replace("<", "\\u003c")
+    .replace(">", "\\u003e").replace("&", "\\u0026"))
+script = script.replace("const picker =", overlay + "const picker =", 1)
 page = (
     """<!doctype html><html lang="en"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -89,6 +99,23 @@ for command in vocabulary["commands"]:
     )
 glossary += "</ul><p>These contracts are provisional and are not installed commands.</p></details>"
 page = page.replace('<div class="controls">', glossary + '<div class="controls">')
+current = json.loads((BASE / "vocabulary-v4.json").read_text())
+current_glossary = '<details id="current-vocabulary"><summary>19 proposed operator commands (V4)</summary><dl>\n'
+for command in current["commands"]:
+    current_glossary += (
+        "<dt><code>" + html.escape(command["name"]) + "</code> — "
+        + html.escape(command["operation"]) + "</dt><dd>"
+        + html.escape(command["target_and_payload"]) + '<p class="meta">'
+        + html.escape(command["authority_and_constraints"]) + "</p><p>"
+        + html.escape(command["completion_evidence"]) + "</p></dd>\n"
+    )
+current_glossary += (
+    "</dl><p>Provisional research contracts; no installed commands or independent substitution validation. "
+    "Six managed recovery inputs are retained and excluded from operator-intent evidence.</p></details>\n"
+    '<p class="meta">The 18-operation glossary below is the frozen V2 evaluation baseline, '
+    "superseded for current proposal review.</p>\n"
+)
+page = page.replace("<p>Choose whole sequences", current_glossary + "<p>Choose whole sequences", 1)
 destination = PRIVATE / "native-catalog.html"
 destination.write_text(page)
 destination.chmod(0o600)

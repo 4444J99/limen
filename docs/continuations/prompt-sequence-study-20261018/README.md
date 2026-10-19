@@ -42,8 +42,9 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 The existing private native-catalog.html places whole captured sequences in columns and keeps
 every retained prompt in order. Search selects complete columns. It contains 382 displayed file
-sequences and 3,500 prompt rows; it remains a frozen earlier rendering. Its candidate glossary
-does not yet contain v4. Private binding files identify the U aliases used in the newer review.
+sequences and 3,500 prompt rows. Its current glossary displays v4; U3 marks the six managed
+inputs while preserving the captured dataset. The frozen v2 glossary remains historical.
+See the [metadata update and verification](catalog-metadata-v1.md).
 
 The original file-based review accounts for 102 post-first positions across 23 files, with six now
 identified as managed inputs. The other 96 are candidate operator-context positions, including
