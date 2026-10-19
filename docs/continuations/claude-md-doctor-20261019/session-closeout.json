@@ -1,0 +1,36 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "106d7b13-6c0d-4f31-abf8-0d574fc5ec30",
+  "repository": "4444J99/limen",
+  "worktree_name": "claude-md-doctor-20261019",
+  "base_head": "50126824b95581a5296e294d9cdf9c8d52aa8774",
+  "publication_branch": "docs/session-closeout-claude-md-doctor-20261019",
+  "owner_url": "https://github.com/4444J99/limen/pull/3125",
+  "disposition": "complete",
+  "owned_paths": [
+    "CLAUDE.md",
+    "docs/architecture/merge-and-branch-protocol-detail.md"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "bash scripts/verify-scoped.sh (exit 0 bare on PR head 1830c253, 8 gates PASS; merged by squash as 50126824; owned paths identical at this head)",
+      "head": "50126824b95581a5296e294d9cdf9c8d52aa8774",
+      "exit_code": 0,
+      "evidence": "docs/continuations/claude-md-doctor-20261019/session-evidence.json",
+      "sha256": "8a2b2fbe4f19ff1a44b87a69820760adc8b5cb8da3e7e8a340da5fc90d8d7e5a"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "head": "50126824b95581a5296e294d9cdf9c8d52aa8774",
+      "exit_code": 0,
+      "evidence": "docs/continuations/claude-md-doctor-20261019/session-evidence.json",
+      "sha256": "8a2b2fbe4f19ff1a44b87a69820760adc8b5cb8da3e7e8a340da5fc90d8d7e5a"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/claude-md-doctor-20261019/session-evidence.json",
+    "sha256": "8a2b2fbe4f19ff1a44b87a69820760adc8b5cb8da3e7e8a340da5fc90d8d7e5a"
+  }
+}
