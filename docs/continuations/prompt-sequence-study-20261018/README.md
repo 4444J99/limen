@@ -21,6 +21,9 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Short sequences and source coverage](short-sequence-coverage-v1.md): 16 more
+  follow-ups, three-valued completeness, all 70 complete-flag column owners,
+  and exact prefix evidence showing why parent tails cannot be concatenated.
 - [Expanded contextual comparison](context-expanded-v1.md): 36 more retained file
   sequences, with all 218 post-opener positions dispositioned against v5.
   Composite intents, shared replies and unresolved payload/authority stay explicit.
