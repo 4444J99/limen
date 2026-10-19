@@ -1,0 +1,60 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "3ac6f57f-9d37-45c2-8140-f68f42d0d97f",
+  "repository": "4444J99/limen",
+  "worktree_name": "fix-gate-python-absolute-20261018",
+  "base_head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+  "publication_branch": "docs/session-closeout-heal-evolve-quota-20261019",
+  "owner_url": "https://github.com/4444J99/limen/pull/3114",
+  "disposition": "complete",
+  "owned_paths": [
+    "scripts/hooks/conduct-register.sh",
+    "scripts/tests/conduct-register-hook.test.sh",
+    "docs/plans/heal-evolve-ancient-avalanche.md",
+    "scripts/lib/gate-python.sh",
+    "cli/tests/test_closeout_runtime_python.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "bash scripts/tests/conduct-register-hook.test.sh (exit 0 bare: 64 passed, 0 failed)",
+      "head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+      "exit_code": 0,
+      "evidence": "docs/continuations/fix-gate-python-absolute-20261018/session-evidence.json",
+      "sha256": "7d05d387aa17477860838844f82be25e1f2f4603a63c41a491a81df4c40a30b4"
+    },
+    {
+      "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_closeout_runtime_python.py cli/tests/test_ship_docs_interpreter.py cli/tests/test_session_plan_slug.py -q (exit 0 bare, python3 shim to python3.14 first on PATH: 10 passed)",
+      "head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+      "exit_code": 0,
+      "evidence": "docs/continuations/fix-gate-python-absolute-20261018/session-evidence.json",
+      "sha256": "7d05d387aa17477860838844f82be25e1f2f4603a63c41a491a81df4c40a30b4"
+    },
+    {
+      "command": "uvx --from ruff==0.15.8 ruff check cli/src cli/tests web/api mcp ianva apps organs (exit 0 bare, at the cli/pyproject.toml pin)",
+      "head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+      "exit_code": 0,
+      "evidence": "docs/continuations/fix-gate-python-absolute-20261018/session-evidence.json",
+      "sha256": "7d05d387aa17477860838844f82be25e1f2f4603a63c41a491a81df4c40a30b4"
+    },
+    {
+      "command": "uvx --from ruff==0.15.8 ruff format --check cli/src cli/tests web/api mcp ianva apps organs (exit 0 bare, at the cli/pyproject.toml pin: 801 files already formatted)",
+      "head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+      "exit_code": 0,
+      "evidence": "docs/continuations/fix-gate-python-absolute-20261018/session-evidence.json",
+      "sha256": "7d05d387aa17477860838844f82be25e1f2f4603a63c41a491a81df4c40a30b4"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check (exit 0 bare: all 32 secret atoms registered)",
+      "head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+      "exit_code": 0,
+      "evidence": "docs/continuations/fix-gate-python-absolute-20261018/session-evidence.json",
+      "sha256": "7d05d387aa17477860838844f82be25e1f2f4603a63c41a491a81df4c40a30b4"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/fix-gate-python-absolute-20261018/session-evidence.json",
+    "sha256": "7d05d387aa17477860838844f82be25e1f2f4603a63c41a491a81df4c40a30b4"
+  }
+}
