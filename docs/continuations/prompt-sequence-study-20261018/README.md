@@ -6,6 +6,10 @@ Publication: [draft #3087](https://github.com/4444J99/limen/pull/3087).
 The current proposal is [vocabulary-v5.json](vocabulary-v5.json): **21 operator operations**.
 It is research evidence, not an installed command pack. The goal remains active.
 
+**Reply-order warning:** 29 captured reply associations across 19 columns precede
+those inputs in native order and timestamp. The capture/catalog is preserved and
+not yet repaired; see [the source-confirmed defect and owner](reply-order-findings-v1.md).
+
 | Purpose | Proposed operations |
 |---|---|
 | Advance or reshape authorized work | continue, goal, plan, fix, correct |
@@ -20,6 +24,13 @@ A common operation can have different outputs as those inputs change. Supplying 
 cannot be shortened to a bare verb without retaining that information or its immutable reference.
 
 ## Review the evidence
+
+- [Nine unknown-retention sequences](unknown-retention-review-v1.md): 47 exact native
+  input comparisons, 38 contextual follow-ups and four cross-sequence intent groups;
+  one new authoring brief is explicitly only partially covered by v5.
+- [Native reply-order defect](reply-order-findings-v1.md): 29 source-confirmed earlier
+  replies, three unexecuted regressions and a reviewable proposed repair; test execution
+  was automatically rejected as `shared-checkout-write`.
 
 - [Three branch families side by side](branch-sequence-review-v1.md): 36 retained source
   positions, 33 follow-up dispositions and seven cutoff-aware views; two embedded

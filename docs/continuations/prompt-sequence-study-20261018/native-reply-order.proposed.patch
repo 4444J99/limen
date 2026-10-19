@@ -1,0 +1,37 @@
+diff --git a/docs/continuations/prompt-sequence-study-20261018/capture-native-projection.py b/docs/continuations/prompt-sequence-study-20261018/capture-native-projection.py
+--- a/docs/continuations/prompt-sequence-study-20261018/capture-native-projection.py
++++ b/docs/continuations/prompt-sequence-study-20261018/capture-native-projection.py
+@@ -113,10 +113,18 @@
+     primary_ids = {id(prompt) for prompt in prompts}
+     for turn_id, users in users_by_turn.items():
+-        replies = replies_by_turn[turn_id]
+-        finals = [r for r in replies if r.get("phase") in {"final_answer", "final"}]
+-        if not finals and replies:
+-            finals = [{**replies[-1], "phase_inferred": True}]
+-        for prompt in users:
+-            prompt["finals"] = finals
++        replies = replies_by_turn[turn_id]
++        turn_finals = [r for r in replies if r.get("phase") in {"final_answer", "final"}]
++        if not turn_finals and replies:
++            turn_finals = [{**replies[-1], "phase_inferred": True}]
++        for prompt in users:
++            ordinal = prompt["source_ref"]["rollout_ordinal"]
++            later_replies = [r for r in replies if r["source_ref"]["rollout_ordinal"] > ordinal]
++            finals = [r for r in later_replies if r.get("phase") in {"final_answer", "final"}]
++            if not finals and later_replies:
++                finals = [{**later_replies[-1], "phase_inferred": True}]
++            preceding = [r["source_ref"].copy() for r in turn_finals if r["source_ref"]["rollout_ordinal"] <= ordinal]
++            if preceding:
++                prompt["excluded_preceding_reply_refs"] = preceding
++            prompt["finals"] = finals
+             prompt["response_attribution"] = (
+                 "shared-native-turn" if sum(id(user) in primary_ids for user in users) > 1 else "native-turn"
+@@ -236,5 +244,8 @@
+             reply["source_ref"]["kind"] = "native-rollout-message"
+             reply["source_ref"]["source_line"] = reply_line
+             if not source[reply_line]["bound"]:
+                 prompt["response_attribution"] = "adjacent-unbound"
++        for excluded in prompt.get("excluded_preceding_reply_refs", []):
++            excluded["kind"] = "native-rollout-message"
++            excluded["source_line"] = excluded["rollout_ordinal"]
+     return result

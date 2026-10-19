@@ -196,3 +196,43 @@ def test_rollout_missing_native_turn_is_explicitly_unmeasured():
         [native_message("user", "continue", None), native_message("assistant", "reported done", None, "final_answer")]
     )
     assert result["prompts"][0]["response_attribution"] == "adjacent-unbound"
+
+
+def test_later_prompt_does_not_receive_an_earlier_native_turn_reply():
+    result = MODULE.project_rows(
+        [
+            user("u1", "first", ordinal=1),
+            reply("earlier outcome", ordinal=2),
+            user("u2", "follow-up", ordinal=3),
+            reply("later outcome", ordinal=4),
+        ]
+    )
+    later = result["prompts"][1]
+    assert [r["text"] for r in later["finals"]] == ["later outcome"]
+    assert [r["rollout_ordinal"] for r in later["excluded_preceding_reply_refs"]] == [2]
+
+
+def test_later_prompt_without_later_reply_keeps_its_outcome_missing():
+    result = MODULE.project_rows(
+        [user("u1", "first", ordinal=1), reply("earlier outcome", ordinal=2), user("u2", "follow-up", ordinal=3)]
+    )
+    later = result["prompts"][1]
+    assert later["finals"] == []
+    assert later["excluded_preceding_reply_refs"][0]["rollout_ordinal"] == 2
+
+
+def test_rollout_later_commentary_does_not_inherit_an_earlier_final():
+    result = MODULE.project_rollout_records(
+        [
+            native_message("user", "first", "t1"),
+            native_message("assistant", "earlier outcome", "t1", "final_answer"),
+            native_message("user", "follow-up", "t1"),
+            native_message("assistant", "later commentary", "t1", "commentary"),
+        ]
+    )
+    later = result["prompts"][1]
+    assert [r["text"] for r in later["finals"]] == ["later commentary"]
+    assert later["finals"][0]["phase_inferred"] is True
+    excluded = later["excluded_preceding_reply_refs"][0]
+    assert excluded["kind"] == "native-rollout-message"
+    assert excluded["source_line"] == 2
