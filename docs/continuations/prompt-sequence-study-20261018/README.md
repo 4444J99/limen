@@ -3,16 +3,16 @@
 Owner: [#3056](https://github.com/4444J99/limen/issues/3056).
 Publication: [draft #3087](https://github.com/4444J99/limen/pull/3087).
 
-The current proposal is [vocabulary-v4.json](vocabulary-v4.json): **19 operator operations**.
+The current proposal is [vocabulary-v5.json](vocabulary-v5.json): **21 operator operations**.
 It is research evidence, not an installed command pack. The goal remains active.
 
 | Purpose | Proposed operations |
 |---|---|
-| Advance or reshape authorized work | continue, plan, fix, correct |
+| Advance or reshape authorized work | continue, goal, plan, fix, correct |
 | Resolve context and orientation | status, next, explain, recall, context |
 | Assess evidence | review, verify |
 | Bind a decision | approve, choose |
-| Publish, apply and prove session release | ship, apply, closeout |
+| Publish, apply, display and prove session release | ship, apply, open, closeout |
 | Transfer work, observe it or persist a lesson | handoff, watch, codify |
 
 Each operation retains its target, payload, authority, constraints and completion evidence.
@@ -26,6 +26,10 @@ cannot be shortened to a bare verb without retaining that information or its imm
   is counted separately from independent prompts.
 - [Recovered control sequence](recovered-control-sequence-v1.json): 25 contextual dispositions
   in a 26-input terminal segment, with seven preceding context inputs explicitly linked.
+- [Recovered artifact sequence](recovered-artifact-sequence-v1.md): nine contextual follow-ups,
+  rhetorical corrections, draft-only authority and the new open operation.
+- [Recovered workstream sequence](recovered-workstream-sequence-v1.md): sixteen follow-ups,
+  capability corrections, substantive requirement payloads and explicit goal persistence.
 - [Native readback and provenance correction](native-readback-v1.md): three native main-thread
   views agree with all 27 captured bodies and turn bindings. Six captured inputs are identified
   managed recovery probes and are excluded from the operator-intent count.
@@ -42,7 +46,7 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 The existing private native-catalog.html places whole captured sequences in columns and keeps
 every retained prompt in order. Search selects complete columns. It contains 382 displayed file
-sequences and 3,500 prompt rows. Its current glossary displays v4; U3 marks the six managed
+sequences and 3,500 prompt rows. Its current glossary displays v5; U3 marks the six managed
 inputs while preserving the captured dataset. The frozen v2 glossary remains historical.
 See the [metadata update and verification](catalog-metadata-v1.md).
 
@@ -58,6 +62,10 @@ remain unresolved.
 V2 remains the frozen evaluation baseline. V3 proposed an exact-response operator based on six
 then-unattributed probe inputs. V4 preserves that research history but excludes the operation
 from the primary vocabulary after those inputs were bound to managed recovery records.
+V5 preserves all nineteen V4 contracts and adds existing-artifact display and persistent-goal
+registration from two newly reviewed native views. Neither version has independent substitution
+validation. The current tranche contributes 25 contextual dispositions across 27 visible inputs;
+it is kept separate from earlier denominators pending broader source-origin reconciliation.
 
 Native main-thread pagination is not proof of complete side conversations. One reviewed chat's
 earlier recovery used Computer History observations; the original side-turn objects and replies

@@ -99,8 +99,8 @@ for command in vocabulary["commands"]:
     )
 glossary += "</ul><p>These contracts are provisional and are not installed commands.</p></details>"
 page = page.replace('<div class="controls">', glossary + '<div class="controls">')
-current = json.loads((BASE / "vocabulary-v4.json").read_text())
-current_glossary = '<details id="current-vocabulary"><summary>19 proposed operator commands (V4)</summary><dl>\n'
+current = json.loads((BASE / "vocabulary-v5.json").read_text())
+current_glossary = '<details id="current-vocabulary"><summary>21 proposed operator commands (V5)</summary><dl>\n'
 for command in current["commands"]:
     current_glossary += (
         "<dt><code>" + html.escape(command["name"]) + "</code> — "

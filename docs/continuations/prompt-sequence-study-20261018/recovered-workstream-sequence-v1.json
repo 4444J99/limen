@@ -1,0 +1,272 @@
+{
+  "schema": "limen.recovered_workstream_sequence_review.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "observed_date": "2026-10-19",
+  "source_alias": "L22",
+  "source_census": "native-source-recovery-v1.json",
+  "source_bindings": "private recovered-workstream-sequence-bindings-v1.json",
+  "privacy": "Private names, contacts, message excerpts, URLs, source paths and native identifiers are omitted.",
+  "method": {
+    "reader": "codex_app.read_thread",
+    "returned_pages": 2,
+    "reader_view_exhausted": true,
+    "visible_turns": 17,
+    "visible_inputs": 17,
+    "post_first_cases": 16,
+    "completed_turns": 15,
+    "interrupted_turns": 2,
+    "turns_without_user_input": 3,
+    "multiple_input_turns": 2,
+    "non_text_input_parts": 0,
+    "original_opener_proven": false,
+    "source_rule": "The first visible input is a plan-implementation relay. Its per-item emitter and relation to earlier native sessions are unresolved; user role alone does not prove direct operator authorship.",
+    "response_rule": "Preserve input/response interleaving inside shared turns; retain the native plan item separately from final prose.",
+    "reviewer": "Same contextual coder; not independent validation.",
+    "comparison_vocabulary": "vocabulary-v5.json"
+  },
+  "findings": {
+    "new_operation": "/goal",
+    "persistent_goal_rule": "An explicit request for a persistent objective is not fully represented by continuing ordinary turn work.",
+    "affirmer_collision": "Position 9 begins with an affirmative but corrects a false access denial; it is not approval.",
+    "duplicate_rule": "Positions 3 and 4 contain identical text in different native turns with different terminal statuses. Do not deduplicate them by text.",
+    "payload_rule": "Positions 12 and 13 add substantive requirements; a control verb cannot replace their full specification.",
+    "native_plan_rule": "Position 17 has a separate structured plan item; final-text-only extraction would falsely make the planning response look incomplete.",
+    "historical_success": "Historical completion claims are not current acceptance evidence; the study does not independently validate the underlying project or communication analysis."
+  },
+  "cases": [
+    {
+      "case": "L22.2",
+      "position": 2,
+      "operations": [
+        "/correct",
+        "/fix"
+      ],
+      "intent": "Correct unsupported access and capability claims and require the agent to bootstrap available tools.",
+      "required_payload": "Actual contested claims, existing authorized work and the documented bootstrap paths.",
+      "authority_boundary": "A capability correction is not permission to bypass an actual authentication or policy gate.",
+      "historical_response": "Interrupted commentary acknowledged the correction and reported attaching a browser; no completed outcome in this turn.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.3",
+      "position": 3,
+      "operations": [
+        "/fix",
+        "/recall"
+      ],
+      "intent": "Require lookup in the existing authoritative repository instead of shifting work back to the operator.",
+      "required_payload": "Repository source scope and the unresolved engineering question.",
+      "authority_boundary": "Retrieve the owning configuration without exposing credentials or inventing permissions.",
+      "historical_response": "Interrupted commentary changed the lookup route; no completed outcome.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.4",
+      "position": 4,
+      "operations": [
+        "/fix",
+        "/recall",
+        "/continue"
+      ],
+      "intent": "Repeat the same repository-lookup correction in a new native turn.",
+      "required_payload": "Same correction payload and current authorized objective.",
+      "authority_boundary": "Do not count identical wording as one source event; preserve the earlier interrupted attempt.",
+      "historical_response": "The later completed turn reported finding the owning rail and completing staging/integration; claims were not reverified.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.5",
+      "position": 5,
+      "operations": [
+        "/correct",
+        "/continue"
+      ],
+      "intent": "Change the preview-access requirement and require the full intended website.",
+      "required_payload": "New public-preview scope and the original full-site objective.",
+      "authority_boundary": "A preview-access change does not authorize unrelated production or private-data exposure.",
+      "historical_response": "Shared completed turn reported a broader public preview while retaining private boundaries.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.6",
+      "position": 6,
+      "operations": [
+        "/correct",
+        "/continue"
+      ],
+      "intent": "Extend the previous input's presentation scope to all named surfaces.",
+      "required_payload": "The explicit surface set and its relationship to the ongoing objective.",
+      "authority_boundary": "Do not substitute a single presentation page for the named whole.",
+      "historical_response": "Shares the completed response with position 5; no separate per-input completion is inferred.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.7",
+      "position": 7,
+      "operations": [
+        "/recall",
+        "/review"
+      ],
+      "intent": "Retrieve recent communication and diagnose a collaboration disconnect.",
+      "required_payload": "Participants, exact time window, authorized source and review purpose.",
+      "authority_boundary": "Retrieval and analysis do not authorize sending messages or changing the project.",
+      "historical_response": "The assistant initially reviewed repository history instead of the requested communication; this is a source-selection mismatch.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.8",
+      "position": 8,
+      "operations": [
+        "/correct",
+        "/recall"
+      ],
+      "intent": "Correct the source from repository state to the native messaging store.",
+      "required_payload": "Named source and inherited participants/time window.",
+      "authority_boundary": "A source correction does not broaden the review to unrelated conversations.",
+      "historical_response": "The assistant denied access and asked for a pasted export; a later turn corrected that access claim.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.9",
+      "position": 9,
+      "operations": [
+        "/correct",
+        "/recall"
+      ],
+      "intent": "Reject the access denial and require the available retrieval route.",
+      "required_payload": "Contested capability and original source-bound review request.",
+      "authority_boundary": "The leading affirmative word is a correction, not approval or permission for unrelated action.",
+      "historical_response": "The assistant acknowledged local access and queried the store, but still failed to resolve the intended contact.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.10",
+      "position": 10,
+      "operations": [
+        "/correct",
+        "/recall"
+      ],
+      "intent": "Require available contact-name resolution for the same retrieval task.",
+      "required_payload": "Participant identity mapping and the same bounded source scope.",
+      "authority_boundary": "Do not ask the operator to re-supply information before using existing authorized identity mappings.",
+      "historical_response": "The assistant again reported inability to resolve the contact; a later response claimed successful resolution.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.11",
+      "position": 11,
+      "operations": [
+        "/fix",
+        "/recall",
+        "/review"
+      ],
+      "intent": "Require due diligence across the existing communication corpus without repeated operator explanation.",
+      "required_payload": "Existing exports/native sources, the original participants/time window and review purpose.",
+      "authority_boundary": "The instruction does not authorize expanding collection indefinitely or inventing inaccessible content.",
+      "historical_response": "The assistant reported a matched conversation and an evidence-based diagnosis; source outputs were not independently reverified.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.12",
+      "position": 12,
+      "operations": [
+        "/approve",
+        "/context",
+        "/continue"
+      ],
+      "intent": "Assent to the preceding direction while adding substantive comparison and generation requirements.",
+      "required_payload": "Exact approved direction plus all newly supplied interface, content and priority requirements.",
+      "authority_boundary": "The assent applies in context; it cannot erase the new requirements or grant publication authority.",
+      "historical_response": "Intervening commentary reported generating comparison artifacts before the next input expanded the interaction model.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.13",
+      "position": 13,
+      "operations": [
+        "/context",
+        "/continue"
+      ],
+      "intent": "Add an interactive selection, rewrite and assembly requirement while work is underway.",
+      "required_payload": "The full new interaction specification and existing content/approval constraints.",
+      "authority_boundary": "New behavior must remain part of the acceptance contract; a bare continue would lose it.",
+      "historical_response": "Intervening commentary reported an implementation pivot; the shared turn's final answer addressed a later capability question.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.14",
+      "position": 14,
+      "operations": [
+        "/explain"
+      ],
+      "intent": "Ask whether a requested template workflow is possible in the existing system.",
+      "required_payload": "The desired alternatives, actual platform/repository constraints and existing integration question.",
+      "authority_boundary": "A feasibility question is not authorization to switch a live template.",
+      "historical_response": "The shared final described current constraints and allowed alternatives; current platform facts were not rechecked by this study.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.15",
+      "position": 15,
+      "operations": [
+        "/plan",
+        "/goal",
+        "/continue"
+      ],
+      "intent": "Plan the complete supplied set of unfinished requirements, then persist a goal to complete it.",
+      "required_payload": "The entire mixed payload, staged plan requirement, exact persistent objective, acceptance criteria and retained external gates.",
+      "authority_boundary": "Do not promote quoted historical status into current proof. Planning, goal registration and execution are separate requested stages.",
+      "historical_response": "Commentary and final claimed execution and goal completion; the returned record contains no historical goal-creation/readback receipt.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.16",
+      "position": 16,
+      "operations": [
+        "/next"
+      ],
+      "intent": "Derive the remaining work in full dependency order.",
+      "required_payload": "Current workstream and requested root-to-leaf breadth.",
+      "authority_boundary": "A request for next actions does not by itself authorize execution.",
+      "historical_response": "The assistant returned an ordered roadmap; it did not implement the roadmap in that turn.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L22.17",
+      "position": 17,
+      "operations": [
+        "/plan"
+      ],
+      "intent": "Produce a full implementation plan for the supplied roadmap.",
+      "required_payload": "Complete roadmap payload, current state and retained publication/production gates.",
+      "authority_boundary": "Planning remains distinct from executing the proposed steps.",
+      "historical_response": "A separate native plan item contains the detailed plan; the brief final message alone omits it.",
+      "bare_command_sufficient": false,
+      "historical_result_reverified": false
+    }
+  ],
+  "claims_not_made": [
+    "Complete original native lineage",
+    "Sixteen independently validated substitutions",
+    "All visible user items directly authored by the operator",
+    "A historical goal was actually registered or correctly completed",
+    "Current project deployment or source-communication truth",
+    "New commands installed"
+  ]
+}

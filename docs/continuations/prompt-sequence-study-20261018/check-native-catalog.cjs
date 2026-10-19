@@ -35,7 +35,7 @@ assert.ok(walk(ids.board).some(item => typeof item.textContent === "string" && i
 const current = page.match(/<details id="current-vocabulary">([\s\S]*?)<\/details>/);
 assert.ok(current, "the comparison must display its current vocabulary");
 const currentNames = Array.from(current[1].matchAll(/<code>(\/[^<]+)<\/code>/g), item => item[1]).sort();
-const expectedNames = JSON.parse(fs.readFileSync(__dirname + "/vocabulary-v4.json", "utf8")).commands.map(item => item.name).sort();
+const expectedNames = JSON.parse(fs.readFileSync(__dirname + "/vocabulary-v5.json", "utf8")).commands.map(item => item.name).sort();
 assert.deepEqual(currentNames, expectedNames, "displayed operation names must match the current operator proposal");
 const managedColumn = ids.board.children.find(column => walk(column).some(item => item.tagName === "h2" && item.textContent === "U3"));
 assert.ok(managedColumn, "the managed-input source must be identifiable");
