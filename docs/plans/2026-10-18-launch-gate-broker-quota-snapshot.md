@@ -1,7 +1,7 @@
 # Launch gate: honour the last-good broker claim snapshot while the write quota is spent
 
 Issue: #3119
-PR: (pending)
+PR: #3122
 
 ## Context
 
