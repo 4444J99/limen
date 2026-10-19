@@ -331,10 +331,15 @@ web-build' spec/contracts/readiness.schema.json
 # DECLARED as `guard_state:` blocks on the parameters.yaml row that governs each one, and that
 # population is grow-only — so deleting a declaration here is precisely the drift the gate exists
 # to catch, and a params change must re-run it.
+#
+# stop-governor-check joined 2026-10-19: check H holds the three LIMEN_STOP_GOVERNOR* rows
+# (default, env, owner) equal to the fallbacks scripts/stop-governor.py ships, so editing a
+# declared default here without the script (or the reverse) is exactly the drift it catches.
 expect params-change 'syntax-changed
 diff-hygiene
 sync-release-test
 guard-degradation
+stop-governor-check
 check-params
 paused-beat-test
 check-note-links' institutio/governance/parameters.yaml

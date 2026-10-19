@@ -646,6 +646,15 @@ def run_hook(args: argparse.Namespace) -> int:
     return 0
 
 
+def _fixed_probe(git: GitState | None) -> Callable[[str], GitState | None]:
+    """A probe that reports the supplied state whatever the cwd (offline replay and tests)."""
+
+    def probe(_cwd: str) -> GitState | None:
+        return git
+
+    return probe
+
+
 def _cmd_decide(args: argparse.Namespace) -> int:
     registry = load_registry(Path(args.registry) if args.registry else REGISTRY)
     if registry is None:
@@ -654,12 +663,13 @@ def _cmd_decide(args: argparse.Namespace) -> int:
     payload = json.loads(Path(args.decide).read_text(encoding="utf-8"))
     state = json.loads(args.git_state) if args.git_state else None
     if state is not None:
-        git: GitState | None = GitState(
-            toplevel=Path(state["toplevel"]) if state.get("toplevel") else None,
-            canonical=Path(state["canonical"]) if state.get("canonical") else None,
-            **{k: state[k] for k in ("branch", "dirty", "ahead", "has_upstream", "commits_vs_main") if k in state},
+        probe = _fixed_probe(
+            GitState(
+                toplevel=Path(state["toplevel"]) if state.get("toplevel") else None,
+                canonical=Path(state["canonical"]) if state.get("canonical") else None,
+                **{k: state[k] for k in ("branch", "dirty", "ahead", "has_upstream", "commits_vs_main") if k in state},
+            )
         )
-        probe: Callable[[str], GitState | None] = lambda _cwd: git
     else:
         probe = probe_git
     decision = decide(
