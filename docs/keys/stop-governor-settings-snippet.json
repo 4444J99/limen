@@ -1,0 +1,44 @@
+{
+  "_README": [
+    "STAGED arming for the stop governor (lever L-STOP-GOVERNOR-ARM). Do NOT let an agent arm settings.json or hooks.json: the repo charter treats hook arming as a self-modification boundary.",
+    "What it does: at the turn-end boundary the governor reads the Stop payload plus read-only git state and, when a registered rule matches, emits ONE bounded continuation written in your own lowercase lexicon (continue / verify / closeout / next / status / merge), so the ask arrives without being typed. Registry: institutio/governance/post-opener-intents.json. Every rule ships in SHADOW: it logs would_block to logs/stop-governor/events.jsonl and changes nothing until a promotion block makes it live.",
+    "Scope is a limen checkout only. The governor stays silent in plan mode, in dontAsk (headless fleet) lanes, under /loop, in a background job, while a stop-hook continuation is already running, and under a logs/AUTONOMY_PAUSED wall.",
+    "Apply, in a worktree on a topic branch (project scope, one human paste for both vendors):",
+    "  1. claude: add the `claude.hooks.Stop` array below as a new `Stop` key under `hooks` in .claude/settings.json (there is no Stop key today).",
+    "  2. codex: append the `codex.hooks.Stop[0]` group below to the existing `Stop` array in .codex/hooks.json (keep the host-admission entry), then accept Codex's persisted hook trust for the new entry when it asks.",
+    "  3. the agent commits, opens the PR, and merges through scripts/merge-policy.sh.",
+    "Verify (read-only, offline): python3 scripts/check-stop-governor.py --armed reports each vendor armed; python3 scripts/armed-valve-audit.py --offline shows STOP_GOVERNOR_CLAUDE_STOP_WIRED and STOP_GOVERNOR_CODEX_STOP_WIRED armed once the live checkout carries the merge.",
+    "Disarm without editing a settings file: touch logs/STOP_GOVERNOR_OFF in the main checkout, or export LIMEN_STOP_GOVERNOR=0. Revert by deleting the two entries.",
+    "Codex note: the repo's own host-admission Stop hook had emitted the halt shape ({continue:false}) instead of a continuation; this change set fixes it, but a live Codex session sees the fix only after the installed immutable runtime refreshes."
+  ],
+  "claude": {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "timeout": 10,
+              "command": "PROJECT_ROOT=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$PROJECT_ROOT/scripts/hooks/stop-governor.sh\" ] && \"$PROJECT_ROOT/scripts/hooks/stop-governor.sh\" --vendor claude --event Stop || true"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "codex": {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "timeout": 10,
+              "command": "\"$(git rev-parse --show-toplevel)/scripts/hooks/codex-hook-runner.sh\" stop-governor --event Stop"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

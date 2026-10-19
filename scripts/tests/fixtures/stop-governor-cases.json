@@ -1,0 +1,1503 @@
+[
+ {
+  "id": "not-stop",
+  "note": "an event other than Stop is not ours",
+  "expect": {
+   "action": "allow",
+   "code": "not_stop"
+  },
+  "payload": {
+   "hook_event_name": "SessionStart",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "kill-env",
+  "note": "LIMEN_STOP_GOVERNOR=0 allows",
+  "expect": {
+   "action": "allow",
+   "code": "kill_switch"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "LIMEN_STOP_GOVERNOR": "0"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "kill-file",
+  "note": "logs/STOP_GOVERNOR_OFF in the canonical root allows",
+  "expect": {
+   "action": "allow",
+   "code": "kill_switch"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "files": {
+   "logs/STOP_GOVERNOR_OFF": ""
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "active-true",
+  "note": "a continuation already running yields",
+  "expect": {
+   "action": "allow",
+   "code": "continuation_active"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": true,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "active-string",
+  "note": "a non-boolean flag yields",
+  "expect": {
+   "action": "allow",
+   "code": "continuation_active"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": "false",
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "active-absent",
+  "note": "an absent flag counts as not continuing (documented tolerance)",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-plan",
+  "note": "plan phase is read-only: silent",
+  "expect": {
+   "action": "allow",
+   "code": "mode:plan"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "plan",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-dontask",
+  "note": "headless fleet lanes run dontAsk: silent",
+  "expect": {
+   "action": "allow",
+   "code": "mode:dontAsk"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "dontAsk",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-bypass",
+  "note": "bypassPermissions is not ours to nudge",
+  "expect": {
+   "action": "allow",
+   "code": "mode:bypassPermissions"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "bypassPermissions",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-missing",
+  "note": "an absent mode is unknown: silent",
+  "expect": {
+   "action": "allow",
+   "code": "mode:None"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-auto-claude",
+  "note": "auto is a Claude mode",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "auto",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "mode-auto-codex",
+  "note": "auto is not a Codex mode",
+  "expect": {
+   "action": "allow",
+   "code": "mode:auto"
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "auto",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "background-job",
+  "note": "a background conduct job is not interactive",
+  "expect": {
+   "action": "allow",
+   "code": "background_job"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "env": {
+   "CLAUDE_JOB_DIR": "/jobs/x"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "loop-owns",
+  "note": "a pending /loop owns the cadence",
+  "expect": {
+   "action": "allow",
+   "code": "loop_owns_cadence"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?",
+   "session_crons": [
+    {
+     "id": "c1"
+    }
+   ]
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "empty",
+  "note": "no assistant text, nothing to judge",
+  "expect": {
+   "action": "allow",
+   "code": "empty"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "  "
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "fixed-point",
+  "note": "CLOSEOUT COMPLETE is terminal: nothing follows it",
+  "expect": {
+   "action": "allow",
+   "code": "fixed_point"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done.\nCLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    },
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "blocked-once",
+  "note": "BLOCKED: is stated once and never continued",
+  "expect": {
+   "action": "allow",
+   "code": "blocked_once"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Want me to go on?\nBLOCKED: paste the snippet"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "no-signal",
+  "note": "no detector matched",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Here is the summary of the files I read."
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    },
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "scope-no-git",
+  "note": "not a work tree: out of scope",
+  "expect": {
+   "action": "allow",
+   "code": "out_of_scope"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "git": null,
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "scope-no-marker",
+  "note": "a git tree without the registry is not a limen checkout",
+  "expect": {
+   "action": "allow",
+   "code": "out_of_scope"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "git": {
+   "out_of_scope": true
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "pause-wall",
+  "note": "a wall suppresses every rule",
+  "expect": {
+   "action": "allow",
+   "code": "paused_wall"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "files": {
+   "logs/AUTONOMY_PAUSED": "class: wall\nreason: safety halt\n"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "pause-legacy",
+  "note": "a legacy marker without a class or a peer keyword is a wall",
+  "expect": {
+   "action": "allow",
+   "code": "paused_wall"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "files": {
+   "logs/AUTONOMY_PAUSED": "reason: stop everything\n"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "pause-unreadable",
+  "note": "an unreadable marker is a wall",
+  "expect": {
+   "action": "allow",
+   "code": "paused_wall"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "dirs": [
+   "logs/AUTONOMY_PAUSED"
+  ],
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "pause-fence-cont",
+  "note": "a fence does not stop a directed session's continuation",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "files": {
+   "logs/AUTONOMY_PAUSED": "class: fence\nreason: peer lane\nprohibitions: merge\n"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "pause-legacy-peer",
+  "note": "a legacy marker naming a peer is a fence",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "files": {
+   "logs/AUTONOMY_PAUSED": "reason: peer agent coordination\n"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "pause-fence-merge",
+  "note": "a fence that prohibits merge suppresses MERGE only",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed the branch and opened PR #4242 for review."
+  },
+  "files": {
+   "logs/AUTONOMY_PAUSED": "class: fence\nreason: peer lane\nprohibitions: merge\n"
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "cont-shadow",
+  "note": "every rule ships shadow: log, change nothing",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "CONT"
+   ],
+   "output_empty": true
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  }
+ },
+ {
+  "id": "cont-live",
+  "note": "a live CONT blocks once with the operator's lexicon",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ],
+   "reason_prefix": "[stop-governor:CONT@",
+   "reason_has": [
+    "proceed w ur suggestion",
+    "BLOCKED: <atom>",
+    "what you need to do:"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "cont-gated",
+  "note": "a send/delete/spend/leak question is never auto-continued",
+  "expect": {
+   "action": "allow",
+   "code": "gated_tail"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Drafted the reply to the client. Should I send the email now?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "cont-cap",
+  "note": "CONT is capped at two per session",
+  "expect": {
+   "action": "allow",
+   "code": "intent_cap"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "ledger_pre": {
+   "session": {
+    "total": 2,
+    "rules": {
+     "CONT": 2
+    }
+   }
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "cont-no-session",
+  "note": "no session id means no ledger key",
+  "expect": {
+   "action": "allow",
+   "code": "no_session"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "session-cap",
+  "note": "four continuations per session, then silence",
+  "expect": {
+   "action": "allow",
+   "code": "session_cap"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "ledger_pre": {
+   "session": {
+    "total": 4,
+    "rules": {}
+   }
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "daily-cap",
+  "note": "forty continuations per day across sessions",
+  "expect": {
+   "action": "allow",
+   "code": "daily_cap"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "ledger_pre": {
+   "day_total": 40
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "dup-claim",
+  "note": "a second registration of the same stop stays silent",
+  "expect": {
+   "action": "allow",
+   "code": "dup_claim"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "ledger_pre": {
+   "claim_current": true
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "no-ledger",
+  "note": "no ledger, no continuation",
+  "expect": {
+   "action": "allow",
+   "code": "no_ledger"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "unwritable_state": true,
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "verify-close-live",
+  "note": "a completion claim on unpublished work composes verify then closeout",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY",
+    "CLOSE"
+   ],
+   "reason_has": [
+    "were all of the findings healed and addressed?",
+    "closeout means closeout, nothing hanging",
+    "scripts/verify-scoped.sh"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "verify-only-live",
+  "note": "VERIFY live, CLOSE shadow: one rule blocks, the other is logged",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ],
+   "shadow_has": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "verify-spent-close",
+  "note": "VERIFY already used this session: closeout alone",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "dirty": true
+  },
+  "ledger_pre": {
+   "session": {
+    "total": 1,
+    "rules": {
+     "VERIFY": 1
+    }
+   }
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "verify-needs-work",
+  "note": "no unpublished work means nothing to verify",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "close-with-evidence",
+  "note": "an exit-code claim is already there: closeout alone",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ],
+   "reason_has": [
+    "safe to archive session?"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "close-cap",
+  "note": "CLOSE is capped at one per session",
+  "expect": {
+   "action": "allow",
+   "code": "intent_cap"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  },
+  "ledger_pre": {
+   "session": {
+    "total": 1,
+    "rules": {
+     "CLOSE": 1
+    }
+   }
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "question-beats-completion",
+  "note": "an agent asking to continue is not finishing: CONT outranks a stray completion word",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ],
+   "shadow_missing": [
+    "VERIFY",
+    "CLOSE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. Want me to also open the PR?"
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "completion-without-question",
+  "note": "the same stop without a question is answered by verify",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "VERIFY"
+   ],
+   "reason_has": [
+    "scripts/verify-scoped.sh"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-shadow",
+  "note": "a clean pushed branch naming a PR",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "MERGE"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed the branch and opened PR #4242 for review."
+  }
+ },
+ {
+  "id": "merge-live",
+  "note": "live MERGE hands the decision to merge-policy",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "MERGE"
+   ],
+   "reason_has": [
+    "scripts/merge-policy.sh",
+    "MERGE-HEAD"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed the branch and opened PR #4242 for review."
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-dirty",
+  "note": "a dirty tree is not merge-ready",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed the branch and opened PR #4242 for review."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-main",
+  "note": "main is never a merge candidate branch",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed the branch and opened PR #4242 for review."
+  },
+  "git": {
+   "branch": "main"
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "merge-unpushed",
+  "note": "an ahead branch is not merge-ready",
+  "expect": {
+   "action": "allow",
+   "code": "no_signal"
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Pushed the branch and opened PR #4242 for review."
+  },
+  "git": {
+   "ahead": 2
+  },
+  "registry_patch": {
+   "rules": {
+    "MERGE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "next-shadow",
+  "note": "verified, clean, no next: line",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: the tests passed."
+  }
+ },
+ {
+  "id": "next-has-line",
+  "note": "a next: line answers NEXT",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "NEXT"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done and verified: the tests passed.\nnext: open the PR"
+  }
+ },
+ {
+  "id": "status-shadow",
+  "note": "a completion claim without a needs-you line",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_has": [
+    "STATUS"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  }
+ },
+ {
+  "id": "status-answered",
+  "note": "a needs-you line answers STATUS",
+  "expect": {
+   "action": "allow",
+   "code": "would_block",
+   "shadow_missing": [
+    "STATUS"
+   ]
+  },
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. what you need to do: none"
+  }
+ },
+ {
+  "id": "codex-yield",
+  "note": "host admission owns a first stop with unpublished work",
+  "expect": {
+   "action": "allow",
+   "code": "codex_admission_owns"
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "All done. The change is fixed and healed across the board."
+  },
+  "git": {
+   "dirty": true
+  },
+  "registry_patch": {
+   "rules": {
+    "VERIFY": {
+     "mode": "live"
+    },
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "codex-clean-cont",
+  "note": "a clean-tree Codex stop gets the same continuation",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "codex-close",
+  "note": "a clean-tree Codex completion closes out",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "vendor": "codex",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claude-clean-cont",
+  "note": "the Claude mirror of codex-clean-cont",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CONT"
+   ]
+  },
+  "vendor": "claude",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "I fixed the first two. Want me to also fix the other two?"
+  },
+  "registry_patch": {
+   "rules": {
+    "CONT": {
+     "mode": "live"
+    }
+   }
+  }
+ },
+ {
+  "id": "claude-close",
+  "note": "the Claude mirror of codex-close",
+  "expect": {
+   "action": "block",
+   "code": "continue",
+   "rules": [
+    "CLOSE"
+   ]
+  },
+  "vendor": "claude",
+  "payload": {
+   "hook_event_name": "Stop",
+   "session_id": "sess-1",
+   "cwd": "/work/limen",
+   "permission_mode": "default",
+   "stop_hook_active": false,
+   "last_assistant_message": "Fixed. verify-scoped exited 0 and everything passed."
+  },
+  "registry_patch": {
+   "rules": {
+    "CLOSE": {
+     "mode": "live"
+    }
+   }
+  }
+ }
+]

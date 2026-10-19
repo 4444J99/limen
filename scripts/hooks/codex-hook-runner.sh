@@ -68,6 +68,11 @@ case "$hook_name" in
     target="$root/scripts/hooks/codex-host-admission.py"
     immutable_target="${LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT:-$HOME/.local/share/limen/current/source/scripts/hooks/codex-host-admission.py}"
     ;;
+  stop-governor)
+    # Advisory and fail-open: it never goes through the immutable admission delegate.
+    target="$root/scripts/hooks/stop-governor.sh"
+    set -- --vendor codex "$@"
+    ;;
   *)
     log "unknown hook target; skipping"
     exit 0

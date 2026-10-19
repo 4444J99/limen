@@ -5498,6 +5498,30 @@
         "historical_gate_requires_verification": "Whether the charter's plan-first enforcement is worth its ceremony cost for reversible work is a product decision no predicate can derive.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-STOP-GOVERNOR-ARM",
+      "label": "Arm the stop governor: paste one Stop entry into .claude/settings.json and one into .codex/hooks.json so the recurring follow-ups (continue, verify, closeout, next, status, merge) fire without being typed.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-19",
+      "cost": "one paste into two tracked files plus one Codex hook-trust accept; the agent commits, opens the PR and merges around it",
+      "source_task": "https://github.com/4444J99/limen/issues/3128 (operator, 2026-10-19: the repeated asks across Claude and Codex sessions are redundant and should happen without input; the prompt-control study found ~540 of 1,503 post-opener turns are recurring argument-free asks typed at an agent stop)",
+      "gate": "Arming a hook is the harness self-modification boundary: an agent may not edit its own hook configuration. The staged snippet is docs/keys/stop-governor-settings-snippet.json; every rule ships in shadow, so arming changes nothing visible until a promotion block makes a rule live.",
+      "unlocks": "The stop governor starts logging would_block rows to logs/stop-governor/events.jsonl on real stops; once a rule carries replay or shadow evidence, or an explicit operator decision, it goes live and the follow-up arrives without typing.",
+      "steps": [
+        "(human) In a worktree, paste the `claude.hooks.Stop` array of docs/keys/stop-governor-settings-snippet.json into .claude/settings.json and the `codex.hooks.Stop[0]` group into the Stop array of .codex/hooks.json; accept Codex's persisted hook trust for the new entry.",
+        "(agent) Commit, open the PR, and merge it through scripts/merge-policy.sh.",
+        "(agent) Confirm with python3 scripts/check-stop-governor.py --armed and scripts/armed-valve-audit.py --offline that both vendors read armed.",
+        "(agent) After shadow rows accumulate, run replay and promote-check (follow-up on the issue) and open a promotion PR per rule; a live rule needs a promotion block or an explicit operator decision reference."
+      ],
+      "note": "Fail-open and reversible: touch logs/STOP_GOVERNOR_OFF in the main checkout or export LIMEN_STOP_GOVERNOR=0 to stop it without editing a settings file. Codex coverage depends on the installed immutable runtime and Codex's permission_mode values, both unverified here.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "issue": 3128,
+      "diagnosed_at": "2026-10-19T12:00:00Z",
+      "diagnosis_provenance": "stop-governor-design-20261019.synthesis"
     }
   ]
 }
