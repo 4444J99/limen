@@ -100,7 +100,19 @@ def _valid_delegate_verdict(output: dict[str, Any], event: str) -> bool:
             and isinstance(verdict.get("permissionDecisionReason"), str)
             and bool(verdict["permissionDecisionReason"])
         )
-    if not output or not set(output) <= {"systemMessage", "continue", "stopReason", "hookSpecificOutput"}:
+    if event == "Stop":
+        # A continuation is {decision: "block", reason}. The legacy {continue: false, stopReason} shape is
+        # still accepted so an older installed runtime keeps working through version skew; hookSpecificOutput
+        # is not a valid Stop output.
+        if not output or not set(output) <= {"systemMessage", "continue", "stopReason", "decision", "reason"}:
+            return False
+        if "decision" in output and (
+            output["decision"] != "block" or not isinstance(output.get("reason"), str) or not output["reason"]
+        ):
+            return False
+        if "reason" in output and "decision" not in output:
+            return False
+    elif not output or not set(output) <= {"systemMessage", "continue", "stopReason", "hookSpecificOutput"}:
         return False
     if "continue" in output and not isinstance(output["continue"], bool):
         return False
@@ -197,7 +209,9 @@ def _warning(text: str) -> dict[str, Any]:
 
 
 def _stop(text: str) -> dict[str, Any]:
-    return {"continue": False, "stopReason": text}
+    # `continue: false` halts the turn; a Stop hook continues it with decision "block" and a reason, which
+    # Codex feeds back as the next prompt (openai/codex hooks/src/events/stop.rs).
+    return {"decision": "block", "reason": text}
 
 
 def _tool_deny(text: str) -> dict[str, Any]:
