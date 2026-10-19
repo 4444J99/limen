@@ -21,6 +21,11 @@ cannot be shortened to a bare verb without retaining that information or its imm
 
 ## Review the evidence
 
+- [Native source recovery](native-source-recovery-v1.md): the reader matched 50 of 58 views;
+  44 were paged to the end, with all gaps retained. Shared history
+  is counted separately from independent prompts.
+- [Recovered control sequence](recovered-control-sequence-v1.json): 25 contextual dispositions
+  in a 26-input terminal segment, with seven preceding context inputs explicitly linked.
 - [Native readback and provenance correction](native-readback-v1.md): three native main-thread
   views agree with all 27 captured bodies and turn bindings. Six captured inputs are identified
   managed recovery probes and are excluded from the operator-intent count.
@@ -40,9 +45,12 @@ every retained prompt in order. Search selects complete columns. It contains 382
 sequences and 3,500 prompt rows; it remains a frozen earlier rendering. Its candidate glossary
 does not yet contain v4. Private binding files identify the U aliases used in the newer review.
 
-The source-level review accounts for 102 post-first positions across 23 files, with six now
+The original file-based review accounts for 102 post-first positions across 23 files, with six now
 identified as managed inputs. The other 96 are candidate operator-context positions, including
 remaining retention and attribution limitations. This is not a corpus substitution percentage.
+The supplementary native-reader review adds 25 contextual dispositions in one terminal segment.
+It is kept separate from the file-based count while original opener and source-origin bindings
+remain unresolved.
 
 ## Version and acceptance boundaries
 
