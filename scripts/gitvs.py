@@ -951,6 +951,15 @@ def _org_posture(estate: dict, online: bool) -> dict:
     return out
 
 
+# The census row shape. `id` is the stable REST identity — it survives renames and
+# transfers, so public-exception matching (estate_posture) and shelf-parity identity joins
+# key on it rather than on coordinates that go stale (P2 follow-up #2783).
+_CENSUS_JQ = (
+    ".[] | {id, full_name, private, fork, archived, size, description, homepage, "
+    "stars: .stargazers_count, topics_count: ((.topics // []) | length), pushed_at}"
+)
+
+
 def _owner_repos(
     owner: str,
     token: str | None,  # allow-secret (type annotation, no value)
@@ -963,10 +972,7 @@ def _owner_repos(
     NATIVE gh identity: non-canonical owners (personal estate, shelf orgs) sit outside the App
     installation, and the App token silently hides their PRIVATE repos. None ⟺ both routes
     failed (fail-open)."""
-    jq = (
-        ".[] | {full_name, private, fork, archived, size, description, homepage, "
-        "stars: .stargazers_count, topics_count: ((.topics // []) | length), pushed_at}"
-    )
+    jq = _CENSUS_JQ
     routes = [f"/orgs/{owner}/repos?type=all", f"/users/{owner}/repos"]
     if user_scoped and _gh_login() == owner:
         # The authenticated user's own estate: /user/repos?affiliation=owner is the ONLY route
@@ -1807,25 +1813,91 @@ def custody_drift(ledger: list, grants: dict, by_repo: dict, org_set: set) -> li
     return out
 
 
-def shelf_drift(shelves: dict, rows: list, target: str | None = None) -> list[str]:
+def _identity_records(estate: dict) -> dict[str, dict]:
+    """Recorded stable-identity/rename map for the migration: declared full coordinate ->
+    {"repository_id": int, "coordinates": [canonical + historical aliases]}. Built from the
+    repository-identity.json the estate's control_plane names ("Numeric GitHub identity
+    survives transfers; only live routing follows the canonical coordinate"). Absent or
+    unreadable ⟹ {} — callers fall back to the legacy bare-name rule."""
+    out: dict[str, dict] = {}
+    try:
+        rel = str((estate.get("control_plane") or {}).get("repository_identity_registry") or "")
+        data = json.loads((ROOT / rel).read_text(encoding="utf-8")) if rel else {}
+        for rec in (data or {}).get("repositories") or []:
+            if not isinstance(rec, dict):
+                continue
+            rid = rec.get("repository_id")
+            coords = sorted(
+                {str(c) for c in [rec.get("canonical_coordinate"), *(rec.get("historical_aliases") or [])] if c}
+            )
+            if not isinstance(rid, int) or not coords:
+                continue
+            entry = {"repository_id": rid, "coordinates": coords}
+            for c in coords:
+                out.setdefault(c, entry)
+    except Exception:
+        pass  # identity is advisory; the rung must never fail for want of it
+    return out
+
+
+def shelf_drift(
+    shelves: dict,
+    rows: list,
+    target: str | None = None,
+    identity: dict | None = None,
+) -> list[str]:
     """Class P's pure join (shelf parity, custody v4.0.0 Phase 2): declared shelf membership
     (estate shelf_assignments, bare names) vs census owner, BOTH directions — a declared repo
     living elsewhere is drift, and an undeclared repo squatting in a shelf org is drift.
-    Deterministic (sorted); reports remediation, never fires a transfer."""
+    Deterministic (sorted); reports remediation, never fires a transfer.
+
+    ``identity`` (optional): recorded stable-identity/rename mapping — declared full
+    coordinate -> {"repository_id": int, "coordinates": [known full names]} (see
+    _identity_records). When a record exists for a declared repo, target custody is accepted
+    ONLY on a stable-ID or recorded-coordinate match (census rows carry the REST ``id``);
+    a same-named unrelated repo at the target is a bare-name coincidence — the collision
+    rename this migration explicitly handles — not custody, and stays drift. Without a
+    record the legacy bare-name rule applies (a same-named repo at the target satisfies
+    the declaration).
+    """
     declared: dict[str, set[str]] = {str(o): {str(n) for n in (ns or [])} for o, ns in (shelves or {}).items()}
     owners_by_name: dict[str, set[str]] = {}
+    census_ids: set[int] = set()
+    census_fulls: set[str] = set()
     for r in rows or []:
-        full = str((r or {}).get("full_name") or "")
+        r = r or {}
+        full = str(r.get("full_name") or "")
         o, _, n = full.partition("/")
         if o and n:
             owners_by_name.setdefault(n, set()).add(o)
+            census_fulls.add(full)
+        rid = r.get("id")
+        if isinstance(rid, int):
+            census_ids.add(rid)
+    identity = identity or {}
     out: list[str] = []
     for org, names in sorted(declared.items()):
         for n in sorted(names):
+            decl_full = f"{org}/{n}"
             owners_ = owners_by_name.get(n) or set()
             if not owners_:
                 out.append(f"{org}/{n}: declared on the shelf but absent from the census")
-            elif org not in owners_ and target not in owners_:
+                continue
+            if org in owners_:
+                continue  # the declared org still holds it
+            rec = identity.get(decl_full) or {}
+            expected_id = rec.get("repository_id")
+            known = {decl_full} | {str(c) for c in (rec.get("coordinates") or [])}
+            if known & census_fulls or (isinstance(expected_id, int) and expected_id in census_ids):
+                continue  # stable identity or a recorded coordinate accounts for the move/rename
+            if rec:
+                # A record exists but nothing recorded matches the census: the target's
+                # same-named repo is a collision coincidence, not custody.
+                out.append(
+                    f"{n}: declared shelf {org}, census owner {'/'.join(sorted(owners_))} — transfer owed "
+                    f"(recorded identity {expected_id} absent from census; same-name target repo not accepted)"
+                )
+            elif target not in owners_:
                 out.append(f"{n}: declared shelf {org}, census owner {'/'.join(sorted(owners_))} — transfer owed")
     for n, owners_ in sorted(owners_by_name.items()):
         for o in sorted(owners_):
@@ -2212,7 +2284,13 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
         if not rows:
             skips.append("[P shelf-parity] no census facts (run census online first)")
         else:
-            for d in shelf_drift(shelves_reg, rows, (estate.get("personal_consolidation") or {}).get("target") if (estate.get("personal_consolidation") or {}).get("enabled") else None):
+            pc = estate.get("personal_consolidation") or {}
+            for d in shelf_drift(
+                shelves_reg,
+                rows,
+                pc.get("target") if pc.get("enabled") else None,
+                _identity_records(estate),
+            ):
                 fails.append(f"[P shelf-parity] {d}")
 
     # D — permission-over-grant (PR B, armed): the personal estate's FULL roll vs ACCESS — the
