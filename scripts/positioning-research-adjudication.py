@@ -41,8 +41,13 @@ RECEIPT_SCHEMA = "limen.psp-p02-w08-live-profile-formalization.v1"
 IDENTITY_SCHEMA = "limen.positioning_repository_identities.v1"
 WORK_ID = "PSP-P02-W08"
 PORTFOLIO_REPOSITORY_ID = 1155412125
+# The accepted August 10 public sources and receipt retain their observed identity.
+# Current manifest routing is checked separately after the later private transfer.
 PORTFOLIO_CANONICAL_SLUG = "organvm-vii-kerygma/portfolio"
 PORTFOLIO_RETIRED_SLUG = "organvm/portfolio"
+CURRENT_PORTFOLIO_CANONICAL_SLUG = "4444J99/portfolio"
+CURRENT_PORTFOLIO_VISIBILITY = "private"
+CURRENT_PORTFOLIO_PREVIOUS_SLUGS = [PORTFOLIO_RETIRED_SLUG, PORTFOLIO_CANONICAL_SLUG]
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 RFC3339_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\Z")
 CLAIM_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
@@ -1198,8 +1203,8 @@ def validate_bundle(
         errors.append(f"repository identity schema must be {IDENTITY_SCHEMA}")
     expected_identity = {
         "github_repository_id": PORTFOLIO_REPOSITORY_ID,
-        "canonical_slug": PORTFOLIO_CANONICAL_SLUG,
-        "visibility": "public",
+        "canonical_slug": CURRENT_PORTFOLIO_CANONICAL_SLUG,
+        "visibility": CURRENT_PORTFOLIO_VISIBILITY,
         "default_branch": "main",
         "archived": False,
         "source": f"https://api.github.com/repositories/{PORTFOLIO_REPOSITORY_ID}",
@@ -1207,16 +1212,18 @@ def validate_bundle(
     for key, expected in expected_identity.items():
         if identity.get(key) != expected:
             errors.append(f"portfolio repository identity {key} must be {expected!r}")
-    if identity.get("previous_slugs") != [PORTFOLIO_RETIRED_SLUG]:
-        errors.append("portfolio repository identity must retain exactly the retired slug as history")
+    if identity.get("previous_slugs") != CURRENT_PORTFOLIO_PREVIOUS_SLUGS:
+        errors.append("portfolio repository identity must retain both retired slugs as history")
     if "immutable GitHub repository ID" not in str(identity.get("resolution_rule") or ""):
         errors.append("portfolio identity must require immutable-ID resolution")
 
     work_rows = _work_rows(program)
-    retired_work = [row.get("id") for row in work_rows if row.get("target_repo") == PORTFOLIO_RETIRED_SLUG]
+    retired_work = [row.get("id") for row in work_rows if row.get("target_repo") in CURRENT_PORTFOLIO_PREVIOUS_SLUGS]
     if retired_work:
         errors.append(f"work packets still use the retired portfolio slug: {', '.join(map(str, retired_work))}")
-    canonical_work_ids = [str(row.get("id")) for row in work_rows if row.get("target_repo") == PORTFOLIO_CANONICAL_SLUG]
+    canonical_work_ids = [
+        str(row.get("id")) for row in work_rows if row.get("target_repo") == CURRENT_PORTFOLIO_CANONICAL_SLUG
+    ]
 
     relay = _mapping(
         artifact.get("repository_drift_relay"),
@@ -1272,13 +1279,13 @@ def validate_bundle(
             issue_number_owners[number] = work_id
         expected_issue_rows.append({"work_id": work_id, "issue": number})
         expected_index_fragment = f"| `{work_id}` "
-        if expected_index_fragment not in issue_index or PORTFOLIO_CANONICAL_SLUG not in next(
+        if expected_index_fragment not in issue_index or CURRENT_PORTFOLIO_CANONICAL_SLUG not in next(
             (line for line in issue_index.splitlines() if expected_index_fragment in line), ""
         ):
             errors.append(f"generated issue index does not project the canonical target for {work_id}")
     if receipt_identity.get("live_issue_bodies_requiring_refresh") != expected_issue_rows:
         errors.append("live issue-body refresh list must match the generated issue map")
-    if PORTFOLIO_RETIRED_SLUG in issue_index:
+    if any(slug in issue_index for slug in CURRENT_PORTFOLIO_PREVIOUS_SLUGS):
         errors.append("generated issue index still contains the retired portfolio slug")
 
     public_profile = _mapping(receipt.get("public_profile"), "receipt.public_profile", errors)
@@ -1699,11 +1706,11 @@ def validate_live_identity(
 ) -> list[str]:
     """Resolve the portfolio by immutable ID and compare token-neutral live metadata.
 
-    Repository permissions are credential-relative.  A repo-scoped Actions
-    token can read this public cross-repository identity but cannot represent
-    the human owner's authority there, so permissions are deliberately not an
-    identity predicate.  The pre-seed guard enforces the same immutable ID,
-    canonical slug, visibility, default branch, and archive-state contract.
+    Repository permissions are credential-relative, so permissions are not an
+    identity predicate. Private targets require an authenticated observation;
+    a successful identity check does not establish public-source eligibility.
+    The pre-seed guard enforces the same immutable ID, canonical slug,
+    visibility, default branch, and archive-state contract.
     """
 
     errors: list[str] = []
@@ -1735,8 +1742,9 @@ def validate_live_identity(
     for key, expected in expectations.items():
         if live.get(key) != expected:
             errors.append(f"stable repository ID resolves {key}={live.get(key)!r}, expected {expected!r}")
-    if live.get("private") is not False:
-        errors.append("stable portfolio repository must remain public")
+    expected_private = identity.get("visibility") != "public"
+    if live.get("private") is not expected_private:
+        errors.append("stable repository ID private flag must match the manifest visibility")
     return errors
 
 

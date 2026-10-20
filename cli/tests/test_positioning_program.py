@@ -47,12 +47,12 @@ def graph_and_map():
 def live_portfolio_repository() -> dict[str, object]:
     return {
         "id": 1155412125,
-        "full_name": "organvm-vii-kerygma/portfolio",
-        "visibility": "public",
-        "private": False,
+        "full_name": "4444J99/portfolio",
+        "visibility": "private",
+        "private": True,
         "default_branch": "main",
         "archived": False,
-        "html_url": "https://github.com/organvm-vii-kerygma/portfolio",
+        "html_url": "https://github.com/4444J99/portfolio",
     }
 
 
@@ -158,17 +158,19 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
         "PSP-P12-W04",
     }
     actual_work_ids = {
-        work_id
-        for work_id, packet in graph["work_by_id"].items()
-        if packet["target_repo"] == "organvm-vii-kerygma/portfolio"
+        work_id for work_id, packet in graph["work_by_id"].items() if packet["target_repo"] == "4444J99/portfolio"
     }
 
     assert actual_work_ids == expected_work_ids
-    identity = graph["repository_identity_by_slug"]["organvm-vii-kerygma/portfolio"]
+    identity = graph["repository_identity_by_slug"]["4444J99/portfolio"]
     assert identity["github_repository_id"] == 1155412125
-    assert "organvm/portfolio" in graph["retired_repository_slugs"]
+    assert identity["visibility"] == "private"
+    assert graph["retired_repository_slugs"] == {
+        "organvm/portfolio": "4444J99/portfolio",
+        "organvm-vii-kerygma/portfolio": "4444J99/portfolio",
+    }
     body = MODULE.body_for("PSP-P06-W01", graph, mapping)
-    assert "`organvm-vii-kerygma/portfolio`" in body
+    assert "`4444J99/portfolio`" in body
     assert "stable GitHub repository ID `1155412125`" in body
     calls: list[list[str]] = []
 
@@ -181,7 +183,9 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
     seed_identity = seed["execution_requirements"]["target_repository_identity"]
     assert seed["not_a_lease"] is True
     assert seed_identity["github_repository_id"] == 1155412125
-    assert seed_identity["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+    assert seed_identity["visibility"] == "private"
+    assert seed["execution_requirements"]["target_repository"] == "4444J99/portfolio"
+    assert seed_identity["resolved_full_name"] == "4444J99/portfolio"
     assert seed_identity["resolution"] == "verified_live_by_immutable_repository_id_before_seed"
     assert MODULE.RFC3339_RE.fullmatch(seed_identity["resolved_at"])
     assert calls == [["api", "repositories/1155412125"]]
@@ -191,7 +195,8 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
 
     assert result["status"] == "ok"
     assert calls == [["api", "repositories/1155412125"]]
-    assert result["repositories"][0]["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+    assert result["repositories"][0]["resolved_full_name"] == "4444J99/portfolio"
+    assert result["repositories"][0]["visibility"] == "private"
 
     moved = live_portfolio_repository()
     moved["full_name"] = "future-owner/portfolio"
@@ -201,11 +206,39 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
     with pytest.raises(MODULE.ProgramError, match="full_name drift"):
         MODULE.verify_repository_identities(graph)
 
+
+@pytest.mark.parametrize("retired_slug", ["organvm/portfolio", "organvm-vii-kerygma/portfolio"])
+def test_portfolio_retired_aliases_cannot_be_live_work_targets(retired_slug) -> None:
     stale = copy.deepcopy(MODULE.load_manifest(MANIFEST))
     psp_p06 = next(phase for phase in stale["phases"] if phase["id"] == "PSP-P06")
-    psp_p06["work"][0]["target_repo"] = "organvm/portfolio"
+    psp_p06["work"][0]["target_repo"] = retired_slug
     with pytest.raises(MODULE.ProgramError, match="retired repository slug"):
         MODULE.index_program(stale)
+
+
+def test_portfolio_registry_only_migration_rejects_every_stale_work_target() -> None:
+    stale = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    stale_work_ids = []
+    for phase in stale["phases"]:
+        for packet in phase["work"]:
+            if packet["target_repo"] == "4444J99/portfolio":
+                stale_work_ids.append(packet["id"])
+                packet["target_repo"] = "organvm-vii-kerygma/portfolio"
+    assert len(stale_work_ids) == 18
+    with pytest.raises(MODULE.ProgramError, match="retired repository slug") as error:
+        MODULE.index_program(stale)
+    assert all(work_id in str(error.value) for work_id in stale_work_ids)
+
+
+def test_portfolio_visibility_drift_blocks_seed_and_verification(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    changed = live_portfolio_repository()
+    changed.update({"visibility": "public", "private": False})
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: changed)
+    with pytest.raises(MODULE.ProgramError, match="visibility drift"):
+        MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    with pytest.raises(MODULE.ProgramError, match="visibility drift"):
+        MODULE.verify_repository_identities(graph)
 
 
 def test_repository_identity_sources_and_slug_history_are_collision_safe() -> None:
@@ -227,7 +260,7 @@ def test_repository_identity_sources_and_slug_history_are_collision_safe() -> No
         **copy.deepcopy(identities["portfolio"]),
         "github_repository_id": 1155412126,
         "canonical_slug": "example/second",
-        "previous_slugs": ["organvm-vii-kerygma/portfolio"],
+        "previous_slugs": ["4444J99/portfolio"],
         "source": "https://api.github.com/repositories/1155412126",
     }
     with pytest.raises(MODULE.ProgramError, match="contains canonical repository slug"):
@@ -1784,7 +1817,7 @@ def _multi_repository_source_receipt(graph, mapping):
     receipt = _source_bound_receipt(graph, mapping)
     work_id = "PSP-P14-W06"
     owner = graph["program"]["repository"]
-    target = "organvm-vii-kerygma/portfolio"
+    target = "4444J99/portfolio"
     command = "python3 scripts/verify-release-recovery.py"
     output = receipt["predicate"]["output"]
     receipt.update(
