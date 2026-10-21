@@ -1,0 +1,27 @@
+{
+  "bytes": 21544398848,
+  "copy_count_after": 2,
+  "date": "20261021",
+  "destination_volume": "/Volumes/Archive4T",
+  "excluded": {
+    "ai_exports_custody_copy": "already equal to its primary on the 4 TB container (path and size dry run, four providers); it is the deliberate off-disk replica, so a second copy beside the primary adds nothing",
+    "ciphertext_replica_restore_payloads": "about 41.7 GB of unpacked restore-test plaintext on the T7 only; derived from ciphertext tarballs whose names and sizes match their primaries, so it is regenerable and was left in place",
+    "finder_metadata": ".DS_Store files"
+  },
+  "files": 406,
+  "independent_physical_devices": true,
+  "items": {
+    "directories": 7,
+    "single_files": 4
+  },
+  "kind": "receipt",
+  "manifest_sha256": "bafba727e13a6ba62394980c87622f766279cdf9afdd1ac0371d12345b11b355",
+  "method": "rsync -rltp into a new directory (no --delete, no overwrite), then sha256 of every file on both sides compared",
+  "nothing_deleted_from_source": true,
+  "other_trees_verification": "path and size only (rsync --size-only dry run), not content hashes: every other T7 tree already exists on the 4 TB container apart from timestamp and Finder-metadata differences",
+  "source_volume": "/Volumes/T7Recovery",
+  "subject": "custody-t7-unique-consolidation",
+  "t7_retention": "keep: Archive4T, Ingress, Scratch and TM-Mac share one physical drive, so the T7 is the only independent physical copy",
+  "verification": "sha256 manifest of every copied file compared byte for byte against the source; private item list and manifest live beside the copy on the destination volume",
+  "volume_identity_note": "BSD disk numbers are reassigned across mounts: the 20261018 sibling receipt records the T7 as disk9, while on 20261021 the same volume is container disk7 on physical disk6; identify devices by volume name, not diskN"
+}
