@@ -1,0 +1,113 @@
+{
+  "schema": "limen.recovery_admission_reconciliation.v1",
+  "owner": "4444J99/limen#2739",
+  "receipt_pr": "4444J99/limen#2834",
+  "observed_at": "2026-10-09T19:41:34.749869+00:00",
+  "native_agent": "codex",
+  "native_session_id": "01a12217-4de8-7e71-9500-13b4acc2a6b6",
+  "human_protected": true,
+  "coordination_boundary": {
+    "human_opened_sessions": "independent lightweight read-only audits may proceed without child packets",
+    "agent_initiated_fanout": "reserve through conduct before launch",
+    "sole_recovery_writer": "coordinator",
+    "initiated_children": 0,
+    "protected_peer_modified": false
+  },
+  "policy": {
+    "owner_binding": "LIMEN_EXECUTION_POLICY",
+    "loader": "web/worker/src/conduct/durable-object.js",
+    "owner_install_route": "bash scripts/cf-wrangler.sh secret put LIMEN_EXECUTION_POLICY --config web/worker/wrangler.toml; payload through stdin",
+    "source_reconciliation": "recovered exact prior installation source; byte hash matches recorded successful installation; live prior deployment matched",
+    "prior_deployment": "af8b4033-47bb-4bdd-9596-4e8041447ea1",
+    "current_runtime": {
+      "schema_version": "limen.conduct_runtime_identity.v1",
+      "git_sha": "f93f3dd9076992ce6d38f4d697a5f7176b776013",
+      "deployment_id": "c9dfd60f-3d7f-4d7b-8a53-550d09bbb466"
+    },
+    "added_priority": {
+      "outcome_id": "remote-first-custody-20261005",
+      "enabled": true,
+      "recovery": true,
+      "work_keys": [
+        "remote-first-custody-20261005"
+      ],
+      "deadline_policy": "hard_deadline",
+      "owner": "https://github.com/4444J99/limen/issues/2739",
+      "resource_limits": {
+        "branch": 1,
+        "issue": 0,
+        "worktree": 0
+      },
+      "authorization_source": "Existing #2739 human remote-first recovery authorization; 2026-10-09 direct instruction reconciles exact work key through owning deployed policy. No capsule deadline or accounting reset."
+    },
+    "existing_outcome_rows_preserved": 2,
+    "execution_limits_unchanged": {
+      "autonomous_tasks": 2,
+      "recovery_writers": 1,
+      "heavy_workloads": 1,
+      "attempt_seconds": 1800,
+      "verification_seconds": 600,
+      "outcome_agent_seconds": 7200,
+      "corrective_retries": 1
+    },
+    "dispatch_enabled": false,
+    "source_code_redeployed": false,
+    "secret_values_published": false
+  },
+  "verification": {
+    "focused_policy_probe": "passed: exact key admitted; existing rows and limits unchanged; unchanged-input retry, third root and cumulative exhaustion denied",
+    "full_module_test": "unavailable: local ajv dependency absent; no dependency installation performed",
+    "focused_scope": "unchanged admission functions extracted verbatim for execution without unrelated AJV module import",
+    "live_probe": "passed priority, cumulative budget, retry, deadline; intentional absent-capability executor rejection",
+    "live_rejection": "conduct broker rejected request (409): {\n  \"detail\": \"no healthy native lane satisfies the packet capabilities and bounds\"\n}",
+    "probe_runs_before": 0,
+    "probe_runs_after": 0,
+    "probe_reserved_seconds": 0,
+    "predicate_validation_correction": "initial prose predicate rejected before admission; corrected executable predicate reached executor selection",
+    "broker_attempted_recovery": false
+  },
+  "accounting": {
+    "canonical_evidence": "retained session audits for both original campaign identities, prior cache writer, coordinator and all nine sessions registered since 2026-10-05; no campaign runs; unrelated six-root run independently identified and excluded",
+    "campaign_broker_admitted_roots": 0,
+    "campaign_broker_reserved_seconds": 0,
+    "campaign_broker_receipt_spend_seconds": 0,
+    "outcome_limit_seconds": 7200,
+    "broker_unreserved_ceiling_seconds": 7200,
+    "broker_root_limit": 2,
+    "broker_corrective_retries_debited": 0,
+    "actual_historical_direct_session_agent_seconds": null,
+    "actual_spend_status": "unmetered in canonical campaign receipts; zero broker spend is not zero actual consumption",
+    "actual_remaining_seconds": null,
+    "exhaustion_proven": false,
+    "separately_admitted_retry_permitted": "not established until historical actual accounting is reconciled; no execution packet constructed",
+    "expired_packet_deadline": "2026-10-09T18:58:20.610418Z",
+    "expired_packet_created_reservation": false,
+    "expired_capsule_extended": false,
+    "cumulative_accounting_reset": false,
+    "renewed_human_authority_requested": false
+  },
+  "execution": {
+    "status": "policy-reconciled-execution-not-admitted",
+    "ordinary_heavy_status": "denied: swap-fraction at 2026-10-09T19:40:37Z",
+    "inherited_heavy_lease": false,
+    "pressure_override_used": false,
+    "new_worktree": false,
+    "cache_retirements": 0,
+    "ssd_transfers": 0,
+    "ssd_restorations": 0,
+    "personal_originals_retired": 0,
+    "attributable_free_space_recovery_bytes": 0
+  },
+  "remaining_owner": {
+    "owner": "4444J99/limen#2739",
+    "predicate": "canonical cumulative actual consumption and retry history reconciled without substituting zero broker debits for unmetered direct execution; valid finite admission and ordinary heavy capacity before mutation",
+    "next_action": "reconcile original controller execution journals and accepted owner receipts into cumulative accounting; retain null actual remaining allowance until supported evidence exists; do not rerun old admit.py fresh-deadline constructor",
+    "audit_sessions_may_continue": true
+  },
+  "scoped_verification": {
+    "status": "passed",
+    "exit_code": 0,
+    "base": "a99bca2090b14d6809d8eb58826f98df2f93df0b",
+    "scope": "two receipt JSON files; does not certify implementation, payload custody or heavy operations"
+  }
+}

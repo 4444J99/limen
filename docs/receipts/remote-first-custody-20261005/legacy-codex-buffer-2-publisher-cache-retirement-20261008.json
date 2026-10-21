@@ -1,0 +1,14 @@
+{
+  "schema": "limen.publisher_cache_retirement_public_receipt.v1",
+  "unit": "legacy-codex-buffer-2",
+  "repository": "4444J99/arca-g3",
+  "preservation_proof": "feab3b13913a66a280b7fdc9e9a1c8daa86f25a6",
+  "cleanup_proof": "09f63f403074594944e09f62ef6c2084b12f02cc",
+  "fresh_remote_equal": true,
+  "independent_escrow_decryption_equal": true,
+  "logical_bytes_removed": 2018484050,
+  "observed_free_bytes_delta": 1011699712,
+  "concurrent_activity_affects_measurement": true,
+  "original_sources_removed": false,
+  "shared_store_removed": false
+}

@@ -7,10 +7,11 @@ Generated for the run-and-gun substrate correction on 2026-07-07.
 The laptop is a thin control plane. It must be able to run at a coffee shop from
 remote owner receipts, active checkouts, and small cached indexes.
 
-The external SSD estate is the durable library and processing substrate. When the
-drives are plugged in, they should hold the complete private/raw estate, processed
-and redacted corpora, repo/org custody mirrors, photos/media packages, and recovery
-copies. They are not just leftovers from the prior recovery incident.
+The complete recoverable collection lives in GitHub commits: encrypted originals,
+actual native recovery metadata, processed derivatives and transformation provenance.
+Publish and verify restoration from GitHub first. Archive4T and T7Recovery then
+hold full mirrors of that same collection, including photos/media packages and
+repo/org custody. Neither SSD holds unique authoritative content.
 
 Remote services remain canonical for remote objects. GitHub repos, profile state,
 issues, PRs, releases, and deployed proof surfaces must be read from the remote
@@ -18,8 +19,9 @@ owner first. Local clones are staging caches.
 
 ## Existing Doctrine
 
-These prior receipts are the current authority until a newer owner receipt
-supersedes them:
+The 2026-10-05 human correction in [issue #2739](https://github.com/4444J99/limen/issues/2739)
+supersedes SSD-exclusive custody roles below. These prior receipts remain
+provenance and preservation evidence:
 
 - `/Volumes/Archive4T/_OPERATIONS/STORAGE-OPERATING-MANUAL-2026-06-15.md`
 - `/Volumes/Archive4T/_OPERATIONS/LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md`
@@ -45,6 +47,17 @@ Key rules recovered from those surfaces:
   this doc.
 
 ## Primitive Layers
+
+### Remote-first full collection amendment (2026-10-05)
+
+Everything enters GitHub before the final external-drive pass. Full mirrors on
+both SSDs are a later requirement for this collection campaign. An absent SSD
+does not block processing, safe Git publication or fresh remote readback.
+Remote readiness never authorizes retirement. Independent key recovery, complete
+native restoration, mirror proofs, active-owner release and shared-store
+consumer checks remain separate predicates. The additive Git-mirrored
+acceptance adapter is pending; do not relabel ordinary Git history as
+provider-enforced retention to satisfy the unchanged v2 validator.
 
 ### Portable recovery amendment (2026-10-03)
 
@@ -156,7 +169,7 @@ The laptop keeps:
 The laptop should not keep:
 
 - completed repo clones after remote custody is proven;
-- bulk prompt/session corpora that already have private external custody;
+- bulk prompt/session corpora with verified encrypted remote custody;
 - raw media exports or Photos-derived working sets after package custody;
 - dependency caches, build outputs, and abandoned scratch roots.
 
@@ -164,8 +177,9 @@ The laptop should not keep:
 
 Private data is not ignored. It is processed with custody:
 
-1. Raw private data lives in the external estate with backup/restore evidence.
-2. Private processors read it and write private receipts into ignored owner paths.
+1. Capture and encrypt raw private data and native recovery metadata before publishing them to GitHub.
+2. Process private material and commit encrypted derivatives, receipts and transformation provenance
+   alongside the originals. Ignored owner paths are temporary staging, never the durable home.
 3. Public repos receive only redacted aggregate counts, generated methods, demos,
    tests, or fixtures that cannot expose private records.
 4. A pain point that becomes a reusable method should get a public shell and a

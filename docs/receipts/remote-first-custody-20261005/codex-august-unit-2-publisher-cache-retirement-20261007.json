@@ -1,0 +1,16 @@
+{
+  "schema": "limen.completed_publisher_cache_retirement.v1",
+  "owner": "4444J99/limen#2739",
+  "scope": "Codex-August-group-2-completed-publisher-cache",
+  "local_objects_covered": 1642,
+  "metadata_objects_preserved": 6,
+  "metadata_raw_bytes_preserved": 3413,
+  "logical_bytes_removed": 738865250,
+  "observed_free_bytes_delta": 370393088,
+  "concurrent_host_activity_affects_measurement": true,
+  "preservation_proof": "c9e2ebf587cd2e216beb5f5cd7fdbe08112243c2",
+  "cleanup_proof": "4b2dac597159e88f540c15efda9202b5d715a3d3",
+  "fresh_remote_equal": true,
+  "independent_escrow_decryption_equal": true,
+  "original_sources_removed": 0
+}

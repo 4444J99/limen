@@ -1,0 +1,31 @@
+{
+  "schema": "limen.codex_cold_months_egress.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "original_root_index": 16,
+  "months": [
+    "2026-07",
+    "2026-09"
+  ],
+  "status": "remote-recovery-verified",
+  "source_files": 353,
+  "logical_source_bytes": 1344971831,
+  "ciphertext_bytes": 529547088,
+  "source_stable": true,
+  "publication_repository": "4444J99/arca-g3",
+  "publication_prefix": "limen-reap/20261006/codex-cold-months",
+  "source_generation": "a6d07f61c50080c4101fd3c6b3cbf140d32b90a9",
+  "private_execution_proof_commit": "c7d432b80c87ce2bfedc24a8438aac4d591a2e06",
+  "fresh_remote_files_verified": 13,
+  "independent_escrow_recovery_verified": true,
+  "logical_restore_verified": true,
+  "native_filesystem_materialization_verified": false,
+  "source_removed": false,
+  "corrective_attempt": {
+    "count": 1,
+    "changed_input": "explicit HTTP/1.1 push transport",
+    "source_recaptured": false,
+    "completed_batches_replayed": false
+  },
+  "retirement_owner": "4444J99/limen#2739"
+}

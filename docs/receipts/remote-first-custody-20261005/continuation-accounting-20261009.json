@@ -1,0 +1,127 @@
+{
+  "schema": "limen.recovery_continuation_proposal.v1",
+  "owner": "4444J99/limen#2739",
+  "receipt_pr": "4444J99/limen#2834",
+  "observed_at": "2026-10-09T19:49:30.029648+00:00",
+  "native_session_id": "01a12234-5566-7c62-a3cb-e131db894e50",
+  "deployed_policy": {
+    "binding": "LIMEN_EXECUTION_POLICY",
+    "live_deployment_id": "c9dfd60f-3d7f-4d7b-8a53-550d09bbb466",
+    "runtime_git_sha": "f93f3dd9076992ce6d38f4d697a5f7176b776013",
+    "reconciled_exact_work_key": "remote-first-custody-20261005",
+    "fresh_capabilities_identity_matches_published_admission_receipt": true,
+    "policy_changed_this_session": false,
+    "prior_live_admission_probe_receipt": "docs/receipts/remote-first-custody-20261005/admission-reconciliation-20261009.json"
+  },
+  "accounting": {
+    "source": "original native campaign session task_complete duration_ms records",
+    "source_session_id": "01a10ceb-651d-7c81-b5ba-40cff41236f5",
+    "scope": "seven completed turns in original campaign session only; interrupted turn, descendants, replacements and subsequent sessions excluded",
+    "native_turns": [
+      {
+        "turn_id": "01a10cf5-b84d-74e1-b645-f862ed948864",
+        "started_at_epoch": 1791218792,
+        "completed_at_epoch": 1791218994,
+        "native_duration_ms": 202420
+      },
+      {
+        "turn_id": "01a10cfe-99f6-7d20-a998-abbe69d8c981",
+        "started_at_epoch": 1791219374,
+        "completed_at_epoch": 1791222073,
+        "native_duration_ms": 2696489
+      },
+      {
+        "turn_id": "01a10d31-e61d-7921-9631-e198b58ac530",
+        "started_at_epoch": 1791222736,
+        "completed_at_epoch": 1791224841,
+        "native_duration_ms": 2105290
+      },
+      {
+        "turn_id": "01a1120a-bb58-7923-a0a1-8f004ffa2ed1",
+        "started_at_epoch": 1791304055,
+        "completed_at_epoch": 1791304237,
+        "native_duration_ms": 182191
+      },
+      {
+        "turn_id": "01a11211-a1a8-7320-b921-02b8bfe8a9d1",
+        "started_at_epoch": 1791304507,
+        "completed_at_epoch": 1791308821,
+        "native_duration_ms": 4314060
+      },
+      {
+        "turn_id": "01a11269-b810-7320-97f6-af6944841b96",
+        "started_at_epoch": 1791310280,
+        "completed_at_epoch": 1791316984,
+        "native_duration_ms": 6703527
+      },
+      {
+        "turn_id": "01a112d2-2e7f-7a91-9671-b0f4eb5ad5fe",
+        "started_at_epoch": 1791317126,
+        "completed_at_epoch": 1791317135,
+        "native_duration_ms": 8909
+      }
+    ],
+    "native_completed_turn_duration_ms_lower_bound": 16212886,
+    "native_completed_turn_minutes_lower_bound": 270.21476666666666,
+    "meter_definition": "elapsed native execution-turn duration, including subprocess work/waits; not model CPU time",
+    "historical_full_campaign_duration_ms": null,
+    "default_outcome_limit_seconds": 7200,
+    "default_remaining_authority_seconds": 0,
+    "default_exhausted": true,
+    "canonical_broker_runs_in_three_audited_campaign_sessions": 0,
+    "canonical_broker_spend_is_not_actual_spend": true,
+    "canonical_accounting_changed": false,
+    "cumulative_accounting_reset": false
+  },
+  "deadline": {
+    "expired_packet_deadline": "2026-10-09T18:58:20.610418Z",
+    "expired_packet_extended": false,
+    "fresh_execution_packet_constructed": false,
+    "source_contract": "web/worker/src/conduct/inventory-admission.js executionAdmission retains min(packet, now+1800, retained, parent) and rejects exhausted deadline; no new runtime deadline test claimed"
+  },
+  "host": {
+    "observed_at": "2026-10-09T19:48:12.067084+00:00",
+    "allowed": false,
+    "reason": "swap-fraction",
+    "swap_fraction": 0.4588354491861537,
+    "live_leases": 0,
+    "pressure_override_inherited": false
+  },
+  "proposed_amendment": {
+    "status": "awaiting-explicit-human-authorization",
+    "outcome_id": "remote-first-custody-20261005",
+    "owner": "4444J99/limen#2739",
+    "additional_execution_seconds": 1800,
+    "verification_seconds_within_attempt": 600,
+    "max_attempts": 1,
+    "initiated_children": 0,
+    "sole_recovery_writer": true,
+    "scope": [
+      "canonical historical-consumption carry-forward and supported finite broker admission",
+      "existing tested exhaustive guard: recover and retire eligible publisher caches individually, with fresh ownership/dependency checks and per-removal df/APFS measurement",
+      "freeze complete collection and mirror/restore on registered Archive4T only if all cache/collection prerequisites and remaining deadline permit"
+    ],
+    "excluded": [
+      "personal-original retirement",
+      "shared Git-store removal",
+      "general backlog",
+      "pressure override",
+      "automatic further continuation",
+      "T7 substitution"
+    ],
+    "start_condition": "explicit human approval recorded under existing owner, then supported admission and ordinary host admission",
+    "stop_condition": "hard 1800-second deadline or denied gate; no fresh-deadline renewal",
+    "historical_accounting": "append continuation consumption; retain historical lower bound and unknown full total; never substitute zero broker debits",
+    "t7_rail": "registered T7Recovery absent; retain existing owner until mounted"
+  },
+  "results": {
+    "retired_cache_copies": 0,
+    "retained_candidate_allocated_bytes": 5186232320,
+    "attributable_reclaimed_bytes": 0,
+    "ssd_transfers": 0,
+    "ssd_restorations": 0,
+    "personal_originals_preserved": true,
+    "shared_git_stores_preserved": true
+  },
+  "next_action": "obtain explicit approval of this amendment before constructing executable recovery packet; ordinary host admission remains independently required"
+}

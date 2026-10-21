@@ -1,0 +1,240 @@
+{
+  "schema": "limen.remote_recovery_checkpoint.v1",
+  "owner": "4444J99/limen#2739",
+  "date": "2026-10-06",
+  "private_proof_repository": "4444J99/arca-g3",
+  "private_proof_commit": "f3524e7a1ac98d59584647a0b29fb02000ed1d26",
+  "private_proof_prefix": "limen-reap/20261006/native-recovery",
+  "proof_blobs_fresh_remote_equal": 4,
+  "scope": {
+    "root_count": 5,
+    "files": 60,
+    "native_atoms": 86
+  },
+  "key_recovery": {
+    "canonical_escrow_used": true,
+    "local_keychain_used_for_recovery": false,
+    "fresh_committed_source_decrypted": true
+  },
+  "results": [
+    {
+      "archive_decryption_equal": true,
+      "atoms": 65,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 65
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/limen",
+      "retirement_authorized": false,
+      "root_id": "r01",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 4,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 4
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/limen",
+      "retirement_authorized": false,
+      "root_id": "r02",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 6,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 3
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/limen",
+      "retirement_authorized": false,
+      "root_id": "r03",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 6,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 2
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/domus-genoma",
+      "retirement_authorized": false,
+      "root_id": "r04",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 5,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 2
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/domus-genoma",
+      "retirement_authorized": false,
+      "root_id": "r05",
+      "source_removed": false
+    }
+  ],
+  "native_mismatch": {
+    "attribute": "com.apple.provenance",
+    "affected_atoms": 76,
+    "other_materialized_fields_equal": true,
+    "original_values_preserved": true,
+    "acceptance_not_relaxed": true,
+    "supported_host_probe": {
+      "deployment_identity_valid": true,
+      "attempted_on_owned_restore_only": true,
+      "attribute_remained_present_after_successful_removal_return": true,
+      "acceptance_unchanged": true
+    }
+  },
+  "bulk_attempt": {
+    "first_acquisition_denied": [
+      "swap-growth",
+      "vitals-shed"
+    ],
+    "artifact": {
+      "private_commit": "34e673c6b65da80bd6051753dcca7080084db053",
+      "files": 65,
+      "logical_bytes": 161961333,
+      "ciphertext_bytes": 126993456,
+      "native_atoms": 69,
+      "source_stable": true,
+      "fresh_remote_readback_equal": true,
+      "archive_decryption_equal": true,
+      "source_removed": false,
+      "content_owners": [
+        "4444J99/limen",
+        "4444J99/speech-score-engine"
+      ],
+      "independent_escrow_key_recovery_verified": true
+    },
+    "receipts": {
+      "files": 33790,
+      "logical_bytes": 3647761908,
+      "ciphertext_bytes": 3389926336,
+      "native_atoms": 40105,
+      "source_stable": true,
+      "publication": "complete",
+      "observed_commit": "541239876755c8e718fd019f72280b1f67f4ce50",
+      "payload_batches_observed": 26,
+      "total_batches_including_manifest": 27,
+      "final_manifest_published": true,
+      "remote_recovery_verified": true,
+      "payload_bytes_published": 3389926336,
+      "remaining_payload_batches": 0,
+      "readback_files_verified_at_checkpoint": 52,
+      "readback_files_total": 52,
+      "independent_escrow_key_recovery_verified": true,
+      "archive_plaintext_hash_and_size_equal": true,
+      "verification_finished_at": "2026-10-06T19:56:11.987156+00:00"
+    },
+    "continuation": {
+      "authority": "https://github.com/4444J99/limen/issues/2739#issuecomment-5842180605",
+      "measurement_cadence_minutes": 30,
+      "per_process_deadlines_enforced": true,
+      "already_published_payloads_compared_and_skipped": true,
+      "source_recaptured": false,
+      "global_git_config_unchanged": true,
+      "latest_admission": {
+        "observed_at": "2026-10-06T17:46:18.814075+00:00",
+        "allowed": false,
+        "reasons": [
+          "disk-throughput"
+        ],
+        "unit": 4,
+        "source_removed": false
+      },
+      "operator_override": {
+        "instruction": "overide and proceed",
+        "date": "2026-10-06",
+        "scope": "Existing receipt snapshot upload and independent readback only",
+        "performance_pressure_override": true,
+        "exclusive_heavy_lease_retained": true,
+        "disk_space_floor_retained": true,
+        "source_deletion_authorized_by_override": false,
+        "global_policy_unchanged": true,
+        "transport": "Immutable raw HTTPS with serial byte-range resume",
+        "ssh_attempt": "Timed out without advancing the advertised branch",
+        "verification": "SHA-256 and exact remote Git blob identities for all files, then escrow decryption"
+      },
+      "execution_proof": {
+        "private_repository": "4444J99/arca-g3",
+        "commit": "d4e841b8d2298ed36acc35be139286b0c5654434",
+        "prefix": "limen-reap/20261006/receipts-execution-proof",
+        "fresh_remote_readback_equal": true,
+        "independent_escrow_decryption_equal": true
+      },
+      "current_transfer_state": "Recovery verified; transfer ended; exclusive lease released"
+    }
+  },
+  "local_disposition": {
+    "originals_removed": 0,
+    "original_sources_retained": true,
+    "private_staging_owned_by_this_receipt": true,
+    "original_target_denominator": 24,
+    "observed_absent": 8,
+    "observed_empty": 1,
+    "observed_nonempty": 15,
+    "verified_transfer_copy_retirement": {
+      "schema": "limen.verified_transfer_copy_retirement.v1",
+      "private_proof_commit": "d4e841b8d2298ed36acc35be139286b0c5654434",
+      "source_generation": "541239876755c8e718fd019f72280b1f67f4ce50",
+      "original_sources_removed": 0,
+      "temporary_ciphertext_files_removed": 102,
+      "temporary_logical_bytes_removed": 6779852672,
+      "free_bytes_before": 39951896576,
+      "scope": "Only ciphertext payload files in this transfer publication and readback directories; manifests retained",
+      "free_bytes_after": 40242159616,
+      "observed_free_bytes_delta": 290263040,
+      "finished_at": "2026-10-06T19:58:00.570779+00:00",
+      "concurrent_host_activity_may_affect_free_space": true,
+      "encrypted_execution_proof_commit": "9b0d361d1dc6a4ade1f6201b6c70c7db5ea2f3d0",
+      "proof_fresh_remote_and_escrow_verified": true
+    }
+  },
+  "remaining_work": {
+    "native_restoration_owner": "4444J99/limen#2739",
+    "domus_roots_owner": "4444J99/domus-genoma#411",
+    "predicate": "Full native restoration plus independent replica and retention evidence, protected-owner release and shared-store dependency proof before original removal",
+    "next_action": "Continue remote egress for the remaining estate roots. Resolve the measured native provenance mismatch through a supported restoration path, establish replica/retention and owner/dependency release before original-source removal. Receipt and artifact archive remote recovery is now verified."
+  },
+  "repo_owners": {
+    "limen": "https://github.com/4444J99/limen/pull/2834",
+    "domus": "https://github.com/4444J99/domus-genoma/pull/411",
+    "speech_score": "https://github.com/4444J99/speech-score-engine/pull/29"
+  }
+}

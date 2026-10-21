@@ -1,0 +1,19 @@
+{
+  "schema": "limen.publisher_cache_retirement_public_receipt.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "private_repository": "4444J99/arca-g3",
+  "preservation_proof_commit": "78436079a0778be2484e171839a1c9be3bfc49b3",
+  "cleanup_proof_commit": "9e75501200e1dfa46d847263e6f1a6b5c7021f13",
+  "fresh_remote_equal": true,
+  "independent_escrow_decryption_equal": true,
+  "unpublished_metadata_objects_preserved": 74,
+  "unpublished_metadata_bytes": 44700,
+  "all_cache_objects_and_refs_recoverable": true,
+  "cache_files_removed": 379,
+  "logical_bytes_removed": 513894381,
+  "observed_free_bytes_delta": 44965888,
+  "measurement_affected_by_concurrent_activity": true,
+  "original_sources_removed": false,
+  "shared_common_store_retained": true
+}
