@@ -1,0 +1,104 @@
+{
+  "cli_client": {
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_conduct_cli.py cli/tests/test_conduct_client.py -q",
+    "exit_code": 0,
+    "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "tests": 33
+  },
+  "credential_wall": {
+    "command": "python scripts/credential-wall.py --check",
+    "exit_code": 0,
+    "refreshed_at": "2026-10-18T12:01:25Z",
+    "registered_atoms": 32
+  },
+  "implementation_head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+  "landed": [
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "fc6e7bd78ec7918b3ce391336d16264d2c8b2e49",
+      "pr": 3022,
+      "repository": "4444J99/limen"
+    },
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "c1e66c1ab9ca4d8cc5c295eabfbde65da3a9c311",
+      "pr": 3011,
+      "repository": "4444J99/limen"
+    },
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "0838fd42fed216293e9a41748fdc6baa061a8b93",
+      "pr": 3019,
+      "repository": "4444J99/limen"
+    },
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "9a806217655fbd9c025174c955bc343aa50506e4",
+      "pr": 3020,
+      "repository": "4444J99/limen"
+    },
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "c92300d581928305ce13d170c4fd7ffe5cf2a82e",
+      "pr": 3021,
+      "repository": "4444J99/limen"
+    },
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "d8703e0796c9d3938c76d2bff1f8162d8e4da8f9",
+      "pr": 3027,
+      "repository": "4444J99/limen"
+    },
+    {
+      "ancestry_exit": 0,
+      "default_head": "5ac0e03d8a41ea250f651e4d43e1e3bce8e8c553",
+      "merge_commit": "9bfdb592bf437a4bd78a2516e2d74ee95ee24f2f",
+      "pr": 3037,
+      "repository": "4444J99/limen"
+    }
+  ],
+  "live_worker": {
+    "policy_fingerprint": "bc303fa68997ae8b76f194b3686bf65ea3e75ec65d2fbfa8f2b8e63643ffa24d",
+    "runtime": {
+      "deployment_id": "4561d4dd-3483-4298-a721-676ab8d9f53a",
+      "git_sha": "9bfdb592bf437a4bd78a2516e2d74ee95ee24f2f",
+      "schema_version": "limen.conduct_runtime_identity.v1"
+    }
+  },
+  "observed_at": "2026-10-18T12:08:22.068283+00:00",
+  "python": {
+    "exit_code": 0,
+    "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "url": "https://github.com/4444J99/limen/actions/runs/39112852953/job/117632454949"
+  },
+  "schema": "limen.unblock_closeout_verification.v1",
+  "scope_policy": "Unchanged implementation reuses exact-head results. This metadata publication does not claim correction of the four open review findings.",
+  "scoped": {
+    "command": "bash scripts/verify-scoped.sh",
+    "execution": "hosted exact source head",
+    "exit_code": 0,
+    "finished_at": "2026-10-18T08:59:38Z",
+    "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "job_conclusion": "success",
+    "url": "https://github.com/4444J99/limen/actions/runs/39112852955/job/117632505310"
+  },
+  "source_pr": {
+    "draft": true,
+    "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "merged": false,
+    "state": "open",
+    "url": "https://github.com/4444J99/limen/pull/3042"
+  },
+  "worker": {
+    "exit_code": 0,
+    "head": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "tests": 408,
+    "url": "https://github.com/4444J99/limen/actions/runs/39112852953/job/117632455156"
+  }
+}

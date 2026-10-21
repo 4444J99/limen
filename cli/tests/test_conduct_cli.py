@@ -395,3 +395,101 @@ def test_campaign_run_emits_one_structured_invalid_boundary(
         "terminal_predicate": "omega",
     }
     assert "/private/secret" not in result.output
+
+
+def _release_request():
+    return {
+        "expected_binding_generation": "a" * 64,
+        "expected_principal_registry_generation": "b" * 64,
+        "replacement_principal_id": "claude-direct",
+        "reason": "Correct a reviewed stale binding.",
+    }
+
+
+@pytest.mark.parametrize("apply", [False, True])
+def test_release_session_requires_exact_prepared_request_and_is_read_only_by_default(monkeypatch, tmp_path, apply):
+    client = HttpConductClient("https://limen-runtime.example", "fixture-owner-token")
+    calls = []
+
+    def request(method, path, payload=None):
+        calls.append((method, path, payload))
+        return {
+            "status": "released",
+            "binding_generation": "a" * 64,
+            "principal_registry_generation": "b" * 64,
+            "healthy": False,
+            "active_leases": 0,
+            "active_runs": 0,
+            "pending_remote_effects": 0,
+        }
+
+    monkeypatch.setattr(client, "_request", request)
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    prepared = tmp_path / "release.json"
+    prepared.write_text(json.dumps(_release_request()))
+    args = ["release-session", "native/session", "--request", str(prepared)]
+    if apply:
+        args.append("--apply")
+    result = CliRunner().invoke(conduct_group, args)
+    assert result.exit_code == 0, result.output
+    assert len(calls) == 1
+    assert calls[0] == (
+        "POST" if apply else "GET",
+        "/api/conduct/sessions/native%2Fsession/" + ("release" if apply else "binding"),
+        _release_request() if apply else None,
+    )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("expected_binding_generation", "invalid"),
+        ("replacement_principal_id", "../not-an-identity"),
+        ("reason", "\u0000"),
+        ("reason", " "),
+        ("principal", {"roles": ["session_owner"]}),
+    ],
+)
+def test_release_session_rejects_invalid_prepared_request_before_transport(monkeypatch, tmp_path, field, value):
+    client = HttpConductClient("https://limen-runtime.example", "fixture-owner-token")
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("invalid request reached transport")
+
+    monkeypatch.setattr(client, "_request", forbidden)
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    prepared = tmp_path / "release.json"
+    payload = _release_request()
+    payload[field] = value
+    prepared.write_text(json.dumps(payload))
+    result = CliRunner().invoke(conduct_group, ["release-session", "native", "--request", str(prepared), "--apply"])
+    assert result.exit_code != 0
+
+
+def test_release_session_check_refuses_changed_generation_without_write(monkeypatch, tmp_path):
+    client = HttpConductClient("https://limen-runtime.example", "fixture-owner-token")
+    calls = []
+
+    def request(method, path, payload=None):
+        calls.append(method)
+        return {"binding_generation": "c" * 64, "principal_registry_generation": "b" * 64}
+
+    monkeypatch.setattr(client, "_request", request)
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    prepared = tmp_path / "release.json"
+    prepared.write_text(json.dumps(_release_request()))
+    result = CliRunner().invoke(conduct_group, ["release-session", "native", "--request", str(prepared)])
+    assert result.exit_code != 0
+    assert calls == ["GET"]
+
+
+def test_release_session_validation_does_not_echo_private_values(monkeypatch, tmp_path):
+    client = HttpConductClient("https://limen-runtime.example", "fixture-owner-token")
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+    payload = _release_request()
+    payload["unexpected_field"] = "private-marker-fixture"
+    prepared = tmp_path / "release.json"
+    prepared.write_text(json.dumps(payload))
+    result = CliRunner().invoke(conduct_group, ["release-session", "native", "--request", str(prepared)])
+    assert result.exit_code != 0
+    assert "private-marker-fixture" not in result.output

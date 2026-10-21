@@ -31,3 +31,34 @@ to inspect its exact-base diff; --apply writes that same patch only on the ownin
 topic branch, refusing any moved source generation. It retains ordinary growth
 reservation and target-volume checks. It does not extend an agent deadline or
 authorize custody, deletion, deployment or unrestricted dispatch.
+
+### Owner-only release of a stale pinned binding
+
+A wrong-bearer registration keeps its original identity pinned until an explicit
+owner release. TTL expiry only makes it unhealthy; it does not change that binding.
+The dedicated session_owner role is isolated: it cannot be combined with a lane,
+conductor or executor role. Installing that principal, deploying the source and
+applying a real release each require operator approval.
+
+Using the separately installed owner credential, run the source CLI's
+conduct session-binding SESSION_ID to read the exact binding_generation and
+principal_registry_generation. Prepare a private JSON request with those two
+values as expected_binding_generation and expected_principal_registry_generation,
+the already configured replacement_principal_id, and a bounded reason.
+conduct release-session SESSION_ID --request FILE checks the request without a
+write; adding --apply submits that exact request once. Never replace its expected
+generations automatically after a conflict.
+
+The keeper refuses healthy sessions, missing liveness evidence, active leases or
+runs, and nonterminal or unknown provider effects. It atomically retains the full
+original registration and principal binding in a release receipt, retains all run
+and event history, then removes the active binding. The same native session ID is
+reserved for the named authenticated replacement principal. The original protected
+status survives re-registration. Release is not a signal, cancellation, lease
+transfer, identity rewrite or custody action. Session audit exposes a bounded
+release summary, while the complete original remains in private keeper custody.
+
+For #3001, source verification is separate from live acceptance: after the approved
+release, the existing Claude hook must register the real native ID using its lane
+bearer and produce a fresh protected Claude readback. A Codex call must never pose
+as that Claude witness.

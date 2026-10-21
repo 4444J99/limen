@@ -35,7 +35,7 @@ export function sessionAudit(state, sessionId) {
     }
   }
   const kindRows = Object.entries(kinds);
-  const truncated = events.length > LIMIT || runs.length > LIMIT || projections.size > LIMIT || kindRows.length > LIMIT;
+  const truncated = events.length > LIMIT || runs.length > LIMIT || projections.size > LIMIT || kindRows.length > LIMIT || (state.session_releases?.[sessionId] || []).length > LIMIT;
   const registrations = events.filter((event) =>
     event.kind === "session.registered" && event.session_id === sessionId);
   return {
@@ -58,6 +58,11 @@ export function sessionAudit(state, sessionId) {
       row_limit: LIMIT,
       next_event_sequence: Number.isSafeInteger(state.next_event_sequence) ? state.next_event_sequence : null,
     },
+    binding_releases: (state.session_releases?.[sessionId] || []).slice(-LIMIT).map(release => ({
+      binding_generation: text(release.binding_generation), released_at: text(release.released_at),
+      original_agent: text(release.original_session?.identity?.agent),
+      replacement_agent: text(release.replacement_principal?.agent),
+    })),
     retained_event_count: events.length,
     retained_event_occurrences: events.reduce((total, event) => total + count(event.count), 0),
     retained_event_kind_count: kindRows.length,

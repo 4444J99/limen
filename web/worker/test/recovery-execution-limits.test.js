@@ -23,3 +23,25 @@ test('only one changed-input correction and two simultaneous tasks', () => {
   assert.throws(() => executionAdmission(policy,{runs:{first:row,second:row}},{...packet,execution_hash:'new'},now), /retry_exhausted/);
   assert.throws(() => executionAdmission(policy,{runs:{first:{...row,status:'running'},second:{...row,status:'reserved'}}},packet,now), /concurrency_exhausted/);
 });
+
+test('operator policy controls execution limits without resetting prior debits', () => {
+  const configured = {...policy, execution_limits: {attempt_seconds: 2400, verification_seconds: 900,
+    cumulative_seconds: 9600, dispatch_concurrency: 3, recovery_concurrency: 1, max_root_attempts: 3}};
+  const admission = executionAdmission(configured, {runs: {}}, packet, now);
+  assert.equal(admission.reserved_seconds, 2400);
+  assert.equal(admission.verification_seconds, 900);
+  assert.equal(admission.attempt_deadline, '2026-09-16T00:40:00.000Z');
+  const old = {packet, status: 'failed', parent_run_id: null,
+    execution_admission: {...admission, reserved_seconds: 7200}};
+  assert.throws(() => executionAdmission({...configured, execution_limits: {
+    ...configured.execution_limits, cumulative_seconds: 9500}}, {runs: {old}},
+    {...packet, execution_hash: 'changed'}, now), /outcome_budget_exhausted/);
+});
+
+test('invalid execution limits cannot silently fall back to defaults', () => {
+  for (const limits of [{attempt_seconds: 0}, {attempt_seconds: true}, {attempt_seconds: '2400'},
+    {verification_seconds: 1801}, {cumulative_seconds: 1799}, {dispatch_concurrency: 0}, {unknown_limit: 1}]) {
+    assert.throws(() => executionAdmission({...policy, execution_limits: limits},
+      {runs: {}}, packet, now), /execution_limits_invalid/);
+  }
+});

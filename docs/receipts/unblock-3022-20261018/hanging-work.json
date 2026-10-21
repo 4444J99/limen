@@ -1,0 +1,157 @@
+{
+  "audit": {
+    "active_lease_count": 0,
+    "coverage": {
+      "next_event_sequence": 12071,
+      "projection_history": "latest-retained-receipts-per-run",
+      "registration_witness": "observed",
+      "rejected_or_uncommitted_requests": "unmeasured",
+      "request_history": "unmeasured",
+      "retained_state_complete": true,
+      "row_limit": 250,
+      "scope": "retained-keeper-state",
+      "truncated": false
+    },
+    "retained_run_count": 2,
+    "runs": [
+      {
+        "run_id": "run-6511a5f69becee7c9cb7ebcba455775a",
+        "status": "blocked"
+      },
+      {
+        "run_id": "run-8c02499c2ff4c097637c1f7805c0ebbf",
+        "status": "failed"
+      }
+    ]
+  },
+  "branch_inventory": {
+    "command": "gh pr list --repo 4444J99/limen --head work/unblock-3022-r5-r1-20261018 --state all",
+    "merged_pr": 3037,
+    "open_pr": 3042,
+    "owner_url": "https://github.com/4444J99/limen/issues/3001"
+  },
+  "broker": {
+    "accepting_work": false,
+    "active_leases": 0,
+    "agent": "codex",
+    "human_protected": true,
+    "worktree_path_sha256": "3c4590d03dcc5680659f94dc003f4d38a8096e3ac489f9c7347663c314510533"
+  },
+  "budget": {
+    "automatic_retry_or_successor_created": false,
+    "limit_seconds": 7200,
+    "outcome_id": "limen-session-release-unblock-3022",
+    "reserved_seconds": 3600,
+    "roots_used": 2
+  },
+  "live_checkout": {
+    "bootstrap": "canonical sync-release.sh attempted once and denied write-target-outside-worktree",
+    "denials": [
+      "write-target-outside-worktree",
+      "shared-checkout-write"
+    ],
+    "handoff": {
+      "acceptance": "canonical probe prints state=coherent; helper returns zero only for that state",
+      "apply": "python3 .limen-private/admission-recovery/3022/check-closeout-live-currency.py --apply",
+      "check": "python3 .limen-private/admission-recovery/3022/check-closeout-live-currency.py --check",
+      "check_exit": 0,
+      "predicate_not_run": true,
+      "script_sha256": "038617e676e57db132f137e2992ee33924289d41425ef95194b0fba296cda90b"
+    },
+    "owner_url": "https://github.com/4444J99/limen/issues/1417",
+    "state": "unmeasured"
+  },
+  "metadata_delta_gate": {
+    "base": "03c248fe5179fa3b489ffa18bdb50af519b8c7ce",
+    "denial": [
+      "swap-fraction",
+      "vitals-shed"
+    ],
+    "executed": false,
+    "exit_code": null,
+    "implementation_verification_reused": true,
+    "metadata_validation": "four JSON files parse; all evidence digests match; staged diff hygiene passes"
+  },
+  "native_anchor": {
+    "identity_witness": "exact native transcript header",
+    "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+    "start_head": "ccfdcc1c5688cb34e08fd5823eb6c9c447b66945"
+  },
+  "operator_gates": [
+    {
+      "atom": "custody validation",
+      "owner_url": "https://github.com/4444J99/limen/issues/685"
+    },
+    {
+      "atom": "future deployment, isolated owner credential and real release",
+      "lever": "L-CONDUCT-REGISTRY-DEPLOY",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001"
+    }
+  ],
+  "reap_check": {
+    "applied": false,
+    "command": "python scripts/reap-branches.py --check --branch work/unblock-3022-r5-r1-20261018",
+    "coverage": "ancestor-only; nested gh lifecycle proof unavailable",
+    "exit_code": 0,
+    "operator_worktree_preservation": "all existing worktrees retained",
+    "retention_owner": "https://github.com/4444J99/limen/issues/685"
+  },
+  "review_debt": [
+    {
+      "disposition": "accepted_pending_correction",
+      "finding": "Reconcile expired lease/run occupancy before release admissibility.",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001",
+      "priority": "P1",
+      "url": "https://github.com/4444J99/limen/pull/3042#discussion_r4306394408"
+    },
+    {
+      "disposition": "accepted_pending_correction",
+      "finding": "Enforce the operator-only boundary for protected releases.",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001",
+      "priority": "P1",
+      "url": "https://github.com/4444J99/limen/pull/3042#discussion_r4306394414"
+    },
+    {
+      "disposition": "accepted_pending_correction",
+      "finding": "Validate replacement principal in the non-mutating admission check.",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001",
+      "priority": "P2",
+      "url": "https://github.com/4444J99/limen/pull/3042#discussion_r4306394415"
+    },
+    {
+      "disposition": "accepted_pending_correction",
+      "finding": "Retain the released worktree reservation for the named replacement.",
+      "owner_url": "https://github.com/4444J99/limen/issues/3001",
+      "priority": "P1",
+      "url": "https://github.com/4444J99/limen/pull/3042#discussion_r4306394422"
+    }
+  ],
+  "runtime_lag": {
+    "behind": 24,
+    "bound": 25,
+    "command": "python scripts/check-runtime-lag.py",
+    "exit_code": 0,
+    "installed_sha": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
+    "observed_during": "2026-10-18 closeout inventory",
+    "scope": "within declared bound at observation; not proof all newly merged behavior is installed"
+  },
+  "schema": "limen.unblock_closeout_hanging_work.v1",
+  "session_id": "01a14d95-6949-79d1-b836-c39edf9158f4",
+  "session_predicate": {
+    "bare_exit_codes": [
+      2,
+      2
+    ],
+    "bridge_owner": "https://github.com/4444J99/limen/issues/1417",
+    "documented_observer_bootstrap": "attempted once; tool hook denied write-target-outside-worktree",
+    "idempotent_fixed_point_claimed": false,
+    "next_action": "Process-ownership owner restores complete exact-native/scope observation; custody owner supplies independent restoration proof; then run this published receipt's session predicate twice.",
+    "owner_url": "https://github.com/4444J99/limen/issues/2763",
+    "protocol_sha": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
+    "reason": "process ownership observation unavailable or invalid",
+    "receipt_commit": "1db26efd41782faecc1e1f2cbfde89ef8a004f9e",
+    "session_released": false,
+    "status": "unmeasured"
+  },
+  "unfiled_followups": []
+}

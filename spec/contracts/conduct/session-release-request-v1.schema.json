@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Owner-prepared compare-and-swap request; no caller-supplied authority.",
+  "properties": {
+    "expected_binding_generation": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Expected Binding Generation",
+      "type": "string"
+    },
+    "expected_principal_registry_generation": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Expected Principal Registry Generation",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "replacement_principal_id": {
+      "title": "Replacement Principal Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "expected_binding_generation",
+    "expected_principal_registry_generation",
+    "replacement_principal_id",
+    "reason"
+  ],
+  "title": "SessionReleaseRequestV1",
+  "type": "object"
+}

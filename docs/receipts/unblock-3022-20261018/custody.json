@@ -1,0 +1,482 @@
+{
+  "blocked_atom": "Independent restoration/readback evidence for the private recovery originals is unavailable; custody actions remain operator-gated.",
+  "deletion_authorized": false,
+  "independent_restoration_verified": false,
+  "native_transcript": {
+    "native_anchor_verified": true,
+    "raw_body_published": false,
+    "retained": true
+  },
+  "next_action": "Obtain positive release of a named finished client, or a supported owning-client operation that releases its proven inactive helpers without affecting active sessions. Then refresh canonical host admission after the measured resource change and execute the same approved custody plan. Do not kill protected/unknown owners, reset swap state, weaken thresholds or re-request custody approval.",
+  "owner_url": "https://github.com/4444J99/limen/issues/685",
+  "retention": {
+    "all_user_owned": true,
+    "bytes": 163047,
+    "file_count": 55,
+    "independent_restoration_verified": false,
+    "manifest_sha256": "36df781ac8a70e2d5fd39cf97e9cb842ab732ef2e1bd61cee8e3df86402a6586",
+    "owner_url": "https://github.com/4444J99/limen/issues/685",
+    "root_mode": "0o700",
+    "root_path_sha256": "e00379e967329b1e083359b25d4b5cab8a2af6156ecda44291d0ccf1dcf701d8"
+  },
+  "root_ids": [
+    "implementation",
+    "native",
+    "recovery"
+  ],
+  "schema": "limen.unblock_closeout_custody.v1",
+  "verified": false,
+  "preparation": {
+    "schema": "limen.unblock_custody_preparation.v1",
+    "prepared_at": "2026-10-18T23:07:00Z",
+    "session_id": "01a14d95-6949-79d1-b836-c39edf9158f4",
+    "owner_url": "https://github.com/4444J99/limen/issues/685",
+    "continuation_url": "https://github.com/4444J99/limen/pull/3042",
+    "source_receipt_commit": "80e5d7084e996534ba93968a57a5ca28c0cd6dff",
+    "procedure": "docs/receipts/unblock-3022-20261018/custody.json#preparation.procedure",
+    "preparation_only": true,
+    "execution_authorized": true,
+    "custody_verified": false,
+    "retirement_authorized": false,
+    "scope_root_ids": [
+      "implementation",
+      "native",
+      "recovery"
+    ],
+    "sources": [
+      {
+        "id": "recovery-private-originals",
+        "root_id": "recovery",
+        "source_root_path_sha256": "e00379e967329b1e083359b25d4b5cab8a2af6156ecda44291d0ccf1dcf701d8",
+        "baseline": {
+          "file_count": 55,
+          "bytes": 163047,
+          "manifest_sha256": "36df781ac8a70e2d5fd39cf97e9cb842ab732ef2e1bd61cee8e3df86402a6586",
+          "freshness": "prior closeout inventory; must be remeasured before acquisition"
+        }
+      },
+      {
+        "id": "native-transcript",
+        "root_id": "native",
+        "coverage": "exact native session, explicit captured byte boundary; any later append remains retained and separately accounted"
+      },
+      {
+        "id": "published-git-state",
+        "root_ids": [
+          "implementation",
+          "native",
+          "recovery"
+        ],
+        "coverage": "repository-qualified heads, publication and retained-owner evidence; no full-worktree backup or retirement claim"
+      }
+    ],
+    "planned_run_id": "limen-3022-20261018T230053Z",
+    "destinations": [
+      {
+        "id": "replica-archive",
+        "mount": "Archive4T",
+        "relative_run_directory": "limen-private/custody/limen-3022-20261018T230053Z",
+        "observed_available_bytes": 1228487094272,
+        "physical_device_identity_verified": false,
+        "new_run_directory_exists": false
+      },
+      {
+        "id": "replica-recovery",
+        "mount": "T7Recovery",
+        "relative_run_directory": "limen-private/custody/limen-3022-20261018T230053Z",
+        "observed_available_bytes": 307320913920,
+        "physical_device_identity_verified": false,
+        "new_run_directory_exists": false
+      }
+    ],
+    "staging": {
+      "owner": "configured LIMEN_CUSTODY_STAGING_ROOT outside vendor state",
+      "relative_run_directory": "limen-3022-20261018T230053Z",
+      "new_run_directory_exists": false,
+      "internal_available_bytes_observed": 15704928256
+    },
+    "bounds": {
+      "attempt_seconds": 1800,
+      "verification_seconds": 600,
+      "payload_bytes": 67108864,
+      "new_bytes_per_target_max": 536870912,
+      "minimum_free_after_bytes": 10737418240,
+      "parallel_heavy_workloads": 1
+    },
+    "method": {
+      "encryption": "existing ARCA one-off seal/unseal, AES-256-CBC with PBKDF2 200000",
+      "key_source": "existing 1Password ARCA escrow only; ARCA_KEY_SOURCE=op; never create or rotate a key",
+      "tool_path": "scripts/arca.sh",
+      "tool_sha256": "ea1f918493d5ad5d5b8841550465547beef297fac30e04cd55810b2ca6a48d4a",
+      "independent_restore_count_required": 2,
+      "contents_executed": false
+    },
+    "observations": {
+      "user_terminal": {
+        "source": "user-supplied attachment; raw output retained privately",
+        "process_observation_complete": true,
+        "observed_process_count": 279,
+        "classification_counts": {
+          "unknown": 279
+        },
+        "bare_exit_code": null,
+        "live_checkout": {
+          "state": "drift",
+          "branch": "main",
+          "behind": 9,
+          "ahead": 0,
+          "dirty": 0,
+          "bare_exit_code": null
+        }
+      },
+      "host_admission": {
+        "allowed": false,
+        "reasons": [
+          "swap-fraction"
+        ],
+        "heavy_work_executed": false
+      },
+      "bridge": {
+        "device_probe_executed": false,
+        "device_probe_denial": "shared-checkout-write",
+        "tool_help_executed": false,
+        "tool_help_denial": "shared-checkout-write",
+        "multiline_read_only_inventory_executed": false,
+        "multiline_inventory_denial": "command-substitution-or-multiline"
+      },
+      "conduct": {
+        "capability_read": "conduct_outcome_unobserved",
+        "children_created": 0
+      },
+      "existing_worktrees": {
+        "count": 68,
+        "mutated": false,
+        "removed": false
+      }
+    },
+    "validation": {
+      "kind": "preparation review only",
+      "command_verbs_and_flags": "reviewed against source, not runtime-tested",
+      "json_parse": true,
+      "mount_presence_and_free_space": "observed with ls and df",
+      "destination_nonexistence": "ls reported all three proposed run roots absent",
+      "scoped_gate_pass_claimed": false
+    },
+    "execution_receipt_required": [
+      "fresh source membership, bytes, content digests and native-metadata observations",
+      "approved exact source/destination identities and complete retained-root classification",
+      "fresh physical device identities and capacity admission",
+      "existing escrow recovery demonstrated without key creation",
+      "encrypted replicas independently read back and hash-matched",
+      "two independent decrypt/extract executions with no source fallback",
+      "full regular-file membership, byte-size and SHA-256 comparisons",
+      "all uncovered metadata or transcript tail explicitly retained and owned",
+      "redacted evidence published; original custody verified flag remains false until acceptance"
+    ],
+    "procedure_steps": [
+      {
+        "step": 1,
+        "name": "Approve and admit the exact operation",
+        "actions": [
+          "Custody remains operator-gated. Approval must name the retained recovery originals, the exact native transcript capture, encrypted replicas on Archive4T and T7Recovery, and two independent restore tests. Preparation grants no execution approval.",
+          "Use the existing #685 owner and #3042 continuation; keep all three original scope IDs. Revalidate source/path hashes and exact native identity; reject aliases and symlinked ancestors.",
+          "Refresh host admission and physical whole-disk identities through limen.agent_state.custody._device_identity. Mounted names and different /dev entries alone do not prove independence. No test identity overrides.",
+          "Require both real target mounts, different stable physical-device identities, sufficient space above the declared budget plus 10 GiB, and one admitted heavy workload. Do not bypass pressure denial."
+        ]
+      },
+      {
+        "step": 2,
+        "name": "Reserve fresh private output paths",
+        "actions": [
+          "Create the declared run directory exclusively under each destination and configured custody staging root. Abort if any run directory exists; never reuse or overwrite an interrupted run.",
+          "All newly created parent/run/restore directories must be user-owned mode 0700; private manifests, ciphertext and logs mode 0600. Never chmod an existing shared directory.",
+          "Plaintext stays under the configured custody staging root outside .agent-runtime. Neither a vendor runtime, symlink into it, synced folder nor public Git is an eligible plaintext destination.",
+          "Keep all originals, existing worktrees, pre-existing archives, interrupted payloads and prior receipts in place. No reaping, stash/reset, relocation or deletion."
+        ]
+      },
+      {
+        "step": 3,
+        "name": "Capture the exact source set without changing it",
+        "actions": [
+          "Privately re-enumerate the recovery-private-originals root with no ignore rules. Compare against the previous 55-file / 163047-byte baseline and record an explicit new complete manifest if membership changed; never silently accept the old count.",
+          "Record every member path, type, ownership, mode, size, available native timestamps/xattrs/ACL/flags and regular-file SHA-256 privately. Reject symlinks, special files, hardlink dependencies outside this exact set, unsupported metadata and sources changing during acquisition.",
+          "Copy only the declared source set into a fresh payload directory with metadata-preserving copying. Compare source-before, copied bytes and source-after inventories. Any mismatch stops before sealing; do not stop a source writer.",
+          "Capture the exact native transcript at an explicit byte boundary and digest that prefix independently before/after copying. Record native header/session identity and the boundary. A later append is retained with the original and remains an explicitly owned coverage gap, never claimed as complete transcript custody.",
+          "Bind all three retained scope roots to their repository-qualified publication/owner evidence. This operation does not copy or certify the whole shared checkout, agent runtime or estate. Unknown in-scope private artifacts block a verified custody claim."
+        ]
+      },
+      {
+        "step": 4,
+        "name": "Seal one bounded snapshot using the existing escrow",
+        "actions": [
+          "Pin scripts/arca.sh to the recorded source digest before execution; use only its one-off seal/unseal verbs. Do not run backup or rotate, which have broader vault effects.",
+          "Set ARCA_KEY_SOURCE=op for every seal/unseal invocation and use the existing ARCA 1Password escrow. If locked, absent or invalid, stop. Do not create, rotate, print, place in argv, commit or escrow another key.",
+          "Set TMPDIR to a fresh 0700 run-private temporary directory inside the custody staging root. Give the outer job a finite remaining deadline, retaining failed/partial outputs with #685.",
+          "Seal the payload into replica A's new bundle.tar.enc. ARCA seal must exit 0 after its internal decrypt-and-cmp roundtrip. Record ciphertext byte size and SHA-256 privately.",
+          "Use direct ARCA verbs rather than sealed-custody.py seal/restore orchestration: that wrapper removes a new replica on seal failure and removes restore scratch. Preserve interrupted outputs and restore evidence for operator review. ARCA's successful internal temporary cleanup is limited to files it creates; no original or pre-existing partial is its target."
+        ],
+        "commands": [
+          "env ARCA_KEY_SOURCE=op TMPDIR=\"$SEAL_TMP\" bash \"$ARCA\" seal \"$SNAPSHOT\" \"$REPLICA_A/bundle.tar.enc\""
+        ]
+      },
+      {
+        "step": 5,
+        "name": "Create and read back the second encrypted copy",
+        "actions": [
+          "Copy only the newly produced ciphertext from replica A into the new exclusive replica B directory. Never copy plaintext onto either external replica.",
+          "Flush completed writes, close the copy handles, reopen each replica independently, and hash its complete bytes against the frozen ciphertext manifest. Both reads must match byte count and SHA-256.",
+          "Write a separate 0600 private manifest at each target, binding source-capture digest, ciphertext digest, actual physical-device identity and acquisition time. These are physical replica observations, not remote/vendor retention proof."
+        ],
+        "commands": [
+          "/usr/bin/ditto \"$REPLICA_A/bundle.tar.enc\" \"$REPLICA_B/bundle.tar.enc\"",
+          "/bin/sync",
+          "shasum -a 256 \"$REPLICA_A/bundle.tar.enc\" \"$REPLICA_B/bundle.tar.enc\""
+        ]
+      },
+      {
+        "step": 6,
+        "name": "Restore replica A independently",
+        "actions": [
+          "Verify the frozen ciphertext digest again, then decrypt/extract only replica A's bundle into a fresh private restore-A directory with its own TMPDIR.",
+          "Validate the trusted generated archive's member names/types before extraction; reject absolute/traversal entries, symlinks and special entries. If this cannot be established before extraction, stop.",
+          "Re-enumerate the restored tree without ignore rules. Compare complete regular-file membership, byte sizes and SHA-256 to the frozen private capture manifest; require zero missing, extra or mismatched files.",
+          "Record the actual bare exit, restored-output digest, complete denominator, tool/predicate digests and aware timestamp. Do not open or execute restored scripts, credentials, policy files or transcripts."
+        ],
+        "commands": [
+          "env ARCA_KEY_SOURCE=op TMPDIR=\"$RESTORE_A_TMP\" bash \"$ARCA\" unseal \"$REPLICA_A/bundle.tar.enc\" \"$RESTORE_A\""
+        ]
+      },
+      {
+        "step": 7,
+        "name": "Restore replica B independently",
+        "actions": [
+          "Repeat the same readback, decrypt/extract and complete comparison using only replica B's bundle and a different fresh restore-B directory/TMPDIR.",
+          "Do not reuse replica A's decrypted payload or fall back to source bytes. A second hash of one restore is not a second restore.",
+          "Require the same logical content digest from both replicas, two distinct measured physical-device identities and two actual passing execution records. Retain both restore directories and private evidence for review."
+        ],
+        "commands": [
+          "env ARCA_KEY_SOURCE=op TMPDIR=\"$RESTORE_B_TMP\" bash \"$ARCA\" unseal \"$REPLICA_B/bundle.tar.enc\" \"$RESTORE_B\""
+        ]
+      },
+      {
+        "step": 8,
+        "name": "Accept evidence at its measured scope",
+        "actions": [
+          "Validate a CustodyReceiptV1 and both RestorationProofV1 records with the existing limen.prima_materia models. Physical identities, private member lists and private paths stay in encrypted/private owner custody.",
+          "Publish only a redacted summary with exact session, all original root IDs, capture boundary, source/ciphertext digests, counts, two-copy and two-restore outcomes, unchanged-original evidence, and explicit coverage/metadata limits.",
+          "No full native-filesystem-equivalence, complete active-transcript, portable v2, offsite, retention-lock, retirement or deletion claim follows from regular-file restoration. The originals remain retained.",
+          "Keep custody.verified=false until the custody owner confirms the complete required artifact denominator is covered. A successful backup of a subset or unresolved transcript tail cannot silently clear the whole-session flag.",
+          "Update the existing custody evidence and hash binding through #3042 only after genuine acceptance; preserve failed results. Do not create a successor, parallel task registry or new worktree."
+        ]
+      },
+      {
+        "step": 9,
+        "name": "Return to the existing closeout gates",
+        "actions": [
+          "Custody success alone does not resolve 279 unclassified processes or the drifted live checkout. Those remain under #2763 and #1417 respectively.",
+          "Route live-checkout reconciliation only through canonical scripts/sync-release.sh. Do not hand-fast-forward the daemon-contended primary tree.",
+          "After changed inputs and accepted custody/process/live evidence, refresh exact publication and run the existing canonical v2 session predicate twice with the unchanged native anchor and all three declared roots. Quote both actual bare exits; only two zeros prove the release fixed point."
+        ]
+      }
+    ],
+    "stop_conditions": [
+      "missing approval or exact owner/source binding",
+      "unavailable host admission, wrong/absent real mount, symlink, device identity uncertainty or same physical device",
+      "payload/budget/deadline exhausted or any free-space safety floor violated",
+      "source mutation, unknown artifact coverage, stale capture or unsupported entry",
+      "existing destination, write outside the new private run directories or any overwrite request",
+      "missing escrow, attempted credential creation/change or secrets in logs",
+      "ciphertext mismatch, unsafe archive membership, failed decrypt, missing/extra/mismatched restored file",
+      "any operation would move/delete originals, change an existing worktree, deploy or release a protected session"
+    ],
+    "operator_approval_text": "Approve the scoped custody backup and two independent restore tests for session 01a14d95-6949-79d1-b836-c39edf9158f4 using encrypted replicas on Archive4T and T7Recovery and the existing ARCA escrow. Preserve all originals, prior partials and existing worktrees; no deployment, credential changes, retirement or deletion.",
+    "authorization": {
+      "source": "direct human instruction in the current native session",
+      "observed_at": "2026-10-18T23:16:45Z",
+      "targets": [
+        "Archive4T",
+        "T7Recovery"
+      ],
+      "existing_ARCA_escrow_only": true,
+      "all_originals_and_existing_worktrees_preserved": true,
+      "deletion_authorized": false,
+      "credential_change_authorized": false,
+      "deployment_authorized": false,
+      "host_admission_override_authorized": false,
+      "budget_reset_authorized": false
+    }
+  },
+  "execution_attempts": [
+    {
+      "schema": "limen.unblock_custody_execution_attempt.v1",
+      "attempted_at": "2026-10-18T23:16:45Z",
+      "stopped_at": "2026-10-18T23:17:31.110365+00:00",
+      "outcome": "not_started_host_admission_denied",
+      "operator_approval_recorded": true,
+      "host_admission": {
+        "operation": "status",
+        "probe": true,
+        "bare_exit_code": 0,
+        "allowed": false,
+        "reasons": [
+          "swap-fraction"
+        ],
+        "pressure": {
+          "observed_at": "2026-10-18T23:17:31.110365+00:00",
+          "swap_fraction": 0.6047937011462636,
+          "swap_used_bytes": 10390276669,
+          "memory_bytes": 17179869184,
+          "vitals_action": "throttle"
+        },
+        "interpretation": "Status is report-only; its exit 0 does not override allowed=false or prove workload admission."
+      },
+      "source_acquisition_executed": false,
+      "replicas_created": 0,
+      "restoration_tests": [
+        {
+          "target": "Archive4T",
+          "executed": false,
+          "bare_exit_code": null
+        },
+        {
+          "target": "T7Recovery",
+          "executed": false,
+          "bare_exit_code": null
+        }
+      ],
+      "escrow_read": false,
+      "credentials_changed": false,
+      "originals_modified": false,
+      "local_worktrees_modified": false,
+      "worktrees_removed": false,
+      "new_directories_created": 0,
+      "provider_children_created": 0,
+      "heavy_workload_started": false,
+      "automatic_retry_scheduled": false,
+      "owner_url": "https://github.com/4444J99/limen/issues/685",
+      "next_action": "After host-pressure inputs change, acquire canonical admission and execute the already-approved bounded procedure. Existing approval persists; no new operator approval is required. Never bypass pressure, stop peers, delete state or reset recovery accounting."
+    }
+  ],
+  "memory_relief": {
+    "schema": "limen.unblock_custody_memory_relief.v1",
+    "started_at": "2026-10-18T23:22:19Z",
+    "last_admission_observed_at": "2026-10-18T23:33:24.616057+00:00",
+    "authorized_scope": "Investigate memory pressure and perform safe relief while preserving all originals, existing worktrees and active sessions; then execute the already-approved custody procedure only under valid admission.",
+    "status": "held_no_confirmed_inactive_owner",
+    "diagnosis": {
+      "inference": "Cumulative live client/helper co-residency is a contributor. No single resident-memory runaway or safely releasable owner was established. Per-process compressed/swap attribution remains unmeasured.",
+      "evidence": {
+        "process_census_before_count": 921,
+        "process_census_after_count": 929,
+        "codex_backend_direct_helpers_before": 230,
+        "codex_backend_direct_helper_rss_kib_before": 1518320,
+        "largest_renderer_rss_kib_before": 971744,
+        "largest_any_process_rss_kib_before": 971744,
+        "largest_any_process_rss_kib_after": 824560,
+        "rss_aggregates_are_not_unique_physical_memory": true,
+        "activity_monitor_observation": {
+          "observed_at": "2026-10-18T23:24:54Z",
+          "physical_memory_gb": 16,
+          "memory_used_gb": 14.3,
+          "app_memory_gb": 3.14,
+          "wired_memory_gb": 4.17,
+          "compressed_memory_gb": 6.34,
+          "swap_used_gb": 10.39,
+          "source": "native Activity Monitor screenshot",
+          "per_process_memory_table": "displayed zero values; not used as ownership or memory-reclamation proof"
+        },
+        "own_node_repl": {
+          "used_heap_bytes": 9054312,
+          "total_heap_bytes": 11878400,
+          "external_bytes": 4379701,
+          "conclusion": "small; no evidence it accounts for the pressure"
+        },
+        "thread_inventory": {
+          "coverage": "at most 50 most recent app entries; not a complete host/session ownership census",
+          "active_entries_returned": 2,
+          "foreign_session_release_authorized": false
+        }
+      }
+    },
+    "owning_relief_policy": {
+      "source": "scripts/host-relief.py; institutio/governance/host-pressure-axes.yaml; docs/architecture/host-work-admission.md",
+      "declared_default_agent_rss_ceiling_mib": 1024,
+      "declared_default_root_hog_rss_ceiling_mib": 4096,
+      "processes_exceeding_default_agent_ceiling_before": 0,
+      "processes_exceeding_default_agent_ceiling_after": 0,
+      "root_processes_exceeding_default_hog_ceiling": 0,
+      "effective_threshold_environment_overrides": "not measured",
+      "action": "No kickstart, signal, restart, priority retuning or threshold change performed. A warm-spare process name or an orphaned parent is not positive inactive-session release."
+    },
+    "safe_actions": [
+      {
+        "action": "closed Activity Monitor opened solely for this task",
+        "preexisting_process_observed": false,
+        "exit_confirmed": true,
+        "reclaimed_bytes": null
+      },
+      {
+        "action": "reset only this task's newly used CUA REPL state after closing its diagnostic app",
+        "tool_result": "js kernel reset",
+        "reclaimed_bytes": null
+      }
+    ],
+    "final_admission": {
+      "operation": "status",
+      "probe": true,
+      "bare_exit_code": 0,
+      "allowed": false,
+      "reasons": [
+        "swap-fraction",
+        "vitals-shed"
+      ],
+      "pressure": {
+        "observed_at": "2026-10-18T23:33:24.616057+00:00",
+        "swap_used_bytes": 12683449466,
+        "memory_bytes": 17179869184,
+        "swap_fraction": 0.7382739257300273,
+        "swap_growth_bytes_per_minute": 201497576.941,
+        "vitals_action": "shed"
+      },
+      "interpretation": "Read-only report exit 0 is not workload admission. Probe remained denied after the diagnostic app was closed. CUA kernel reset occurred afterward; no green admission is inferred."
+    },
+    "integration_limits": {
+      "actual_tool_workdir": "pwd confirmed the requested external worktree",
+      "read_only_shell_probes_denied": [
+        "vm_stat",
+        "sysctl vm.swapusage",
+        "lsof"
+      ],
+      "denial": "shared-checkout-write",
+      "canonical_admission_state_diagnostic": "valid, no legacy leases, nine scoped leases observed",
+      "conduct_capabilities": "ianva broker configuration unavailable",
+      "bypass_performed": false
+    },
+    "custody_execution": {
+      "approval_persists": true,
+      "source_acquisition_executed": false,
+      "replicas_created": 0,
+      "archive4t_restore_executed": false,
+      "t7recovery_restore_executed": false,
+      "escrow_read": false,
+      "heavy_workload_started": false,
+      "automatic_retry_scheduled": false
+    },
+    "preservation": {
+      "preexisting_processes_signaled": 0,
+      "active_sessions_stopped": 0,
+      "originals_modified": false,
+      "local_worktrees_modified": false,
+      "worktrees_removed": 0,
+      "swap_files_deleted": false,
+      "admission_thresholds_changed": false,
+      "credentials_changed": false
+    },
+    "owner_urls": [
+      "https://github.com/4444J99/limen/issues/685",
+      "https://github.com/4444J99/limen/issues/2763",
+      "https://github.com/4444J99/limen/issues/1417"
+    ],
+    "next_action": "Obtain positive release of a named finished client, or a supported owning-client operation that releases its proven inactive helpers without affecting active sessions. Then refresh canonical host admission after the measured resource change and execute the same approved custody plan. Do not kill protected/unknown owners, reset swap state, weaken thresholds or re-request custody approval."
+  }
+}
