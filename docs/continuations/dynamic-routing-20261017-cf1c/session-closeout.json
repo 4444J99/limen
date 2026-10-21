@@ -1,0 +1,139 @@
+{
+  "schema": "limen.session_closeout.v2",
+  "session_id": "01a14ac6-cf1c-7043-a3d6-839e4fbd4f56",
+  "session_root_path_sha256": "7457e6ebff7d02e40106cded42e67c60234f167cd8a05cc2fe3c0b703567f20b",
+  "receipt_root_id": "limen",
+  "owner_url": "https://github.com/4444J99/limen/pull/2903",
+  "disposition": "handoff",
+  "scope_roots": [
+    {
+      "id": "limen",
+      "kind": "git",
+      "path_sha256": "fd99afc39f815f1d686c008a076b80cd060f6a091396d25dff9d51f82945ec89",
+      "repository": "4444J99/limen",
+      "repository_id": 1255213941,
+      "base_head": "ae8319226ea18b974691e976baa3066d2a58dce1",
+      "publication_branch": "feat/dynamic-routing-20261017-cf1c",
+      "owned_paths": [
+        ".codex/plans/2026-10-17-dynamic-model-routing.md",
+        "cli/src/limen/provider_selection.py",
+        "cli/src/limen/delegation_policy.py",
+        "cli/tests/test_dynamic_routing.py",
+        "docs/continuations/dynamic-routing-20261017-cf1c/"
+      ],
+      "retained_work": []
+    },
+    {
+      "id": "domus",
+      "kind": "git",
+      "path_sha256": "de6b63d6cd95131fc25eb7bcb91867f6c905b540b002a2f782ea3db1b9b25d67",
+      "repository": "4444J99/domus-genoma-private",
+      "repository_id": 1124448005,
+      "base_head": "586a328af9f225a12e067e610c921da8100b2f04",
+      "subject_head": "45e0690a899960fee1b099eaa16ea8b8660b670f",
+      "publication_branch": "feat/dynamic-routing-20261017-cf1c",
+      "owned_paths": [
+        ".codex/plans/2026-10-17-dynamic-model-routing.md",
+        ".chezmoiignore",
+        "dot_local/bin/executable_pretooluse-guard-dispatch.sh",
+        "dot_local/libexec/domus_op_command.py",
+        "dot_local/libexec/native_model_adapter.py",
+        "dot_local/libexec/native_model_runner.py",
+        "dot_local/libexec/agent_hook_policy.py",
+        "dot_local/libexec/hook_evidence.py",
+        "dot_local/bin/executable_domus-model-route",
+        "tests/test_dynamic_model_adapters.py",
+        "tests/test_guard_liveness.py",
+        "scripts/model-routing-recover-20261017-cf1c.py",
+        "docs/receipts/dynamic-routing-checkpoint-20261017-cf1c.md",
+        "docs/receipts/dynamic-routing-deployment-review-20261017-cf1c.json",
+        "docs/receipts/local-ci-complete-20261017.md"
+      ],
+      "retained_work": [
+        {
+          "paths": [
+            ".chezmoidata/config-ownership.json",
+            ".codex/plans/2026-10-17-hook-estate-evolution.md",
+            "Workspace/limen/private_dot_agent-runtime/private_claude/modify_private_settings.json.tmpl",
+            "Workspace/limen/private_dot_agent-runtime/private_codex/modify_private_hooks.json.tmpl",
+            "Workspace/limen/private_dot_agent-runtime/private_gemini/private_home/dot_gemini/modify_private_settings.json.tmpl",
+            "docs/receipts/hook-current-client-canary-20261017.json",
+            "docs/receipts/hook-estate-20261017.md",
+            "docs/receipts/hook-estate-20261017/release-evidence.json",
+            "docs/receipts/hook-estate-20261017/session-closeout.json",
+            "docs/receipts/hook-estate-acceptance-20261017.md",
+            "docs/receipts/hook-estate-census-20261017-after.json",
+            "docs/receipts/hook-estate-census-20261017-before.json",
+            "docs/receipts/hook-estate-rollout-20261017.json",
+            "docs/receipts/hook-estate-verification-20261017.json",
+            "dot_config/ai-context/reliquary/hook-reference.md",
+            "dot_config/opencode/plugins/domus-hooks.js.tmpl",
+            "dot_copilot/hooks/domus-observation.json.tmpl",
+            "dot_cursor/modify_hooks.json.tmpl",
+            "dot_local/bin/executable_check-agent-hooks-drift",
+            "dot_local/bin/executable_comment-cadence-tracker.sh",
+            "dot_local/bin/executable_domus-agent-hook",
+            "dot_local/bin/executable_domus-claude-host-hook.tmpl",
+            "dot_local/bin/executable_domus-codex-host-hook.tmpl",
+            "dot_local/bin/executable_domus-hook-canary",
+            "dot_local/bin/executable_guard-liveness-check.sh",
+            "dot_local/bin/executable_limen-session-closeout.py",
+            "dot_local/libexec/agent_hook_acceptance.py",
+            "dot_local/libexec/agent_hook_inventory.py",
+            "dot_local/libexec/hook_io.py",
+            "scripts/hook-estate-rollout.py",
+            "tests/test_agent_hook_acceptance.py",
+            "tests/test_agent_hook_inventory.py",
+            "tests/test_agent_hook_policy.py",
+            "tests/test_domus_claude_host_hook.py",
+            "tests/test_domus_codex_host_hook.py",
+            "tests/test_hook_evidence.py",
+            "tests/test_hook_io.py",
+            "tests/test_modify_claude_settings.py",
+            "tests/test_modify_codex_hooks.py",
+            "tests/test_native_hook_registrations.py"
+          ],
+          "owner_url": "https://github.com/4444J99/domus-genoma-private/issues/487"
+        }
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "root_id": "domus",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -m pytest tests/test_dynamic_model_adapters.py tests/test_agent_hook_policy.py tests/test_guard_liveness.py tests/test_hook_evidence.py -q",
+      "head": "aff4f7671318c7691edf94d73b1e6adcb74c6a4e",
+      "exit_code": 1,
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/490",
+      "evidence": "docs/continuations/dynamic-routing-20261017-cf1c/evidence.json",
+      "sha256": "84fa4837696bdae6259ba2adf29853cbc427b00e8d1fbb3192e07bab57286ea0"
+    }
+  ],
+  "custody": {
+    "verified": false,
+    "root_ids": [
+      "domus",
+      "limen"
+    ],
+    "evidence": "docs/continuations/dynamic-routing-20261017-cf1c/evidence.json",
+    "sha256": "84fa4837696bdae6259ba2adf29853cbc427b00e8d1fbb3192e07bab57286ea0"
+  },
+  "external_effects": [
+    {
+      "id": "ci-branch-preservation",
+      "kind": "remote-branch",
+      "verified": true,
+      "evidence": "docs/continuations/dynamic-routing-20261017-cf1c/evidence.json",
+      "sha256": "84fa4837696bdae6259ba2adf29853cbc427b00e8d1fbb3192e07bab57286ea0"
+    },
+    {
+      "id": "native-rollout",
+      "kind": "deployment",
+      "verified": false,
+      "evidence": "docs/continuations/dynamic-routing-20261017-cf1c/evidence.json",
+      "sha256": "84fa4837696bdae6259ba2adf29853cbc427b00e8d1fbb3192e07bab57286ea0",
+      "owner_url": "https://github.com/4444J99/domus-genoma-private/issues/487"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "limen.implementation_checkpoint.v1",
+  "native_session_id": "01a14ac6-cf1c-7043-a3d6-839e4fbd4f56",
+  "native_caller": "/Users/4jp",
+  "recorded_at": "2026-10-17T17:48:00Z",
+  "disposition": "unfinished-retained",
+  "completion": false,
+  "implementation": {
+    "limen_head": "6da1334c6",
+    "domus_head": "b3fbad71",
+    "changes": [
+      "Parent packet authority, deadline, retry and validated plan bounds",
+      "Unknown prices remain ineligible",
+      "Owner-only fresh catalog reader and agent-authority equivalence",
+      "Native success preserves permission flow",
+      "Bounded native runner input and subprocess output"
+    ]
+  },
+  "verification": {
+    "focused": {
+      "limen_passed": 28,
+      "domus_passed": 80,
+      "bare_exit_code": 0
+    },
+    "later_runner_tests": {
+      "count": 4,
+      "executed": false,
+      "admission_reason": "heavy-lease-held",
+      "bare_exit_code": 75
+    },
+    "static_lint": "passed for changed selector, catalog, adapter and runner files",
+    "full_scoped_gate": "not passing: verifier Python missing declared zstandard; source type/format issues corrected but whole gate not rerun"
+  },
+  "deployment": {
+    "applied": false,
+    "pending_entries_observed": 57,
+    "scripts": 23,
+    "deletions": 2,
+    "report": "4444J99/domus-genoma-private:docs/receipts/dynamic-routing-deployment-review-20261017-cf1c-v2.json",
+    "review_complete": false,
+    "native_enforcement_observed": false
+  },
+  "custody": {
+    "ci_branch_b811cdc0": "remote preserved exact readback in earlier receipt",
+    "checkouts": "retain both routing checkouts and both CI checkouts",
+    "retirement": false,
+    "independent_restoration": false
+  },
+  "remaining": [
+    "Verify 4 new runner tests under admitted bounded helper",
+    "Finish six native client integrations and genuine catalog producers; resolve Gemini installed tool contract and OpenCode V2 plugin contract",
+    "Complete per-file semantic/render/rollback review and explicit deployment with scripts excluded and protected holds retained",
+    "Run native allowed/denied child probes with observed actual models",
+    "Resolve scoped verification environment dependency and pass implicated gates",
+    "Review and integrate exact verified heads through repository rail; deploy runtime and read back",
+    "Refresh session-closeout.v2 receipt and run canonical home-anchored predicate twice with both bare exits zero and no second effects"
+  ],
+  "owners": {
+    "routing": "4444J99/limen#940",
+    "native_acceptance": "4444J99/domus-genoma-private#487",
+    "limen_pr": 2903,
+    "domus_pr": 490
+  },
+  "attempt_limit": "Renewed attempt 17:20–17:50 UTC; checkpoint and stop at bound. Goal remains unachieved."
+}
