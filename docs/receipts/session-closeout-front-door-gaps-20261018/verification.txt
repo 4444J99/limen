@@ -1,0 +1,86 @@
+Session 1ecb794a-0690-4782-a5a1-57c07ddde7fb — scoped verification (2026-10-18 UTC)
+Every predicate below was run bare and its own exit code is the one quoted. Where a predicate exited non-zero or could not run, that is stated under NOT RUN / NOT CLAIMED; none is counted as green.
+
+POST-MERGE — run on this receipt's base, origin/main d899a2e5e799fc4597c908669531fff16a087489
+(which contains all four session merges: d95e5c07957e6085627db79c103cbb200f9433b4 #3015 plan, 06fa2287c893bfe0317c27d684d5d243d4c7a70b #3025 Copilot preservation receipt, cfed4d86d4a7e667b537f5156f0cad8cbcc128d5 #3033 script and tests, 94a63230e16423df265c7b468b61c525b85d00e4 #3035 docs and plan stamp)
+- run-pytest-hermetic.sh cli/tests/test_limen_knowledge_verb.py -q -> 80 passed, 1 skipped in 97.14 s, exit 0 (the skip is /usr/local/bin/bash, not installed here)
+- ruff check cli/tests/test_limen_knowledge_verb.py -> All checks passed, exit 0
+- ruff format --check cli/tests/test_limen_knowledge_verb.py -> 1 file already formatted, exit 0
+- shellcheck --severity=style scripts/open-knowledge.sh -> no findings, exit 0
+- bash -n scripts/open-knowledge.sh and /bin/bash -n scripts/open-knowledge.sh (bash 3.2) -> exit 0 both
+- scripts/credential-wall.py --check -> all 32 secret atoms registered, exit 0
+- merge-base --is-ancestor of each of the four merge commits above against HEAD -> exit 0 each
+- blob ids at HEAD of the owned paths: scripts/open-knowledge.sh 3eeb27f08366eee051a81a5ecbde682d692bc728, cli/tests/test_limen_knowledge_verb.py f15636e7176f56eee2f3c69eb48612983777b06b, docs/architecture/ai-exports-archive.md 4b4493b2f5cb62fe45bf9b2dedc4d5163ea61581, docs/plans/2026-10-18-close-front-door-verification-gaps.md 098509a0215e7c1d098f0d7406860ff77a04ad53, docs/receipts/receipt-custody-copilot-captures-20261018.json 2b6df289cd47a845beb2f83f6765a221a922bba5; the first four are byte-identical to the verified PR heads
+- gh pr view 3015, 3025, 3033, 3035 -> state MERGED, merge commits as above
+- scripts/check-live-checkout.py (LIMEN_ROOT = the live checkout) -> state=coherent, drift=0 ahead=0 behind=0 dirty=0, exit 0
+- scripts/check-runtime-lag.py -> OK: scheduled runtime 06fa2287c893 is 6 commits behind origin/main (bound 25), exit 0
+
+OBSERVED — through the installed ~/.local/bin/limen (runtime 06fa2287c893) with LIMEN_ROOT=/Users/4jp/Workspace/limen (the live checkout), on a throwaway port so the operator's server on 8472 was never touched
+- limen knowledge --port 8599 --no-open -> "server started on port 8599 (pid 82420 ...)"; a second identical call -> "server already up on port 8599"
+- limen knowledge --port 8599 --status -> server up, real fingerprint e3adf81a..., 5958 conversations / 106725 messages, the fingerprint-bound alive receipt
+- curl /api/ping on 8599 -> {"ok": true}; / -> HTTP 200 text/html, 2184 bytes
+- limen knowledge --port 8599 --stop -> "stopped the server on port 8599 (pid 82420)"; a following --status -> server down
+- limen knowledge --port 65536 --status -> exit 2 "must be a number from 1 to 65535"
+- limen knowledge --status (default port) -> server up on 8472 (pid 14937); ps shows the same process still running, started before this session's merges, never signalled
+- Before the merge, the same lifecycle was run against the PR branch worktree (pid 64000): identical results.
+- Before the runtime rotation the installed CLI had no `knowledge` command at all ("No such command"); the rotation is domus-limen-runtime install --sha 06fa2287c893bfe0317c27d684d5d243d4c7a70b, receipt installed_at 2026-10-18T06:38:16+00:00.
+
+PRE-MERGE — exact-head evidence at each PR head (squash-merged away; these heads are NOT ancestors of the receipt base)
+#3033, final head 3366021d5ca32d2d9e2e51e27b95f801e88342a6:
+- local run-pytest-hermetic.sh on the owned test file: 80 passed, 1 skipped in 98.45 s, exit 0
+- acceptance probe in soak mode: 18/18 scenarios under bash 5 and 18/18 under /bin/bash 3.2, exit 0 each; deterministic interleavings (throwaway hooked copy): 11/11 under bash 5 and 11/11 under bash 3.2, exit 0 each
+- mutation testing of the owned test file: 44 distinct mutations of the script, 43 killed and 1 survived (release-leaves-mutex, SIGTERM while a recoverer holds the recovery mutex, no test: item 12 of #3032). Whole-PR A/B against the parent blob 970313a46e35d26859815abcf6038e3da74141eb (measured at f99a8399, 79 tests): 49 fail on the parent script, 29 pass, 1 skipped
+- the tests added for each review or CI finding were run against the script blob before its fix and failed there for the reason they name (1 of 1, 6 of 6, 2 of 2)
+- local scripts/verify-scoped.sh, cheap wave: PASS, 8 of 8 gates (syntax-changed, diff-hygiene, direct-main-writer-contract, check-params, check-test-hygiene, check-note-links, ruff-lint, ruff-format), measured at the earlier head 8caedac1 because the heavy tier then stopped the run
+- remote pr-gate on a Linux runner (verify.py --changed, run 39110497936, https://github.com/4444J99/limen/actions/runs/39110497936): cheap wave 8/8 PASS; pytest-cli PASS (9220 passed, 72 skipped, 10 subtests passed, 941.67 s); pytest-api PASS (52 passed); "Scoped verification passed"
+- the first Linux run at head f99a83994 (run 39108119956): pytest-cli 1 failed, 9199 passed. The failure was real: procps ps cuts output not going to a terminal at the terminal width unless given -ww, which macOS never does. Fixed at 3366021d with ps -ww and two tests
+- independent reviewers: an Opus-class protocol reviewer proved the start-lock design (18 scenarios x 2 bash, 120 soak iterations, 11 deterministic interleavings); a second Opus-class adversary reviewed the whole script (no blocker; 1 major, 3 minor, 5 nits: fixed with tests, reworded, or filed in #3032); a docs checker found 7 imprecisions, all applied
+#3035, head cc97ee81f7f74810b8f17b953e26396cc408fea0:
+- local scripts/verify-scoped.sh (LIMEN_VERIFY_JOBS=1): "Scoped verification passed"; 6 of 6 gates PASS (syntax-changed, diff-hygiene, session-phase, check-plan-decisions, check-docs-exports, check-note-links); no heavy gate implicated; remote pr-gate pass in 28 s
+#3015 (plan) and #3025 (Copilot preservation receipt): verified earlier in this session; the #3025 digest was reproduced by a third independent method (openssl dgst).
+
+NOT RUN / NOT CLAIMED
+- The local heavy tier (pytest-cli, pytest-api) did not run on this host: scripts/verify-scoped.sh exited 75 (EX_TEMPFAIL, "Host admission denied scoped heavy verification") twice, reasons swap-fraction (0.24 to 0.44 of RAM against a 0.25 threshold) and heavy-lease-held (another session's lease). It is reported as not run, not green. The same gates ran on the exact merged head remotely and passed (above); the repository requires no checks on pull requests, so the merges rested on that evidence plus merge-policy.sh CLEARED.
+- Not exercised: Linux beyond the CI run; a live lock holder owned by another user; SIGTERM while the recovery mutex is held; /usr/local/bin/bash. Residual lock-protocol windows are owned in #3032.
+- Not performed: re-activation of the one-shot heartbeat after the runtime rotation (a LaunchAgent edit; human-gated, #3028); closing any issue (#3012 and every follow-up stay open for the operator).
+- Not done: the Copilot second copy and the CCE reader for the saved chat pages (#3010, blocked on attaching T7Recovery, lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, #688).
+- The five memory lessons were queued as tickets, but the memory lane is dark (LIMEN_MEMORIA=0) and could not drain once armed (#3036); they are queued, not folded.
+- One leftover test process (pid 19861, a fake engine from a pre-fix mutation run) was not stopped: the auto-mode classifier denied the kill. It is harmless and outside the subject checkout.
+
+CONTINUATION — the same session, after the operator's message "the other externals are attached"
+Scope: this work is in a second repository (4444J99/conversation-corpus-engine). None of it is an owned path of this receipt; it is recorded as evidence. Its durable homes are engine PR 82 (merged), engine issues 80 and 81, Limen issues 3010 and 3077, and four queued memory tickets.
+
+EXTERNALS RE-MEASURED (read-only; first reading about 09:40Z, last about 11:30Z, identical)
+- diskutil list: one external physical disk (4 TB; volumes Archive4T, Ingress, Scratch, TM-Mac) and an iOS simulator image
+- ioreg -p IOUSB -w0 and system_profiler SPUSBHostDataType: that disk and an iPhone; system_profiler SPThunderboltDataType: all three receptacles "No device connected"; mount: no T7Recovery
+- result: the Copilot second copy is still BLOCKED on attaching T7Recovery (#3010, lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, #688). Nothing was copied to another volume of the one attached disk: the lever says a mount label is not a second device.
+
+ENGINE READER — merged (engine origin/main c46256075a5d575d3eb0a20eb272e5efd4dafebb; PR 82 head 8b630772dd588010deacdda0dfa61d83fca1f0fa; merged 2026-10-18T11:47:15Z)
+- route: merge-policy.sh 82 --repo 4444J99/conversation-corpus-engine -> HOLD (exit 2, 3 required checks running) then CLEARED (exit 0, required 0 failing 0 pending); the first merge-drain.py submission deferred (exit 2, LIFECYCLE-CLASSIFICATION-FAILED: the engine repo had no lifecycle:delivery label); after creating the label with Limen's definition and one corrective re-submission: MERGED. Defect filed as Limen #3077. A README-only commit (8b63077) was pushed to the branch by another actor after green CI; its diff was read in full and adopted by fast-forward.
+- landing proof (squash repo): git diff origin/main <verified head> is empty; archive_read_copilot.py blob 10042e548db7cb6c2099e9d6644b96d898a88784 and test_archive_copilot.py blob fb99655f15a1c766a6890dc394a289d89d2028bc are identical on main and on the verified head
+- engine suite on the final tree: 1005 passed on CPython 3.11.15, 3.12.13 and 3.13.14 (untouched baseline 705 passed with CCE_CORPUS_STORE_ROOT unset; with it set one inherited test fails: engine issue 81); ruff check src tests: All checks passed; ruff format --check src tests: 126 files already formatted; GitHub Linux CI on PR 82: test (3.11), test (3.12), test (3.13) and schema-check pass
+- three independent reviews (real-data conformance by aggregates only; code review with mutation testing; metamorphic and hostile-input checks): round-one mutation 68 mutants, 47 killed, 16 genuine test gaps; round two killed all 16 plus one reverting mutant per hardening fix (35 of 35; the quadratic-regex mutant first by a 100 s timeout, then by assertion in 11.9 s once its test was resized). 21 metamorphic relations over generated pages held (400 pages each; the cross-process determinism check is one run); cost doubles with input size up to a 20 MB page
+- real captures, aggregates only: word recall and precision 1.0 on every one of the 8 pages against counts taken independently from the raw DOM; pills 309, source cards 263, tables 17, plus table rows, headings per level, list items and quotes, all equal; two full builds byte-identical
+- privacy: hashed scan (7-word shingles, long ids, file names of the real corpus) of the whole branch diff against origin/main at head 48d1248 (the later README-only commit was read in full, not scanned): 0 shingle, 0 private-token and 0 file-name hits; the scanner was first shown to fire on planted real prose and on a planted real id. Disclosure: the engine's own graph summary printed the 8 session titles into this session's local tool output; nothing was written outside the local transcript and scratch.
+
+ENGINE READER — installed and observed (two different rails, reported apart)
+- installed rail, before: cce archive ingest --provider copilot -> exit 2, invalid choice 'copilot' (tool pinned at 7e55e2cbb2cff97bb3bcc2ccf7229208e2ce5528)
+- rotation: uv tool install --force --from git+https://github.com/4444J99/conversation-corpus-engine@c46256075a5d575d3eb0a20eb272e5efd4dafebb conversation-corpus-engine (no Domus package owns this tool; the documented command is the owner; rollback is the same command at 7e55e2cb)
+- installed rail, after: uv tool list pins c46256075a5d; the unshadowed tool interpreter imports archive_read_copilot@1 from its own site-packages; plain cce archive ingest --help lists copilot among the provider choices; the installed cce ingests the 8 real captures into a scratch store: exit 0, copilot ok, 8 conversations, 8 messages, 29665 words
+- worktree rail (branch code shadowed in with PYTHONPATH, shadow proven by __file__): build ok with 8 conversations and 8 messages, verify 0 problems, verify-names 51 names ok, prompt feed 0 rows plus a receipt (8 messages, all role-assistant), full-text search finds corpus terms and returns 0 for a nonsense term
+- A/B through the real entrypoint, baseline extracted from commit 879b777 with 8 hardening markers asserted absent from it: a saved date at year 1 -> exit 1 OverflowError before, exit 0 and a counter after; 20000 consecutive pills 5.11 s before, 0.26 s after, byte-identical output; a wrapper around header and body swallowed the body before; malformed link text and a pill before a closing quote repaired
+- acceptance, third clause: check-knowledge-alive.py --live (CCE_CORPUS_STORE_ROOT unset, private root as the parent folder) -> ALIVE cd674db6f3d1cab3: 10 of 10 checks ok on the real archive (6 providers, 5958 conversations, 27204 ledger rows, 635 public files and 159943 values scanned for privacy, none found, receipt present for the current fingerprint); --fixture -> ALIVE 1cec965fb96a4535
+
+HANGING-WORK INVENTORY (closeout step 4)
+- unmerged session PRs: Limen 3045 (this receipt, open on purpose: merging deletes its publication branch and leaves the predicate unmeasured, #2948); the engine PR is merged
+- landed-but-unreaped branches: reap-branches.py --check listed 8; this session's 7 were reaped with an exact --branch allowlist (all landed-ancestor, ledger-authorized, 0 in-flight, 0 live-work); the eighth (worktree-heal-evolve-opencode-20261018) belongs to another session and was deliberately left
+- live checkout: check-live-checkout.py read state=drift (14 behind, other lanes' merges); sync-release.sh fast-forwarded 1b78978 -> 087ecd5; re-read state=coherent drift=0
+- installed Limen runtime: check-runtime-lag.py -> OK, 06fa2287c893 is 22 commits behind origin/main, bound 25 (not red; the lag grows with other lanes' merges)
+- unfiled follow-ups: filed as engine issues 80 and 81, Limen issue 3077, and the #3010 comment (edited in place) that orders the remaining steps
+
+NOT RUN / NOT CLAIMED (continuation)
+- The live archive was not rebuilt with Copilot: a heavy workload that host admission had denied (swap fraction 0.31 against 0.25) and that is the next step in #3010. Merged and installed do not mean the live archive contains copilot; its manifest still lists six providers.
+- The Limen docs and registry update for Copilot (docs/architecture/ai-exports-archive.md, the copilot-history-memory row in corpora.yaml) waits for that rebuild (#3010). The second copy stays BLOCKED (above).
+- The shared to_iso overflow (engine issue 80) and the test-isolation leak (engine issue 81) are filed, not fixed. The engine's advisory CodeRabbit and semgrep checks were still pending at merge.
+- pid 19861 was not stopped: the earlier classifier denial stands, and it is harmless.
+- Agent accounting: about 112 descendant agent-minutes of the 120-minute allowance for this outcome (two build agents and an integrator 29, three reviewers 42, one test builder 41 before it was stopped for exceeding its time-box); the three reviewers ran concurrently, read-only on the repository with scratch writes only. Subagents ran without individual conduct leases, as declared at registration (the reservation mechanism is owed in #3000).
