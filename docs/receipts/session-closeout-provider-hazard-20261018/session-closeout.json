@@ -1,0 +1,37 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "3ac18ade-5b6e-4cba-94da-a4428a5ec69c",
+  "worktree_name": "wf_a1821565-3df-3",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-provider-hazard-20261018",
+  "base_head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/issues/3010",
+  "owned_paths": [
+    "docs/architecture/ai-exports-archive.md"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "purpose": "completion",
+      "head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-provider-hazard-20261018/verification.txt",
+      "sha256": "bd9a1a867b42bd6ec6a3a6bb462bb27da1e985bce414e57aa7310ec1e415c1b5",
+      "owner_url": "https://github.com/4444J99/limen/issues/3010"
+    },
+    {
+      "purpose": "credential-wall",
+      "head": "b6a4f208480da3d80005d753ee2a5b09b8b95e0b",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-provider-hazard-20261018/verification.txt",
+      "sha256": "bd9a1a867b42bd6ec6a3a6bb462bb27da1e985bce414e57aa7310ec1e415c1b5",
+      "owner_url": "https://github.com/4444J99/limen/issues/3010"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-provider-hazard-20261018/custody.json",
+    "sha256": "81e249b41106904a075938f4a70fdc19cc83c71ec8b976f0dfe9c121482e2b6b"
+  }
+}

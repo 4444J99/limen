@@ -1,0 +1,52 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "3ac18ade-5b6e-4cba-94da-a4428a5ec69c",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3104, "merge_commit": "82fb062759dcb43a5f49fd3541e886eb0d2d8cec", "what": "docs/architecture/ai-exports-archive.md: the full-build rule (--provider rewrites the manifest from the named providers alone) and the corrected Copilot paragraph (the engine reads the pages; the live archive does not yet include them)"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/3010",
+    "https://github.com/4444J99/limen/issues/3028",
+    "https://github.com/4444J99/limen/issues/2054",
+    "https://github.com/4444J99/limen/issues/3012",
+    "https://github.com/4444J99/conversation-corpus-engine/issues/84"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/3010#issuecomment-6253314443 (the live rebuild: BLOCKED host admission, the --provider hazard, the exact command)",
+      "https://github.com/4444J99/limen/issues/3028#issuecomment-6253314756 (the heartbeat plan as reviewed and the one human step; edited in place once)",
+      "https://github.com/4444J99/limen/issues/2054#issuecomment-6253314946 (recurrence evidence for the broker write allowance)"
+    ],
+    "issues_created": [
+      "https://github.com/4444J99/conversation-corpus-engine/issues/84 (cce archive build --provider X rewrites the manifest from that provider alone)"
+    ],
+    "broker_registration": "Registered by the background-job hook with the Claude lane bearer (principal claude-direct) as session 3ac18ade-5b6e-4cba-94da-a4428a5ec69c, bound to this worktree, at 17:38:24Z, 17:40:32Z and 17:44:09Z. The refresh at 17:46:13Z was rejected with HTTP 500, Exceeded allowed rows written in Durable Objects free tier (issue 2054). The session audit read fails the same way, so the release predicate is unmeasured until the allowance resets.",
+    "native_fanout": "None. No subagent, team or workflow was launched in this session; the advisor tool was consulted once. Research was read inline."
+  },
+  "host_effects": [
+    {"effect": "live checkout fast-forwarded by its owner organ", "readback": "env LIMEN_ROOT=<live checkout> scripts/sync-release.sh: fdfbe2d -> b6a4f20, fast-forward only; check-live-checkout.py read state=coherent drift=0 afterwards"},
+    {"effect": "one synthetic corpus store registered, built three times and deleted", "readback": "the experiment script registered a store under its own project root (never global config), built it from cce archive fixture exports, and removed the whole run directory; the real archive store was never named and CCE_CORPUS_STORE_ROOT was unset for every call"},
+    {"effect": "no runtime rotation, no process signalled, no LaunchAgent edited", "readback": "the installed runtime moved from 056262dab21c to c80d848219a9 during the session through other work; plan-heartbeat was run read-only"},
+    {"effect": "two memory tickets queued", "readback": "scripts/memory-ticket.py: 20261018T181515_662349Z-3ac18ade-5b6e-4cba-94da-a4428a5ec69c-b1576704 (feedback: the classifier denies read-only commands that name conduct, fanout, tokens or kill) and 20261018T181520_177925Z-3ac18ade-5b6e-4cba-94da-a4428a5ec69c-be078bf4 (project: the background job shell's stale LIMEN_ROOT and the Write-tool scratch path); the lane is dark and cannot drain once armed (issue 3036), so both are queued, not folded"}
+  ],
+  "session_worktrees": {
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/wf_a1821565-3df-3 (branch docs/session-closeout-provider-hazard-20261018). It is also the native caller's worktree: the receipt and the subject are one checkout.",
+    "earlier_local_branches": "docs/ai-exports-archive-drift (tip cc97ee81, the head of merged PR 3035; the remote branch was deleted on merge) and docs/ai-exports-archive-build-scope-20261018 (tip 17e77f10, the head of merged PR 3104; the remote branch was deleted on merge). Both are left as found: landing is provable through refs/pull/3035/head and refs/pull/3104/head, and the reaper owns them."
+  },
+  "not_owned_by_this_session": [
+    "the operator's archive server on port 8472 (pid 14937), untouched",
+    "pid 19861, a pytest fake engine from session 1ecb794a; the kill was denied twice by the auto-mode classifier and is not retried",
+    "pull request 3045, session 1ecb794a's receipt, left open on purpose (issue 2948)",
+    "the other lanes' open pull requests, worktrees, runtime rotations and the codex-worktree-write leases in the host admission store",
+    "the nine memory tickets session 1ecb794a queued (issue 3036)"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/3010", "what": "the live rebuild with Copilot (BLOCKED: host admission, swap pressure; the command and the --provider hazard are in the 2026-10-18 update), then the doc and corpora.yaml decision, then the second copy (BLOCKED: attach T7Recovery, lever L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES, issue 688)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3028", "what": "re-activating the one-shot heartbeat is a human step (a LaunchAgent edit); the plan was read and the steps prepared"},
+    {"owner": "https://github.com/4444J99/limen/issues/2054", "what": "the conduct broker's Durable Objects write allowance; session-release proofs are unmeasured (exit 2) on every lane until it resets or the cold-mutation path is bounded"},
+    {"owner": "https://github.com/4444J99/conversation-corpus-engine/issues/84", "what": "make a subset --provider build merge into the manifest or refuse it"},
+    {"owner": "https://github.com/4444J99/limen/issues/3036", "what": "the memory ticket lane cannot drain once armed; this session's two tickets and the nine from session 1ecb794a are queued, not folded"},
+    {"owner": "https://github.com/4444J99/limen/issues/3012", "what": "the tracking issue stays open: closing it is the operator's decision"}
+  ],
+  "local_only_state": "Scratch under this worktree's .limen-private/scratch/pickup-20261018 (the verification script, the experiment script and its summary, the comment, pull request and issue bodies, the commit message) is disposable and git-ignored. The durable results are pull request 3104, the three issue comments, engine issue 84 and this receipt. The experiment's store was deleted by its own script. Nothing durable exists only locally."
+}
