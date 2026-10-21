@@ -168,8 +168,8 @@ rails:
   archive4t:
     service: "Archive4T (APFS volume, 4TB SSD)"
     declared_state: adopted
-    role: "Optional local archive — existing curated recovered data, manifests, operating docs remain preserved; Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
-    never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder"]
+    role: "Organized local archive and Mac-exit consolidation target (mac-exit-20261021/, sha256 manifests). Shares one physical drive with Ingress, Scratch and TM-Mac. Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
+    never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder", "counting a same-drive copy as a second copy", "moving a code-pinned path"]
     mount: "/Volumes/Archive4T"
     required_mounted: false   # absence stays visible; portable recovery is separately gated
     trust_gates:
@@ -178,8 +178,8 @@ rails:
   t7recovery:
     service: "T7Recovery (second local copy)"
     declared_state: adopted
-    role: "Second local recovery copy of CleanUnique until offsite restore proof exists; then re-evaluate."
-    never: ["scratch", "active workspace", "new unsorted data", "deletion before offsite restore proof"]
+    role: "Second local copy on a device separate from the 4 TB drive: CleanUnique, custody replicas, and the Mac-exit set at Archive4T-identical relative paths. Kept until offsite restore proof exists; then re-evaluate."
+    never: ["scratch", "active workspace", "new unsorted data", "deletion before offsite restore proof", "re-layout of existing paths"]
     mount: "/Volumes/T7Recovery"
     required_mounted: false   # may be detached; report-only
     trust_gates:
@@ -188,8 +188,8 @@ rails:
   time-machine:
     service: "Time Machine -> TM-Mac"
     declared_state: adopted
-    role: "LOCAL rollback for the internal Mac only (optional convenience — data already has iCloud + Archive4T + Backblaze copies; stated once, not nagged)."
-    never: ["a backup of Archive4T", "a substitute for offsite backup", "a reason to erase T7Recovery"]
+    role: "LOCAL rollback for the internal Mac only; frozen after a final backup before the erase, then retired only on the retirement proof (homed, verified, restore drills, owner sign-off)."
+    never: ["a backup of Archive4T", "a substitute for offsite backup", "a reason to erase T7Recovery", "a new Mac's target before the old image retires"]
     mount: "/Volumes/TM-Mac"
     required_mounted: false
     probes:
@@ -200,8 +200,8 @@ rails:
   ingress:
     service: "Ingress (intake volume)"
     declared_state: adopted
-    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until promoted to Archive4T."
-    never: ["long-term storage", "Backblaze selection"]
+    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until copied to Archive4T; originals leave only after a second physical copy is verified."
+    never: ["long-term storage", "Backblaze selection", "counting the Archive4T copy as a second physical copy"]
     mount: "/Volumes/Ingress"
     required_mounted: false
     trust_gates:
@@ -210,8 +210,8 @@ rails:
   scratch:
     service: "Scratch (disposable volume)"
     declared_state: adopted
-    role: "Disposable workspace: risky unpacking, transformations, one-off experiments."
-    never: ["only home of anything important", "Backblaze selection"]
+    role: "Disposable workspace: risky unpacking, transformations, one-off experiments, generated worktrees and rebuildable derived stores."
+    never: ["only home of anything important", "Backblaze selection", "a worktree whose git dir is on the internal Mac"]
     mount: "/Volumes/Scratch"
     required_mounted: false
     trust_gates:
