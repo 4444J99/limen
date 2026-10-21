@@ -1,0 +1,33 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "7531975a-4e6f-452f-a13b-d135d98551cf",
+  "repository": "4444J99/limen",
+  "worktree_name": "closeout-session-7531975a-20261019",
+  "base_head": "bbf1cc65e0bbe0e45f05867d062de5f858ec1baf",
+  "publication_branch": "worktree-closeout-session-7531975a-20261019",
+  "owner_url": "https://github.com/4444J99/limen/pull/3136",
+  "disposition": "read_only",
+  "owned_paths": [],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "bash scripts/verify-scoped.sh (bare, clean tree at base: 'No changes vs the base and no local modifications - nothing to verify.'; no failure status; the session changed no implementation)",
+      "head": "bbf1cc65e0bbe0e45f05867d062de5f858ec1baf",
+      "exit_code": 0,
+      "evidence": "docs/continuations/closeout-session-7531975a-20261019/session-evidence.json",
+      "sha256": "ce1788a1fa4fb5f7505aab55ef8b4b4df0742ac880d835360a64ed5b002e323e"
+    },
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "head": "bbf1cc65e0bbe0e45f05867d062de5f858ec1baf",
+      "exit_code": 0,
+      "evidence": "docs/continuations/closeout-session-7531975a-20261019/session-evidence.json",
+      "sha256": "ce1788a1fa4fb5f7505aab55ef8b4b4df0742ac880d835360a64ed5b002e323e"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/closeout-session-7531975a-20261019/session-evidence.json",
+    "sha256": "ce1788a1fa4fb5f7505aab55ef8b4b4df0742ac880d835360a64ed5b002e323e"
+  }
+}
