@@ -1,0 +1,106 @@
+{
+  "schema": "limen.agent_surface_handoff_evidence.v1",
+  "session_id": "01a14dc9-d07f-7d52-8fbb-e9588ab390f6",
+  "implementation_head": "96ae61ead3b72042852ec5d0e885380010de3bcf",
+  "checks": [
+    {
+      "command": "python3 docs/continuations/agent-surface-containment-20261018/check-tools.py",
+      "exit_code": 0,
+      "result": "4 fixture checks passed; checked sources unchanged at implementation head"
+    },
+    {
+      "command": "/usr/local/bin/python3.13 scripts/credential-wall.py --check",
+      "exit_code": 0,
+      "result": "all 32 credential atoms registered; no credential values in artifacts"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "bash scripts/verify-scoped.sh",
+      "executed": false,
+      "exit_code": null,
+      "denying_layer": "host PreToolUse admission",
+      "reasons": [
+        "swap-fraction",
+        "vitals-shed"
+      ],
+      "owner_url": "https://github.com/4444J99/limen/pull/3030",
+      "next_command": "bash scripts/verify-scoped.sh after admission allows execution"
+    },
+    {
+      "command": "inventory.py verify, retained segments 2 and 3",
+      "exit_codes": [
+        2,
+        2
+      ],
+      "result": "hashes and physical counts match; completeness false"
+    }
+  ],
+  "private_publication": {
+    "repository": "4444J99/domus-genoma-private",
+    "repository_id": 1124448005,
+    "private_verified": true,
+    "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+    "raw_ledger_commit": "34477227e0235bc8c5061b6cbdc8e8ef74f15034",
+    "derivation_commit": "a6cd196a9a32dd8556f3b2db5978cf1553d36bd9",
+    "raw_files_readback_count": 21,
+    "raw_files_byte_readback": true,
+    "derivation_script_readback": true
+  },
+  "custody": {
+    "scope": "new metadata evidence and source handoff only",
+    "verified": true,
+    "reason": "All three attempt ledgers, continuation roots, publisher and derivation script are committed to the verified private repository with exact byte readback. Public source is committed to this PR. Generated local evidence is retained. No original native state or historical custody tree was moved or retired.",
+    "native_restore_proven": false,
+    "retirement_authorized": false
+  },
+  "hanging_work": {
+    "public_pr": "https://github.com/4444J99/limen/pull/3030",
+    "private_pr": "https://github.com/4444J99/domus-genoma-private/pull/510",
+    "landed_branch_check": {
+      "exit_code": 0,
+      "scope": "this session branch only",
+      "limitation": "remote reaper proof skipped offline; observed open draft PR, no retirement eligibility"
+    },
+    "live_checkout": {
+      "exit_code": 0,
+      "state": "coherent",
+      "head": "06fa2287c893bfe0317c27d684d5d243d4c7a70b"
+    },
+    "installed_runtime": {
+      "exit_code": 0,
+      "lag_commits": 0,
+      "head": "06fa2287c893bfe0317c27d684d5d243d4c7a70b"
+    }
+  },
+  "retained_obligations": [
+    {
+      "owner_url": "https://github.com/4444J99/limen/pull/3030",
+      "work": "Finish exact pending census roots and resolve coverage errors; pass scoped gate before merge"
+    },
+    {
+      "owner_url": "https://github.com/4444J99/limen/issues/2848",
+      "work": "Provider rollout, native acceptance, independent custody and any retirement retain their existing owners"
+    },
+    {
+      "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+      "work": "Retain private path ledgers and integrate census under Domus Phase B"
+    }
+  ],
+  "fanout": {
+    "root_reservation": "conduct_rejected HTTP 409",
+    "native_children_launched": 0
+  },
+  "scope_denials": {
+    "historical": "workspace-scope-unavailable, as supplied by human review",
+    "current": "structured workdir/file writes denied shared-checkout-write; explicit scoped command succeeds",
+    "swap_causation_established": false
+  },
+  "receipt_text_denial": {
+    "reason": "unguarded-heavy; use bash scripts/verify-scoped.sh",
+    "actual_action": "serialize receipt metadata mentioning the gate; no gate command was being executed",
+    "resolution": "structured GitHub file publication on this same owned draft branch"
+  }
+}

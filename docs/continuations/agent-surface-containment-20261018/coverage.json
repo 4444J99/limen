@@ -1,0 +1,56 @@
+{
+  "schema": "limen.agent_surface_coverage.v1",
+  "census_complete": false,
+  "name_predicate": "case-insensitive basename contains codex",
+  "unique_observed_physical_codex_directories": 13786,
+  "unique_related_alias_paths": 11162,
+  "unique_recorded_metadata_errors": 1583,
+  "remaining_pending_directory_roots": 243,
+  "deduplication": "device and inode across three timed observations; not an atomic snapshot or active-install count",
+  "depth_limit": null,
+  "prune_patterns": [],
+  "segments": [
+    {
+      "id": "segment-1",
+      "exit_code": 130,
+      "named_directory_records": 206,
+      "error_records": 45,
+      "complete": false
+    },
+    {
+      "id": "segment-2",
+      "exit_code": 2,
+      "named_directory_records": 8142,
+      "error_records": 865,
+      "complete": false,
+      "started_at": "2026-10-18T07:02:09.151701+00:00",
+      "finished_at": "2026-10-18T07:07:09.161367+00:00",
+      "directory_observations": 4007263,
+      "pending_directory_roots": 156,
+      "root_statuses": {
+        "traversed": 2,
+        "traversed-with-errors": 5,
+        "deadline": 4
+      }
+    },
+    {
+      "id": "segment-3",
+      "exit_code": 2,
+      "named_directory_records": 10315,
+      "error_records": 711,
+      "complete": false,
+      "started_at": "2026-10-18T07:08:05.735389+00:00",
+      "finished_at": "2026-10-18T07:12:05.744220+00:00",
+      "directory_observations": 3122906,
+      "pending_directory_roots": 243,
+      "root_statuses": {
+        "traversed": 16,
+        "traversed-with-errors": 9,
+        "deadline": 139
+      }
+    }
+  ],
+  "owner_url": "https://github.com/4444J99/limen/pull/3030",
+  "remaining_work": "Resolve retained access/dataless/timeout errors and finish exact pending roots when host admission permits; no broader completion claim.",
+  "private_ledger_owner": "Domus census Phase B from PR 502"
+}

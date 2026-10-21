@@ -1,0 +1,213 @@
+{
+  "schema": "limen.session_closeout.v2",
+  "session_id": "01a14dc9-d07f-7d52-8fbb-e9588ab390f6",
+  "session_root_path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+  "receipt_root_id": "handoff",
+  "broker_scope_root_id": "handoff",
+  "owner_url": "https://github.com/4444J99/limen/pull/3030",
+  "disposition": "handoff",
+  "scope_roots": [
+    {
+      "id": "handoff",
+      "path_sha256": "2b782d8bcd6cce1f6e8d40adca5c2bcf469454bc447afa6585c36aff198cfa48",
+      "kind": "git",
+      "repository": "4444J99/limen",
+      "repository_id": 1255213941,
+      "base_head": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
+      "publication_branch": "docs/codex-census-safe-containment-20261018",
+      "owned_paths": [
+        "docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md",
+        "docs/plans/2026-10-18-codex-census-safe-containment-v4.md",
+        "docs/continuations/agent-surface-containment-20261018/README.md",
+        "docs/continuations/agent-surface-containment-20261018/inventory.py",
+        "docs/continuations/agent-surface-containment-20261018/stage-rollback.py",
+        "docs/continuations/agent-surface-containment-20261018/check-tools.py"
+      ],
+      "retained_work": []
+    }
+  ],
+  "verification": [
+    {
+      "root_id": "handoff",
+      "command": "python3 docs/continuations/agent-surface-containment-20261018/check-tools.py",
+      "head": "96ae61ead3b72042852ec5d0e885380010de3bcf",
+      "exit_code": 0,
+      "evidence": "docs/continuations/agent-surface-containment-20261018/session-evidence.json",
+      "sha256": "732457b28cfce9c7e52da582dda77db3c12437ce93cad6c08cd2e10b4798a898"
+    },
+    {
+      "root_id": "handoff",
+      "command": "/usr/local/bin/python3.13 scripts/credential-wall.py --check",
+      "head": "96ae61ead3b72042852ec5d0e885380010de3bcf",
+      "exit_code": 0,
+      "evidence": "docs/continuations/agent-surface-containment-20261018/session-evidence.json",
+      "sha256": "732457b28cfce9c7e52da582dda77db3c12437ce93cad6c08cd2e10b4798a898"
+    },
+    {
+      "root_id": "handoff",
+      "command": "git diff --check",
+      "head": "96ae61ead3b72042852ec5d0e885380010de3bcf",
+      "exit_code": 0,
+      "evidence": "docs/continuations/agent-surface-containment-20261018/session-evidence.json",
+      "sha256": "732457b28cfce9c7e52da582dda77db3c12437ce93cad6c08cd2e10b4798a898"
+    },
+    {
+      "root_id": "handoff",
+      "command": "inventory.py verify: segments 2 and 3, two separate invocations",
+      "head": "96ae61ead3b72042852ec5d0e885380010de3bcf",
+      "exit_code": 2,
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/pull/3030",
+      "evidence": "docs/continuations/agent-surface-containment-20261018/coverage.json",
+      "sha256": "1de48390444b2603f29e17e6385c51f83cae6ba7b9096d779bbc120d9aa58195"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "root_ids": [
+      "handoff"
+    ],
+    "evidence": "docs/continuations/agent-surface-containment-20261018/session-evidence.json",
+    "sha256": "732457b28cfce9c7e52da582dda77db3c12437ce93cad6c08cd2e10b4798a898"
+  },
+  "external_effects": [
+    {
+      "id": "private-evidence-publication",
+      "kind": "github-pr",
+      "verified": true,
+      "evidence": "docs/continuations/agent-surface-containment-20261018/session-evidence.json",
+      "sha256": "732457b28cfce9c7e52da582dda77db3c12437ce93cad6c08cd2e10b4798a898"
+    }
+  ],
+  "retained_obligations": [
+    {
+      "owner_url": "https://github.com/4444J99/limen/pull/3030",
+      "work": "Finish exact pending census roots and resolve coverage errors; pass scoped gate before merge"
+    },
+    {
+      "owner_url": "https://github.com/4444J99/limen/issues/2848",
+      "work": "Provider rollout, native acceptance, independent custody and any retirement retain their existing owners"
+    },
+    {
+      "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+      "work": "Retain private path ledgers and integrate census under Domus Phase B"
+    }
+  ],
+  "checkout_retention": {
+    "disposition": "retain",
+    "owner_url": "https://github.com/4444J99/limen/pull/3030",
+    "reason": "Handoff checkout with retained metadata originals; session release grants no retirement authority"
+  },
+  "pending_completion_gate": {
+    "command": "bash scripts/verify-scoped.sh",
+    "executed": false,
+    "reason": "host admission: swap-fraction,vitals-shed",
+    "owner_url": "https://github.com/4444J99/limen/pull/3030"
+  },
+  "session_release_attempt": {
+    "exit_code": 2,
+    "status": "unmeasured",
+    "session_released": false,
+    "task_completed": false,
+    "reason": "process ownership observation unavailable or invalid",
+    "diagnostic": {
+      "complete": false,
+      "unknown_processes": 82,
+      "owned_survivors": 0,
+      "unmeasured_processes": 1,
+      "unmeasured_reason": "process_evidence_stale"
+    },
+    "owner_url": "https://github.com/4444J99/limen/pull/3030",
+    "next_action": "Reconcile the three source-owned attribution defects recorded in followup_observation, without mutating or signaling peer sessions. Host admission must permit scoped verification before source integration. Repeat the installed exact-session predicate only after operational evidence changes.",
+    "idempotence_proven": false,
+    "followup_observation": {
+      "observed_at": "2026-10-18T08:08:19Z",
+      "installed_revision": "06fa2287c893bfe0317c27d684d5d243d4c7a70b",
+      "method": "Installed process_ownership.snapshot plus assess over the exact native anchor and declared handoff root; metadata only. Operational evidence was supplied, not removed.",
+      "counts": {
+        "checker": 1,
+        "shared_service": 0,
+        "foreign_session": 0,
+        "owned_survivor": 0,
+        "unknown": 84,
+        "unmeasured": 1
+      },
+      "pid_reuse": {
+        "confirmed": true,
+        "old_service": "serena",
+        "current_executable": "zsh",
+        "native_start_identities_differ": true,
+        "receipt_changed": false
+      },
+      "host_contract": {
+        "same_canonical_executable": true,
+        "missing_declared_flag": "--analytics-default-enabled",
+        "source": ".chezmoidata/config-ownership.json: mcp process_ownership.hosts",
+        "rendered_surface": "~/.config/domus/mcp-policy.json",
+        "source_repository": "4444J99/domus-genoma-private"
+      },
+      "counterfactual": {
+        "diagnostic_only": true,
+        "method": "In-memory copy of derived service contracts used the exact observed native host argv. No policy or operational record changed.",
+        "counts": {
+          "checker": 1,
+          "shared_service": 30,
+          "foreign_session": 0,
+          "owned_survivor": 0,
+          "unknown": 54,
+          "unmeasured": 1
+        },
+        "acceptance_proof": false
+      },
+      "admission": {
+        "observed_at": "2026-10-18T08:05:55.363528Z",
+        "command": "/usr/local/bin/python3.13 scripts/host-work-admission.py status --no-probe",
+        "allowed": false,
+        "reasons": [
+          "swap-fraction",
+          "vitals-shed"
+        ],
+        "swap_fraction": 0.3435858153970912,
+        "gate_retried": false
+      },
+      "source_actions": [
+        {
+          "owner_url": "https://github.com/4444J99/domus-genoma-private/issues/397",
+          "source": ".chezmoidata/config-ownership.json; dot_config/domus/mcp-policy.json.tmpl",
+          "action": "Declare the verified analytics-enabled native host invocation as an exact source-owned variant while preserving other supported invocations; validate and deploy through the source owner's rail. Do not wildcard argv or remove flags in the assessor."
+        },
+        {
+          "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+          "source": "dot_local/bin/executable_domus-process-ownership",
+          "action": "Implement an identity-bound, evidence-preserving stale-receipt reconciliation path. A reused PID must not be adopted as the old service. Preserve the old receipt and positively classify the current process before any replacement; do not signal it."
+        },
+        {
+          "owner_url": "https://github.com/4444J99/limen/pull/3030",
+          "source": "cli/src/limen/process_services.py; cli/src/limen/process_ownership.py",
+          "action": "Resolve remaining managed-wrapper, helper and non-Codex native-session ownership through verified source contracts and exact native evidence. Matching names, inherited cwd, app ancestry or creation time alone are insufficient. Retain unknowns until proved."
+        }
+      ],
+      "acceptance": [
+        "Scoped source checks pass under actual host admission.",
+        "The installed observer positively attributes every in-scope surviving instance and has zero unknown, unmeasured and owned-survivor counts.",
+        "The explicit v2 session predicate exits 0 twice with the native anchor unchanged and no new artifacts on its second run."
+      ],
+      "changes": {
+        "operational_receipts": false,
+        "live_config": false,
+        "peer_processes": false,
+        "native_state": false
+      },
+      "session_predicate_retried": false,
+      "reason_not_retried": "No operational ownership inputs changed; the diagnostic remains unmeasured. Repeating the same session predicate would provide no new evidence.",
+      "private_evidence": {
+        "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/510",
+        "commit": "ffcec9e24ae51a258584010bd844a1867c0fa4d0",
+        "path": "docs/receipts/codex-directory-census-20261018/closeout-observation-0808.json",
+        "byte_readback": true,
+        "sha256": "5db66451963b7b9f1fd0305ffe5e6292d7bed0cfd663468f06b0a2b68117a25b",
+        "size": 4096
+      }
+    }
+  }
+}
