@@ -6,8 +6,19 @@
     "stash and unpushed counts are repository-wide and repeat on every worktree row; they are counted once per repository",
     "a rerun of the committed scripts minutes later saw 372 entries and 92 real; the extra is this session's own new worktree, dirty while its edits were uncommitted, which shows how fast this evidence goes stale on a live Mac"
   ],
+  "corrections": [
+    "the arca vault is a clean git clone fully held by its remote (no commits on any non-remote ref, nothing uncommitted), so it is regenerable and was wrongly listed under non-git data without a remote",
+    "external worktrees naming a Mac path were first reported as 8 (the count from one repo's own worktree list); a filesystem discovery found 468 after the owner's sanctioned reap removed one: 16 live (will break on erase) and 452 already orphaned (Mac-side metadata gone)",
+    "the survey's repo-wide unpushed count treats stale machine-generated bot branches as at-risk work; a repo reported as carrying 4 unpushed commits held only 4 superseded Dependabot branches",
+    "the sweep prunes ~/.local/share and ~/.cache by design; 137 git repos live there, nearly all regenerable, and two held unproven work that was added to a supplementary preserve run",
+    "the remaining gate 'amend storage-roles.yaml' was completed in PR #3150 and is no longer listed"
+  ],
   "date": "20261021",
-  "external_worktrees_dependent_on_internal_git_dir": 8,
+  "external_worktrees_dependent_on_internal_git_dir": {
+    "already_orphaned": 452,
+    "live": 16,
+    "naming_a_mac_path": 468
+  },
   "footprint_kib": {
     "arca_vault": 18060372,
     "cache": 28031876,
@@ -46,7 +57,6 @@
     "Messages and Mail stores",
     "Photos library and Pictures",
     "Documents",
-    "arca vault",
     "Application Support, Group Containers and Containers",
     "dotfiles that hold keys or credentials"
   ],
@@ -57,7 +67,6 @@
     "convert the external worktrees that point into the internal limen git dir into standalone clones",
     "home the non-git data above on an external with a sha256 manifest, and credentials through the credential organ",
     "prove per-branch against fresh remote state before deleting any local copy that the remote is said to hold",
-    "amend storage-roles.yaml so the externals' declared roles match the consolidated layout",
     "human: erase the Mac, which needs the owner at the machine and the Apple ID"
   ],
   "scope": "read-only survey; nothing was deleted, moved or modified",
