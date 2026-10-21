@@ -168,6 +168,57 @@ def test_checker_observation_children_are_excluded(cohort):
     assert result["counts"]["checker"] == 2
 
 
+KEEPAWAKE = ("/usr/bin/caffeinate", "-i", "-t", "300")
+
+
+def _row(result, pid):
+    return next((row for row in result["processes"] if row["pid"] == pid), None)
+
+
+def test_harness_keepawake_child_of_checker_ancestry_is_checker_owned(cohort):
+    # The harness wraps each tool call in `caffeinate -i -t 300`, a child of the shell the checker runs under; it
+    # inherits the worktree cwd. Counting it as a survivor made every in-session closeout fail (measured 2026-10-19).
+    processes, _, _, evaluate = cohort
+    baseline = evaluate(excluded={104})
+    processes[106] = ownership.Process(106, 104, os.getuid(), "start-keepawake", KEEPAWAKE, cwd=processes[101].cwd)
+    result = evaluate(excluded={104})
+    assert _row(result, 106) == {"pid": 106, "category": "checker", "reason": "checker_keepawake"}
+    assert result["process_count"] == baseline["process_count"]
+    assert result["counts"]["checker"] == baseline["counts"]["checker"] + 1
+
+
+@pytest.mark.parametrize(
+    ("argv", "parent"),
+    [
+        pytest.param(KEEPAWAKE, 100, id="parent-not-in-checker-ancestry"),
+        pytest.param(("/usr/bin/caffeinate", "-s", "-t", "300"), 104, id="other-flag"),
+        pytest.param(("/usr/bin/caffeinate", "-i", "-t", "99999"), 104, id="unbounded-timeout"),
+        pytest.param(("/usr/bin/caffeinate", "-i", "-t", "0"), 104, id="zero-timeout"),
+        pytest.param(("/usr/bin/caffeinate", "-i", "-t", "300", "sleep", "1"), 104, id="wraps-a-command"),
+        pytest.param(("/usr/bin/caffeinate", "-i"), 104, id="no-timeout"),
+        pytest.param(("/usr/bin/sleep", "-i", "-t", "300"), 104, id="not-caffeinate"),
+    ],
+)
+def test_keepawake_lookalikes_stay_unknown_and_block(cohort, argv, parent):
+    # The rule must not hide a real survivor: anything that is not the exact wrapper under the checker stays blocking.
+    processes, _, _, evaluate = cohort
+    baseline = evaluate(excluded={104})
+    processes[106] = ownership.Process(106, parent, os.getuid(), "start-lookalike", argv, cwd=processes[101].cwd)
+    result = evaluate(excluded={104})
+    row = _row(result, 106)
+    assert (row["category"], row["reason"]) == ("unknown", "ownership_unresolved")
+    assert result["process_count"] == baseline["process_count"] + 1
+
+
+def test_keepawake_outside_the_scope_root_is_not_counted_at_all(cohort):
+    processes, _, _, evaluate = cohort
+    baseline = evaluate(excluded={104})
+    processes[106] = ownership.Process(106, 104, os.getuid(), "start-away", KEEPAWAKE, cwd=processes[100].cwd)
+    result = evaluate(excluded={104})
+    assert _row(result, 106) is None
+    assert result["process_count"] == baseline["process_count"]
+
+
 def test_native_witness_reads_header_only_and_checks_child_lineage(tmp_path):
     path = tmp_path / "transcript"
     header = {
