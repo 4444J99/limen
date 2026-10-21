@@ -23,7 +23,7 @@ out="${1:-${TMPDIR:-/tmp}/mac-exit-git-sweep}"
 mkdir -p "$out"
 log() { printf '%s %s\n' "$(date -u +%H:%M:%SZ)" "$*"; }
 
-roots=("$HOME/Workspace" "$HOME/Documents" "$HOME/Desktop" "$HOME/Downloads" "$HOME/Developer" "$HOME/Code" "$HOME/edu")
+roots=("$HOME/Workspace" "$HOME/Documents" "$HOME/Desktop" "$HOME/Downloads" "$HOME/Developer" "$HOME/Code" "$HOME/edu" "$HOME/limen-lanes")
 prune=(\( -name node_modules -o -name .venv -o -name site-packages -o -name .tox -o -name Pods \) -prune -o)
 
 list="$out/git-entries.zlist"

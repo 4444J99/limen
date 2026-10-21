@@ -3,7 +3,8 @@
     "local view: unpushed is measured against remote-tracking refs from the last fetch and can lag the remote",
     "only a remote named origin was examined, so a repo whose remote has another name is counted as having none",
     "a branch merged by squash is not an ancestor of the remote, so it is counted as unpushed although its content landed",
-    "stash and unpushed counts are repository-wide and repeat on every worktree row; they are counted once per repository"
+    "stash and unpushed counts are repository-wide and repeat on every worktree row; they are counted once per repository",
+    "a rerun of the committed scripts minutes later saw 372 entries and 92 real; the extra is this session's own new worktree, dirty while its edits were uncommitted, which shows how fast this evidence goes stale on a live Mac"
   ],
   "date": "20261021",
   "external_worktrees_dependent_on_internal_git_dir": 8,
@@ -49,6 +50,8 @@
     "Application Support, Group Containers and Containers",
     "dotfiles that hold keys or credentials"
   ],
+  "owner_issue": "4444J99/limen#3147",
+  "private_detail": "/Volumes/Archive4T/t7-unique-20261021/_exit-survey (named work list, both sweeps, comparison outputs, one-off tools; sha256 manifest alongside)",
   "remaining_gates": [
     "preserve each real-exposure repo as a verified git bundle plus a snapshot of its dirty tree on an external, run immediately before any reset because the Mac is live and the state moves",
     "convert the external worktrees that point into the internal limen git dir into standalone clones",
