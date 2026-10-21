@@ -1,0 +1,66 @@
+{
+  "caveats": [
+    "local view: unpushed is measured against remote-tracking refs from the last fetch and can lag the remote",
+    "only a remote named origin was examined, so a repo whose remote has another name is counted as having none",
+    "a branch merged by squash is not an ancestor of the remote, so it is counted as unpushed although its content landed",
+    "stash and unpushed counts are repository-wide and repeat on every worktree row; they are counted once per repository",
+    "a rerun of the committed scripts minutes later saw 372 entries and 92 real; the extra is this session's own new worktree, dirty while its edits were uncommitted, which shows how fast this evidence goes stale on a live Mac"
+  ],
+  "date": "20261021",
+  "external_worktrees_dependent_on_internal_git_dir": 8,
+  "footprint_kib": {
+    "arca_vault": 18060372,
+    "cache": 28031876,
+    "documents": 4699748,
+    "home_total": 283564668,
+    "library": 68877600,
+    "local": 17255812,
+    "pictures": 14219912,
+    "workspace": 124702028
+  },
+  "git": {
+    "entries": 371,
+    "flagged": 129,
+    "flagged_disposable_by_path": 38,
+    "flagged_real": 91,
+    "reasons_among_real": {
+      "repo_dirty": 26,
+      "repo_no_origin": 11,
+      "repo_stash": 7,
+      "repo_unpushed_vs_tracking_refs": 34,
+      "worktree_detached_head_on_no_remote_branch": 15,
+      "worktree_dirty": 25
+    },
+    "repos": 187,
+    "safe_repos": 100,
+    "safe_worktrees": 142,
+    "worktrees": 184
+  },
+  "internal_volume": {
+    "free_gib": 12,
+    "total_gib": 460,
+    "used_gib": 427
+  },
+  "kind": "receipt",
+  "non_git_data_without_a_remote": [
+    "Messages and Mail stores",
+    "Photos library and Pictures",
+    "Documents",
+    "arca vault",
+    "Application Support, Group Containers and Containers",
+    "dotfiles that hold keys or credentials"
+  ],
+  "owner_issue": "4444J99/limen#3147",
+  "private_detail": "/Volumes/Archive4T/t7-unique-20261021/_exit-survey (named work list, both sweeps, comparison outputs, one-off tools; sha256 manifest alongside)",
+  "remaining_gates": [
+    "preserve each real-exposure repo as a verified git bundle plus a snapshot of its dirty tree on an external, run immediately before any reset because the Mac is live and the state moves",
+    "convert the external worktrees that point into the internal limen git dir into standalone clones",
+    "home the non-git data above on an external with a sha256 manifest, and credentials through the credential organ",
+    "prove per-branch against fresh remote state before deleting any local copy that the remote is said to hold",
+    "amend storage-roles.yaml so the externals' declared roles match the consolidated layout",
+    "human: erase the Mac, which needs the owner at the machine and the Apple ID"
+  ],
+  "scope": "read-only survey; nothing was deleted, moved or modified",
+  "subject": "mac-exit-survey",
+  "tooling": "scripts/mac-exit/git-sweep.sh then scripts/mac-exit/classify-git-sweep.py"
+}
