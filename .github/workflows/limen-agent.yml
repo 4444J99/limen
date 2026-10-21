@@ -88,7 +88,7 @@ jobs:
   deterministic-compute:
     # The personal controller is public: use GitHub's standard hosted runner and never admit a
     # public target to the operator's self-hosted machine.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       LIMEN_REQUEST_ID: ${{ inputs.request_id }}

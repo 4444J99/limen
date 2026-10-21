@@ -38,7 +38,7 @@ on:
 
 jobs:
   run-agent:
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-24.04' }}
     steps:
       - uses: actions/checkout@v7
 

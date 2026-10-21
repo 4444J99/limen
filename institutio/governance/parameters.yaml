@@ -4118,7 +4118,7 @@ parameters:
     env: LIMEN_RUNS_ON
     self_update: none
     owner: gitvs
-    note: "GitHub Actions org/repo VARIABLE (vars context, not a shell env) that routes fleet workflows' runs-on. Unset/empty ⇒ 'ubuntu-latest' (hosted). 'self-hosted' flips ci.yml/limen-agent/limen-warp-oz/auto-scale/conductor-report to the $0 Mac runner lane (scripts/runner-install.sh) — PRIVATE repos only; pr-gate deliberately stays hosted (merge-critical). Declared here so the flip is registry-visible, though GitHub resolves it, not the shell."
+    note: "GitHub Actions org/repo VARIABLE (vars context, not a shell env) that routes fleet workflows' runs-on. Unset/empty ⇒ 'ubuntu-24.04' (hosted). 'self-hosted' flips ci.yml/limen-agent/limen-warp-oz/auto-scale/conductor-report to the $0 Mac runner lane (scripts/runner-install.sh) — PRIVATE repos only; pr-gate deliberately stays hosted (merge-critical). Declared here so the flip is registry-visible, though GitHub resolves it, not the shell."
   LIMEN_RUNNER_ORG:
     default: "organvm"
     env: LIMEN_RUNNER_ORG
