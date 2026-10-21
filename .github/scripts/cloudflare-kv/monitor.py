@@ -46,6 +46,41 @@ def record_owner(owners, namespace_id, name, shared_label='shared_namespace'):
   owners[namespace_id]=shared_label
 
 
+# KV observation semantics (per UTC day, per actionType). Cloudflare's
+# kvOperationsAdaptiveGroups is an adaptive-sampled group-by over recorded
+# operation events: group results list only dimension tuples that had data,
+# and counts are estimates. Cloudflare documents no zero-row or
+# expected-dimension contract (developers.cloudflare.com/kv/observability/
+# metrics-analytics, /analytics/graphql-api/sampling), so an absent actionType
+# row is silence, not an affirmative zero. Comparing an ungrouped total with
+# the per-action sum adds no evidence (both aggregate the same events), and an
+# actionType filter is not documented to return a zero row. Therefore:
+#   observed       a well-formed row reported a positive count
+#   observed_zero  the source itself returned a well-formed row whose count is 0
+#                  (the only affirmative zero; never synthesized by this script)
+#   unobserved     no row for the action: NOT zero, so headroom stays unverified
+#   malformed      the reported value has the wrong type/shape: fail closed
+#   incomplete     the day's KV evidence is partial (query rejected, truncated
+#                  at the row limit, or a non-final UTC day): fail closed
+# Only observed and observed_zero may verify headroom. Whole-response
+# malformed/incomplete answers are reported via usage_observation() below.
+KV_ACTIONS=('read','write','list','delete')
+KV_CAPS={'read':80000,'write':800,'list':800,'delete':800}
+OBSERVED,OBSERVED_ZERO,UNOBSERVED,MALFORMED,INCOMPLETE=(
+ 'observed','observed_zero','unobserved','malformed','incomplete')
+VERIFIABLE=frozenset((OBSERVED,OBSERVED_ZERO))
+
+
+def kv_observation(ops, action, coverage='completed_utc_day'):
+ if not isinstance(ops,dict):return MALFORMED
+ if coverage in ('partial_day',INCOMPLETE):return INCOMPLETE
+ if action not in ops:return UNOBSERVED
+ value=ops[action]
+ if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value) or value<0:
+  return MALFORMED
+ return OBSERVED_ZERO if value==0 else OBSERVED
+
+
 def build_days(kv_days, d1, today, database_days=None, first_complete_day=FIRST_COMPLETE_DAY):
  by_date={row['date']:row for row in kv_days}
  previous=today-dt.timedelta(days=1)
@@ -56,16 +91,37 @@ def build_days(kv_days, d1, today, database_days=None, first_complete_day=FIRST_
   ops=row.get('account_operations',{})
   storage=d1.get(date)
   complete=bool(first_complete_day and date<today.isoformat() and date>=first_complete_day)
-  required={'read','write','list','delete'}
-  within=(complete and required.issubset(ops) and storage is not None
-    and ops['read']<=80000 and ops['write']<=800 and ops['list']<=800
-    and ops['delete']<=800 and storage['rowsRead']<=4000000 and storage['rowsWritten']<=80000)
-  days.append({'date':date,'coverage':row.get('coverage','unobserved'),'kv':ops,'d1':storage,
+  # A row from an earlier summarizer run that labelled a past day partial is
+  # still incomplete evidence; a past day with no row at all is unobserved.
+  coverage=row.get('coverage','unobserved')
+  states={a:kv_observation(ops,a,coverage if row else 'completed_utc_day') for a in KV_ACTIONS}
+  within=(complete and all(state in VERIFIABLE for state in states.values()) and storage is not None
+    and all(ops[a]<=KV_CAPS[a] for a in KV_ACTIONS)
+    and storage['rowsRead']<=4000000 and storage['rowsWritten']<=80000)
+  keys=ops.keys() if isinstance(ops,dict) else ()
+  days.append({'date':date,'coverage':coverage,'kv':ops,'d1':storage,
                'database_operations':(database_days or {}).get(date,{}),
                'namespace_operations':row.get('target_namespace_operations',{}),
                'completed_post_rollout_window':complete,'observed_20_percent_headroom':bool(within),
-               'unobserved_kv_dimensions':sorted(required-ops.keys())})
+               'kv_observation':states,
+               'unobserved_kv_dimensions':sorted(set(KV_ACTIONS)-set(keys))})
  return days
+
+
+# Fixed SafeError codes from the shared KV summarizer, mapped to observation
+# states. Anything unrecognised is incomplete: never a pass, never a zero.
+MALFORMED_CODES=frozenset(('analytics_dimension_invalid','analytics_count_invalid',
+ 'analytics_namespace_invalid','provider_rows_invalid','provider_object_invalid'))
+
+
+def usage_observation(code):
+ return MALFORMED if code in MALFORMED_CODES else INCOMPLETE
+
+
+def summarize_kv(rows, owners, today):
+ try:return r.inv.o.summarize_operations(rows,owners,today)
+ except r.inv.o.SafeError as error:
+  raise r.inv.o.SafeError('kv_usage_'+usage_observation(str(error))) from None
 
 
 def usage(client, owners, database_owners=None, first_complete_day=FIRST_COMPLETE_DAY):
@@ -75,11 +131,12 @@ def usage(client, owners, database_owners=None, first_complete_day=FIRST_COMPLET
  request=urllib.request.Request(r.inv.o.API+'/graphql',data=json.dumps(params).encode(),
   headers={'Authorization':'Bearer '+client.token,'Content-Type':'application/json'})
  with r.inv.o.OPENER.open(request,timeout=20) as response:body=r.inv.o.decode_response(response)
- if body.get('errors'):raise r.inv.o.SafeError('usage_query_rejected')
+ # A rejected query is incomplete KV evidence, never an empty (zero) answer.
+ if body.get('errors'):raise r.inv.o.SafeError('kv_usage_incomplete')
  accounts=body['data']['viewer']['accounts']
  if len(accounts)!=1:raise r.inv.o.SafeError('usage_account_invalid')
  data=accounts[0]
- kv=r.inv.o.summarize_operations(data.get('kvOperationsAdaptiveGroups'),owners,now.date().isoformat())
+ kv=summarize_kv(data.get('kvOperationsAdaptiveGroups'),owners,now.date().isoformat())
  rows=data.get('d1AnalyticsAdaptiveGroups')
  if not isinstance(rows,list) or len(rows)>=10000:raise r.inv.o.SafeError('d1_usage_incomplete')
  d1={};database_days={}
@@ -100,7 +157,8 @@ def usage(client, owners, database_owners=None, first_complete_day=FIRST_COMPLET
   for key in ('rowsRead','rowsWritten'):
    total[key]+=values[key];attributed[key]+=values[key]
  return {'days':build_days(kv['days'],d1,now.date(),database_days,first_complete_day),
-         'qualification':'adaptive analytics, not exact billing or proof of successful operations; absent operation dimensions remain unobserved'}
+         'qualification':'adaptive analytics, not exact billing or proof of successful operations; absent operation dimensions remain unobserved',
+         'semantics':'observed|observed_zero verify headroom; unobserved, malformed and incomplete fail closed; absence is never zero'}
 
 
 def observe(client):
@@ -166,7 +224,9 @@ def classify(runtime_ok, completed):
 
 def main():
  try:report=observe(r.ReleaseClient(os.environ.get('CLOUDFLARE_API_TOKEN','')))
- except r.inv.o.SafeError as error:report={'state':'UNOBSERVED','error':str(error),'mutations':0}
+ except r.inv.o.SafeError as error:
+  report={'state':'UNOBSERVED','error':str(error),'mutations':0}
+  if str(error).startswith('kv_usage_'):report['kv_observation']=str(error)[len('kv_usage_'):]
  except Exception:report={'state':'UNOBSERVED','error':'witness_failed','mutations':0}
  text=json.dumps(report,indent=2,sort_keys=True)
  print(text)

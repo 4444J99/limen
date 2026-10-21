@@ -72,6 +72,60 @@ class MonitorTests(unittest.TestCase):
   result=m.project_state(state,NOW,{RID:RECEIPT})['edgarflash']
   self.assertFalse(result['healthy']);self.assertEqual(result['last_status'],'running')
 
+class KvObservationStateTests(unittest.TestCase):
+ # One test per state. Only observed and observed_zero may verify headroom.
+ D1={'2026-09-24':{'rowsRead':1,'rowsWritten':1}}
+ def day(self,ops,coverage='completed_utc_day'):
+  kv=[{'date':'2026-09-24','coverage':coverage,'account_operations':ops,'target_namespace_operations':{}}]
+  return m.build_days(kv,self.D1,dt.date(2026,9,25))[0]
+
+ def test_observed_counts_verify_headroom(self):
+  day=self.day({'read':5,'write':4,'list':3,'delete':2})
+  self.assertEqual(set(day['kv_observation'].values()),{m.OBSERVED})
+  self.assertTrue(day['observed_20_percent_headroom'])
+  self.assertEqual(m.classify(True,[day]),'VERIFIED_WINDOW')
+
+ def test_observed_zero_only_when_source_reports_a_zero_row(self):
+  day=self.day({'read':5,'write':4,'list':3,'delete':0})
+  self.assertEqual(day['kv_observation']['delete'],m.OBSERVED_ZERO)
+  self.assertTrue(day['observed_20_percent_headroom'])
+  self.assertEqual(day['unobserved_kv_dimensions'],[])
+
+ def test_absent_action_is_unobserved_not_zero(self):
+  day=self.day({'read':5,'write':4,'list':3})
+  self.assertEqual(day['kv_observation']['delete'],m.UNOBSERVED)
+  self.assertNotIn('delete',day['kv'])
+  self.assertFalse(day['observed_20_percent_headroom'])
+  self.assertEqual(m.classify(True,[day]),'ACTION_REQUIRED')
+
+ def test_malformed_values_fail_closed_without_crashing(self):
+  for bad in ('0',None,True,-1,float('nan'),float('inf'),[0]):
+   day=self.day({'read':5,'write':4,'list':3,'delete':bad})
+   self.assertEqual(day['kv_observation']['delete'],m.MALFORMED,bad)
+   self.assertFalse(day['observed_20_percent_headroom'])
+  # non-object operations: every action malformed
+  day=self.day(['read'])
+  self.assertEqual(set(day['kv_observation'].values()),{m.MALFORMED})
+  self.assertFalse(day['observed_20_percent_headroom'])
+
+ def test_incomplete_day_fails_closed_even_with_all_four_actions(self):
+  day=self.day({'read':5,'write':4,'list':3,'delete':0},coverage='partial_day')
+  self.assertEqual(set(day['kv_observation'].values()),{m.INCOMPLETE})
+  self.assertFalse(day['observed_20_percent_headroom'])
+  self.assertEqual(m.classify(True,[day]),'ACTION_REQUIRED')
+
+ def test_over_cap_observed_value_is_not_headroom(self):
+  day=self.day({'read':5,'write':4,'list':3,'delete':801})
+  self.assertEqual(day['kv_observation']['delete'],m.OBSERVED)
+  self.assertFalse(day['observed_20_percent_headroom'])
+
+ def test_summarizer_errors_map_to_explicit_states(self):
+  self.assertEqual(m.usage_observation('analytics_count_invalid'),m.MALFORMED)
+  self.assertEqual(m.usage_observation('analytics_dimension_invalid'),m.MALFORMED)
+  self.assertEqual(m.usage_observation('analytics_missing_or_truncated'),m.INCOMPLETE)
+  self.assertEqual(m.usage_observation('anything_else'),m.INCOMPLETE)
+
+
 class ObservationTests(unittest.TestCase):
  class Client:
   aid='test-account'
@@ -177,3 +231,68 @@ class ObservationTests(unittest.TestCase):
   m.record_owner(owners,'private-db','edgarflash','shared_database')
   m.record_owner(owners,'private-db','ops-scheduler-production','shared_database')
   self.assertEqual(owners['private-db'],'shared_database')
+
+ def kv_rows(self,analytics):
+  return analytics['data']['viewer']['accounts'][0]['kvOperationsAdaptiveGroups']
+
+ def test_whole_response_malformed_is_reported_and_unobserved(self):
+  analytics=self.analytics(read=1,complete=True)
+  self.kv_rows(analytics)[0]['sum']['requests']='12'
+  with self.assertRaises(m.r.inv.o.SafeError) as error:
+   self.observe(self.Client(),analytics)
+  self.assertEqual(str(error.exception),'kv_usage_malformed')
+
+ def test_whole_response_incomplete_truncated_or_rejected(self):
+  analytics=self.analytics(read=1,complete=True)
+  rows=self.kv_rows(analytics)
+  rows.extend([dict(rows[0])]*10000)
+  with self.assertRaises(m.r.inv.o.SafeError) as error:
+   self.observe(self.Client(),analytics)
+  self.assertEqual(str(error.exception),'kv_usage_incomplete')
+  analytics=self.analytics(read=1,complete=True);analytics['errors']=[{'message':'private-provider-text'}]
+  with self.assertRaises(m.r.inv.o.SafeError) as error:
+   self.observe(self.Client(),analytics)
+  self.assertEqual(str(error.exception),'kv_usage_incomplete')
+  self.assertNotIn('private-',str(error.exception))
+
+ def test_main_publishes_observation_state_and_fails(self):
+  for code,state in (('kv_usage_malformed','malformed'),('kv_usage_incomplete','incomplete')):
+   with patch.object(m.r,'ReleaseClient'),patch.object(m,'observe',side_effect=m.r.inv.o.SafeError(code)),patch('sys.stdout',new=io.StringIO()) as out,\
+     patch.dict(m.os.environ,{},clear=True):
+    self.assertEqual(m.main(),1)
+   report=json.loads(out.getvalue())
+   self.assertEqual(report['state'],'UNOBSERVED');self.assertEqual(report['kv_observation'],state)
+
+ def test_absent_delete_in_live_shape_stays_action_required(self):
+  # Mirrors run 39049441086: read/write/list rows only, far under caps.
+  analytics=self.analytics(read=1,complete=True)
+  rows=self.kv_rows(analytics)
+  rows[:]=[row for row in rows if row['dimensions']['actionType']!='delete']
+  for row in rows:row['sum']['requests']=5
+  report=self.observe(self.Client(),analytics)
+  completed=[d for d in report['usage']['days'] if d['completed_post_rollout_window']]
+  self.assertEqual(completed[0]['kv_observation']['delete'],m.UNOBSERVED)
+  self.assertNotIn('delete',completed[0]['kv'])
+  self.assertFalse(report['complete_window_ok'])
+  self.assertEqual(report['state'],'ACTION_REQUIRED')
+
+ def test_stale_workers_stay_unhealthy_whatever_the_analytics_say(self):
+  # Every KV action affirmatively observed and the window verified: stale
+  # edgarflash/vulnpulse must still fail runtime and the witness.
+  class Stale(self.Client):
+   def sql(self,statement,params):
+    now=time.time()*1000
+    states={name:{'lastStatus':'success','lastCompletedAt':now} for name in m.TARGET_AGES}
+    states['edgarflash']={'lastStatus':'uncertain','lastCompletedAt':now-1883449000,'lastFailureCode':'unclassified_failure'}
+    states['vulnpulse']={'lastStatus':'uncertain','lastCompletedAt':now-1830380000,'lastFailureCode':'timeout'}
+    return [{'payload':json.dumps({'targetStates':states})}]
+  for delete in (0,3):
+   analytics=self.analytics(read=1,complete=True)
+   for row in self.kv_rows(analytics):
+    row['sum']['requests']=delete if row['dimensions']['actionType']=='delete' else 5
+   report=self.observe(Stale(),analytics)
+   self.assertTrue(report['complete_window_ok'])
+   jobs=report['schedulers']['ops-scheduler-production']['jobs']
+   self.assertFalse(jobs['edgarflash']['healthy']);self.assertFalse(jobs['vulnpulse']['healthy'])
+   self.assertFalse(report['runtime_ok'])
+   self.assertEqual(report['state'],'ACTION_REQUIRED')
