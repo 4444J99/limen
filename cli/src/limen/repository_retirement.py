@@ -155,6 +155,8 @@ class Runtime:
                 "-c",
                 "core.fsmonitor=false",
                 "-c",
+                "core.excludesFile=/dev/null",
+                "-c",
                 "gc.auto=0",
                 "-c",
                 "maintenance.auto=false",
