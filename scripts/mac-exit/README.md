@@ -15,7 +15,9 @@ no stage's output may be trusted by a later one without being re-checked against
 | 5. verify | `verify-preserve.sh real.tsv RUN [SUPPLEMENTARY...]` | the run directory and the live repositories | `RUN/RESULT.txt` (first line `PASS` or `FAIL`) |
 | 6. re-home | `rehome-discover.sh`, `rehome.sh` | worktrees on external volumes that point back at the Mac | standalone stores on the external, with rollback |
 
-`rehome-selftest.sh` exercises stage 6 on fixtures. Run any tool with no arguments for usage.
+`rehome-selftest.sh` exercises stage 6 on fixtures. Each tool's header comment states its usage. The tools that need arguments print a
+usage line when called without them; `git-sweep.sh` and `rehome-discover.sh` are read-only and run with a default output directory
+under `${TMPDIR:-/tmp}` when called bare.
 
 ## Why each stage exists
 
@@ -42,6 +44,8 @@ no stage's output may be trusted by a later one without being re-checked against
   `.git` pointer file of each external worktree (the old content is kept in the new store, and a rollback script is written),
   so it is run only on an explicit decision, after a `dry` run.
 * Scratch lives under `PRESERVE_SCRATCH` (default `${TMPDIR:-/tmp}/preserve-git-scratch`), never inside the checkout.
+* `preserve-git.sh apply` refuses a destination on the same device as `$HOME` (a copy on the disk being protected protects
+  nothing); fixtures and self-tests opt out with `PRESERVE_ALLOW_SAME_DEVICE=1`.
 * `PRESERVE_MIN_FREE_GIB` (default 100) is a free-space floor on the destination; `PRESERVE_SOFT_DEADLINE_SEC`
   (default 1650) bounds a run, and an overrun is a failed run, not a partial success.
 * Nothing here deletes anything, anywhere. Erasing the Mac is a separate, human act.

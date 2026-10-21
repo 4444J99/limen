@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Carry a previous sweep's universe forward into a fresh one, so removals stay accounted for.
 
 A fresh sweep lists only what exists now. Anything that vanished since the previous sweep silently leaves the universe, which is
@@ -19,7 +20,14 @@ import sys
 
 
 def main() -> int:
+    if len(sys.argv) != 4:
+        print(__doc__.strip().splitlines()[-1], file=sys.stderr)
+        return 64
     fresh_path, old_path, out_path = sys.argv[1:4]
+    for p in (fresh_path, old_path):
+        if not os.path.isfile(p):
+            print(f"no such sweep file: {p}", file=sys.stderr)
+            return 66
     with open(fresh_path, newline="", encoding="utf-8") as fh:
         reader = csv.reader(fh, delimiter="\t")
         header = next(reader)
@@ -42,8 +50,11 @@ def main() -> int:
         w.writerows(fresh)
         w.writerows(carried_vanished)
         w.writerows(carried_missed)
-    print(f"fresh rows {len(fresh)}; carried forward as vanished {len(carried_vanished)}; "
-          f"still on disk but missed by the fresh sweep {len(carried_missed)}; merged {len(fresh) + len(carried_vanished) + len(carried_missed)}")
+    merged = len(fresh) + len(carried_vanished) + len(carried_missed)
+    print(
+        f"fresh rows {len(fresh)}; carried forward as vanished {len(carried_vanished)}; "
+        f"still on disk but missed by the fresh sweep {len(carried_missed)}; merged {merged}"
+    )
     for r in carried_missed:
         print("  MISSED BY FRESH SWEEP (exists on disk):", r[0])
     return 0

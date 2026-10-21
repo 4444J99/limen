@@ -23,7 +23,8 @@
 #   preserve-git.sh, INPUT.real.tsv    provenance copies; run.log is the transcript (not in MANIFEST)
 #
 # Env knobs: PRESERVE_MIN_FREE_GIB (default 100), PRESERVE_SOFT_DEADLINE_SEC (default 1650),
-# PRESERVE_SCRATCH (default ${TMPDIR:-/tmp}/preserve-git-scratch).
+# PRESERVE_SCRATCH (default ${TMPDIR:-/tmp}/preserve-git-scratch), PRESERVE_ALLOW_SAME_DEVICE (default 0: apply refuses a
+# destination on the same device as $HOME, because a copy on the disk being protected protects nothing).
 
 set -u
 set -o pipefail
@@ -255,6 +256,13 @@ if [ "$MODE" = apply ]; then
     echo "refusing: only ${AVAIL_KIB} KiB free on the destination volume, need ${NEED_KIB} KiB (${MIN_FREE_GIB} GiB)" >&2
     exit 75
   fi
+  # The point of preserving is a copy OFF the disk being protected: refuse a destination on the same device as $HOME.
+  # (Fixtures and self-tests set PRESERVE_ALLOW_SAME_DEVICE=1.)
+  dev_of() { stat -f %d "$1" 2>/dev/null || stat -c %d "$1" 2>/dev/null; }
+  if [ "$(dev_of "$existing")" = "$(dev_of "$HOME_DIR")" ] && [ "${PRESERVE_ALLOW_SAME_DEVICE:-0}" != 1 ]; then
+    echo "refusing: destination $DEST is on the same device as \$HOME; a preserve copy must be on another volume" >&2
+    exit 75
+  fi
   mkdir -p "$DEST" || { echo "cannot create dest-root $DEST" >&2; exit 73; }
   RUN="$DEST/run-$STAMP"
   mkdir "$RUN" || { echo "refusing: run directory $RUN already exists or cannot be created" >&2; exit 73; }
@@ -288,7 +296,7 @@ tr '\t' '\037' < "$TSV" | tail -n +2 > "$SCR/rows.us"
 NROWS=0
 NVANISHED=0
 NFAILED_RESOLVE=0
-while IFS=$'\037' read -r -u 3 path kind branch remote dirty unpushed stashes reasons; do
+while IFS=$'\037' read -r -u 3 path kind branch remote dirty _ _ _; do
   [ -n "$path" ] || continue
   NROWS=$((NROWS + 1))
   case "$dirty" in '' | *[!0-9]*) dirty=0 ;; esac
@@ -404,12 +412,12 @@ dirty_snapshot() { # path slug common
 # tar_list <kind> <path> <slug> <NUL-separated file list> <out rel> <empty-note>
 # Filters the list (credential patterns, >2 GiB files, nested-repo entries), then tars the rest relative to <path>.
 tar_list() {
-  local kind=$1 path=$2 slug=$3 all=$4 out=$5 emptynote=$6 keep stats entries payload big nested special cred credb gone note rc terr
+  local kind=$1 path=$2 slug=$3 all=$4 out=$5 emptynote=$6 keep stats entries payload big nested special cred gone note rc terr
   keep="$SCR/$slug.$kind.keep"
   terr="$SCR/$slug.$kind.tar.err"
   stats=$(python3 -I "$HELPER" filter-untracked "$path" "$all" "$keep" "$SKIPPED" "$CREDLIST" "$slug" "$MAX_FILE_BYTES")
   # stats: keep_count keep_bytes big nested special cred cred_bytes gone
-  if ! read -r entries payload big nested special cred credb gone <<< "$stats"; then
+  if ! read -r entries payload big nested special cred _ gone <<< "$stats"; then
     manifest "$kind" failed "$slug" "$path" "" "" "file-list filter produced no stats"
     return
   fi
