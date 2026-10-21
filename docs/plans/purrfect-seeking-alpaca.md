@@ -127,3 +127,74 @@ the checker's code in `cli/src/limen/session_closeout.py` and `cli/src/limen/pro
   (`git status --short` empty before and after).
 - Observed (not just predicate): the first measured pass happens from inside Claude Code's own shell, which is the
   case that failed.
+
+---
+
+# Addendum 2026-10-21 — finish Task 1, then Task 2, then the terminal closeout
+
+## Where it stands (measured today, read-only)
+
+- Draft PR #3135 (`fix/closeout-checker-keepawake-20261019`, head `e30cc93c`) is `CLEAN`. The **remote `pr-gate` passed on
+  this exact head (17m03s)**: the same `pytest-cli` suite on a clean runner. So the local failure on 2026-10-19
+  (1500s budget hit at ~99%, one unlabelled `F`) was host contention or a load-sensitive test, not this change. That
+  is the new input that permits one corrective local retry. All 145 tests in the six `process_ownership` consumer
+  modules also passed locally.
+- Host admission allows work, but **another session holds the single heavy lease** (`verify-scoped`, TTL 15 min). A
+  local heavy run must wait for the slot, not race it; `EXIT=75 heavy-lease-held` is a wait, not a failure.
+- `origin/main` is 2 commits ahead of this branch's base. Not a blocker: merge state is `CLEAN`, and the merge is by
+  exact head.
+- Hanging-work inventory for this session: the only unmerged session PR is #3135. `reap-branches.py --check` is red
+  for two landed branches that belong to **other** sessions and are already authorized on the reap ledger
+  (`fix/jules-rolling-observation-reland-20261018`, `worktree-heal-evolve-opencode-20261018`); the beat reaper owns
+  them, so they are recorded and left. This session's five local topic branches have squash-merged or pushed heads and
+  are retained for the same reaper. #3091 has no new activity; its operator atoms are unchanged.
+
+## Order of operations
+
+1. **Commit this addendum to the PR branch and push** (new head H1). It is the plan for the work the PR belongs to, so
+   it rides with the PR; committing it first means the tree I verify is the tree I merge.
+2. **`gh pr ready 3135`** (a draft holds `merge-policy.sh` at HOLD).
+3. **One local `bash scripts/verify-scoped.sh` on H1**, run bare to a file, when `host-work-admission.py status
+   --no-probe` shows no heavy lease. Read its own exit code. Expect about 12 minutes on a quiet host.
+   - exit 0 → step 4.
+   - exit 75 (lease held) → wait one heartbeat; do not poll.
+   - exit 1 with a named failing test → classify it (this change / pre-existing and red on `main` / load-sensitive,
+     using the remote `pr-gate` result as the tiebreak); this is the one retry, so a second local failure is recorded
+     with its owner and the PR stays open, not retried again.
+4. **Merge Task 1:** read `logs/AUTONOMY_PAUSED` (absent = no prohibition), `scripts/merge-policy.sh 3135` must exit 0
+   CLEARED, then `gh pr merge 3135 --squash --match-head-commit <MERGE-HEAD>`.
+5. **Task 2 (receipt rebuild), in this same worktree**, because the session predicate binds `--worktree` to the native
+   caller and the receipt precedent reuses it: cut `docs/session-closeout-approval-audit-20261021` from fresh
+   `origin/main` (which now carries the classifier fix). Re-capture `verification-his-hand.txt`,
+   `verification-targeted-tests.txt` and `verification-credential-wall.txt` at that head `X`; set `base_head` and every
+   `verification[].head` to `X` (precedent `session-closeout-lesson-harvest-20261018`). `owned_paths` gains
+   `cli/src/limen/process_ownership.py` and `cli/tests/test_process_ownership.py`; the previous 8 stay; disposition
+   stays `handoff` to #3091 (the effector repair and the transcript detector are still open there). The receipt
+   commit touches only `docs/receipts/session-closeout-approval-audit-20261021/`, so no owned path changes after `X`.
+   The two `context-*.txt` files are already on `main` from #3116, so they fall outside the `X..HEAD` diff.
+6. **Publish the receipt branch, then run the session predicate twice from this checkout's `scripts/`** (the copy that
+   contains the fix), with real absolute paths, no placeholders, each run bare so its own exit code is read:
+   `bash scripts/no-tasks-on-me.sh --session-id 20ca0534-92e4-46e8-b3ef-e5e306c3b189 --worktree
+   /Users/4jp/Workspace/limen/.claude/worktrees/chore-fewer-permission-prompts-20261018b --receipt
+   <absolute path to the new session-closeout.json> --json`. Both must exit 0, and the second must create nothing
+   (`git status --short` empty before and after). **Run both before merging the receipt PR**: the squash merge deletes
+   the remote `publication_branch`, issue #2970's known limitation.
+7. Merge the receipt PR (`merge-policy.sh` CLEARED, exact head). Only now, with both bare exit codes 0, emit
+   `CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items`, and stop. Nothing follows it.
+
+## Stop conditions (stated once, then recorded, not re-surfaced)
+
+- A finding the checker raises after steps 1-6 that is not in the three classes already fixed is a changed input and
+  gets one corrective pass. A second new class is recorded on #3091 with its owner and the closeout is reported as
+  *not* complete.
+- If the local retry fails and the remote `pr-gate` also fails on the same head, the failing test is a real defect:
+  fix it or file it with its owner before any merge.
+- Nothing here needs the operator. The two operator atoms (`L-APPROVAL-USER-ALLOW-WIDENING`, `L-APPROVAL-PLAN-DEFAULT`)
+  stay filed on #3091 and are not part of the fixed point: they are retained obligations with an open owner.
+
+## Verification
+
+- Step 3: `verify-scoped.sh` exit 0 on H1, read bare.
+- Step 6: two bare exit codes of 0 from the predicate, quoted verbatim in the report, plus the `git status --short`
+  emptiness check around the second run.
+- Observed: the predicate passes when run from inside Claude Code's own shell, the case that failed on 2026-10-19.
