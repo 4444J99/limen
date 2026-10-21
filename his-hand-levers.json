@@ -5590,6 +5590,148 @@
         "historical_gate_requires_verification": "Whether the Codex Stop entry takes effect (hook trust, permission_mode values, how two Stop handlers aggregate) is observable only in a live Codex session.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-MAC-EXIT-REHOME-APPLY",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "label": "Re-home the external-drive git worktrees that still point back at the Mac (16 live): run the dry-checked rehome apply that the agent's permission classifier refuses.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-21",
+      "diagnosed_at": "2026-10-21T20:00:00Z",
+      "issue": 3147,
+      "cost": "One command after a fresh discovery; about 1.5 GB of stores written to the archive external; reversible with the rollback.sh it writes.",
+      "source_task": "https://github.com/4444J99/limen/issues/3147",
+      "gate": "The auto-mode permission classifier denied the agent's `scripts/mac-exit/rehome.sh ... apply` three times (it rewrites each external worktree's single .git pointer file). An operator-run command, or a Bash allow rule for exactly that script, clears it; an agent may not edit its own permission settings.",
+      "unlocks": "The exit-readiness predicate's no-external-dependency check stops failing on the live worktrees, and the external worktrees keep working after the Mac is erased.",
+      "steps": [
+        "(human) From a detached origin/main worktree run scripts/mac-exit/rehome-discover.sh <out>, then scripts/mac-exit/rehome.sh <out>/discovery.tsv <store-root-on-the-archive-external> dry <out2>, then the same with apply (exact paths: the private operator runbook on the archive external, section 4).",
+        "(agent) Re-run the readiness predicate and confirm no-external-dependency reports 0 LIVE worktrees."
+      ],
+      "note": "Fail-safe: apply rolls back automatically on any before/after state mismatch, keeps each old pointer inside the new store, and writes rollback.sh.",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "The operator runs scripts/mac-exit/rehome.sh apply (after a fresh rehome-discover.sh and a dry run) or allows it for the agent; the agent then re-runs discovery and the exit-readiness predicate to confirm no live external worktree still depends on the Mac.",
+        "rationale": "Rewriting each external worktree's .git pointer was judged by the permission classifier to need the owner's consent; the change is reversible (old pointers kept, rollback.sh written) and verified before and after per worktree.",
+        "evidence_refs": [
+          "scripts/mac-exit/rehome.sh",
+          "scripts/mac-exit/rehome-discover.sh",
+          "scripts/mac-exit/rehome-selftest.sh",
+          "https://github.com/4444J99/limen/issues/3147",
+          "https://github.com/4444J99/limen/pull/3149"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#standing-autonomy--compliant-gate-reroute"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3147",
+        "acceptance": {
+          "condition": "No worktree on an external volume other than the independent replica carries a .git pointer into the Mac whose admin directory still exists.",
+          "predicate": "bash scripts/mac-exit/rehome-discover.sh (expect 0 rows with admin_exists=yes outside the independent replica)",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Operator-run apply, or a narrow Bash allow rule for scripts/mac-exit/rehome.sh"
+        ],
+        "remaining_human_action": "Run the rehome apply, or allow it for the agent.",
+        "historical_gate_requires_verification": "Whether a re-homed worktree is in use by a live session is observable only at apply time; check for active sessions first.",
+        "decision_status": "chosen_pending_evidence"
+      }
+    },
+    {
+      "id": "L-MAC-EXIT-PRIVATE-DATA-HOMING",
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "label": "Choose where the Mac's personal-communication data (Messages, Mail, Notes, contacts, chat databases) is copied before the erase: an AES-256 encrypted sparse bundle on the archive external (you set and keep the passphrase) or an explicit OK for clear copies.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-21",
+      "diagnosed_at": "2026-10-21T20:00:00Z",
+      "issue": 3147,
+      "cost": "Create and attach one encrypted sparse bundle (two commands) and store its passphrase; the homing runs (about 47 GB core, 39 GB runtime) then take under an hour.",
+      "source_task": "https://github.com/4444J99/limen/issues/3147",
+      "gate": "The permission classifier denied the agent's non-git homing apply twice (PII Data Handling: personal data to an unencrypted external). The passphrase of an encrypted destination is a credential only the owner may set and keep (credential Wall #320).",
+      "unlocks": "The readiness predicate's nongit-homed check can pass, and the ciphertext can then be mirrored to the independent drive.",
+      "steps": [
+        "(human) Create and attach an AES-256 sparse bundle on the archive external (exact commands: the private operator runbook on the archive external, sections 1-2).",
+        "(human, or the agent once permitted) Run the generated homing script with its destination inside the mounted bundle: the core set first, the runtime set last with agent sessions quiet.",
+        "(agent) Mirror the detached bundle's ciphertext to the independent drive and re-run the readiness predicate with --nongit-run pointing inside the bundle."
+      ],
+      "note": "Clear copies of the same data already exist inside the unencrypted Time Machine volume on the same physical drive; none of it is mirrored to the independent drive until it is encrypted.",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "The operator chooses the destination (an AES-256 encrypted sparse bundle on the archive external, or an explicit OK for clear copies), sets and keeps the passphrase if encrypted, and runs or allows the generated non-git homing script (core set, then the runtime set with agent sessions quiet); the agent then mirrors only ciphertext to the independent drive and re-runs the readiness predicate.",
+        "rationale": "Copying personal communications to an unencrypted external was refused by the permission classifier, and an encryption passphrase is a credential only the owner may set and keep.",
+        "evidence_refs": [
+          "https://github.com/4444J99/limen/issues/3147"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#credentials-are-organ-owned-never-recited-in-chat",
+          "CLAUDE.md#standing-autonomy--compliant-gate-reroute"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3147",
+        "acceptance": {
+          "condition": "Both non-git homing runs exist on an external volume with RESULT.txt PASS and a MANIFEST.sha256 that re-verifies, inside an encrypted volume or under an owner-recorded OK for clear copies.",
+          "predicate": "shasum -a 256 -c MANIFEST.sha256 inside each homing run directory",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Owner choice of destination",
+          "Owner-held passphrase if encrypted",
+          "Operator-run homing, or a narrow Bash allow rule"
+        ],
+        "remaining_human_action": "Choose the destination (and set the passphrase if encrypted); run or allow the homing.",
+        "historical_gate_requires_verification": "Whether iCloud-backed items (Photos originals, dataless placeholders) are current in iCloud is not observable from the Mac's files.",
+        "decision_status": "chosen_pending_evidence"
+      }
+    },
+    {
+      "id": "L-MAC-EXIT-OFFSITE-RAIL",
+      "sovereignty": {
+        "reason": "vendor_mint"
+      },
+      "label": "Pick and arm an offsite backup for the archive external before the Mac is erased: no offsite backup client is installed on this machine, so the preserved work exists only on two drives in one place.",
+      "owner": "yours",
+      "status": "open",
+      "added": "2026-10-21",
+      "diagnosed_at": "2026-10-21T20:00:00Z",
+      "issue": 3147,
+      "cost": "A vendor and account choice plus its install or subscription (a spend decision).",
+      "source_task": "https://github.com/4444J99/limen/issues/3147",
+      "gate": "A paid service and an account sign-in; an agent cannot buy or authenticate on the owner's behalf.",
+      "unlocks": "The readiness predicate's offsite check (an owner attestation file) can be satisfied, and a fire or theft no longer takes every copy.",
+      "steps": [
+        "(human) Choose and arm the offsite rail for the archive external and let a first upload complete.",
+        "(human) Write the attestation file the readiness predicate reads for the offsite check.",
+        "(agent) Record the chosen rail in institutio/governance/storage-roles.yaml through a PR."
+      ],
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "The operator chooses and arms an offsite backup for the archive external and lets a first upload complete; the agent records the rail in institutio/governance/storage-roles.yaml and the operator writes the attestation the readiness predicate reads.",
+        "rationale": "Choosing and paying for a backup vendor is a spend and account decision only the owner can make.",
+        "evidence_refs": [
+          "institutio/governance/storage-roles.yaml",
+          "https://github.com/4444J99/limen/issues/3147"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#standing-autonomy--compliant-gate-reroute"
+        ],
+        "owner": "https://github.com/4444J99/limen/issues/3147",
+        "acceptance": {
+          "condition": "An offsite copy of the archive external exists with a completed first upload, and the attestation names the rail and its completion date.",
+          "predicate": "the owner attestation file read by the exit-readiness predicate's offsite check",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Vendor choice and subscription",
+          "First upload completion"
+        ],
+        "remaining_human_action": "Choose, pay for and arm the offsite rail; attest it.",
+        "historical_gate_requires_verification": "Upload completeness is observable only in the vendor's own console.",
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }
