@@ -80,6 +80,14 @@ on:
         description: Digest binding every execution input
         required: true
         type: string
+      attempt_deadline:
+        description: Original keeper attempt deadline, never renewed on recovery
+        required: true
+        type: string
+      verification_deadline:
+        description: Original keeper verification reservation deadline
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -89,7 +97,7 @@ jobs:
     # The personal controller is public: use GitHub's standard hosted runner and never admit a
     # public target to the operator's self-hosted machine.
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     env:
       LIMEN_REQUEST_ID: ${{ inputs.request_id }}
       LIMEN_PROVIDER: ${{ inputs.provider }}
@@ -111,6 +119,8 @@ jobs:
       LIMEN_INPUTS_JSON: ${{ inputs.inputs_json }}
       LIMEN_EXECUTION_PROFILE_JSON: ${{ inputs.execution_profile_json }}
       LIMEN_PACKET_DIGEST: ${{ inputs.packet_digest }}
+      LIMEN_ATTEMPT_DEADLINE: ${{ inputs.attempt_deadline }}
+      VERIFICATION_DEADLINE: ${{ inputs.verification_deadline }}
       LIMEN_OBSERVED_CONTROL_REPO: ${{ github.repository }}
       LIMEN_OBSERVED_CONTROL_REF: ${{ github.ref_name }}
       LIMEN_OBSERVED_CONTROL_REF_KIND: ${{ github.ref_type }}
@@ -121,64 +131,106 @@ jobs:
       LIMEN_SANDBOX_IMAGE: python@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
       LIMEN_SANDBOX_SECRET_SENTINEL: host-secret-must-not-cross
     steps:
-      - name: Check out pinned control code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-        with:
-          repository: ${{ inputs.control_repo }}
-          ref: ${{ inputs.control_sha }}
-          path: .limen-control
-          persist-credentials: false
-
-      - name: Check out exact pushed target
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-        with:
-          repository: ${{ inputs.target_repo }}
-          ref: ${{ inputs.base_sha }}
-          path: target
-          persist-credentials: false
-
-      - name: Resolve exact allowlisted sandbox image
-        shell: bash
+      - name: Prepare and verify within the original keeper reservation
+        shell: python
         run: |
-          set -euo pipefail
-          docker version --format '{{.Server.Version}}'
-          docker pull "$LIMEN_SANDBOX_IMAGE"
+          import json, os, re, signal, subprocess, sys, time
+          from datetime import datetime, timezone
+          from pathlib import Path
 
-      - name: Execute attested verifier in the verification sandbox
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 .limen-control/cli/src/limen/remote_predicate.py \
-            --request-id "$LIMEN_REQUEST_ID" \
-            --provider "$LIMEN_PROVIDER" \
-            --task-id "$LIMEN_TASK_ID" \
-            --repo "$LIMEN_TARGET_REPO" \
-            --control-repo "$LIMEN_CONTROL_REPO" \
-            --control-ref "$LIMEN_CONTROL_REF" \
-            --control-ref-kind "$LIMEN_CONTROL_REF_KIND" \
-            --base-sha "$LIMEN_BASE_SHA" \
-            --control-sha "$LIMEN_CONTROL_SHA" \
-            --workflow-id "$LIMEN_WORKFLOW_ID" \
-            --workflow-path "$LIMEN_WORKFLOW_PATH" \
-            --workflow-event "$LIMEN_WORKFLOW_EVENT" \
-            --observed-control-repo "$LIMEN_OBSERVED_CONTROL_REPO" \
-            --observed-control-ref "$LIMEN_OBSERVED_CONTROL_REF" \
-            --observed-control-ref-kind "$LIMEN_OBSERVED_CONTROL_REF_KIND" \
-            --observed-workflow-event "$LIMEN_OBSERVED_WORKFLOW_EVENT" \
-            --observed-workflow-ref "$LIMEN_OBSERVED_WORKFLOW_REF" \
-            --observed-workflow-sha "$LIMEN_OBSERVED_WORKFLOW_SHA" \
-            --verification-context-digest "$LIMEN_VERIFICATION_CONTEXT_DIGEST" \
-            --predicate "$LIMEN_PREDICATE" \
-            --instruction-digest "$LIMEN_INSTRUCTION_DIGEST" \
-            --receipt-target "$LIMEN_RECEIPT_TARGET" \
-            --custody-mode "$LIMEN_CUSTODY_MODE" \
-            --inputs-json "$LIMEN_INPUTS_JSON" \
-            --execution-profile-json "$LIMEN_EXECUTION_PROFILE_JSON" \
-            --packet-digest "$LIMEN_PACKET_DIGEST" \
-            --run-url "$LIMEN_RUN_URL" \
-            --cwd target \
-            --control-cwd .limen-control \
-            --output receipt.json
+          started = datetime.now(timezone.utc)
+          attempt = datetime.fromisoformat(os.environ["LIMEN_ATTEMPT_DEADLINE"].replace("Z", "+00:00"))
+          verification = datetime.fromisoformat(os.environ["VERIFICATION_DEADLINE"].replace("Z", "+00:00"))
+          if attempt.tzinfo is None or verification.tzinfo is None or verification > attempt:
+              raise SystemExit("Invalid original keeper deadlines")
+          if verification <= started:
+              raise SystemExit("Original keeper verification deadline expired while queued")
+          # One absolute and one monotonic bound cover checkout, image preparation and execution.
+          # Leave job-ceiling room for cleanup and receipt upload as well.
+          wall = time.monotonic() + min(570, (verification - started).total_seconds())
+          os.environ["VERIFICATION_STARTED_AT"] = started.isoformat()
+          def remaining():
+              budget = min(wall - time.monotonic(), (verification - datetime.now(timezone.utc)).total_seconds())
+              if budget <= 0:
+                  raise TimeoutError("Original verification reservation expired")
+              return budget
+          def run(argv, cwd=None, cleanup_reserve=0):
+              timeout = remaining() - cleanup_reserve
+              if timeout <= 0:
+                  raise TimeoutError("Insufficient reservation for safe cleanup")
+              process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL,
+                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+              try:
+                  result = process.wait(timeout=timeout)
+              except BaseException:
+                  try:
+                      os.killpg(process.pid, signal.SIGKILL)
+                  except ProcessLookupError:
+                      pass
+                  process.wait(timeout=5)
+                  raise
+              if result:
+                  raise RuntimeError("Bounded preparation or verification failed")
+          for repo_key, sha_key, directory in (
+              ("LIMEN_CONTROL_REPO", "LIMEN_CONTROL_SHA", ".limen-control"),
+              ("LIMEN_TARGET_REPO", "LIMEN_BASE_SHA", "target"),
+          ):
+              repo, sha = os.environ[repo_key], os.environ[sha_key]
+              if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+                  raise SystemExit("Invalid pinned public source")
+              Path(directory).mkdir()
+              git = ["git", "-c", "core.hooksPath=/dev/null", "-c", "credential.helper="]
+              run(git + ["init", "--quiet"], directory)
+              run(git + ["fetch", "--quiet", "--depth=1", "https://github.com/" + repo + ".git", sha], directory)
+              run(git + ["-c", "advice.detachedHead=false", "checkout", "--quiet", "--detach", "FETCH_HEAD"], directory)
+          run(["docker", "version", "--format", "{{.Server.Version}}"])
+          run(["docker", "pull", os.environ["LIMEN_SANDBOX_IMAGE"]])
+          fields = {
+              "request-id": "LIMEN_REQUEST_ID", "provider": "LIMEN_PROVIDER", "task-id": "LIMEN_TASK_ID",
+              "repo": "LIMEN_TARGET_REPO", "base-sha": "LIMEN_BASE_SHA", "control-repo": "LIMEN_CONTROL_REPO",
+              "control-ref": "LIMEN_CONTROL_REF", "control-ref-kind": "LIMEN_CONTROL_REF_KIND",
+              "control-sha": "LIMEN_CONTROL_SHA", "workflow-id": "LIMEN_WORKFLOW_ID",
+              "workflow-path": "LIMEN_WORKFLOW_PATH", "workflow-event": "LIMEN_WORKFLOW_EVENT",
+              "observed-control-repo": "LIMEN_OBSERVED_CONTROL_REPO", "observed-control-ref": "LIMEN_OBSERVED_CONTROL_REF",
+              "observed-control-ref-kind": "LIMEN_OBSERVED_CONTROL_REF_KIND", "observed-workflow-event": "LIMEN_OBSERVED_WORKFLOW_EVENT",
+              "observed-workflow-ref": "LIMEN_OBSERVED_WORKFLOW_REF", "observed-workflow-sha": "LIMEN_OBSERVED_WORKFLOW_SHA",
+              "verification-context-digest": "LIMEN_VERIFICATION_CONTEXT_DIGEST", "predicate": "LIMEN_PREDICATE",
+              "instruction-digest": "LIMEN_INSTRUCTION_DIGEST", "receipt-target": "LIMEN_RECEIPT_TARGET",
+              "custody-mode": "LIMEN_CUSTODY_MODE", "inputs-json": "LIMEN_INPUTS_JSON",
+              "execution-profile-json": "LIMEN_EXECUTION_PROFILE_JSON", "packet-digest": "LIMEN_PACKET_DIGEST",
+              "attempt-deadline": "LIMEN_ATTEMPT_DEADLINE", "verification-deadline": "VERIFICATION_DEADLINE",
+              "run-url": "LIMEN_RUN_URL",
+          }
+          command = [sys.executable, ".limen-control/cli/src/limen/remote_predicate.py"]
+          for flag, variable in fields.items():
+              command.extend(["--" + flag, os.environ[variable]])
+          command.extend(["--cwd", "target", "--control-cwd", ".limen-control", "--output", "receipt.json"])
+          owner = os.environ["LIMEN_REQUEST_ID"]
+          if not re.fullmatch(r"[0-9a-f]{32}", owner):
+              raise SystemExit("Invalid sandbox ownership")
+          try:
+              run(command, cleanup_reserve=15)
+          except Exception as failure:
+              # This is failure evidence only, never a substitute for successful attestation.
+              if not Path("receipt.json").exists():
+                  Path("receipt.json").write_text(json.dumps({
+                      "schema_version": "limen.remote-execution.v4", "request_id": owner,
+                      "attempt_deadline": os.environ["LIMEN_ATTEMPT_DEADLINE"],
+                      "verification_deadline": os.environ["VERIFICATION_DEADLINE"],
+                      "predicate_exit_code": 124 if isinstance(failure, (TimeoutError, subprocess.TimeoutExpired)) else 125,
+                      "workspace_clean": False, "delta_safe": False,
+                      "failure_class": type(failure).__name__,
+                  }))
+              raise
+          finally:
+              # Killing docker's client does not kill its daemon-owned container.
+              owned = subprocess.run(["docker", "ps", "-aq", "--filter", "label=limen.verification.request=" + owner],
+                  capture_output=True, check=True, timeout=5).stdout.decode().split()
+              if any(not re.fullmatch(r"[0-9a-f]{12,64}", value) for value in owned):
+                  raise SystemExit("Invalid owned container census")
+              if owned:
+                  subprocess.run(["docker", "rm", "--force", *owned], check=True, timeout=5,
+                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
       - name: Upload counts-only receipt
         if: always()

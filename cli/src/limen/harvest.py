@@ -1,3 +1,4 @@
+import json
 import subprocess
 import re
 import os
@@ -242,6 +243,13 @@ def _remote_receipt_path(
     return candidate
 
 
+def _saved_deadline(manifest: dict[str, object], key: str) -> str | None:
+    value = manifest.get(key)
+    if value is not None and not isinstance(value, str):
+        raise RemoteExecutionError("stored deadline custody is malformed")
+    return value
+
+
 def _adopt_orphan_remote_entry(
     task: Task,
     tasks_path: Path,
@@ -274,6 +282,8 @@ def _adopt_orphan_remote_entry(
                 instruction=f"Verify completed implementation for task {task.id}; do not modify code: {task.title}",
                 repo=str(task.repo or ""),
                 execution_profile=execution_profile_for(task).as_dict(),
+                attempt_deadline=_saved_deadline(manifest, "attempt_deadline"),
+                verification_deadline=_saved_deadline(manifest, "verification_deadline"),
             )
             receipt = load_receipt(path, request)
         except (RemoteExecutionError, ValueError):
@@ -447,6 +457,16 @@ def check_remote_harvest(
             continue
         try:
             verification_context = verification_context_for_task(task, tasks_by_id)
+            saved_path = _remote_receipt_path(tasks_path, store, task.id, entry.remote_receipt)
+            saved_manifest = {}
+            if saved_path is not None and saved_path.exists():
+                try:
+                    saved_envelope = json.loads(saved_path.read_text())
+                    if not isinstance(saved_envelope, dict) or not isinstance(saved_envelope.get("request"), dict):
+                        raise ValueError("request custody must be an object")
+                    saved_manifest = saved_envelope["request"]
+                except (ValueError, OSError) as exc:
+                    raise RemoteExecutionError("stored request custody is malformed") from exc
             request = remote_request_from_task(
                 task,
                 provider,
@@ -461,6 +481,8 @@ def check_remote_harvest(
                 instruction=f"Verify completed implementation for task {task.id}; do not modify code: {task.title}",
                 repo=str(task.repo or ""),
                 execution_profile=execution_profile_for(task).as_dict(),
+                attempt_deadline=_saved_deadline(saved_manifest, "attempt_deadline"),
+                verification_deadline=_saved_deadline(saved_manifest, "verification_deadline"),
             )
             stored = _remote_receipt_path(tasks_path, store, task.id, entry.remote_receipt)
             stored_receipt = None
