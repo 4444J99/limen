@@ -437,6 +437,12 @@ gates:
     paths: ["his-hand-levers.json", "scripts/check-his-hand.py", "scripts/lever-classify.py", "scripts/lever-decision-report.py", "scripts/insight-route.py", "cli/src/limen/observatory/lever.py", "cli/tests/test_check_his_hand.py", "cli/tests/test_lever_classify.py"]
     owner: observe
     note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
+  mac-exit-selftests:
+    command: "bash scripts/mac-exit/rehome-selftest.sh && bash scripts/mac-exit/tm-rescue-selftest.sh && bash scripts/mac-exit/nongit-homing-selftest.sh && bash scripts/run-pytest-hermetic.sh scripts/mac-exit/test_nongit_homing.py -q"
+    paths: ["scripts/mac-exit/**"]
+    tier: heavy
+    owner: runtime
+    note: "The Mac-exit tools copy, verify and re-home the only copies of work before an irreversible erase, and each ships a fixture self-test with negative controls (a corrupted byte, a forged manifest, a mid-copy change, a vacuous run must all FAIL). Before this gate none of them ran in any gate, so a green scoped push said nothing about them. Fixtures live under TMPDIR; the homing self-test writes about 250 MB there, hence heavy. macOS-only tools, so no ci_job: this is a local push gate."
   board-publication-acceptance-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_board_publication_live.py -q"
     paths: ["scripts/check-board-publication-live.py", "scripts/validate-task-board.py", "cli/tests/test_board_publication_live.py", "web/worker/src/conduct/private-board.js", "cli/src/limen/conduct/client.py"]
