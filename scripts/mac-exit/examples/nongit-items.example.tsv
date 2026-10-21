@@ -1,0 +1,19 @@
+# Example items file for scripts/mac-exit/nongit-homing.sh. Every name and path below is made up: copy this file,
+# replace the rows with your own directories, and run  nongit-homing.sh dry  on it first.
+#
+# Four TAB-separated columns (an editor that turns tabs into spaces breaks the file):
+#   name          label used in logs and in the per-item RESULT.txt line; unique
+#   source_dir    absolute, or starting with $HOME/ or ~/ (nothing else is expanded); a directory or one regular file
+#   dest_rel      where it lands under the run directory; relative, no '..'; unique. For a single-file source it must
+#                 end in that file's name. Mirroring the source below $HOME as home/<path> keeps runs easy to compare.
+#   exclude_globs optional, ';'-separated, matched against paths relative to source_dir (and against each basename).
+#                 "=name" carves a top-level entry out because ANOTHER item copies it (see the last two rows).
+#
+# Credential-looking files and directories, dataless cloud placeholders, sockets and FIFOs are never copied no matter
+# what is written here; they are only listed, by name and size, in the run's EXCLUDED.tsv.
+#
+# name	source_dir	dest_rel	exclude_globs
+example-docs	$HOME/ExampleDocs	home/ExampleDocs	Caches;*.tmp;node_modules
+example-notes-db	$HOME/ExampleNotes/notes.sqlite	home/ExampleNotes/notes.sqlite
+example-projects-loose	$HOME/ExampleProjects	home/ExampleProjects	=archive;build
+example-projects-archive	$HOME/ExampleProjects/archive	home/ExampleProjects/archive
