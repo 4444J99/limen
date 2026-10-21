@@ -1,0 +1,47 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "20ca0534-92e4-46e8-b3ef-e5e306c3b189",
+  "supersedes": "docs/receipts/session-closeout-approval-audit-20261018 (measured 2026-10-19: owned implementation changed after its verification head, base_head spanned other sessions, and the harness keep-awake child was counted as a surviving process)",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 3088, "merge_commit": "549dbe25eb240f5a6c9f091a6174f17641419d33", "change": "26 read-only patterns appended to permissions.allow in .claude/settings.json, plus the plan docs/plans/purrfect-seeking-alpaca.md; project layer only"},
+    {"repository": "4444J99/limen", "pr": 3097, "merge_commit": "1335649d3b6d3ad97e8db20950bd407a3526f596", "change": "closeout skill step 2 names receipt-check forms that never prompt (.agents/skills/closeout/SKILL.md)"},
+    {"repository": "4444J99/limen", "pr": 3093, "merge_commit": "3f151aa6e6bdb89fb6655e789c0f18ed96e54117", "change": "72h approval-request audit receipt, two operator levers in his-hand-levers.json, lever-total pin in cli/tests/test_check_his_hand.py; merged by the operator account, not by this session"},
+    {"repository": "4444J99/limen", "pr": 3116, "merge_commit": "15dc46ff503a7d1b1b95991a770009bef5e5481b", "change": "first owner receipt for this session (superseded by this one) and the two audit helper scripts under docs/receipts/approval-request-audit-20261018/tooling"},
+    {"repository": "4444J99/limen", "pr": 3135, "merge_commit": "4acd0d131544fcbec43e9f83afbab176f9aa7a22", "change": "process_ownership.is_checker_keepawake classifies the exact harness keep-awake child of the checker ancestry as checker-owned, with 8 tests and the 2026-10-19 and 2026-10-21 plan addenda; merged by the operator account at 2026-10-21T14:20:21Z at head e089e73f60f40360b8357a707e39c5462d4019ec, about two minutes after the PR was marked ready and before this session's second local verification of that head began"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/3091",
+    "https://github.com/4444J99/limen/issues/3145"
+  ],
+  "durable_records": {
+    "issue_comments": [
+      "https://github.com/4444J99/limen/issues/2898#issuecomment-6253124393",
+      "https://github.com/4444J99/limen/issues/3044#issuecomment-6319344980",
+      "https://github.com/4444J99/limen/issues/3066#issuecomment-6319346941"
+    ],
+    "broker_registration": "observed: after the Durable Objects write quota reset (issue 2054) the session predicate returned registration_witness observed on 2026-10-19, so the earlier BrokerQuotaExhausted block no longer applies to this session."
+  },
+  "session_worktrees": {
+    "receipt_worktree": "~/Workspace/limen/.claude/worktrees/chore-fewer-permission-prompts-20261018b",
+    "note": "Topic branches for 3088, 3097, 3093, 3116 and 3135 were squash-merged and their remote heads removed on merge. This worktree was reused for the receipt branch and is retained for the sanctioned reaper, not removed by this session."
+  },
+  "not_owned_by_this_session": [
+    "the live checkout ~/Workspace/limen: 5 commits behind origin/main with 1 daemon-written dirty path when measured 2026-10-21 (check-live-checkout.py state=drift); sync-release.sh owns the fast-forward",
+    "installed-runtime lag: check-runtime-lag.py reports OK, 21 commits behind (2.9 days); the installed runtime c80d84821 predates the keep-awake fix, and rotation (domus-limen-runtime install --sha) is owned by Domus; the checker was run from this worktree, which carries the fix",
+    "the two landed branches fix/jules-rolling-observation-reland-20261018 and worktree-heal-evolve-opencode-20261018, already authorized on the reap ledger and owned by the beat reaper",
+    "the CI python job failure for the certifi pin: issue 3145 (not caused by this session)"
+  ],
+  "unfinished_and_owned": [
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "repair scripts/heal-hook-wiring.py to the live modify_ source and extend it, dry-run by default, merged unarmed (causes 1 and 6)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "extend claude-workflow-guard.py audit-transcript to flag menus, re-asks and ceremony plan gates, with fixtures; add the approved-prompt receipt recorder"},
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "check the ai-skills and domus-genoma copies of the closeout skill for improvised receipt-check commands (only the limen copy was checked)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3091", "what": "operator atoms L-APPROVAL-USER-ALLOW-WIDENING (read the repaired effector dry-run diff, decide whether to arm) and L-APPROVAL-PLAN-DEFAULT (answered by protocol, awaits the operator's closure)"},
+    {"owner": "https://github.com/4444J99/limen/issues/3044", "what": "stays open: an observed pass from inside a live Claude background session, and the separate registration-hook half of its title"},
+    {"owner": "https://github.com/4444J99/limen/issues/2898", "what": "stays open for the keeper reserve_growth verification window"}
+  ],
+  "not_verified_locally": [
+    "the pytest-cli heavy wave for the merged 3135 head: two local runs (2026-10-19 under contention, 2026-10-21 on an idle host with no competing lease) both stopped at the 1500s gate budget at about 99% with one unlabelled F; the killed run never printed pytest's summary. Remote pr-gate passed on e089e73f and on the previous head e30cc93c, and the PR had already been merged by the operator account (2026-10-21T14:20:21Z) before the second local run began, so that run verified an already-landed head and could not gate the merge. The cause of the local-only tail stall is not identified; the nearest open owner family is issue 1678 (the local suite cannot reach green while CI does), which is not claimed to be the cause. The change cannot fire except for a caffeinate -i -t N child of the checker ancestry, and all 145 tests in the six modules that import process_ownership pass (verification-process-ownership-tests.txt).",
+    "whether the 26 allowlist entries from 3088 reduce prompts in a session launched outside a Limen checkout is unobserved; the discriminating test is one fixture command from a session launched in the home directory"
+  ],
+  "local_only_state": "The audit scratch directory in this worktree (.limen-private/scratch: the extracted event file, 19 batch dossiers quoting operator prompts and tool inputs, a rejected lever-rewrite script, and saved gate outputs) is gitignored, disposable and regenerable from the transcript window with the committed tooling; no restore copy is claimed. Nothing durable exists only locally: every finding is in docs/receipts/approval-request-audit-20261018 or on issue 3091, and every change is merged on origin/main."
+}
