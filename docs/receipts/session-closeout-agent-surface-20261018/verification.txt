@@ -1,0 +1,43 @@
+Session 87d23735-6e99-4131-818d-b9e3133b66e7 (Claude, background job "docs-agent-surface-v3-20261018") - closeout evidence, 2026-10-18 UTC.
+Commands below were run bare and each exit code was read directly (never through a pipe). Lines under RECORDED are quoted from the merged PRs' own bodies and merge messages and were not re-run here.
+
+BASE
+- Receipt base: origin/main b6a4f208480da3d80005d753ee2a5b09b8b95e0b, fetched before the receipt branch was cut.
+- The session's native checkout, docs-agent-surface-v3-20261018, was at 39f3ffde2af32e14875f75eaab11301036805f5e, the final head of squash-merged PR #3026. The receipt branch was cut from the base above in the same checkout; the original branch ref and its commits were not edited.
+
+FRESH - observed during this closeout
+
+1. Ladder for #3029 (OpenCode live-database resolver), merge commit d899a2e5e799fc4597c908669531fff16a087489.
+   merged:   git merge-base --is-ancestor d899a2e5e fdfbe2da44d5cc84a5b8663918a9f2d97ea30bf0 -> exit 0, and the same for 056262dab21cf83c899f20a1979b067c027f7564 -> exit 0 (fdfbe2da4 was the live checkout HEAD).
+   live:     live checkout working tree, grep -c "def resolve_opencode_db" cli/src/limen/session_sources.py -> 1; installed pinned runtime runtimes/056262dab21c.../site-packages/limen/session_sources.py -> 1.
+   observed: with the live checkout's cli/src on the path, resolve_opencode_db() returned .agent-runtime/opencode/data/opencode/opencode.db, a 3,072,540,672-byte file, and returned the same path with LIMEN_AGENT_RUNTIME_ROOT and LIMEN_OPENCODE_DB unset in-process (the beat's environment). The installed runtime's own interpreter, with no path shadow, returned the same path.
+   A/B with the same reader function (_sqlite_latest), varying only the path: the fix's parent d899a2e5e^ has no resolve_opencode_db and hardcodes ~/.local/share/opencode/opencode.db (line 101); that path resolves to legacy-share/opencode.db, 8,257,536 bytes, newest session 2026-08-09T14:19:32Z. After the fix: 3,072,540,672 bytes, newest session 2026-10-01T21:40:34Z.
+   not driven: the six scripts that import the resolver (they write receipts into a checkout or scan the 3 GB database).
+   known limit: limen#3040 (open) - 199 of 333 sessions sit in session_v2 and are invisible to the switched readers.
+
+2. Domus tools (4444J99/domus-genoma-private PRs #507 and #509), installed on this host by the operator's targeted chezmoi apply of the two target paths.
+   ls -l: both executable (13:47 local); chezmoi status for the two paths -> empty.
+   domus-agent-location-ledger -> exit 0: seed=42 present=40 absent=2 dangling=0; 39 unique realpaths, 28 non-nested roots, 46831 MiB; 36 undeclared matches. The committed baseline recorded 42/40/2/0, 39 realpaths, 29 roots, 36 undeclared. A per-location diff against that baseline found the same 42 ids; the one structural change is the .grokbot doorway realpath (now ~/.grokbot -> .agent-runtime/aux/grokbot), which moves non-nested roots 29 -> 28 and nested 10 -> 11. Total size grew 46,588,148 -> 47,958,416 KiB, almost all in two active runtime roots.
+   domus-skills-census -> exit 1, "FAIL: 1 finding(s)": the documented same-name collision "closeout" (home-agents root 84360ee718b5 against catalog, claude, codex and opencode roots 5e5589d51211), owned by domus issue #508 (open). Dangling 0 across 9 roots. The merged plan says not to wire the census into a gate until #508 resolves; no limen file on main and no domus yml/yaml/sh/tmpl/json/Makefile file references it.
+   domus-home-guard --check --json -> ok true, violations 0, actual_entries 95 = declared_entries 95, routes 33, before and after the apply.
+
+3. Research bundle (#3081, merge commit 056262dab21cf83c899f20a1979b067c027f7564): git hash-object of the staged private copies equals the blob id tracked under docs/research/agent-ecosystem-unity/ for 7 of the 9 staged files (claims-ledger 0bc4be75, export f47be16b, request 03bcb558, sanitization ea0ecd25, sources 708d18b9, verification 27f63f9f, prepare outcome 993af343 = report.receipt.blocked.json). The generated receipt (blob 36b86bde) and the private catalog copy are not tracked.
+
+4. Custody copy (details in custody.json): three staged private payload directories, 16 files, 2,018,560 bytes, copied to a second physical volume. diff -r of each source against its copy -> exit 0 (byte-identical), three times. SHA-256 of every copy, read back from the second volume, is recorded in custody.json.
+
+5. Landing of the session branch: git diff --numstat origin/main 39f3ffde2 -- the two plan files -> "0 42" for docs/plans/2026-10-18-agent-surface-reconciliation-v3.md and no row for docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md. Zero lines exist only in the session branch; main holds 42 more.
+
+6. Fleet probes: check-runtime-lag.py -> "OK - scheduled runtime c80d848219a9 is 2 commit(s) behind origin/main" (earlier pin 056262dab21c, 4 behind). check-live-checkout.py with LIMEN_ROOT pinned -> state=drift, 12 behind origin/main, owner scripts/sync-release.sh (not hand-fast-forwarded). enactment-audit.py --check -> exit 0, "5 rung(s) green/skip"; its efficacy view shows only the audit's own self-streak. reap-branches.py (check and dry run) -> nothing provably landed (offline, ancestor-only; squash-merged heads are not ancestors).
+
+RECORDED - quoted from the merged PRs
+- #3026 head 39f3ffde2af32e14875f75eaab11301036805f5e (plan reconciliation, docs-only): "scripts/verify-scoped.sh passed (session-phase, diff-hygiene, check-plan-decisions, syntax-changed, check-docs-exports, check-note-links). check-session-phase counts 36 plans, up from 35." Its worktree was created under an explicit operator override of the host writer lease (allowed:false, swap-fraction).
+- #3029 head a09a3cee47a767626400c47013ce728952285388 (resolver): merge message - "session_sources + full-stack-review tests 12 passed, mypy and ruff clean." PR body, at the earlier head ac85cae7 - 8 tests passed in test_session_sources.py; a mutation check fails exactly 3 of the 8; five consumer suites 32 passed; scripts/verify-scoped.sh exit 75 (cheap wave passed; heavy wave refused by host admission, swap-fraction and vitals-shed). The merge message also records witness-contract failing fleet-wide for an unrelated credential reason (limen#3003) and pr-gate and semgrep still running on that head.
+- #3081 head 907c871eee497a04495ad5c71ef28d8aa7c6cbfe (research bundle): "scripts/verify-scoped.sh on the exact tree: cheap wave PASS (7 gates ...)"; the bundle was validated with the contract's own parsers before use. The PR body discloses that children were not broker-reserved, one advisor iteration inside a round-2 synthesizer, and one Bash call plus six Read calls in round 1.
+
+NOT RUN / NOT CLAIMED
+- The session closeout predicate did not measure. bash scripts/no-tasks-on-me.sh --session-id 87d23735-6e99-4131-818d-b9e3133b66e7 --worktree <this checkout> --receipt <this receipt> --json returned exit 2 with error_type BrokerQuotaExhausted, session_released false, status "unmeasured". The conduct broker rejects writes with HTTP 500 "Exceeded allowed rows written in Durable Objects free tier". scripts/hooks/conduct-register.sh registered this session on tool activity from 07:50:50Z through 17:42:57Z and was rejected from 17:48:06Z (last logged 18:02:58Z). Exit 2 is unmeasured, never a pass. The broker audit (leases, runs, registration) is therefore unmeasured. Owner: limen#2054.
+- The heavy wave of verify-scoped.sh on #3029's final head: never run (exit 75 at the earlier head, above).
+- Sealed custody was not performed. The sanctioned capture tool reads a keychain secret and pushes encrypted content to a private GitHub remote; neither was authorized for this session. The independent copy in custody.json is a plain byte-identical copy on a second physical volume.
+- Domus-side CI: jobs on domus-genoma-private do not start, and the check-run annotation mentions a billing or spending limit. That is the provider's text, not a verified cause; nothing is gated on it.
+- state=coherent for the live checkout was not reached; it is owned by scripts/sync-release.sh.
+- OpenCode: the live database was archived by its owner at 2026-10-18T08:26Z (limen#3038, preservation predicate met, one external copy); the retention decision and the v2-table reader gap (#3040) remain open.
