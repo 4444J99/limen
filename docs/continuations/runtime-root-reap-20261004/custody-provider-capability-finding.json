@@ -1,0 +1,60 @@
+{
+  "schema": "limen.reap_custody_provider_capability_finding.v1",
+  "generated_at": "2026-10-05T04:18:59+00:00",
+  "headline": "The owning custody contract mandates provider-evidenced retention that no available provider offers.",
+  "model_level_rejection": "Value error, opaque ID must be a bounded base64url-style identifier [type=value_error, input_value='probeArtifact01', input_type=str]",
+  "interpretation": "CustodyReceiptV2 refuses a graph whose restore-tested replicas carry no retention_until. The available replicas are Google Drive and a private GitHub repository, and neither exposes an enforced retention horizon. The contract therefore cannot be satisfied honestly with the providers reachable from this host. The previously published retention_until 2027-04-03 and retention_enforced true were fabricated to satisfy this clause and are retracted.",
+  "provider_capability_evidence": {
+    "gdrive": {
+      "probe": "rclone lsjson on the custody object",
+      "fields_returned": [
+        "ID",
+        "IsDir",
+        "MimeType",
+        "ModTime",
+        "Name",
+        "Path",
+        "Size"
+      ],
+      "retention_version_lock_fields": [],
+      "conclusion": "no retention, versioning or lock attribute exposed"
+    },
+    "github": {
+      "probe": "gh api repos/4444J99/arca-g3/git/blobs/<sha>; gh api repos/4444J99/arca-g3/rulesets",
+      "blob_fields_returned": [
+        "content",
+        "encoding",
+        "node_id",
+        "sha",
+        "size",
+        "url"
+      ],
+      "rulesets": 0,
+      "archived": false,
+      "conclusion": "no enforced object retention; a git tag is a label, not a horizon"
+    },
+    "note": "an external-drive replica (backend 'physical') is the only modelled backend that could carry a device-enforced horizon, and neither /Volumes/Archive4T nor /Volumes/T7Recovery is mounted"
+  },
+  "retracted": [
+    "retention_until 2027-04-03T03:40:28+00:00",
+    "retention_enforced true",
+    "any statement that custody acceptance passed"
+  ],
+  "still_proven": [
+    "AES-256-GCM encryption at rest, profile measured from EncryptedObjectStore",
+    "two independent failure domains (gdrive, private 4444J99/arca-g3)",
+    "authenticated readback from each provider, digest matched",
+    "full restoration from each remote copy, all 5 member digests matched"
+  ],
+  "not_proven": [
+    "provider-enforced retention (no provider offers it)",
+    "off-host recoverability of the recovery key (Wall #320 predicate FAILS; key exists only in this Mac's local login keychain)"
+  ],
+  "disposition": "Payload remains remotely recoverable by two independent providers and fully restorable on this host. Custody acceptance under the v2 contract is BLOCKED on provider capability, not on conduct. Quarantine and both dependent/protected worktrees are preserved. No entry is purge-authorized.",
+  "blocker": {
+    "atom": "custody-retention-evidence-requires-a-replica-backend-with-enforced-retention",
+    "owner": "storage-rails / prima-materia contract owner (4444J99/limen#1108 credential lane for the rclone remotes)",
+    "exact_next_action": "Either mount an external custody device so a 'physical' replica with a device-enforced horizon can be produced, or have the contract owner accept a provider-reachability observation in place of a retention horizon for the gdrive/github backends.",
+    "next_command": "ls /Volumes   # then re-run this probe"
+  }
+}

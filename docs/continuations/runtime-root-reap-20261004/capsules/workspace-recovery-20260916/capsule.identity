@@ -1,0 +1,14 @@
+{
+  "invocation_sha256": "2a5ab807da8bd2bf6ef4265c334b455d93cf2bb89d4fbffa5871178c94a22f99",
+  "modules": {
+    "README.md": "44f9ef668ca5427856f9f13f322479e7960ab7614de79c427aed38fce4365021",
+    "closeout.md": "ea09dc5228e0925b4899582f9ec490644e11c962585b3fd6187d12d0711301d7",
+    "intent.md": "a40629cc054246f33971faa24d0613155a2af05a6f3085aa7901da3aee1499d3",
+    "kickstart.sh": "5447da3388e8039eab5195e8363a925d3461155bc494280c7a715204261515f1",
+    "manifest.md": "54e11fa7207e342c9308a8293eb0d67deab84dadf8ecef5c340117198292608b",
+    "runtime.md": "52f056f02136d7207417810a530690ceb42e76d591b4e4a5b899abaa343391b1",
+    "workstream-contract.py": "c8da5ead772a3686936d77e8a166d8a9c61f130ed64f8d0a5f76a7e1993046a2",
+    "workstream.json": "c5b643b758931d53b3a1f01831007d48118ebf3aa753706c14431ea7bcd35a03"
+  },
+  "schema": "limen.workstream.capsule-identity.v2"
+}

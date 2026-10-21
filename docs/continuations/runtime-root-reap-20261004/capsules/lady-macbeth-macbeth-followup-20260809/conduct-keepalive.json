@@ -1,0 +1,14 @@
+{
+  "deadline_epoch": 1786408862,
+  "detail": "provider process exited or changed identity",
+  "keepalive_pid": 32233,
+  "last_failure_epoch": null,
+  "last_success_epoch": 1786325737,
+  "observed_at": "2026-08-10T01:36:07Z",
+  "observed_epoch": 1786325767,
+  "refresh_count": 19,
+  "schema": "limen.workstream.conduct-keepalive.v1",
+  "session_id": "workstream-lady-macbeth-macbeth-followup-20260809-20260810T004101Z-32148",
+  "state": "stopped",
+  "target_pid": 32148
+}

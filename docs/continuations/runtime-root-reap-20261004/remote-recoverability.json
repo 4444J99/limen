@@ -1,0 +1,53 @@
+{
+  "schema": "limen.reap_remote_recoverability.v1",
+  "verified_at": "2026-10-05T04:21:29+00:00",
+  "owner_branch": "reap/runtime-roots-authorization-20261004",
+  "owner_head": "783516c446c36184fe74dd0179e9bdce0f014f7a",
+  "all_preserved_work_reachable": true,
+  "checks": [
+    {
+      "item": "limen owner branch",
+      "ref": "783516c446c36184fe74dd0179e9bdce0f014f7a\trefs/heads/reap/runtime-roots-authorization-20261004",
+      "reachable": true
+    },
+    {
+      "item": "receipt.json",
+      "ref": "783516c446c36184fe74dd0179e9bdce0f014f7a\trefs/heads/reap/runtime-roots-authorization-20261004",
+      "reachable": true,
+      "path": "docs/continuations/runtime-root-reap-20261004/receipt.json",
+      "head_blob_matches_remote_head": false,
+      "content_sha256": "defa84870e6c0262b0b446150a9225d2c51f5685e0268275a5bcf81044300c90"
+    },
+    {
+      "item": "session-closeout.json",
+      "ref": "783516c446c36184fe74dd0179e9bdce0f014f7a\trefs/heads/reap/runtime-roots-authorization-20261004",
+      "reachable": true,
+      "path": "docs/continuations/runtime-root-reap-20261004/session-closeout.json",
+      "head_blob_matches_remote_head": false,
+      "content_sha256": "38320d4e26d9745e6bc45905a752717687407f3173dc4f3482c727dac784f0f8"
+    },
+    {
+      "item": "custody-retention-clause-probe.json",
+      "ref": "783516c446c36184fe74dd0179e9bdce0f014f7a\trefs/heads/reap/runtime-roots-authorization-20261004",
+      "reachable": true,
+      "path": "docs/continuations/runtime-root-reap-20261004/custody-retention-clause-probe.json",
+      "head_blob_matches_remote_head": false,
+      "content_sha256": "c2acb9ccce589e66633105cc1e8e93973108097a7bbdbaa965f2545eb83058d9"
+    },
+    {
+      "item": "rescued portfolio branch",
+      "reachable": true,
+      "ref": "6cb1abf0bf08e71341476886385eba5499c51bb7\trefs/heads/preserve/reap-20261004/psp-c06-public-surfaces-preflight"
+    },
+    {
+      "item": "arca-g3 custody branch",
+      "reachable": true,
+      "ref": "de50ba718406ecab610dcc69e84458dc8a126441\trefs/heads/custody/reap-runtime-roots-20261004"
+    },
+    {
+      "item": "gdrive ciphertext replica",
+      "reachable": true,
+      "detail": "[\n{\"Path\":\"_reap-runtime-roots-20261004-private.tar.enc\",\"Name\":\"_reap-runtime-roots-20261004-private.tar.enc\",\"Size\":15"
+    }
+  ]
+}
