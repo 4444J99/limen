@@ -1860,9 +1860,9 @@
     },
     {
       "id": "L-IDENTITY-POPULATE",
-      "label": "Populate the core personal-fact atoms ONCE — DOB, home address (street/city/state/zip), and phone — into ~/Workspace/_life-private/identity.json (ARCA-sealed). They exist in no store and cannot be derived; scripts/identity.py verify (beat sensor 0a2) reports the gap every beat until filled. Two paths: (1) enable the 1Password CLI desktop integration and run `python3 scripts/identity.py hydrate`, or (2) one-time entry into the store. Crown-jewels (full SSN) stay op-only. Done when `identity.py verify` exits 0 — then every form-filler renders with zero blanks and this lever auto-closes.",
+      "label": "Populate the core personal-fact atoms ONCE — DOB, home address (street/city/state/zip), and phone — into ~/Workspace/_life-private/identity.json (ARCA-sealed). They exist in no store and cannot be derived; scripts/identity.py verify (beat sensor 0a2) reports the gap every beat until filled. Two paths: (1) run `python3 scripts/identity.py hydrate` (the 1Password CLI desktop integration is ALREADY ON — owner-confirmed 2026-10-22; from an interactive terminal it works directly, and a background agent session routes op through `domus-agent-host run -- op ...`, because the desktop app refuses CLI calls whose process chain has no GUI responsible app and reports that as \"couldn't connect to the desktop app\"), or (2) one-time entry into the store. Crown-jewels (full SSN) stay op-only. Done when `identity.py verify` exits 0 — then every form-filler renders with zero blanks and this lever auto-closes.",
       "owner": "yours",
-      "cost": "~2 min one-time entry (or enable op CLI + hydrate); REVERSIBLE",
+      "cost": "~2 min one-time entry (or op hydrate); REVERSIBLE",
       "unlocks": "every form auto-fills (starting with the Jewish Board PHI form); the beat presence-check goes green; no future form asks for these in chat",
       "source_task": "PERSONA-FEDERATA identity organ (phi.pdf form-fill, 2026-07-10)",
       "issue": 892,
