@@ -68,9 +68,13 @@ from reap_acceptance import (
 
 HOME = os.environ.get("HOME", str(Path.home()))
 WORKSPACE = Path(os.environ.get("LIMEN_WORKSPACE", f"{HOME}/Workspace"))
-LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
+LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", str(SCRIPT_DIR.parent))).resolve()
 sys.path.insert(0, str(LIMEN_ROOT / "cli" / "src"))
-from limen.resource_envelope import current_required_free_gib  # noqa: E402
+try:
+    from limen.resource_envelope import current_required_free_gib  # noqa: E402
+except (ImportError, ModuleNotFoundError):
+    def current_required_free_gib() -> float | None:
+        return None
 
 LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
 CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
@@ -421,7 +425,7 @@ def confirm_recloneable(repo: Path) -> bool:
         return False
     try:
         res = subprocess.run(
-            ["git", "-C", str(repo), "ls-remote", "origin"],
+            ["git", "-C", str(repo), "ls-remote", "--exit-code", "origin", "HEAD"],
             capture_output=True,
             text=True,
             timeout=30,
@@ -504,6 +508,7 @@ def main() -> int:
     global _ACTIVE_PROCESS_CWDS
     ap = argparse.ArgumentParser(description="Reap pure pushed-mirror clones (loss-free).")
     ap.add_argument("--apply", action="store_true", help="actually remove (default: dry-run)")
+    ap.add_argument("--dry-run", action="store_true", help="dry-run mode (default behavior)")
     ap.add_argument(
         "--pressure",
         dest="pressure",
@@ -514,6 +519,8 @@ def main() -> int:
     ap.add_argument("--no-pressure", dest="pressure", action="store_false", help="force pressure OFF regardless of df")
     ap.add_argument("--max", type=int, default=int(os.environ.get("LIMEN_REAP_MAX", "50")))
     args = ap.parse_args()
+    if args.dry_run:
+        args.apply = False
     _ACTIVE_PROCESS_CWDS = active_process_cwds()
 
     idle_days = float(os.environ.get("LIMEN_REAP_IDLE_DAYS", "2"))
