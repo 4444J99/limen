@@ -281,35 +281,49 @@ def _read_jsonl(source: SessionSource) -> list[dict[str, Any]]:
 
 
 def _read_opencode(source: SessionSource) -> list[dict[str, Any]]:
+    """Keep legacy history authoritative and append only previously unavailable v2 turns."""
+
     path = Path(source.locator.split("#", 1)[0])
-    records: list[dict[str, Any]] = []
+    rows: list[tuple[Any, ...]] = []
+    tail: list[dict[str, Any]] = []
     try:
         with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as db:
-            if opencode_session_table(db) == "session_v2":
-                v2_rows = db.execute(
-                    "SELECT type, data FROM session_message WHERE session_id = ? ORDER BY seq, time_created, id",
+            has_legacy = opencode_has_legacy_messages(db)
+            if has_legacy:
+                rows = db.execute(
+                    "SELECT m.id, m.time_created, m.data, p.data "
+                    "FROM message AS m LEFT JOIN part AS p ON p.message_id = m.id "
+                    "WHERE m.session_id = ? ORDER BY m.time_created, m.id, p.time_created, p.id",
                     (source.session_id,),
                 ).fetchall()
-                if v2_rows:
-                    return _opencode_v2_records(v2_rows)
-            rows = db.execute(
-                "SELECT m.id, m.data, p.data "
-                "FROM message AS m LEFT JOIN part AS p ON p.message_id = m.id "
-                "WHERE m.session_id = ? ORDER BY m.time_created, m.id, p.time_created, p.id",
-                (source.session_id,),
-            ).fetchall()
+            if opencode_session_table(db) == "session_v2":
+                if not rows:
+                    # Metadata alone cannot stand in for missing message/part history.
+                    tail = opencode_v2_turns(db, source.session_id)
+                elif (
+                    "session" not in _opencode_table_names(db)
+                    or not db.execute("SELECT 1 FROM session WHERE id = ?", (source.session_id,)).fetchone()
+                ):
+                    # A partial store can retain messages without its session freeze marker.
+                    tail = opencode_v2_turns(db, source.session_id, after=max(row[1] for row in rows))
+                else:
+                    tail = opencode_v2_tail(db, source.session_id)
     except sqlite3.Error:
-        return records
+        return []
     grouped: dict[str, dict[str, Any]] = {}
-    for message_id, message_raw, part_raw in rows:
+    for message_id, created, message_raw, part_raw in rows:
         try:
             message = json.loads(message_raw)
         except (TypeError, json.JSONDecodeError):
             message = {}
+        if not isinstance(message, dict):
+            message = {}
+        time = message.get("time")
+        timestamp = time.get("created") if isinstance(time, dict) else None
         record = grouped.setdefault(
             str(message_id),
             {
-                "timestamp": (message.get("time") or {}).get("created"),
+                "timestamp": created if timestamp is None else timestamp,
                 "role": message.get("role"),
                 "content": [],
             },
@@ -318,33 +332,12 @@ def _read_opencode(source: SessionSource) -> list[dict[str, Any]]:
             part = json.loads(part_raw) if part_raw else {}
         except (TypeError, json.JSONDecodeError):
             part = {}
-        record["content"].extend(_content_text(part))
-    records.extend(grouped.values())
-    return records
-
-
-def _opencode_v2_records(rows: Iterable[tuple[str, str]]) -> list[dict[str, Any]]:
-    """Render ``session_message`` rows as conversation records.
-
-    v2 keeps a user turn's text at the top level of ``data`` and an assistant turn's text in typed ``content``
-    blocks; the other row types (``idle``, ``system``, ``compaction``, ...) are not conversation turns.
-    """
-
-    records: list[dict[str, Any]] = []
-    for kind, raw in rows:
-        if kind not in ("user", "assistant"):
-            continue
-        try:
-            data = json.loads(raw)
-        except (TypeError, json.JSONDecodeError):
-            data = {}
-        if not isinstance(data, dict):
-            data = {}
-        body = data.get("text") if kind == "user" else data.get("content")
-        records.append(
-            {"timestamp": (data.get("time") or {}).get("created"), "role": kind, "content": _content_text(body)}
-        )
-    return records
+        if isinstance(part, dict):
+            record["content"].extend(_content_text(part))
+    return list(grouped.values()) + [
+        {"timestamp": turn["time_created"], "role": turn["role"], "content": _content_text(turn["parts"])}
+        for turn in tail
+    ]
 
 
 def opencode_v2_turns(db: sqlite3.Connection, session_id: str, after: int | None = None) -> list[dict[str, Any]]:
