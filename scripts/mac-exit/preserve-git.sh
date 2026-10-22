@@ -10,16 +10,33 @@
 #   MANIFEST.tsv                       one row per item: kind status slug source file bytes sha256 entries note
 #   bundles/<slug>.bundle              git bundle --all of each unique git common dir (all refs, tags, remotes, refs/stash)
 #   bundles/<slug>.head.bundle         HEAD not reachable from any remote, for every detached-HEAD row
-#   bundles/<slug>.gitdir.tar          raw copy of a git dir where a bundle cannot work: partial clones (the network is never
-#                                      used: GIT_NO_LAZY_FETCH=1), unborn HEAD with staged blobs, or a failed bundle
-#   dirty/<slug>.tracked.patch         git diff --binary HEAD for rows with dirty>0
+#   bundles/<slug>.gitdir.tar          raw copy of a git dir (a bundle holds refs and their history, nothing else). Made where a
+#                                      bundle cannot work: partial clones (the network is never used: GIT_NO_LAZY_FETCH=1),
+#                                      unborn HEAD with staged blobs, or a failed bundle; and wherever the git dir holds
+#                                      something a bundle drops, derived from live git, per git dir (the common dir and each
+#                                      linked worktree's admin dir, so a worktree whose checkout is gone still counts):
+#                                        reflog-only    commits reachable only from a reflog (`rev-list --reflog --not --all`):
+#                                                       a reset --hard, an amend, a deleted branch, a lower stash entry
+#                                        per-worktree-refs   a ref under refs/worktree/, refs/bisect/ or refs/rewritten/
+#                                        lfs-objects    a regular file under <lfs dir>/objects (default <common>/lfs)
+#                                        annex-objects  a regular file under <common>/annex/objects
+#                                        submodule-gitdirs   anything under <common>/modules
+#                                      A rule that cannot be evaluated counts as required (reflog-check-failed, ...).
+#   bundles/<slug>.lfs-storage.tar     the directory `git config lfs.storage` names when it lies OUTSIDE the git dir (the
+#                                      gitdir-tar cannot hold it); slug is the common dir's, source is the storage directory
+#   dirty/<slug>.tracked.patch        git diff --binary HEAD for rows with dirty>0
 #   dirty/<slug>.untracked.tar         untracked, non-ignored files of those rows
+#   dirty/<slug>.filtered.tar          tracked paths with a `filter` attribute (clean/smudge filters, filter=lfs): the
+#                                      working-tree bytes, which git does not store as such and no status or diff shows.
+#                                      Every resolved non-bare row, dirty or not; written only when such a path exists
 #   dirty/<slug>.staged.tar            unborn-HEAD rows only: every path in the index (git ls-files --cached)
 #   dirty/<slug>.orphan-tree.tar       DEVIATION: raw working tree of rows that exist but whose gitfile no longer resolves
 #   dirty/<cslug>.stashN.patch         stash entries below refs/stash (a bundle --all keeps only the top entry)
 #   dirty/<cslug>.stash-reflog.txt     the refs/stash reflog (index, sha, subject)
 #   dirty/skipped.txt                  reason, slug, path, bytes: files over 2 GiB, nested-repo entries, vanished files
-#   dirty/credential-skipped.txt       tag, slug, path, bytes: credential-pattern files left out (path and size only)
+#   dirty/credential-skipped.txt       tag, slug, path, bytes: credential-pattern files left out (path and size only); tag
+#                                      gitdir-tar: every `config` / `config.worktree` in a copied git dir (modules/*,
+#                                      worktrees/*, nested modules, top level) whose content carries a user:password@ URL
 #   preserve-git.sh, INPUT.real.tsv    provenance copies; run.log is the transcript (not in MANIFEST)
 #
 # Env knobs: PRESERVE_MIN_FREE_GIB (default 100), PRESERVE_SOFT_DEADLINE_SEC (default 1650),
@@ -189,9 +206,35 @@ def cmd_filter_untracked(repo, inp, keep, skipped, credlist, slug, maxb):
     print(kc, kb, big, nested, special, cred, credb, gone)
 
 
+def cmd_filter_paths(attrs, out):
+    # `git check-attr --stdin -z filter` prints <path> NUL <attribute> NUL <value> NUL per path: keep the paths whose
+    # filter attribute is anything but unspecified or unset (that includes filter=lfs), NUL separated, and print how many.
+    toks = read_nul(attrs)
+    if len(toks) % 3:
+        sys.exit("check-attr output is not a whole number of <path, attribute, value> triples")
+    n = 0
+    with open(out, "wb") as of:
+        for i in range(0, len(toks), 3):
+            if toks[i + 2] in (b"unspecified", b"unset"):
+                continue
+            of.write(toks[i] + b"\0")
+            n += 1
+    print(n)
+
+
+def cmd_realpath(path):
+    print(os.path.realpath(path))
+
+
 def main(argv):
     cmd, args = argv[1], argv[2:]
-    {"sha256": cmd_sha256, "cred-names": cmd_cred_names, "filter-untracked": cmd_filter_untracked}[cmd](*args)
+    {
+        "sha256": cmd_sha256,
+        "cred-names": cmd_cred_names,
+        "filter-untracked": cmd_filter_untracked,
+        "filter-paths": cmd_filter_paths,
+        "realpath": cmd_realpath,
+    }[cmd](*args)
 
 
 main(sys.argv)
@@ -508,16 +551,87 @@ is_partial_clone() { # common: promisor remote / extensions.partialclone => blob
   G --git-dir="$1" config --get extensions.partialclone > /dev/null 2>&1
 }
 
-# gitdir_tar <common> <why>: raw tar of the git common dir itself (objects, index, refs, config) when a bundle cannot
-# capture the repo (partial clone, unborn HEAD with staged blobs, or a failed bundle). Aborted-download tmp_pack_* junk is
-# left out; a config carrying a user:password@ URL is left out and listed by path and size only.
+# ---------------------------------------------------------------------------------------------
+# what a bundle drops: when a raw git-dir copy (and a relocated LFS store copy) is required, derived from live git
+# ---------------------------------------------------------------------------------------------
+gitdirs_of() { # common: the common dir, then every linked worktree's admin dir (one per line)
+  local d
+  printf '%s\n' "$1"
+  for d in "$1"/worktrees/*; do
+    [ -f "$d/HEAD" ] && printf '%s\n' "$d"
+  done
+  return 0
+}
+
+# Under pipefail a `find | head -n 1` pipeline exits 141 once head has what it wanted: test the output, never the status.
+has_regular_file() { [ -d "$1" ] && [ -n "$(find "$1" -type f -print 2> /dev/null | head -n 1)" ]; }
+has_any_entry() { [ -d "$1" ] && [ -n "$(find "$1" -mindepth 1 -print 2> /dev/null | head -n 1)" ]; }
+inside_dir() { case "$1/" in "$2"/*) return 0 ;; esac; return 1; } # path is dir itself or below it (both realpaths)
+
+lfs_storage_dir() { # common: where git-lfs keeps its store for this repository, as a realpath
+  local v
+  v=$(G --git-dir="$1" config --type=path --get lfs.storage 2> /dev/null) || v=""
+  [ -n "$v" ] || v="$1/lfs"
+  case "$v" in /*) ;; *) v="$1/$v" ;; esac # git-lfs reads a relative lfs.storage relative to the git dir
+  python3 -I "$HELPER" realpath "$v"
+}
+
+lfs_storage_outside() { # common: the lfs.storage directory when the setting moves it OUTSIDE the git dir (else nothing)
+  local dir
+  G --git-dir="$1" config --type=path --get lfs.storage > /dev/null 2>&1 || return 0
+  dir=$(lfs_storage_dir "$1")
+  inside_dir "$dir" "$(python3 -I "$HELPER" realpath "$1")" || printf '%s' "$dir"
+}
+
+# gitdir_requirement <common>: why a bundle is not enough for this repository, as comma separated reason tokens (empty when
+# it is). The reflog and the per-worktree refs are read per git dir with --git-dir, never with -C <checkout>, so a linked
+# worktree whose directory is gone is still read. A rule that cannot be evaluated counts as required.
+gitdir_requirement() {
+  local common=$1 gd out lfs realcommon reasons=""
+  req_add() { case ",$reasons," in *",$1,"*) ;; *) reasons="${reasons:+$reasons,}$1" ;; esac; }
+  while IFS= read -r gd; do
+    if out=$(G --git-dir="$gd" rev-list --reflog --not --all --max-count=1 2> /dev/null); then
+      [ -z "$out" ] || req_add reflog-only
+    else
+      req_add reflog-check-failed
+    fi
+    if out=$(G --git-dir="$gd" for-each-ref --count=1 --format='%(refname)' refs/worktree refs/bisect refs/rewritten 2> /dev/null); then
+      [ -z "$out" ] || req_add per-worktree-refs
+    else
+      req_add per-worktree-refs-check-failed
+    fi
+  done < <(gitdirs_of "$common")
+  realcommon=$(python3 -I "$HELPER" realpath "$common")
+  lfs=$(lfs_storage_dir "$common")
+  if inside_dir "$lfs" "$realcommon" && has_regular_file "$lfs/objects"; then req_add lfs-objects; fi
+  if has_regular_file "$common/annex/objects"; then req_add annex-objects; fi
+  if has_any_entry "$common/modules"; then req_add submodule-gitdirs; fi
+  printf '%s' "$reasons"
+}
+
+glob_escape() { # tar --exclude takes globs: a path with * ? [ or \ in it must match itself and nothing else
+  local s=$1
+  s=${s//\\/\\\\}
+  s=${s//\*/\\*}
+  s=${s//\?/\\?}
+  s=${s//\[/\\[}
+  printf '%s' "$s"
+}
+
+# gitdir_tar <common> <why>: raw tar of the git common dir itself (objects, index, refs, config, logs/, worktrees/, lfs/,
+# modules/) when a bundle cannot capture the repo (partial clone, unborn HEAD with staged blobs, or a failed bundle) or
+# the git dir holds what a bundle drops (see gitdir_requirement). Aborted-download tmp_pack_* junk is left out; so is every
+# `config` / `config.worktree` anywhere in the git dir (modules and worktrees included) carrying a user:password@ URL,
+# listed by path and size only.
 gitdir_tar() {
-  local common=$1 why=$2 slug rel parent base terr rc entries cfgsize
+  local common=$1 why=$2 slug rel parent base terr rc entries cfgsize req cfg relcfg
   local -a excl
   slug=$(slugify "$common")
   rel="bundles/$slug.gitdir.tar"
   if [ -e "$SCR/gitdir-tar.$slug" ]; then return 0; fi
   : > "$SCR/gitdir-tar.$slug"
+  req=$(cat "$SCR/greq.$slug" 2> /dev/null || true)
+  case "$why" in required:*) ;; *) [ -z "$req" ] || why="$why; also required: $req" ;; esac
   if past_deadline; then
     manifest gitdir-tar skipped "$slug" "$common" "" "" "soft deadline reached before this item"
     return
@@ -526,11 +640,15 @@ gitdir_tar() {
   base=$(basename "$common")
   terr="$SCR/$slug.gitdir.tar.err"
   excl=(--exclude 'tmp_pack_*')
-  if grep -Eq '://[^/ @]+:[^/ @]+@' "$common/config" 2> /dev/null; then
-    excl+=(--exclude "$base/config")
-    cfgsize=$(stat -f %z "$common/config" 2> /dev/null || echo 0)
-    printf 'gitdir-tar\t%s\t%s/config\t%s\n' "$slug" "$base" "$cfgsize" >> "$CREDLIST"
-  fi
+  # Every `config` and `config.worktree` anywhere in the git dir (top level, modules/*, nested modules, worktrees/*) whose
+  # content carries a user:password@ URL stays out of the copy and is listed by path and size only.
+  while IFS= read -r -d '' cfg; do
+    grep -Eq '://[^/ @]+:[^/ @]+@' "$cfg" 2> /dev/null || continue
+    relcfg=${cfg#"$common"/}
+    excl+=(--exclude "$(glob_escape "$base/$relcfg")")
+    cfgsize=$(stat -f %z "$cfg" 2> /dev/null || echo 0)
+    printf 'gitdir-tar\t%s\t%s\t%s\n' "$slug" "$(printf '%s' "$base/$relcfg" | tr '\t\n\r' '   ')" "$cfgsize" >> "$CREDLIST"
+  done < <(find "$common" -type f \( -name config -o -name config.worktree \) -print0 2> /dev/null)
   tar -C "$parent" "${excl[@]}" -cf "$RUN/$rel" "$base" 2> "$terr"
   rc=$?
   entries=$(tar -tf "$RUN/$rel" 2> /dev/null | wc -l | tr -d ' ')
@@ -545,7 +663,53 @@ gitdir_tar() {
   fi
 }
 
-full_bundle() { # common est
+# lfs_storage_tar <common> <storage dir>: tar of an LFS store that `lfs.storage` moved outside the git dir, so no raw git-dir
+# copy holds it. Keyed by the common dir's slug like the bundle; the item's source is the storage directory itself.
+lfs_storage_tar() {
+  local common=$1 dir=$2 slug rel parent base terr rc entries
+  slug=$(slugify "$common")
+  rel="bundles/$slug.lfs-storage.tar"
+  terr="$SCR/$slug.lfs-storage.tar.err"
+  if past_deadline; then
+    manifest lfs-storage-tar skipped "$slug" "$dir" "" "" "soft deadline reached before this item"
+    return
+  fi
+  if [ ! -e "$dir" ]; then
+    manifest lfs-storage-tar empty "$slug" "$dir" "" 0 "lfs.storage of $common names a directory that does not exist: nothing to copy"
+    return
+  fi
+  if [ ! -d "$dir" ]; then
+    manifest lfs-storage-tar failed "$slug" "$dir" "" "" "lfs.storage of $common names something that is not a directory"
+    return
+  fi
+  case "$dir" in
+    / | "$HOME_DIR")
+      manifest lfs-storage-tar failed "$slug" "$dir" "" "" "refusing to tar $dir as the LFS store of $common (lfs.storage points at the root or home directory)"
+      return
+      ;;
+  esac
+  if ! has_any_entry "$dir"; then
+    manifest lfs-storage-tar empty "$slug" "$dir" "" 0 "lfs.storage of $common names an empty directory"
+    return
+  fi
+  parent=$(dirname "$dir")
+  base=$(basename "$dir")
+  tar -C "$parent" -cf "$RUN/$rel" "$base" 2> "$terr"
+  rc=$?
+  entries=$(tar -tf "$RUN/$rel" 2> /dev/null | wc -l | tr -d ' ')
+  if [ -s "$terr" ]; then
+    cp "$terr" "$RUN/$rel.err"
+    manifest tar-log ok "$slug" "$dir" "$rel.err" "" "tar stderr for lfs-storage-tar $slug"
+  fi
+  if [ "$rc" -ne 0 ]; then
+    manifest lfs-storage-tar failed "$slug" "$dir" "$rel" "$entries" "tar exit $rc: $(first_line "$terr")"
+  else
+    manifest lfs-storage-tar ok "$slug" "$dir" "$rel" "$entries" "lfs.storage of $common, outside the git dir"
+  fi
+}
+
+# bundle_common <common> <est>: the full bundle of one git common dir (or the raw copy where a bundle cannot work)
+bundle_common() {
   local common=$1 est=$2 slug rel err rc nrefs vout
   slug=$(slugify "$common")
   rel="bundles/$slug.bundle"
@@ -577,6 +741,50 @@ full_bundle() { # common est
   fi
 }
 
+# full_bundle <common> <est>: the bundle, then whatever else this git dir holds that a bundle drops (gitdir_requirement)
+full_bundle() {
+  local common=$1 slug req lfsout
+  bundle_common "$1" "$2"
+  slug=$(slugify "$common")
+  req=$(cat "$SCR/greq.$slug" 2> /dev/null || true)
+  lfsout=$(cat "$SCR/lfsout.$slug" 2> /dev/null || true)
+  if [ -n "$req" ]; then gitdir_tar "$common" "required: $req"; fi
+  if [ -n "$lfsout" ]; then lfs_storage_tar "$common" "$lfsout"; fi
+}
+
+# filtered_names <path> <slug> <out>: the tracked paths with a `filter` attribute (clean/smudge filters and filter=lfs), NUL
+# separated, into <out>; prints how many. A tracked path's filter output is what git stores, so the working-tree bytes
+# of these paths are held by nothing else. Returns non-zero when git could not answer.
+filtered_names() {
+  local path=$1 slug=$2 out=$3 all attrs err
+  all="$SCR/$slug.filtered.ls"
+  attrs="$SCR/$slug.filtered.attrs"
+  err="$SCR/$slug.filtered.err"
+  G -C "$path" ls-files -z > "$all" 2> "$err" || return 1
+  if [ ! -s "$all" ]; then
+    : > "$out"
+    echo 0
+    return 0
+  fi
+  G -C "$path" check-attr --stdin -z filter < "$all" > "$attrs" 2>> "$err" || return 1
+  python3 -I "$HELPER" filter-paths "$attrs" "$out" 2>> "$err"
+}
+
+filtered_snapshot() { # path slug
+  local path=$1 slug=$2 names n
+  names="$SCR/$slug.filtered.names"
+  if past_deadline; then
+    manifest filtered-tar skipped "$slug" "$path" "" "" "soft deadline reached before this item"
+    return
+  fi
+  if ! n=$(filtered_names "$path" "$slug" "$names"); then
+    manifest filtered-tar failed "$slug" "$path" "" "" "listing filter attributes failed: $(first_line "$SCR/$slug.filtered.err")"
+    return
+  fi
+  [ "${n:-0}" -gt 0 ] || return 0
+  tar_list filtered-tar "$path" "$slug" "$names" "dirty/$slug.filtered.tar" "none of the $n filter-attribute path(s) exists in the working tree"
+}
+
 head_bundle() { # path slug
   local path=$1 slug=$2 rel err rc vout
   rel="bundles/$slug.head.bundle"
@@ -602,6 +810,20 @@ head_bundle() { # path slug
   fi
 }
 
+# What a bundle drops, per common dir, decided up front from live git (see gitdir_requirement); the files are read back
+# by slug where the raw git-dir copy and the relocated LFS store copy are made.
+NGITDIR=0
+NLFSOUT=0
+while IFS=$'\t' read -r -u 3 _ _ common; do
+  cslug=$(slugify "$common")
+  req=$(gitdir_requirement "$common")
+  printf '%s' "$req" > "$SCR/greq.$cslug"
+  printf '%s' "$(lfs_storage_outside "$common")" > "$SCR/lfsout.$cslug"
+  if [ -n "$req" ]; then NGITDIR=$((NGITDIR + 1)); fi
+  if [ -s "$SCR/lfsout.$cslug" ]; then NLFSOUT=$((NLFSOUT + 1)); fi
+done 3< "$SCR/commons.sorted"
+log "raw git-dir copies required beyond the bundle=$NGITDIR relocated lfs stores=$NLFSOUT"
+
 # ---------------------------------------------------------------------------------------------
 # DRY: report the plan with byte estimates, touch nothing
 # ---------------------------------------------------------------------------------------------
@@ -611,6 +833,20 @@ if [ "$MODE" = dry ]; then
   while IFS=$'\t' read -r -u 3 nr est common; do
     printf 'BUNDLE noremote=%s est=%s %s\n' "$nr" "$est" "$common"
   done 3< "$SCR/commons.sorted"
+  echo "== what a bundle drops (raw git-dir copy reasons, relocated lfs stores) =="
+  while IFS=$'\t' read -r -u 3 nr est common; do
+    cslug=$(slugify "$common")
+    req=$(cat "$SCR/greq.$cslug")
+    lfsout=$(cat "$SCR/lfsout.$cslug")
+    if [ -n "$req" ]; then printf 'GITDIR required=%s %s\n' "$req" "$common"; fi
+    if [ -n "$lfsout" ]; then printf 'LFS-STORAGE %s (of %s)\n' "$lfsout" "$common"; fi
+  done 3< "$SCR/commons.sorted"
+  echo "== filter-attribute paths (filtered-tar) =="
+  while IFS=$'\t' read -r -u 3 path kind branch remote dirty common; do
+    if [ "$(G -C "$path" rev-parse --is-bare-repository 2> /dev/null)" = true ]; then continue; fi
+    fn=$(filtered_names "$path" "$(slugify "$path")" "$SCR/dry.filtered.names") || fn="?"
+    if [ "$fn" != 0 ]; then printf 'FILTERED paths=%s %s\n' "$fn" "$path"; fi
+  done 3< "$SCR/rowinfo.tsv"
   echo "== dirty snapshots =="
   while IFS=$'\t' read -r -u 3 path kind branch remote dirty common; do
     [ "$dirty" -gt 0 ] || continue
@@ -663,6 +899,12 @@ while IFS=$'\t' read -r -u 3 path oslug; do
   log "orphan worktree: $path"
   orphan_snapshot "$path" "$oslug"
 done 3< "$SCR/orphans.tsv"
+
+log "== phase A3: filter-attribute paths (working-tree bytes git does not store) =="
+while IFS=$'\t' read -r -u 3 path kind branch remote dirty common; do
+  if [ "$(G -C "$path" rev-parse --is-bare-repository 2> /dev/null)" = true ]; then continue; fi # no working tree
+  filtered_snapshot "$path" "$(slugify "$path")"
+done 3< "$SCR/rowinfo.tsv"
 
 log "== phase S: extra stash entries =="
 while IFS=$'\t' read -r -u 3 nr est common; do stash_extras "$common"; done 3< "$SCR/commons.sorted"

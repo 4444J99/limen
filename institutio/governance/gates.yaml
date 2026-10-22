@@ -443,6 +443,13 @@ gates:
     tier: heavy
     owner: runtime
     note: "The Mac-exit tools copy, verify and re-home the only copies of work before an irreversible erase, and each ships a fixture self-test with negative controls (a corrupted byte, a forged manifest, a mid-copy change, a vacuous run must all FAIL). Before this gate none of them ran in any gate, so a green scoped push said nothing about them. Fixtures live under TMPDIR; the homing self-test writes about 250 MB there, hence heavy. macOS-only tools, so no ci_job: this is a local push gate."
+  mac-exit-erase-gate-selftests:
+    command: "python3 scripts/mac-exit/check-exit-ready.py --self-test && python3 scripts/mac-exit/prove-remote-held.py --self-test && bash scripts/mac-exit/preserve-git-selftest.sh && python3 scripts/mac-exit/erase-gate-roundtrip-selftest.py"
+    paths: ["scripts/mac-exit/check-exit-ready.py", "scripts/mac-exit/prove-remote-held.py", "scripts/mac-exit/prove-mutation-check.py", "scripts/mac-exit/gh-merged-pr-proof.sh", "scripts/mac-exit/preserve-git.sh", "scripts/mac-exit/preserve-git-selftest.sh", "scripts/mac-exit/verify-preserve.sh", "scripts/mac-exit/git-sweep.sh", "scripts/mac-exit/merge-sweeps.py", "scripts/mac-exit/classify-git-sweep.py", "scripts/mac-exit/erase-gate-roundtrip-selftest.py"]
+    tier: heavy
+    timeout_seconds: 1200
+    owner: runtime
+    note: "The erase-gate diagnostics (readiness predicate, remote-held prover, preserve producer and verifier, sweep) and the round trip that feeds the REAL sweep and prover output into the predicate's proof binding: a self-test that fabricates its producer's format hid a dead binding in an earlier round, so the round trip is part of the gate. Measured on the target host: predicate about 400 s, prover 43 s, producer 31 s, round trip 1 s; the budget is about 2.5x that. Every fixture builds under TMPDIR (which must not sit under HOME, or the predicate's stand-in HOME and the producer's real HOME slug paths differently). macOS-only, so no ci_job."
   board-publication-acceptance-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_board_publication_live.py -q"
     paths: ["scripts/check-board-publication-live.py", "scripts/validate-task-board.py", "cli/tests/test_board_publication_live.py", "web/worker/src/conduct/private-board.js", "cli/src/limen/conduct/client.py"]
