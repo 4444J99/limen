@@ -168,7 +168,7 @@ rails:
   archive4t:
     service: "Archive4T (APFS volume, 4TB SSD)"
     declared_state: adopted
-    role: "Organized local archive and Mac-exit consolidation target (mac-exit-20261021/, sha256 manifests). Shares one physical drive with Ingress, Scratch and TM-Mac. Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
+    role: "Organized local archive and Mac-exit consolidation target (mac-exit-20261021/, sha256 manifests). Holds MacExitPrivate.sparsebundle (AES-256, key in the owner's password manager; ciphertext mirrored to T7Recovery/mac-exit-20261021/, 17,182 bands sha256-identical) with the homed core and runtime non-git sets and the people-private repo. Ingress is slated to be folded into Archive4T and removed after the audiovisual footage work completes. Shares one physical drive with Ingress, Scratch and TM-Mac. Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
     never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder", "counting a same-drive copy as a second copy", "moving a code-pinned path"]
     mount: "/Volumes/Archive4T"
     required_mounted: false   # absence stays visible; portable recovery is separately gated
@@ -178,7 +178,7 @@ rails:
   t7recovery:
     service: "T7Recovery (second local copy)"
     declared_state: adopted
-    role: "Second local copy on a device separate from the 4 TB drive: CleanUnique, custody replicas, and the Mac-exit set at Archive4T-identical relative paths. Kept until offsite restore proof exists; then re-evaluate."
+    role: "Second local copy on a device separate from the 4 TB drive: CleanUnique, custody replicas, and the Mac-exit set at Archive4T-identical relative paths. Kept until offsite restore proof exists; then re-evaluate. The T7's empty volumes Blank and Fresh were deleted 2026-10-22 (Blank's content preserved inside the encrypted MacExitPrivate bundle first); T7Recovery is now the only volume on the T7."
     never: ["scratch", "active workspace", "new unsorted data", "deletion before offsite restore proof", "re-layout of existing paths"]
     mount: "/Volumes/T7Recovery"
     required_mounted: false   # may be detached; report-only
@@ -188,7 +188,7 @@ rails:
   time-machine:
     service: "Time Machine -> TM-Mac"
     declared_state: adopted
-    role: "LOCAL rollback for the internal Mac only; frozen after a final backup before the erase, then retired only on the retirement proof (homed, verified, restore drills, owner sign-off)."
+    role: "LOCAL rollback for the internal Mac only; frozen after a final backup before the erase, then retired only on the retirement proof (homed, verified, restore drills, owner sign-off). Unchanged until the erase."
     never: ["a backup of Archive4T", "a substitute for offsite backup", "a reason to erase T7Recovery", "a new Mac's target before the old image retires"]
     mount: "/Volumes/TM-Mac"
     required_mounted: false
@@ -200,7 +200,7 @@ rails:
   ingress:
     service: "Ingress (intake volume)"
     declared_state: adopted
-    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until copied to Archive4T; originals leave only after a second physical copy is verified."
+    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until copied to Archive4T; originals leave only after a second physical copy is verified. Slated to be folded into Archive4T and removed after the audiovisual footage work completes."
     never: ["long-term storage", "Backblaze selection", "counting the Archive4T copy as a second physical copy"]
     mount: "/Volumes/Ingress"
     required_mounted: false
@@ -210,7 +210,7 @@ rails:
   scratch:
     service: "Scratch (disposable volume)"
     declared_state: adopted
-    role: "Disposable workspace: risky unpacking, transformations, one-off experiments, generated worktrees and rebuildable derived stores."
+    role: "Disposable workspace: risky unpacking, transformations, one-off experiments, generated worktrees and rebuildable derived stores. RETAINED as the disposable volume because fleet code requires it (heartbeat, metabolize, saturate, ship-docs, worktree_roots.py, parameters.yaml, domus scratch-authority); it shares the 4 TB container's free space."
     never: ["only home of anything important", "Backblaze selection", "a worktree whose git dir is on the internal Mac"]
     mount: "/Volumes/Scratch"
     required_mounted: false
