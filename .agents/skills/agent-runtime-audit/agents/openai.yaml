@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent runtime audit"
+  short_description: "Audit runtime state and plan configuration convergence"
+  default_prompt: "Use $agent-runtime-audit to inspect my agent runtime, review cleanup candidates, and prepare a source-owned configuration convergence plan."
