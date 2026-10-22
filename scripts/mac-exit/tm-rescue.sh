@@ -24,17 +24,26 @@
 #   TM_ALLOW_INTERNAL_DEST=1   permit a destination on the same device as $HOME. Refused otherwise: rescuing onto the disk
 #                          about to be erased defeats the purpose, and an unmounted volume's leftover mount-point directory
 #                          would silently turn the "external" copy into an internal one. For self-tests only.
+#   TM_DEADLINE_SEC        whole-run time budget for apply, in seconds: a positive integer of at most 9 digits, default 3600.
+#                          There is deliberately no "no limit" value; raise it for a bigger rescue. The deadline is fixed once,
+#                          just before the first copy, and each rsync is killed when the budget runs out. A row whose copy was
+#                          killed is rsync-timeout, a row never started is deadline-not-started; either one makes the run FAIL
+#                          (the destination is kept, the receipt says "deadline: exceeded"). The clock counts whole seconds, so
+#                          a kill can land up to a second late, and the re-inventory of a copy rsync already finished is not
+#                          interrupted. Needs perl. 0, a negative number or a non-number is a usage error (exit 64), in dry too.
 #
 # Written inside the new directory:
 #   <snapshot>/<rel>/        the copies (excluded names left out, see TM_EXCLUDES)
 #   RESCUE-RESULTS.tsv       rel snapshot status files_src files_dst git unpushed_dst fsck parent_rel
-#   RESCUE-RECEIPT.txt       result, rel_root and the exact exclude list, which tm-rescue-verify.sh reuses
+#   RESCUE-RECEIPT.txt       result, deadline_sec, deadline (met|exceeded), rel_root and the exact exclude list, which
+#                            tm-rescue-verify.sh reuses
 #   RESCUE-LOG.txt           rsync output
 #
-# status "copied" is the only green value. Others: missing-in-backup, snapshot-unreadable, rsync-failed, inventory-failed,
-# inventory-mismatch (files, directories or symlinks differ), empty-source, fsck-failed, and copied-worktree-parent-missing:
-# a linked worktree keeps its history in its parent repository, so a worktree copy without that parent in the same run loses
-# its unpushed commits. Exit: 0 PASS, 1 FAIL (some row not green; the destination is kept), 2 refusal or bad input.
+# status "copied" is the only green value. Others: missing-in-backup, snapshot-unreadable, rsync-failed, rsync-timeout,
+# deadline-not-started, inventory-failed, inventory-mismatch (files, directories or symlinks differ), empty-source,
+# fsck-failed, and copied-worktree-parent-missing: a linked worktree keeps its history in its parent repository, so a worktree
+# copy without that parent copied from the same snapshot in the same run loses its unpushed commits.
+# Exit: 0 PASS, 1 FAIL (some row not green; the destination is kept), 2 refusal or bad input, 64 bad TM_DEADLINE_SEC.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=tm-lib.sh
@@ -42,6 +51,13 @@ here="$(cd "$(dirname "$0")" && pwd)"
 
 mode=dry
 case "${1:-}" in dry|apply) mode="$1"; shift ;; esac
+# set-but-empty is as invalid as 0: the budget has no "unlimited" spelling. Leading zeros are decimal (10#), not octal.
+deadline_sec="${TM_DEADLINE_SEC-3600}"
+case "$deadline_sec" in
+  ''|*[!0-9]*|??????????*) tm_usage "TM_DEADLINE_SEC must be a positive integer of at most 9 digits (seconds), got: '$deadline_sec'" ;;
+esac
+deadline_sec=$((10#$deadline_sec))
+[[ "$deadline_sec" -gt 0 ]] || tm_usage "TM_DEADLINE_SEC must be a positive integer (seconds; there is no 'no limit' value), got: '$TM_DEADLINE_SEC'"
 plan="${1:-${TM_PLAN:-}}"
 [[ -n "$plan" && -f "$plan" ]] || tm_die "need a plan file: tm-rescue.sh [dry|apply] PLAN  (or set TM_PLAN)"
 
@@ -96,6 +112,7 @@ else
     esac
   fi
 fi
+command -v perl > /dev/null 2>&1 || refuse "perl is not available; the copy needs it to enforce TM_DEADLINE_SEC"
 
 if [[ "$mode" == dry ]]; then
   tm_log "DRY RUN -- nothing is written (destination: ${DEST:-not given})"
@@ -126,9 +143,13 @@ mkdir "$DEST" || tm_die "cannot create $DEST"
 results="$DEST/RESCUE-RESULTS.tsv"
 : > "$DEST/RESCUE-LOG.txt"
 printf 'rel\tsnapshot\tstatus\tfiles_src\tfiles_dst\tgit\tunpushed_dst\tfsck\tparent_rel\n' > "$results"
+# one deadline for the whole run, fixed before the first copy; every row is handed what is left of it
+deadline_at=$((SECONDS + deadline_sec))
 while IFS=$'\t' read -r rel stamp <&3; do
-  tm_log "copying $stamp/$rel"
-  tm_copy_one "$stamp" "$rel" "$DEST"
+  left=$((deadline_at - SECONDS))
+  if [[ "$left" -ge 1 ]]; then tm_log "copying $stamp/$rel (${left}s of the ${deadline_sec}s budget left)"
+  else tm_log "TM_DEADLINE_SEC=$deadline_sec is used up; not starting $stamp/$rel"; fi
+  tm_copy_one "$stamp" "$rel" "$DEST" "$left"
   printf '%s\n' "$TM_ROW" >> "$results"
 done 3< "$TM_TMP/plan"
 
@@ -142,11 +163,15 @@ awk -F'\t' -v OFS='\t' '
 
 rows="$(awk -F'\t' 'FNR>1' "$results" | wc -l | tr -d ' ')"
 bad="$(awk -F'\t' 'FNR>1 && $3!="copied"' "$results" | wc -l | tr -d ' ')"
+late="$(awk -F'\t' 'FNR>1 && ($3=="rsync-timeout" || $3=="deadline-not-started")' "$results" | wc -l | tr -d ' ')"
+deadline=met; [[ "$late" == 0 ]] || deadline=exceeded
 result=PASS; [[ "$bad" == 0 && "$rows" -gt 0 ]] || result=FAIL
 {
   echo "tool: tm-rescue.sh"
   echo "result: $result"
   echo "created_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "deadline_sec: $deadline_sec"
+  echo "deadline: $deadline"
   echo "rows: $rows"
   echo "rows_not_green: $bad"
   echo "rel_root: $TM_REL_ROOT"
@@ -157,5 +182,6 @@ result=PASS; [[ "$bad" == 0 && "$rows" -gt 0 ]] || result=FAIL
 
 tm_log "rows=$rows not_green=$bad  results: $results"
 if [[ "$bad" != 0 ]]; then awk -F'\t' 'FNR>1 && $3!="copied" {printf "  NOT GREEN  %-34s %s/%s\n", $3, $2, $1}' "$results"; fi
+if [[ "$deadline" == exceeded ]]; then echo "deadline: exceeded (TM_DEADLINE_SEC=$deadline_sec; $late row(s) killed or never started; the destination is kept)"; fi
 if [[ "$result" == PASS ]]; then echo "RESULT: PASS"; exit 0; fi
 echo "RESULT: FAIL (see $results)"; exit 1

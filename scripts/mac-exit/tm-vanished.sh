@@ -17,6 +17,8 @@
 #   TM_STAMPS      backup stamps to search, NEWEST FIRST, space-separated (default: every <stamp>.backup below TM_ROOT)
 #   TM_ALREADY     colon-separated list of earlier tm-rescue.sh destinations; directories they copied are not rescued again
 #   TM_REAL_TSV    optional classify-git-sweep.py output; adds an informational in_real_list column
+#   TM_DEADLINE_SEC  time budget (default 3600 s) of the `tm-rescue.sh apply` run; see tm-rescue.sh. An overrun makes apply exit 1,
+#                  a bad value exits 64 (apply only, and only once there is something to rescue; dry never starts one)
 #
 # A swept entry is "exposed" when its work may exist nowhere else: no origin remote, uncommitted changes, unpushed commits
 # (an UNKNOWN count counts as exposed), stashes, or a detached HEAD (repo or worktree) that no remote branch contains --
