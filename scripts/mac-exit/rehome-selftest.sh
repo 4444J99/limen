@@ -80,7 +80,7 @@ REHOME_SKIP_VOLUMES="$SKIP" bash "$here/rehome.sh" "$disc" "$base/stores" apply 
 
 # 6. the parameter, not the name, decides. Same row shape on two volumes: G1 on the volume the sections above skipped,
 # G2 on another. Skipping the OTHER volume must convert G1 (so the name VolReplica carries no meaning of its own), and
-# with no skip list at all both rows are planned.
+# with the skip list set but empty both rows are planned.
 mkrepo gamma
 G1="$base/ext/gamma-one"; G2="$base/ext/gamma-two"
 git -C "$base/mac/gamma" worktree add -q "$G1" feat
@@ -90,14 +90,24 @@ disc3="$base/discovery-param.tsv"
 printf 'volume\tworktree\tadmin_dir\tparent_repo\tadmin_id\tadmin_exists\n' > "$disc3"
 printf 'VolReplica\t%s\t%s\t%s\t%s\tyes\n' "$G1" "$base/mac/gamma/.git/worktrees/gamma-one" "$base/mac/gamma" gamma-one >> "$disc3"
 printf 'VolOther\t%s\t%s\t%s\t%s\tyes\n' "$G2" "$base/mac/gamma/.git/worktrees/gamma-two" "$base/mac/gamma" gamma-two >> "$disc3"
-dry_all="$(env -u REHOME_SKIP_VOLUMES bash "$here/rehome.sh" "$disc3" "$base/stores3" dry "$base/out3" 2>&1)"
-case "$dry_all" in *"would convert 2 worktree(s)"*) ok "no skip list (the default): nothing is skipped, both rows planned";; *) bad "default skip list is not empty: $dry_all";; esac
+dry_all="$(REHOME_SKIP_VOLUMES='' bash "$here/rehome.sh" "$disc3" "$base/stores3" dry "$base/out3" 2>&1)"
+case "$dry_all" in *"would convert 2 worktree(s)"*) ok "skip list set but empty: nothing is skipped, both rows planned";; *) bad "empty skip list still skipped something: $dry_all";; esac
 dry_one="$(REHOME_SKIP_VOLUMES=VolOther bash "$here/rehome.sh" "$disc3" "$base/stores3" dry "$base/out3" 2>&1)"
 case "$dry_one" in *"would convert 1 worktree(s)"*"$G1"*|*"$G1"*"would convert 1 worktree(s)"*) ok "skipping VolOther plans the VolReplica row";; *) bad "skip plan wrong: $dry_one";; esac
 case "$dry_one" in *"$G2"*) bad "skipped volume's worktree still planned";; *) ok "skipped volume's worktree is not planned";; esac
 REHOME_SKIP_VOLUMES=VolOther bash "$here/rehome.sh" "$disc3" "$base/stores3" apply "$base/out3" > "$base/apply3.log" 2>&1 && ok "apply with VolOther skipped exits 0" || bad "apply with VolOther skipped failed: $(tail -n 5 "$base/apply3.log")"
 [ "$(pointer "$G1")" != "$P_G1" ] && ok "VolReplica row converted: only the skip list decides, not the name" || bad "VolReplica row was not converted"
 [ "$(pointer "$G2")" = "$P_G2" ] && ok "VolOther row left untouched" || bad "skipped VolOther row was converted"
+
+# 7. fail closed: an UNSET skip list refuses both modes (exit 64) and writes nothing. Set-but-empty is allowed (section 6).
+# G2 has not been converted, so it is the live row an unguarded run would have rewritten.
+env -u REHOME_SKIP_VOLUMES bash "$here/rehome.sh" "$disc3" "$base/stores4" dry "$base/out4" > "$base/unset-dry.log" 2>&1; rc_dry=$?
+env -u REHOME_SKIP_VOLUMES bash "$here/rehome.sh" "$disc3" "$base/stores4" apply "$base/out4" > "$base/unset-apply.log" 2>&1; rc_apply=$?
+[ "$rc_dry" = 64 ] && ok "unset REHOME_SKIP_VOLUMES: dry refuses with exit 64" || bad "unset skip list, dry exited $rc_dry (want 64)"
+[ "$rc_apply" = 64 ] && ok "unset REHOME_SKIP_VOLUMES: apply refuses with exit 64" || bad "unset skip list, apply exited $rc_apply (want 64)"
+grep -q 'REHOME_SKIP_VOLUMES' "$base/unset-dry.log" "$base/unset-apply.log" && ok "the refusal names the variable" || bad "refusal does not name REHOME_SKIP_VOLUMES"
+{ [ ! -e "$base/stores4" ] && [ ! -e "$base/out4" ]; } && ok "unset skip list wrote nothing (no store root, no out dir)" || bad "refused run still wrote something"
+[ "$(pointer "$G2")" = "$P_G2" ] && ok "unset skip list left the live worktree untouched" || bad "unset skip list converted a worktree"
 
 if [ "$fail" = 0 ]; then rm -rf "$base"; echo "RESULT: PASS"; exit 0; fi
 echo "RESULT: FAIL (fixture kept for inspection: $base)"; exit 1

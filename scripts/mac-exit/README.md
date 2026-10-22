@@ -23,14 +23,15 @@ Stage 6 usage (no volume name is built into either tool):
 
 ```
 rehome-discover.sh [OUT_DIR [VOLUME...]]
-[REHOME_SKIP_VOLUMES=NAME[,NAME...]] rehome.sh OUT_DIR/discovery.tsv STORE_ROOT dry|apply [RUN_DIR]
+REHOME_SKIP_VOLUMES=NAME[,NAME...] rehome.sh OUT_DIR/discovery.tsv STORE_ROOT dry|apply [RUN_DIR]
 ```
 
 * `VOLUME` is a name under `/Volumes`. Given none, discovery scans every mount point directly under `/Volumes` except the boot
   volume (realpath `/`, or the same device as `$HOME`).
-* `REHOME_SKIP_VOLUMES` names the volumes `rehome.sh` must never convert, for example the independent replica. It defaults to
-  empty, which skips nothing: the `dry` run prints the list in force and the volume of every worktree it plans to convert, so
-  read that before running `apply`.
+* `REHOME_SKIP_VOLUMES` is required. It names the volumes `rehome.sh` must never convert, for example the independent replica.
+  Unset, both `dry` and `apply` refuse (exit 64) and write nothing, so forgetting it cannot convert the replica; set but empty
+  (`REHOME_SKIP_VOLUMES=`) converts every volume, deliberately. The `dry` run prints the list in force and the volume of every
+  worktree it plans to convert, so read that before running `apply`.
 
 ## Why each stage exists
 
