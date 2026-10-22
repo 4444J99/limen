@@ -1,0 +1,57 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "8d68de1c-f7e2-45d0-9ee6-d69c788901c0",
+  "repository": "4444J99/limen",
+  "worktree_name": "opencode-v2-message-readers-20261019",
+  "base_head": "80899737339dd83856e30d4a6f8a54d97fb029b8",
+  "publication_branch": "worktree-opencode-v2-message-readers-20261019",
+  "owner_url": "https://github.com/4444J99/limen/pull/3161",
+  "disposition": "handoff",
+  "owned_paths": [
+    "cli/src/limen/session_sources.py",
+    "cli/tests/conftest.py",
+    "cli/tests/test_session_sources.py",
+    "cli/tests/test_prompt_lifecycle_ledger.py",
+    "cli/tests/test_agent_session_full_stack_review.py",
+    "scripts/prompt-lifecycle-ledger.py",
+    "scripts/agent-session-full-stack-review.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "91c8897e9916c34585d4a3ad1414f1ced2c14a82",
+      "exit_code": 0,
+      "command": "bash scripts/run-pytest-hermetic.sh <the 20 cli test files that reference session_sources or the eight scripts importing it, including the three files this change touches> -q (259 passed)",
+      "evidence": "docs/continuations/opencode-v2-message-readers-20261019/session-evidence.json",
+      "sha256": "d6b6184343f357f1a19644de3e215fb9c82b12156b516d0bbb8c0e87e8bce203"
+    },
+    {
+      "head": "91c8897e9916c34585d4a3ad1414f1ced2c14a82",
+      "exit_code": 0,
+      "command": "bash scripts/verify-scoped.sh, cheap wave only (13 gates incl. ruff-lint and ruff-format under the pinned ruff, python-typecheck, check-effectors): WAVE cheap PASS",
+      "evidence": "docs/continuations/opencode-v2-message-readers-20261019/session-evidence.json",
+      "sha256": "d6b6184343f357f1a19644de3e215fb9c82b12156b516d0bbb8c0e87e8bce203"
+    },
+    {
+      "head": "91c8897e9916c34585d4a3ad1414f1ced2c14a82",
+      "exit_code": 0,
+      "command": "python3 scripts/credential-wall.py --check (all 32 secret atoms registered)",
+      "evidence": "docs/continuations/opencode-v2-message-readers-20261019/session-evidence.json",
+      "sha256": "d6b6184343f357f1a19644de3e215fb9c82b12156b516d0bbb8c0e87e8bce203"
+    },
+    {
+      "head": "91c8897e9916c34585d4a3ad1414f1ced2c14a82",
+      "exit_code": 1,
+      "command": "bash scripts/verify-scoped.sh, serialized pytest-cli gate: gate-command-timeout at 1500s, 99 percent, on a quiet host; failing tests unnamed (see unadmitted_gates)",
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/pull/3161",
+      "evidence": "docs/continuations/opencode-v2-message-readers-20261019/session-evidence.json",
+      "sha256": "d6b6184343f357f1a19644de3e215fb9c82b12156b516d0bbb8c0e87e8bce203"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/opencode-v2-message-readers-20261019/session-evidence.json",
+    "sha256": "d6b6184343f357f1a19644de3e215fb9c82b12156b516d0bbb8c0e87e8bce203"
+  }
+}
