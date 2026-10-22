@@ -8,6 +8,11 @@
 #   - streams every bundle's pack through `git unpack-objects -n` (checksums + zlib of every object, writes nothing),
 #   - runs `tar -tf` on every tar and compares the entry count with the count recorded at creation time; raw git-dir tars
 #     must also contain HEAD,
+#   - recomputes from live git, for every common dir, what a bundle drops (commits reachable only from a reflog, per-worktree
+#     refs, LFS or git-annex objects, submodule git dirs, an LFS store moved outside the git dir by lfs.storage) and checks the
+#     run holds it: the raw git-dir copy must contain every such commit's object, ref file and object, LFS/annex file and
+#     modules/ entry; the lfs-storage-tar every file of the relocated store; and for every checkout, the filtered-tar exactly
+#     the working-tree files of the tracked paths that have a `filter` attribute (credential-pattern and >2 GiB files excepted),
 #   - recomputes the sha256 of every file against MANIFEST.tsv (reads with F_NOCACHE),
 #   - checks consistency: unique common dirs == full bundles (ok+empty) + raw git-dir tars + items covered by a
 #     supplementary run; every dirty row has its snapshots; every detached row has a head bundle; every unresolved row has
@@ -17,7 +22,10 @@
 #     (git repo present, same number of staged entries); otherwise the run FAILS,
 #   - a failed item counts as covered only by a raw git-dir tar in the same run, or by an ok item for the same source in a
 #     supplementary run whose own RESULT.txt starts with PASS.
-# Writes <run-dir>/RESULT.txt (first line PASS only when everything is consistent with zero failures, else FAIL).
+#   - a raw git-dir copy must not hold a `config` / `config.worktree` carrying a user:password@ URL (preserve-git.sh leaves them
+#     out, listed in dirty/credential-skipped.txt), and the verifier does not demand those members,
+# Writes <run-dir>/RESULT.txt (first line PASS only when everything is consistent with zero failures, else FAIL; the second
+# line names the run, a later `manifest_sha256=` line pins the MANIFEST.tsv the verdict is about).
 # Read-only toward every repository and never uses the network; scratch files live under PRESERVE_SCRATCH
 # (default ${TMPDIR:-/tmp}/preserve-git-scratch).
 # Exit 0 on PASS, 1 on FAIL.
@@ -42,11 +50,15 @@ command git init --bare -q "$SCR/verify.git" || exit 73
 python3 -I - "$TSV" "$RUN" "$SCR" "$@" <<'PY'
 import collections
 import csv
+import fnmatch
 import hashlib
 import os
 import re
+import stat
+import struct
 import subprocess
 import sys
+import tarfile
 import time
 
 tsv, run, scr = sys.argv[1:4]
@@ -139,6 +151,269 @@ def tar_list(path, keep_names=False):
 
 def count_nul(cmd_out):
     return len([x for x in cmd_out.split(b"\0") if x])
+
+
+# Credential-pattern files are never copied (preserve-git.sh leaves them out of every file tar); an independent copy of
+# its rule, so the expected content of a filtered-tar is derived here and not read back from the producer's skip list.
+MAX_FILE_BYTES = 2 * 1024 * 1024 * 1024
+CRED_PATTERNS = [
+    ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "*.jks", "*.keystore", "*.kdbx",
+    "*.keychain", "*.keychain-db", "id_rsa*", "id_dsa*", "id_ecdsa*", "id_ed25519*",
+    ".netrc", "_netrc", ".npmrc", ".pypirc", ".git-credentials", ".pgpass",
+    "credentials", "credentials.json", "service-account*.json", "*.token", ".token", "token",
+    "tokens.json", "secrets.json", "secrets.yaml", "secrets.yml", "*.secret",
+]
+CRED_DIRS = {".ssh", ".gnupg", ".aws", ".1password", "1password", "keychains", "private_keys"}
+SAFE_SUFFIXES = (".example", ".sample", ".template", ".dist", ".pub")
+
+
+def is_cred(rel):
+    parts = [p for p in rel.lower().split("/") if p]
+    if not parts:
+        return False
+    for d in parts[:-1]:
+        if d in CRED_DIRS:
+            return True
+    base = parts[-1]
+    if base.endswith(SAFE_SUFFIXES):
+        return False
+    return any(fnmatch.fnmatchcase(base, pat) for pat in CRED_PATTERNS)
+
+
+def idx_has(data, sha):
+    """Is `sha` in a pack .idx (version 2)? Binary search on the sorted object-name table."""
+    if data[:4] != b"\xfftOc" or struct.unpack(">I", data[4:8])[0] != 2:
+        return False
+    want = bytes.fromhex(sha)
+    width = len(want)
+    fanout = struct.unpack(">256I", data[8:8 + 1024])
+    lo, hi = (fanout[want[0] - 1] if want[0] else 0), fanout[want[0]]
+    table = 8 + 1024
+    while lo < hi:
+        mid = (lo + hi) // 2
+        entry = data[table + mid * width:table + (mid + 1) * width]
+        if entry == want:
+            return True
+        if entry < want:
+            lo = mid + 1
+        else:
+            hi = mid
+    return False
+
+
+def inside(path, directory):
+    return path == directory or path.startswith(directory + os.sep)
+
+
+def walk_files(root):
+    """Regular files below root (symlinks are not followed and not files)."""
+    for dirpath, _dirs, files in os.walk(root):
+        for fn in files:
+            p = os.path.join(dirpath, fn)
+            if stat.S_ISREG(os.lstat(p).st_mode):
+                yield p
+
+
+def gitdirs_of(common):
+    """The common dir, then every linked worktree's admin dir: read with --git-dir so a worktree whose checkout is gone counts."""
+    out = [common]
+    wt = os.path.join(common, "worktrees")
+    if os.path.isdir(wt):
+        out += [os.path.join(wt, n) for n in sorted(os.listdir(wt)) if os.path.isfile(os.path.join(wt, n, "HEAD"))]
+    return out
+
+
+CRED_URL = re.compile(rb"://[^/ @]+:[^/ @]+@")
+_cred_configs = {}
+
+
+def credential_configs(common):
+    """Paths (relative to the git dir) of every `config` / `config.worktree` below it whose content carries a
+    user:password@ URL: preserve-git.sh leaves these out of the raw git-dir copy, so the copy must not hold them and the
+    verifier must not demand them. Independent of the producer's own scan; cached per git dir."""
+    if common in _cred_configs:
+        return _cred_configs[common]
+    found = []
+    for dirpath, _dirs, files in os.walk(common):
+        for fn in files:
+            if fn not in ("config", "config.worktree"):
+                continue
+            p = os.path.join(dirpath, fn)
+            try:
+                if not stat.S_ISREG(os.lstat(p).st_mode):
+                    continue
+                with open(p, "rb") as fh:
+                    data = fh.read()
+            except OSError:
+                continue
+            if any(CRED_URL.search(line) for line in data.split(b"\n")):
+                found.append(os.path.relpath(p, common))
+    _cred_configs[common] = found
+    return found
+
+
+def lfs_dir(common):
+    """(realpath of the directory git-lfs keeps its store in for this repository, whether lfs.storage names one)."""
+    r = git("config", "--type=path", "--get", "lfs.storage", gitdir=common)
+    v = r.stdout.decode("utf-8", "replace").strip() if r.returncode == 0 else ""
+    configured = r.returncode == 0
+    if not v:
+        v = os.path.join(common, "lfs")
+    elif not os.path.isabs(v):
+        v = os.path.join(common, v)  # git-lfs reads a relative lfs.storage relative to the git dir
+    return os.path.realpath(v), configured
+
+
+def requirement(common):
+    """What a bundle drops for this common dir, derived from live git: the reasons a raw git-dir copy is required, and the
+    things such a copy must then hold. A rule that cannot be evaluated counts as required."""
+    req = {"reasons": [], "reflog_commits": [], "wt_refs": [], "lfs_files": [], "modules_paths": []}
+
+    def add(reason):
+        if reason not in req["reasons"]:
+            req["reasons"].append(reason)
+
+    commits = {}
+    for gd in gitdirs_of(common):
+        r = git("rev-list", "--reflog", "--not", "--all", gitdir=gd)
+        if r.returncode != 0:
+            add("reflog-check-failed")
+        else:
+            for sha in r.stdout.decode().split():
+                commits[sha] = True
+        r = git("for-each-ref", "--format=%(objectname) %(refname)", "refs/worktree", "refs/bisect", "refs/rewritten", gitdir=gd)
+        if r.returncode != 0:
+            add("per-worktree-refs-check-failed")
+        else:
+            for ln in r.stdout.decode("utf-8", "replace").splitlines():
+                if ln.strip():
+                    sha, _, ref = ln.partition(" ")
+                    req["wt_refs"].append((gd, ref, sha))
+                    add("per-worktree-refs")
+    req["reflog_commits"] = list(commits)
+    if commits:
+        add("reflog-only")
+    lfs, _configured = lfs_dir(common)
+    for tag, objects in (("lfs-objects", os.path.join(lfs, "objects") if inside(lfs, common) else None),
+                         ("annex-objects", os.path.join(common, "annex", "objects"))):
+        if objects and os.path.isdir(objects):
+            for p in walk_files(objects):
+                req["lfs_files"].append((os.path.relpath(p, common), os.lstat(p).st_size))
+                add(tag)
+    modules = os.path.join(common, "modules")
+    if os.path.isdir(modules):
+        left_out = set(credential_configs(common))
+        for dirpath, dirs, files in os.walk(modules):
+            for n in dirs + files:
+                rel = os.path.relpath(os.path.join(dirpath, n), common)
+                if not n.startswith("tmp_pack_") and rel not in left_out:
+                    req["modules_paths"].append(rel)
+        if req["modules_paths"] or os.listdir(modules):
+            add("submodule-gitdirs")
+    return req
+
+
+def check_gitdir_content(common, tar_path, req):
+    """Everything that made the raw git-dir copy required must be inside it: a list of problems, empty when it is."""
+    base = os.path.basename(common)
+    try:
+        tf = tarfile.open(tar_path, "r:", encoding="utf-8", errors="surrogateescape")
+        members = {m.name: m for m in tf}
+    except (OSError, tarfile.TarError) as exc:
+        return ["the raw git-dir copy is unreadable: %s" % exc]
+    problems = []
+    with tf:
+        def blob(name):
+            fh = tf.extractfile(members[name])
+            return fh.read() if fh else b""
+
+        idx_blobs = []
+        idx_loaded = False
+
+        def has_object(sha):
+            nonlocal idx_blobs, idx_loaded
+            if "%s/objects/%s/%s" % (base, sha[:2], sha[2:]) in members:
+                return True
+            if not idx_loaded:
+                idx_blobs = [blob(n) for n in members if n.startswith(base + "/objects/pack/") and n.endswith(".idx")]
+                idx_loaded = True
+            return any(idx_has(d, sha) for d in idx_blobs)
+
+        missing = [sha for sha in req["reflog_commits"] if not has_object(sha)]
+        if missing:
+            problems.append("%d reflog-only commit(s) are not in the raw git-dir copy, e.g. %s" % (len(missing), missing[0][:12]))
+        for gd, ref, sha in req["wt_refs"]:
+            rel = os.path.relpath(gd, common)
+            name = "%s/%s" % (base, ref) if rel == "." else "%s/%s/%s" % (base, rel, ref)
+            m = members.get(name)
+            held = m is not None and m.isreg() and blob(name).decode("utf-8", "replace").strip() == sha
+            if not held and rel == "." and (base + "/packed-refs") in members:
+                held = any(ln.startswith(sha + " ") and ln[len(sha) + 1:].strip() == ref
+                           for ln in blob(base + "/packed-refs").decode("utf-8", "replace").splitlines())
+            if not held:
+                problems.append("per-worktree ref %s of %s is not in the raw git-dir copy with value %s" % (ref, rel, sha[:12]))
+            elif not has_object(sha):
+                problems.append("the object %s of per-worktree ref %s is not in the raw git-dir copy" % (sha[:12], ref))
+        gone = [rel for rel, size in req["lfs_files"]
+                if not ((m := members.get("%s/%s" % (base, rel))) is not None and m.isreg() and m.size == size)]
+        if gone:
+            problems.append("%d LFS/annex object file(s) are not in the raw git-dir copy, e.g. %s" % (len(gone), gone[0]))
+        gone = [rel for rel in req["modules_paths"] if ("%s/%s" % (base, rel)) not in members]
+        if gone:
+            problems.append("%d entr(ies) of modules/ are not in the raw git-dir copy, e.g. %s" % (len(gone), gone[0]))
+    return problems
+
+
+def check_store_content(store, tar_path):
+    """Every file of a relocated LFS store must be in its tar (objects with the same size)."""
+    base = os.path.basename(store)
+    try:
+        with tarfile.open(tar_path, "r:", encoding="utf-8", errors="surrogateescape") as tf:
+            members = {m.name: m for m in tf}
+    except (OSError, tarfile.TarError) as exc:
+        return ["the LFS store copy is unreadable: %s" % exc]
+    gone = []
+    for p in walk_files(store):
+        rel = os.path.relpath(p, store)
+        m = members.get("%s/%s" % (base, rel))
+        if m is None or not m.isreg() or (rel.startswith("objects" + os.sep) and m.size != os.lstat(p).st_size):
+            gone.append(rel)
+    return ["%d file(s) of the LFS store %s are not in its copy, e.g. %s" % (len(gone), store, gone[0])] if gone else []
+
+
+def filter_paths(path):
+    """Tracked paths of a checkout that have a `filter` attribute (not unspecified, not unset), or None when git cannot say."""
+    ls = git("ls-files", "-z", cwd=path)
+    if ls.returncode != 0:
+        return None
+    if not ls.stdout:
+        return []
+    r = subprocess.run(
+        ["git", "-c", "core.fsmonitor=false", "-C", path, "check-attr", "--stdin", "-z", "filter"],
+        capture_output=True, env=ENV, input=ls.stdout,
+    )
+    toks = [t for t in r.stdout.split(b"\0") if t]
+    if r.returncode != 0 or len(toks) % 3:
+        return None
+    return [toks[i].decode("utf-8", "surrogateescape") for i in range(0, len(toks), 3) if toks[i + 2] not in (b"unspecified", b"unset")]
+
+
+def expected_filtered(path, names):
+    """{name: size or None for a symlink} of the filter-attribute paths a filtered-tar must hold: present in the working tree
+    as a regular file (<= 2 GiB) or a symlink, and not a credential pattern."""
+    want = {}
+    for n in names:
+        try:
+            st = os.lstat(os.path.join(path, n))
+        except OSError:
+            continue
+        if is_cred(n):
+            continue
+        if stat.S_ISLNK(st.st_mode):
+            want[n] = None
+        elif stat.S_ISREG(st.st_mode) and st.st_size <= MAX_FILE_BYTES:
+            want[n] = st.st_size
+    return want
 
 
 waivers = []  # (source, reason, evidence path)
@@ -294,7 +569,7 @@ for dirpath, dirnames, filenames in os.walk(run):
 packs_checked = 0
 gitdir_tars = 0
 tar_entry_total = 0
-TAR_KINDS = ("untracked-tar", "staged-tar", "orphan-tree-tar", "gitdir-tar")
+TAR_KINDS = ("untracked-tar", "staged-tar", "orphan-tree-tar", "gitdir-tar", "filtered-tar", "lfs-storage-tar")
 for it in items:
     if it["status"] != "ok" or not it["file"]:
         continue
@@ -317,6 +592,11 @@ for it in items:
                 fail("git-dir tar %s has no %s/HEAD" % (it["file"], base))
             if any("/tmp_pack_" in x for x in names):
                 fail("git-dir tar %s contains aborted tmp_pack files" % it["file"])
+            if os.path.isdir(it["source"]):
+                held = set(names)
+                for rel in credential_configs(it["source"]):
+                    if ("%s/%s" % (base, rel)) in held:
+                        fail("git-dir tar %s holds %s, which carries a user:password@ URL and must be left out" % (it["file"], rel))
     elif k == "bundle":
         v = git("bundle", "verify", path, gitdir=EMPTY_GITDIR)  # full bundles are self-contained: verify in an empty repo
         if v.returncode != 0:
@@ -413,6 +693,58 @@ eq_parts = sum(state_counts[k] for k in ("bundle-ok", "bundle-empty", "gitdir-ta
 if len(U) != eq_parts:
     fail("unique common dirs (%d) != preserved states (%s)" % (len(U), dict(state_counts)))
 
+# ---------------------------------------------------------------- what a bundle drops (recomputed from live git, not read from the producer)
+# A bundle carries refs and their history. A raw git-dir copy is required for reflog-only commits, per-worktree refs, LFS or
+# annex objects and submodule git dirs, and a relocated LFS store needs its own tar. Items covered some other way (a
+# supplementary run, a covered-by copy, a waiver) are that route's business.
+raw_required = raw_verified = lfs_stores = lfs_stores_verified = 0
+for common in sorted(U):
+    state = common_state.get(common)
+    if state is None or state in ("covered-by-copy", "waived"):
+        continue
+    cslug = slugify(common)
+    req = requirement(common)
+    if req["reasons"]:
+        raw_required += 1
+        why = ",".join(req["reasons"])
+        if state == "supplementary-run":
+            if ("gitdir-tar", common) not in supp_ok:
+                fail("common dir %s needs a raw git-dir copy (%s) and no supplementary run holds one" % (common, why))
+        else:
+            g = one("gitdir-tar", cslug)
+            if g is None or g["status"] != "ok":
+                fail("common dir %s needs a raw git-dir copy (%s) but the run has no usable gitdir-tar item (%s)" % (common, why, g["status"] if g else "none"))
+            elif os.path.isfile(os.path.join(run, g["file"])):
+                bad_content = check_gitdir_content(common, os.path.join(run, g["file"]), req)
+                for msg in bad_content:
+                    fail("raw git-dir copy %s (required for %s): %s" % (g["file"], why, msg))
+                if not bad_content:
+                    raw_verified += 1
+    store, configured = lfs_dir(common)
+    if configured and not inside(store, common):
+        lfs_stores += 1
+        if state == "supplementary-run":
+            if ("lfs-storage-tar", store) not in supp_ok:
+                fail("common dir %s keeps its LFS store outside the git dir (%s) and no supplementary run holds a copy" % (common, store))
+            continue
+        it = one("lfs-storage-tar", cslug)
+        live = os.path.isdir(store) and any(True for _ in os.scandir(store))
+        if it is None:
+            fail("common dir %s keeps its LFS store outside the git dir (%s) but the run has no lfs-storage-tar item" % (common, store))
+        elif it["source"] != store:
+            fail("lfs-storage-tar item for %s names %s, live lfs.storage is %s" % (common, it["source"], store))
+        elif it["status"] == "empty":
+            if live:
+                fail("lfs-storage-tar for %s is recorded empty but %s holds files" % (common, store))
+            else:
+                lfs_stores_verified += 1
+        elif it["status"] == "ok" and os.path.isfile(os.path.join(run, it["file"])):
+            bad_content = check_store_content(store, os.path.join(run, it["file"]))
+            for msg in bad_content:
+                fail("lfs-storage-tar %s: %s" % (it["file"], msg))
+            if not bad_content:
+                lfs_stores_verified += 1
+
 # ---------------------------------------------------------------- head bundles (detached rows)
 head_ok = head_empty = 0
 for r in resolved_rows:
@@ -496,6 +828,55 @@ for r in dirty_rows:
         both_empty.append(r["path"])
 if both_empty:
     note("%d dirty row(s) produced no snapshot content (dirty>0 in the sweep but nothing tracked or untracked to save): %s" % (len(both_empty), "; ".join(both_empty[:6])))
+
+# ---------------------------------------------------------------- filter-attribute paths (filtered-tar)
+# Git stores what a clean filter (or git-lfs) outputs, not the working-tree bytes: status and diff stay clean while the
+# only copy of those bytes is the file. Every resolved checkout with such a tracked path needs a filtered-tar holding
+# exactly the files that exist now (credential-pattern and > 2 GiB files excepted), sizes included.
+filtered_rows = filtered_verified = 0
+for r in resolved_rows:
+    path = r["path"]
+    if git("rev-parse", "--is-bare-repository", cwd=path).stdout.strip() == b"true":
+        continue  # no working tree
+    names = filter_paths(path)
+    if names is None:
+        fail("cannot list the filter-attribute paths of %s" % path)
+        continue
+    want = expected_filtered(path, names)
+    if not want:
+        continue
+    filtered_rows += 1
+    it = one("filtered-tar", r["slug"])
+    if it is None:
+        if ("filtered-tar", path) in supp_ok:
+            filtered_verified += 1
+        else:
+            fail("checkout %s has %d tracked path(s) with a filter attribute present in the working tree but the run has no filtered-tar item" % (path, len(want)))
+        continue
+    if it["status"] != "ok":
+        if it["status"] == "empty":
+            fail("filtered-tar for %s is recorded empty but %d filter-attribute file(s) exist in the working tree" % (path, len(want)))
+        continue  # failed or skipped: reported by the generic status check
+    tpath = os.path.join(run, it["file"])
+    if not os.path.isfile(tpath):
+        continue
+    try:
+        with tarfile.open(tpath, "r:", encoding="utf-8", errors="surrogateescape") as tf:
+            held = {m.name: m for m in tf}
+    except (OSError, tarfile.TarError) as exc:
+        fail("filtered-tar %s is unreadable: %s" % (it["file"], exc))
+        continue
+    missing = sorted(set(want) - set(held))
+    extra = sorted(set(held) - set(want))
+    wrong = sorted(n for n, size in want.items() if size is not None and n in held and held[n].size != size)
+    if missing:
+        fail("filtered-tar %s lacks %d of the %d filter-attribute file(s) of %s, e.g. %s" % (it["file"], len(missing), len(want), path, missing[0]))
+    if extra:
+        fail("filtered-tar %s holds %d file(s) that live git does not list as filter-attribute files, or that a credential rule excludes, e.g. %s" % (it["file"], len(extra), extra[0]))
+    if wrong:
+        fail("filtered-tar %s holds %d file(s) whose size differs from the working tree, e.g. %s" % (it["file"], len(wrong), wrong[0]))
+    if not (missing or extra or wrong):
+        filtered_verified += 1
 
 # rows whose source vanished AFTER the apply run: their live state cannot be re-derived, so coverage is read from the
 # manifest (a dirty row needs both snapshot items; a detached row needs its head-bundle item); their integrity was
@@ -618,6 +999,8 @@ out.append("WAIVERS: %d%s" % (len(waivers), " (a PASS above means PASS-with-waiv
 for src, reason, ev in waivers:
     out.append("WAIVER: source=%s reason=%s evidence=%s" % (src, reason, ev))
 out.append("run=%s verified_at=%s elapsed=%ds" % (run, time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), time.time() - started))
+# pins the manifest this verdict is about: a manifest edited after the verifier passed it no longer matches
+out.append("manifest_sha256=%s" % sha256_file(os.path.join(run, "MANIFEST.tsv")))
 out.append("rows=%d resolved=%d unresolved_orphans=%d vanished=%d (annotated recovered-from-tm: %d)" % (len(rows), len(resolved_rows), len(orphan_rows), len(vanished_rows), recovered_annotated))
 out.append("unique_common_dirs=%d states=%s" % (len(U), dict(state_counts)))
 out.append("equation: %d unique common dirs == bundle-ok %d + bundle-empty %d + gitdir-tar %d + covered-by-supplementary-run %d + covered-by-copy %d + waived %d + uncovered %d (vanished rows have no common dir and are counted at row level)" % (len(U), n_ok, n_empty, state_counts["gitdir-tar"], state_counts["supplementary-run"], state_counts["covered-by-copy"], state_counts["waived"], state_counts["uncovered"]))
@@ -627,6 +1010,7 @@ out.append("dirty_rows=%d with_snapshot_content=%d snapshot_bytes=%d tar_entries
 out.append("unborn_head_rows=%s" % (unborn_rows or "none"))
 out.append("orphan_tree_tars_made=%d of %d unresolved rows; rows vanished since the apply run (coverage read from the manifest)=%d" % (orphan_made, len(orphan_rows), gone_since_apply))
 out.append("stash_patches_verified=%d" % stash_checked)
+out.append("raw_git_dir_copies_required=%d verified=%d; lfs_stores_outside_git_dir=%d verified=%d; checkouts_with_filtered_paths=%d verified=%d" % (raw_required, raw_verified, lfs_stores, lfs_stores_verified, filtered_rows, filtered_verified))
 out.append("files_hashed=%d bytes_hashed=%d bundle_packs_stream_checked=%d gitdir_tars_checked=%d" % (files_checked, bytes_checked, packs_checked, gitdir_tars))
 out.append("skipped_files: %s; over_2GiB=%d; credential_pattern_files=%d (%d bytes, paths+sizes only)" % (dict(skip_reasons) or "none", len(big_files), cred_n, cred_bytes))
 out.append("manifest_bytes_total=%d by_kind=%s" % (total_bytes, dict(kind_bytes)))
