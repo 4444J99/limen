@@ -25,6 +25,7 @@ TM_DEFAULT_EXCLUDES="node_modules .venv venv __pycache__ .pytest_cache .ruff_cac
 
 tm_log() { printf '%s %s\n' "$(date -u +%H:%M:%SZ)" "$*"; }
 tm_die() { printf 'FAIL: %s\n' "$*" >&2; exit 2; }
+tm_usage() { printf 'USAGE: %s\n' "$*" >&2; exit 64; }
 
 # tm_init -- resolve the TM_* parameters; builds TM_PRUNE (find), TM_RSYNC_EXCL (rsync), TM_DU_EXCL (BSD du -I),
 # TM_EXCLUDES_EFFECTIVE and TM_SHA.
@@ -200,14 +201,25 @@ tm_worktree_parent() {
   return 0
 }
 
-# tm_copy_one STAMP REL DEST -- copy backup STAMP's REL into DEST/STAMP/REL, then re-inventory both sides and probe git.
+# tm_run_within SECONDS CMD... -- run CMD with a hard wall-clock limit. The alarm survives the exec, so CMD itself is killed
+# (SIGALRM) and the status is 142; a CMD that ends normally keeps its own status, and one that cannot be started is 127 (a
+# failed perl exec would otherwise fall off the end of the script and read as success). Needs perl; same idiom as nongit-homing.sh.
+TM_RC_TIMEOUT=142
+tm_run_within() { perl -e 'alarm shift; exec @ARGV or do { print STDERR "cannot run $ARGV[0]: $!\n"; exit 127 }' "$@"; }
+
+# tm_copy_one STAMP REL DEST BUDGET_SEC -- copy backup STAMP's REL into DEST/STAMP/REL, then re-inventory both sides and probe git.
 # Sets TM_ROW (the RESCUE-RESULTS.tsv line) and TM_ROW_STATUS; "copied" is the only green status. The backup is only read.
-# Needs TM_TMP and a log file DEST/RESCUE-LOG.txt that receives rsync's output.
+# Needs TM_TMP and a log file DEST/RESCUE-LOG.txt that receives rsync's output. BUDGET_SEC is the time left in the caller's
+# whole-run budget, in whole seconds, and is required (there is no "unlimited" call): below 1 the copy is not started
+# (deadline-not-started); otherwise rsync is killed when it runs out (rsync-timeout) and the re-inventory is skipped, since a
+# killed copy is partial by definition and walking the trees would spend the time the budget just ran out of.
 tm_copy_one() {
-  local stamp="$1" rel="$2" dest="$3"
-  local home="" src="" dst="" status=copied fs="-" fd="-" parent="-" ok=1 ptr
+  local stamp="$1" rel="$2" dest="$3" budget="${4:?tm_copy_one needs the remaining time budget in seconds}"
+  local home="" src="" dst="" status=copied fs="-" fd="-" parent="-" ok=1 ptr rc=0
   TM_GIT_KIND=none; TM_GIT_UNPUSHED="-"; TM_GIT_FSCK="-"
-  if ! home="$(tm_snap_home "$stamp")"; then
+  if [[ "$budget" -lt 1 ]]; then
+    status=deadline-not-started
+  elif ! home="$(tm_snap_home "$stamp")"; then
     status=snapshot-unreadable
   else
     src="$home/$rel"; dst="$dest/$stamp/$rel"
@@ -216,30 +228,33 @@ tm_copy_one() {
     elif ! mkdir -p "$dst"; then
       status=mkdir-failed
     else
-      if ! rsync -a ${TM_RSYNC_EXCL[@]+"${TM_RSYNC_EXCL[@]}"} "$src/" "$dst/" >> "$dest/RESCUE-LOG.txt" 2>&1; then
-        status=rsync-failed
-      fi
-      : > "$TM_TMP/inv.err"
-      tm_inventory "$src" "$TM_TMP/inv.err" > "$TM_TMP/inv.src" || ok=0
-      tm_inventory "$dst" "$TM_TMP/inv.err" > "$TM_TMP/inv.dst" || ok=0
-      [[ -s "$TM_TMP/inv.err" ]] && ok=0
-      if [[ "$ok" == 0 ]]; then
-        [[ "$status" == copied ]] && status=inventory-failed
+      tm_run_within "$budget" rsync -a ${TM_RSYNC_EXCL[@]+"${TM_RSYNC_EXCL[@]}"} "$src/" "$dst/" >> "$dest/RESCUE-LOG.txt" 2>&1 || rc=$?
+      if [[ "$rc" == "$TM_RC_TIMEOUT" ]]; then
+        status=rsync-timeout
       else
-        fs="$(awk -F'\t' '$1=="f"{n++} END{print n+0}' "$TM_TMP/inv.src")"
-        fd="$(awk -F'\t' '$1=="f"{n++} END{print n+0}' "$TM_TMP/inv.dst")"
-        if ! cmp -s "$TM_TMP/inv.src" "$TM_TMP/inv.dst"; then
-          [[ "$status" == copied ]] && status=inventory-mismatch
+        [[ "$rc" == 0 ]] || status=rsync-failed
+        : > "$TM_TMP/inv.err"
+        tm_inventory "$src" "$TM_TMP/inv.err" > "$TM_TMP/inv.src" || ok=0
+        tm_inventory "$dst" "$TM_TMP/inv.err" > "$TM_TMP/inv.dst" || ok=0
+        [[ -s "$TM_TMP/inv.err" ]] && ok=0
+        if [[ "$ok" == 0 ]]; then
+          [[ "$status" == copied ]] && status=inventory-failed
+        else
+          fs="$(awk -F'\t' '$1=="f"{n++} END{print n+0}' "$TM_TMP/inv.src")"
+          fd="$(awk -F'\t' '$1=="f"{n++} END{print n+0}' "$TM_TMP/inv.dst")"
+          if ! cmp -s "$TM_TMP/inv.src" "$TM_TMP/inv.dst"; then
+            [[ "$status" == copied ]] && status=inventory-mismatch
+          fi
+          if [[ "$fs" == 0 ]]; then
+            [[ "$status" == copied ]] && status=empty-source
+          fi
         fi
-        if [[ "$fs" == 0 ]]; then
-          [[ "$status" == copied ]] && status=empty-source
+        tm_git_probe "$dst"
+        if [[ "$TM_GIT_FSCK" == FAILED && "$status" == copied ]]; then status=fsck-failed; fi
+        if [[ "$TM_GIT_KIND" == worktree ]]; then
+          ptr="$(tm_worktree_parent "$src" "$home")"
+          if [[ -n "$ptr" ]]; then parent="$ptr"; fi
         fi
-      fi
-      tm_git_probe "$dst"
-      if [[ "$TM_GIT_FSCK" == FAILED && "$status" == copied ]]; then status=fsck-failed; fi
-      if [[ "$TM_GIT_KIND" == worktree ]]; then
-        ptr="$(tm_worktree_parent "$src" "$home")"
-        if [[ -n "$ptr" ]]; then parent="$ptr"; fi
       fi
     fi
   fi

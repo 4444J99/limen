@@ -42,6 +42,7 @@ tailout() { tail -n 6 "$base/last.out" 2>/dev/null | tr '\n' '|'; }
 rc_is()     { if [ "$RC" = "$2" ]; then ok "$1"; else bad "$1 (exit $RC, wanted $2; output: $(tailout))"; fi; }
 out_has()   { if grep -qE -- "$2" "$base/last.out"; then ok "$1"; else bad "$1 (no match for '$2'; output: $(tailout))"; fi; }
 check()     { local d="$1"; shift; if "$@"; then ok "$d"; else bad "$d"; fi; }
+check_not() { local d="$1"; shift; if "$@"; then bad "$d"; else ok "$d"; fi; }
 
 # ---------------------------------------------------------------- oracles (independent of the tools under test)
 EXCL_FIND=( \( -name node_modules -o -name .venv -o -name venv -o -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .next \) -prune -o -print )
@@ -255,6 +256,7 @@ check "unpushed count in the copy equals the original's" test "$(git -C "$BC" re
 check "results record git=repo, the original's unpushed count and fsck=ok for beta" test "$(res_field "$DESTA" 'Workspace/work area/beta' 6)/$(res_field "$DESTA" 'Workspace/work area/beta' 7)/$(res_field "$DESTA" 'Workspace/work area/beta' 8)" = "repo/$BETA_UNPUSHED/ok"
 check "receipt records the exact exclude list" grep -qx 'excludes: node_modules .venv venv __pycache__ .pytest_cache .ruff_cache .mypy_cache .next' "$DESTA/RESCUE-RECEIPT.txt"
 check "  ...and result: PASS" grep -qx 'result: PASS' "$DESTA/RESCUE-RECEIPT.txt"
+check "  ...and the default time budget: deadline_sec: 3600, deadline: met" bash -c 'grep -qx "deadline_sec: 3600" "$1" && grep -qx "deadline: met" "$1"' _ "$DESTA/RESCUE-RECEIPT.txt"
 check "run directory is private (700)" test "$(stat -f %Lp "$DESTA")" = 700
 
 FPD="$(fingerprint "$DESTA")"
@@ -322,11 +324,58 @@ printf 'rel\tsnapshot\nWorkspace/theta\t%s\nWorkspace/iota\t%s\n' "$S2" "$S2" > 
 XENV=(TM_DEST="$ext/wt-both"); run tm-rescue.sh apply "$base/plan-wt-both.tsv"; XENV=()
 rc_is "worktree plus its parent exits 0" 0
 check "  ...the detached commit is in the rescued parent's object store (git oracle)" git -C "$ext/wt-both/$S2/Workspace/iota" cat-file -e "$THETA_C^{commit}"
+# the parent must come from the SAME snapshot: a copy of iota from the older backup does not hold the newer worktree's commits
+printf 'rel\tsnapshot\nWorkspace/theta\t%s\nWorkspace/iota\t%s\n' "$S2" "$S1" > "$base/plan-wt-cross.tsv"
+XENV=(TM_DEST="$ext/wt-cross"); run tm-rescue.sh apply "$base/plan-wt-cross.tsv"; XENV=()
+rc_is "a worktree whose parent was copied from a DIFFERENT backup exits 1" 1
+check "  ...theta is copied-worktree-parent-missing while iota itself is copied" test "$(res_field "$ext/wt-cross" Workspace/theta 3)/$(res_field "$ext/wt-cross" Workspace/iota 3)" = copied-worktree-parent-missing/copied
 
 # a snapshot mounted by hand uses the second layout (<stamp>.backup/<rel root>)
 mkdir -p "$base/tm-mounted/$S2.backup/Data"; ln -s "$H2" "$base/tm-mounted/$S2.backup/$REL"
 XENV=(TM_ROOT="$base/tm-mounted"); run tm-rescue.sh dry "$base/plan-wt-only.tsv"; XENV=()
 rc_is "a hand-mounted snapshot layout is read too" 0
+
+# what counts as a complete checkout inside a backup (the husk rule), as a unit test of the library function
+hk="$base/hk"; mkdir -p "$hk/husk" "$hk/okwt" "$hk/okrepo/.git" "$hk/badrepo/.git"
+echo x > "$hk/husk/file"; echo "gitdir: x" > "$hk/okwt/.git"; echo ref > "$hk/okrepo/.git/HEAD"
+tbh() { "$BASH_BIN" -c '. "$1/tm-lib.sh"; tm_backup_has "$2" "$3"' _ "$here" "$1" "$2"; }   # DIR KIND
+check_not "a worktree husk (files, no .git) is not a complete copy" tbh "$hk/husk" worktree
+check "a worktree with its .git file is complete" tbh "$hk/okwt" worktree
+check "a repo with .git/HEAD is complete" tbh "$hk/okrepo" repo
+check_not "a repo whose .git has no HEAD is a husk" tbh "$hk/badrepo" repo
+
+# TM_DEADLINE_SEC: a bad value is a usage error (64) that creates nothing; an overrun is a FAIL that keeps its destination
+for v in 0 -5 abc 1.5 1234567890 ''; do
+  XENV=(TM_DEADLINE_SEC="$v" TM_DEST="$ext/dl-bad"); run tm-rescue.sh apply "$planA"; XENV=()
+  rc_is "TM_DEADLINE_SEC='$v' is a usage error" 64
+  out_has "  ...naming the variable" 'TM_DEADLINE_SEC must be a positive integer'
+done
+check "  ...and no bad value created a destination" test ! -e "$ext/dl-bad"
+XENV=(TM_DEADLINE_SEC=abc); run tm-rescue.sh dry "$planA"; XENV=()
+rc_is "a bad TM_DEADLINE_SEC is a usage error in dry mode too" 64
+# the slow copy: a stub rsync that waits before the real one; FX_REAL_RSYNC is resolved before PATH is overridden. One perl
+# process sleeps then execs rsync, so the budget's alarm kills the whole stub and no sleep is left behind.
+mkdir -p "$base/slowstub"; real_rsync="$(command -v rsync)"
+cat > "$base/slowstub/rsync" <<'EOF'
+#!/bin/bash
+exec perl -e 'select(undef, undef, undef, shift); exec @ARGV' "${FX_SLOW_SEC:-1}" "$FX_REAL_RSYNC" "$@"
+EOF
+chmod +x "$base/slowstub/rsync"
+slow() { XENV=(PATH="$base/slowstub:$PATH" FX_REAL_RSYNC="$real_rsync" FX_SLOW_SEC="$1" TM_DEADLINE_SEC="$2" TM_DEST="$3"); run tm-rescue.sh apply "$planA"; XENV=(); }   # SLEEP BUDGET DEST
+slow 6 2 "$ext/dl-over"
+rc_is "a copy that outlives TM_DEADLINE_SEC exits 1" 1
+check_not "  ...and is never reported as PASS" grep -q 'RESULT: PASS' "$base/last.out"
+out_has "  ...saying deadline: exceeded" 'deadline: exceeded'
+check "  ...the copy in flight was killed: rsync-timeout" test "$(res_field "$ext/dl-over" 'Workspace/work area/beta' 3)" = rsync-timeout
+check "  ...the rows behind it were never started: deadline-not-started" test "$(res_field "$ext/dl-over" Workspace/gamma 3)/$(res_field "$ext/dl-over" Workspace/delta 3)" = deadline-not-started/deadline-not-started
+check "  ...and copied nothing" test ! -e "$ext/dl-over/$S1"
+check "  ...the receipt records result: FAIL, deadline: exceeded and the budget" bash -c 'grep -qx "result: FAIL" "$1" && grep -qx "deadline: exceeded" "$1" && grep -qx "deadline_sec: 2" "$1"' _ "$ext/dl-over/RESCUE-RECEIPT.txt"
+check "  ...and the destination is kept for inspection" test -f "$ext/dl-over/RESCUE-RESULTS.tsv" -a -d "$ext/dl-over/$S2/Workspace/work area/beta"
+slow 1 0120 "$ext/dl-ok"
+rc_is "the same slow copy inside a generous budget (0120 is decimal 120) exits 0" 0
+out_has "  ...PASS" 'RESULT: PASS'
+check "  ...with three green rows" test "$(awk -F'\t' 'FNR>1 && $3=="copied"' "$ext/dl-ok/RESCUE-RESULTS.tsv" | wc -l | tr -d ' ')" = 3
+check "  ...and the receipt says deadline_sec: 120, deadline: met" bash -c 'grep -qx "deadline_sec: 120" "$1" && grep -qx "deadline: met" "$1"' _ "$ext/dl-ok/RESCUE-RECEIPT.txt"
 
 # ================================================================ C. tm-rescue-verify.sh
 run tm-rescue-verify.sh dry "$DESTA"; rc_is "verify dry on a good rescue exits 0" 0
@@ -399,6 +448,14 @@ printf 'rel\tsnapshot\tstatus\tfiles_src\tfiles_dst\tgit\tunpushed_dst\tfsck\tpa
 XENV=(TM_ROOT="$tm3"); run tm-rescue-verify.sh dry "$base/var-zero"; XENV=()
 rc_is "verify refuses to call an empty row identical" 1
 out_has "  ...as a MISMATCH with no files to compare" "MISMATCH +$S2/Workspace/onlyexcl.*no files to compare"
+# a plan entry that is a symlink in the backup is never followed (it could point anywhere); needs a writable backup root (tm3)
+t3h="$tm3/$S2.backup/$S2.backup/$REL"
+mkdir -p "$t3h/Workspace/realdir"; echo f > "$t3h/Workspace/realdir/f.txt"; ln -s realdir "$t3h/Workspace/linkdir"
+printf 'rel\tsnapshot\nWorkspace/linkdir\t%s\n' "$S2" > "$base/plan-linkdir.tsv"
+XENV=(TM_ROOT="$tm3" TM_DEST="$ext/linkdir"); run tm-rescue.sh apply "$base/plan-linkdir.tsv"; XENV=()
+rc_is "a plan entry that is a symlink in the backup is refused, exit 1" 1
+check "  ...row status is missing-in-backup" test "$(res_field "$ext/linkdir" Workspace/linkdir 3)" = missing-in-backup
+check "  ...and nothing was copied through the link" test ! -e "$ext/linkdir/$S2/Workspace/linkdir"
 XENV=(TM_DEST="$ext/empty-rescue"); run tm-rescue.sh apply "$base/plan-missing.tsv"; XENV=()
 rc_is "a rescue whose only row is missing in its backup exits 1 and keeps its destination" 1
 run tm-rescue-verify.sh dry "$ext/empty-rescue"; rc_is "verify of a rescue with no copied rows FAILs (nothing verified)" 1
