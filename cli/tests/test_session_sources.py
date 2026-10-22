@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+
+import pytest
 from pathlib import Path
 
 from limen.session_sources import (
@@ -240,14 +242,14 @@ def test_v2_store_renders_user_and_assistant_turns_and_skips_the_rest(tmp_path: 
     assert records[0]["timestamp"] == 900
 
 
-def test_v2_store_reads_a_migrated_session_from_session_message(tmp_path: Path) -> None:
+def test_v2_store_keeps_legacy_authoritative_for_a_migrated_session(tmp_path: Path) -> None:
     path = tmp_path / "opencode.db"
     _open_code_v2_db(path)
     source = SessionSource("opencode", f"{path}#session:open-run", "open-run", "opencode-sqlite", 0)
 
     records = read_session_records(source)
 
-    assert records and records[0]["content"] == ["Migrated ask"], "v2 rows win once the store is v2"
+    assert records == [{"timestamp": 500, "role": "user", "content": ["OpenCode ask"]}]
 
 
 def test_v2_store_falls_back_to_legacy_messages_when_a_session_has_no_v2_rows(tmp_path: Path) -> None:
@@ -346,3 +348,138 @@ def test_opencode_has_legacy_messages_tracks_the_frozen_tables(tmp_path: Path) -
         assert opencode_has_legacy_messages(db)
         db.execute("DROP TABLE part")
         assert not opencode_has_legacy_messages(db)
+
+
+def _opencode_source(path: Path, session_id: str = "frozen") -> SessionSource:
+    return SessionSource("opencode", f"{path}#session:{session_id}", session_id, "opencode-sqlite", 0)
+
+
+def test_migrated_adapter_preserves_legacy_history_and_appends_only_the_v2_tail(opencode_migrated_store: Path) -> None:
+    path = opencode_migrated_store
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "INSERT INTO part VALUES ('reason', 'm2', 'frozen', 202, 202, ?)",
+            (json.dumps({"type": "reasoning", "text": "Legacy reasoning"}),),
+        )
+        # A migrated row at the cutoff must not duplicate the legacy answer.
+        db.execute(
+            "INSERT INTO session_message VALUES ('boundary', 'frozen', 'assistant', 2, 500, 500, ?)",
+            (json.dumps({"content": [{"type": "text", "text": "Frozen answer"}]}),),
+        )
+        # Sequence order, rather than text de-duplication, distinguishes later repeated prompts.
+        db.execute(
+            "INSERT INTO session_message VALUES ('later', 'frozen', 'user', 4, 701, 701, ?)",
+            (json.dumps({"text": "Frozen ask"}),),
+        )
+    source = _opencode_source(path)
+    before = path.read_bytes()
+
+    records = read_session_records(source)
+
+    assert records == [
+        {"timestamp": 100, "role": "user", "content": ["Frozen ask", "Injected note"]},
+        {"timestamp": 200, "role": "assistant", "content": ["Frozen answer", "Legacy reasoning"]},
+        {"timestamp": 700, "role": "user", "content": ["Tail ask"]},
+        {"timestamp": 701, "role": "user", "content": ["Frozen ask"]},
+    ]
+    assert source == _opencode_source(path), "the native locator and session identity remain the source provenance"
+    assert path.read_bytes() == before, "reading must not migrate or modify the synthetic store"
+
+
+def test_legacy_adapter_output_survives_enabling_v2(opencode_migrated_store: Path) -> None:
+    path = opencode_migrated_store
+    merged = read_session_records(_opencode_source(path))
+    with sqlite3.connect(path) as db:
+        db.execute("DROP TABLE session_message")
+        db.execute("DROP TABLE session_v2")
+    legacy = read_session_records(_opencode_source(path))
+
+    assert merged[: len(legacy)] == legacy
+    assert legacy == [
+        {"timestamp": 100, "role": "user", "content": ["Frozen ask", "Injected note"]},
+        {"timestamp": 200, "role": "assistant", "content": ["Frozen answer"]},
+    ]
+
+
+@pytest.mark.parametrize("missing", ["session", "session-row", "message", "part", "all"])
+def test_adapter_reads_v2_without_complete_legacy_tables(opencode_migrated_store: Path, missing: str) -> None:
+    path = opencode_migrated_store
+    with sqlite3.connect(path) as db:
+        if missing == "session-row":
+            db.execute("DELETE FROM session WHERE id = 'frozen'")
+        else:
+            for table in ["session", "message", "part"] if missing == "all" else [missing]:
+                db.execute(f"DROP TABLE {table}")
+    # Dropping metadata alone leaves usable authoritative message/part rows.
+    expected = (
+        [
+            {"timestamp": 100, "role": "user", "content": ["Frozen ask", "Injected note"]},
+            {"timestamp": 200, "role": "assistant", "content": ["Frozen answer"]},
+        ]
+        if missing in {"session", "session-row"}
+        else [
+            {"timestamp": 100, "role": "user", "content": ["Frozen ask"]},
+        ]
+    )
+    assert read_session_records(_opencode_source(path)) == expected + [
+        {"timestamp": 700, "role": "user", "content": ["Tail ask"]},
+    ]
+    assert read_session_records(_opencode_source(path, "v2-only")) == [
+        {"timestamp": 900, "role": "user", "content": ["V2 ask"]},
+        {"timestamp": 901, "role": "assistant", "content": ["V2 answer"]},
+    ]
+
+
+@pytest.mark.parametrize("missing", ["session_v2", "session_message", "both"])
+def test_adapter_keeps_legacy_when_v2_tables_are_missing(opencode_migrated_store: Path, missing: str) -> None:
+    path = opencode_migrated_store
+    with sqlite3.connect(path) as db:
+        for table in ["session_v2", "session_message"] if missing == "both" else [missing]:
+            db.execute(f"DROP TABLE {table}")
+    assert read_session_records(_opencode_source(path)) == [
+        {"timestamp": 100, "role": "user", "content": ["Frozen ask", "Injected note"]},
+        {"timestamp": 200, "role": "assistant", "content": ["Frozen answer"]},
+    ]
+
+
+@pytest.mark.parametrize("raw", ["{broken", "null", "[]", '"string"', '{"time": "invalid"}'])
+def test_adapter_tolerates_malformed_records_without_losing_neighbors(opencode_migrated_store: Path, raw: str) -> None:
+    path = opencode_migrated_store
+    with sqlite3.connect(path) as db:
+        db.execute("INSERT INTO message VALUES ('bad', 'frozen', 150, 150, ?)", (raw,))
+        db.execute("INSERT INTO part VALUES ('bad-part', 'bad', 'frozen', 150, 150, ?)", (raw,))
+        db.execute("INSERT INTO session_message VALUES ('bad-v2', 'frozen', 'assistant', 3, 800, 800, ?)", (raw,))
+    records = read_session_records(_opencode_source(path))
+
+    assert records[0] == {"timestamp": 100, "role": "user", "content": ["Frozen ask", "Injected note"]}
+    assert records[1]["timestamp"] == 150
+    assert records[2] == {"timestamp": 200, "role": "assistant", "content": ["Frozen answer"]}
+    assert records[3] == {"timestamp": 700, "role": "user", "content": ["Tail ask"]}
+    assert records[4] == {"timestamp": 800, "role": "assistant", "content": []}
+
+
+def test_adapter_empty_or_missing_store_is_not_created(tmp_path: Path) -> None:
+    path = tmp_path / "missing.db"
+    assert read_session_records(_opencode_source(path)) == []
+    assert not path.exists()
+    with sqlite3.connect(path):
+        pass
+    assert read_session_records(_opencode_source(path)) == []
+
+
+def test_adapter_preserves_embedded_legacy_timestamp_and_v2_sequence_order(opencode_migrated_store: Path) -> None:
+    path = opencode_migrated_store
+    with sqlite3.connect(path) as db:
+        db.execute(
+            "UPDATE message SET data = ? WHERE id = 'm1'", (json.dumps({"role": "user", "time": {"created": 99}}),)
+        )
+        db.execute(
+            "INSERT INTO session_message VALUES ('out-of-clock-order', 'frozen', 'assistant', 3, 600, 600, ?)",
+            (json.dumps({"content": [{"type": "reasoning", "text": "Tail reasoning"}]}),),
+        )
+    assert read_session_records(_opencode_source(path)) == [
+        {"timestamp": 99, "role": "user", "content": ["Frozen ask", "Injected note"]},
+        {"timestamp": 200, "role": "assistant", "content": ["Frozen answer"]},
+        {"timestamp": 700, "role": "user", "content": ["Tail ask"]},
+        {"timestamp": 600, "role": "assistant", "content": ["Tail reasoning"]},
+    ]
