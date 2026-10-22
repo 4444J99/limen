@@ -19,6 +19,20 @@ no stage's output may be trusted by a later one without being re-checked against
 usage line when called without them; `git-sweep.sh` and `rehome-discover.sh` are read-only and run with a default output directory
 under `${TMPDIR:-/tmp}` when called bare.
 
+Stage 6 usage (no volume name is built into either tool):
+
+```
+rehome-discover.sh [OUT_DIR [VOLUME...]]
+REHOME_SKIP_VOLUMES=NAME[,NAME...] rehome.sh OUT_DIR/discovery.tsv STORE_ROOT dry|apply [RUN_DIR]
+```
+
+* `VOLUME` is a name under `/Volumes`. Given none, discovery scans every mount point directly under `/Volumes` except the boot
+  volume (realpath `/`, or the same device as `$HOME`).
+* `REHOME_SKIP_VOLUMES` is required. It names the volumes `rehome.sh` must never convert, for example the independent replica.
+  Unset, both `dry` and `apply` refuse (exit 64) and write nothing, so forgetting it cannot convert the replica; set but empty
+  (`REHOME_SKIP_VOLUMES=`) converts every volume, deliberately. The `dry` run prints the list in force and the volume of every
+  worktree it plans to convert, so read that before running `apply`.
+
 ## Why each stage exists
 
 * **Sweep** is a *local view*. Remote-tracking refs can lag, a repository-wide "unpushed" count includes stale bot branches,

@@ -5598,22 +5598,22 @@
       },
       "label": "Re-home the external-drive git worktrees that still point back at the Mac (16 live): run the dry-checked rehome apply that the agent's permission classifier refuses.",
       "owner": "yours",
-      "status": "open",
+      "status": "discharged",
       "added": "2026-10-21",
       "diagnosed_at": "2026-10-21T20:00:00Z",
       "issue": 3147,
       "cost": "One command after a fresh discovery; about 1.5 GB of stores written to the archive external; reversible with the rollback.sh it writes.",
       "source_task": "https://github.com/4444J99/limen/issues/3147",
-      "gate": "The auto-mode permission classifier denied the agent's `scripts/mac-exit/rehome.sh ... apply` three times (it rewrites each external worktree's single .git pointer file). An operator-run command, or a Bash allow rule for exactly that script, clears it; an agent may not edit its own permission settings.",
+      "gate": "Discharged 2026-10-22 by the owner's operator-run apply (the permission classifier had refused the agent's apply four times). Result: 16 of 16 live worktrees converted, 0 failed or skipped, RESULT: PASS; a fresh discovery afterwards found 0 live worktrees pointing into the Mac; every converted worktree kept its HEAD, branch and status digest. The results file and rollback.sh are kept, hash-verified, beside the stores on the archive external.",
       "unlocks": "The exit-readiness predicate's no-external-dependency check stops failing on the live worktrees, and the external worktrees keep working after the Mac is erased.",
       "steps": [
-        "(human) From a detached origin/main worktree run scripts/mac-exit/rehome-discover.sh <out>, then scripts/mac-exit/rehome.sh <out>/discovery.tsv <store-root-on-the-archive-external> dry <out2>, then the same with apply (exact paths: the private operator runbook on the archive external, section 4).",
+        "(human) From a detached origin/main worktree run scripts/mac-exit/rehome-discover.sh <out>, then REHOME_SKIP_VOLUMES=<independent-replica-volume-name> scripts/mac-exit/rehome.sh <out>/discovery.tsv <store-root-on-the-archive-external> dry <out2>, then the same with apply. REHOME_SKIP_VOLUMES is required (unset, rehome.sh refuses with exit 64): set it to the independent replica volume's name so its worktrees are never converted, and read the dry run's skip-list line and per-worktree volume before applying (exact paths and the replica's name: the private operator runbook on the archive external, section 4).",
         "(agent) Re-run the readiness predicate and confirm no-external-dependency reports 0 LIVE worktrees."
       ],
       "note": "Fail-safe: apply rolls back automatically on any before/after state mismatch, keeps each old pointer inside the new store, and writes rollback.sh.",
       "implementation": {
         "schema_version": 1,
-        "behavior": "The operator runs scripts/mac-exit/rehome.sh apply (after a fresh rehome-discover.sh and a dry run) or allows it for the agent; the agent then re-runs discovery and the exit-readiness predicate to confirm no live external worktree still depends on the Mac.",
+        "behavior": "The operator runs scripts/mac-exit/rehome.sh apply with REHOME_SKIP_VOLUMES set to the independent replica volume's name (after a fresh rehome-discover.sh and a dry run) or allows it for the agent; the agent then re-runs discovery and the exit-readiness predicate to confirm no live external worktree still depends on the Mac.",
         "rationale": "Rewriting each external worktree's .git pointer was judged by the permission classifier to need the owner's consent; the change is reversible (old pointers kept, rollback.sh written) and verified before and after per worktree.",
         "evidence_refs": [
           "scripts/mac-exit/rehome.sh",
@@ -5628,15 +5628,13 @@
         "owner": "https://github.com/4444J99/limen/issues/3147",
         "acceptance": {
           "condition": "No worktree on an external volume other than the independent replica carries a .git pointer into the Mac whose admin directory still exists.",
-          "predicate": "bash scripts/mac-exit/rehome-discover.sh (expect 0 rows with admin_exists=yes outside the independent replica)",
-          "status": "not_currently_verified"
+          "predicate": "bash scripts/mac-exit/rehome-discover.sh (expect 0 rows with admin_exists=yes on any volume other than the independent replica, the one named in REHOME_SKIP_VOLUMES)",
+          "status": "observed_pass_requires_live_recheck"
         },
-        "dependencies": [
-          "Operator-run apply, or a narrow Bash allow rule for scripts/mac-exit/rehome.sh"
-        ],
-        "remaining_human_action": "Run the rehome apply, or allow it for the agent.",
-        "historical_gate_requires_verification": "Whether a re-homed worktree is in use by a live session is observable only at apply time; check for active sessions first.",
-        "decision_status": "chosen_pending_evidence"
+        "dependencies": [],
+        "remaining_human_action": null,
+        "historical_gate_requires_verification": "A worktree created on an external volume after 2026-10-22 from a parent on the Mac would point into the Mac again; the final pre-erase discovery re-checks it.",
+        "decision_status": "terminal_history_preserved"
       }
     },
     {

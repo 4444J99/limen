@@ -5,12 +5,20 @@
 # worktree is a dead directory. This builds a standalone store (a FILE-LEVEL copy of the parent repo's .git, which keeps
 # unreachable objects, refs/stash and reflogs that a clone would drop) on an external and points each worktree at it.
 #
-#   rehome.sh <discovery.tsv> <store-root> dry [out-dir]     read-only: print the plan and each worktree's BEFORE state
-#   rehome.sh <discovery.tsv> <store-root> apply [out-dir]   build stores, convert, verify, auto-rollback on any mismatch
+#   REHOME_SKIP_VOLUMES=NAME[,NAME...] rehome.sh <discovery.tsv> <store-root> dry [out-dir]
+#       read-only: print the plan and each worktree's BEFORE state
+#   REHOME_SKIP_VOLUMES=NAME[,NAME...] rehome.sh <discovery.tsv> <store-root> apply [out-dir]
+#       build stores, convert, verify, auto-rollback on any mismatch
+#
+# REHOME_SKIP_VOLUMES is REQUIRED: comma-separated volume names (the discovery.tsv "volume" column, no spaces around the
+# commas) whose worktrees are never converted, for example the independent replica. Unset, both modes refuse (exit 64) and
+# write nothing, so forgetting it can never convert the replica. Set but empty (REHOME_SKIP_VOLUMES=) converts every
+# volume, deliberately. The dry run prints the list in force and the volume of every planned worktree: read it before apply.
 #
 # Mutations in apply mode, and nothing else: (1) NEW store directories under <store-root>; (2) the single file W/.git of
-# each live, non-T7 worktree W (the old content is kept as <store>/worktrees/<id>/mac-link.orig, NOT inside W, because a
-# file inside W shows up as untracked and makes the worktree look dirty). Nothing is deleted; the Mac repos are only read.
+# each live worktree W on a volume that is not skipped (the old content is kept as <store>/worktrees/<id>/mac-link.orig, NOT
+# inside W, because a file inside W shows up as untracked and makes the worktree look dirty). Nothing is deleted; the Mac
+# repos are only read.
 # Lessons from the fixture test: never set core.bare on the store (git status then fails in its worktrees); the
 # independence check must skip mac-link.orig (it names the Mac path on purpose).
 #
@@ -21,6 +29,11 @@ disc="${1:?discovery.tsv}"; root="${2:?store root}"; mode="${3:-dry}"
 out="${4:-${TMPDIR:-/tmp}/mac-exit-rehome-out}"
 [[ "$mode" == dry || "$mode" == apply ]] || { echo "mode must be dry|apply" >&2; exit 2; }
 [[ -f "$disc" ]] || { echo "no such discovery file: $disc" >&2; exit 2; }
+# fail closed: an unset skip list must never mean "skip nothing" (unset and set-but-empty are different; test with +x)
+[[ -n "${REHOME_SKIP_VOLUMES+x}" ]] || {
+  echo "REHOME_SKIP_VOLUMES is not set: set REHOME_SKIP_VOLUMES to the comma-separated volume names whose worktrees must never be converted (the independent replica); set it empty (REHOME_SKIP_VOLUMES=) only to convert every volume" >&2
+  exit 64
+}
 mkdir -p "$out"
 results="$out/rehome-results.tsv"; rollback="$out/rollback.sh"
 log() { printf '%s %s\n' "$(date -u +%H:%M:%SZ)" "$*"; }
@@ -32,11 +45,17 @@ state() { # W -> head|ref|statushash
     "$(git -C "$w" status --porcelain=v1 -z 2>/dev/null | shasum -a 256 | cut -d' ' -f1)"
 }
 
-candidates() { awk -F'\t' 'NR>1 && $1!="T7Recovery" && $6=="yes"' "$disc"; }
+# ENVIRON, not awk -v: -v would interpret backslash escapes in a volume name
+skip="${REHOME_SKIP_VOLUMES:-}"; export REHOME_SKIP_VOLUMES="$skip"
+candidates() {
+  awk -F'\t' 'BEGIN { n = split(ENVIRON["REHOME_SKIP_VOLUMES"], a, ","); for (i = 1; i <= n; i++) if (a[i] != "") s[a[i]] = 1 }
+              NR>1 && !($1 in s) && $6=="yes"' "$disc"
+}
 parents()    { candidates | awk -F'\t' '{print $4}' | sort -u; }
 
 if [[ "$mode" == dry ]]; then
   log "DRY RUN -- nothing is written (store root: $root)"
+  log "REHOME_SKIP_VOLUMES: ${skip:-<empty: EVERY volume is converted>}"
   avail_kb=$(df -k "$(dirname "$root")" 2>/dev/null | awk 'NR==2{print $4}')
   need=0
   while IFS= read -r p; do
@@ -48,13 +67,14 @@ if [[ "$mode" == dry ]]; then
   n=0
   while IFS=$'\t' read -r vol w adm p id ex; do
     n=$((n + 1))
-    printf 'WORKTREE %s  parent=%s id=%s  before=%s\n' "$w" "$(basename "$p")" "$id" "$(state "$w")"
+    printf 'WORKTREE %s  volume=%s parent=%s id=%s  before=%s\n' "$w" "$vol" "$(basename "$p")" "$id" "$(state "$w")"
   done < <(candidates)
   log "would convert $n worktree(s); stores need about ${need} KiB (x1), free ${avail_kb:-?} KiB"
   exit 0
 fi
 
 # ---- apply ----
+log "REHOME_SKIP_VOLUMES: ${skip:-<empty: EVERY volume is converted>}"
 mkdir -p "$root" || exit 2
 avail_kb=$(df -k "$root" 2>/dev/null | awk 'NR==2{print $4}')   # after mkdir: df fails on a path that does not exist yet
 want=$(candidates | wc -l | tr -d ' ')
