@@ -1,0 +1,12 @@
+{
+  "schema": "limen.runtime_evidence_custody_observation.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "native_session_id": "01a154c1-f69f-7013-979c-69516316a258",
+  "published_artifacts": "Draft PR 3130; exact source and redacted receipts pushed",
+  "private_payloads": "Native RPC history, fixture database families, preimages, failed attempts, a 7049282-byte archive and PR/issue body drafts retained in the existing custody owner",
+  "generated_cache_disposition": "Two generated mypy caches renamed into existing live custody staging; no deletion",
+  "independent_custody_verified": false,
+  "vault_admission": "Refused before ciphertext write: artifact id has no public recovery admission proof",
+  "checkout_disposition": "Retain; no deletion or retirement authority",
+  "next_owner": "4444J99/limen#2848 / draft PR #3130"
+}

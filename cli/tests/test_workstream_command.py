@@ -3242,3 +3242,37 @@ def test_explicit_destination_refuses_ambiguous_targets(tmp_path, monkeypatch, k
     assert result.exit_code != 0
     assert not (repo / ".worktrees").exists()
     assert not _git("branch", "--list", "work/bad-route", cwd=repo).stdout.strip()
+
+
+@pytest.mark.parametrize("existing_branch", [False, True])
+def test_workstream_inventory_uses_cli_interpreter_with_incomplete_path_python(
+    tmp_path: Path, monkeypatch, existing_branch: bool
+) -> None:
+    """PATH Python may lack CLI dependencies; admission must retain the CLI toolchain."""
+    repo = _destination_repo(tmp_path)
+    if existing_branch:
+        _git("branch", "work/interpreter", cwd=repo)
+    fake_bin = tmp_path / "incomplete-python"
+    fake_bin.mkdir()
+    fake_python = fake_bin / "python3"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        'if [[ "$1" == -c && "$2" == *limen.inventory_admission* ]]; then\n'
+        "  echo \"ModuleNotFoundError: No module named 'rfc8785'\" >&2\n"
+        "  exit 1\n"
+        "fi\n"
+        'exec "$REAL_PYTHON" "$@"\n',
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+    monkeypatch.setenv("REAL_PYTHON", sys.executable)
+    monkeypatch.setenv("LIMEN_WORKSTREAM_PYTHON", str(fake_python))
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    destination = tmp_path / "external" / "interpreter"
+    result = CliRunner().invoke(
+        main,
+        ["workstream", "--no-readme", "--destination", str(destination), str(repo), "interpreter"],
+    )
+    assert result.exit_code == 0, result.output
+    assert _git("branch", "--show-current", cwd=destination).stdout.strip() == "work/interpreter"

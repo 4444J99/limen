@@ -1076,10 +1076,11 @@ def workstream(
     if no_readme:
         args.append("--no-readme")
     args.extend([repo, slug])
+    workstream_env = {**os.environ, "LIMEN_WORKSTREAM_PYTHON": sys.executable}
     if agent_name or launch_shell:
-        result = subprocess.run(args, text=True)
+        result = subprocess.run(args, text=True, env=workstream_env)
     else:
-        result = subprocess.run(args, text=True, capture_output=True)
+        result = subprocess.run(args, text=True, capture_output=True, env=workstream_env)
         if result.stdout:
             click.echo(result.stdout, nl=False)
         if result.stderr:
