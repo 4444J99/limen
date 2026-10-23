@@ -12,6 +12,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "scripts" / "avtopoiesis.py"
 
@@ -26,6 +28,70 @@ def _audit():
     r = _run("--json")
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
+
+
+def test_audit_loads_each_yaml_once_and_next_audit_observes_edits(tmp_path, monkeypatch):
+    """Repeated registry parsing per door must not return, nor a process-global stale cache."""
+    import yaml
+
+    spec = importlib.util.spec_from_file_location("avtopoiesis_snapshot_test", GATE)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    canon = tmp_path / "canon.yaml"
+    monkeypatch.setattr(module, "CANON", canon)
+    canon.write_text(
+        yaml.safe_dump(
+            {
+                "discovery": {"beat_pattern": r"C_([A-Z]+)=(\d+) (#.*)?"},
+                "senses": {"past": {"metabolize_signatures": ["history"]}},
+            }
+        )
+    )
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "heartbeat-loop.sh").write_text("python3 scripts/beat-sensors.py --source heartbeat --scheduled-only\n")
+    (scripts / "implementation.py").write_text("# history\n")
+    sensors = tmp_path / "institutio/governance/sensors.yaml"
+    sensors.parent.mkdir(parents=True)
+    registry = {
+        "sensors": {
+            name: {"source": ["heartbeat"], "cadence": 1, "steps": [{"command": "python3 scripts/implementation.py"}]}
+            for name in ("first", "second", "third")
+        }
+    }
+    sensors.write_text(yaml.safe_dump(registry))
+    original = module.yaml.safe_load
+    loads = []
+
+    def counted_load(text):
+        loads.append(text)
+        return original(text)
+
+    monkeypatch.setattr(module.yaml, "safe_load", counted_load)
+    first = module.build()
+    assert {row["key"] for row in first["doors"]} == {"first", "second", "third"}
+    assert len(loads) == 2  # canon plus sensors, irrespective of door count
+    assert all(row["evidence"]["past"]["score"] == 1 for row in first["doors"])
+    registry["sensors"]["fourth"] = registry["sensors"]["first"]
+    sensors.write_text(yaml.safe_dump(registry))
+    second = module.build()
+    assert len(loads) == 4
+    assert {row["key"] for row in second["doors"]} == {"first", "second", "third", "fourth"}
+
+
+def test_failed_audit_does_not_leak_yaml_snapshot(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("avtopoiesis_failed_snapshot", GATE)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    canon = tmp_path / "canon.yaml"
+    monkeypatch.setattr(module, "CANON", canon)
+    canon.write_text("alive_threshold: broken\n")
+    with pytest.raises(ValueError):
+        module.build()
+    canon.write_text("alive_threshold: 0.5\n")
+    monkeypatch.setattr(module, "discover_doors", lambda _canon: [])
+    assert module.build()["threshold"] == 0.5
 
 
 def test_discovers_doors_from_heartbeat():

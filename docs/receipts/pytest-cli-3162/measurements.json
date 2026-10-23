@@ -1,0 +1,765 @@
+{
+  "status": "partial",
+  "owner": "4444J99/limen#3162",
+  "main_sha": "13a7934bd18fe933e359e741110dda15ec8fa976",
+  "pr3161_sha": "b84cfd7e1a2c96a60590317a60af5a2283ae21f2",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "python": "3.12.14",
+  "main_run": {
+    "exitstatus": 1,
+    "elapsed_seconds": 254.21842785800254,
+    "summary": "133 failed, 9245 passed, 91 skipped, 10 subtests; pytest wall 254.25s",
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto --maxfail=0 --tb=line --durations=30 -p pytest_diagnostics --limen-diagnostics=.pytest_cache/limen-diagnostics",
+    "instrumentation": "Topic-branch observer loaded through PYTHONPATH; production and tests are untouched main; full history available before run",
+    "failures": [
+      {
+        "nodeid": "cli/tests/test_conduct_liveness.py::test_probe_from_inside_the_worktree_does_not_see_its_own_scanner",
+        "phase": "call",
+        "last_error_line": "     +      where '68332\\n' = CompletedProcess(args=['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3', '-c', \"from pathli...rt foreign_worktree_occupant\\nprint(foreign_worktree_occupant(Path('.')))\"], returncode=0, stdout='68332\\n', stderr='').stdout"
+      },
+      {
+        "nodeid": "cli/tests/test_codex_host_admission_hook.py::test_project_delegate_requires_compatible_immutable_runtime",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'runtime-capabilities-unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_codex_host_admission_hook.py::test_project_delegate_uses_compatible_immutable_runtime",
+        "phase": "call",
+        "last_error_line": "E   codex_host_admission_test_module.ImmutableRuntimeError: runtime-capabilities-unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_codex_host_admission_hook.py::test_malformed_store_emits_exactly_one_redacted_rejection_channel",
+        "phase": "call",
+        "last_error_line": "E   AssertionError: assert 'invalid_field=schema' in 'lease owner PID/start identity is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_codex_host_admission_hook.py::test_hook_runner_delegates_host_admission_to_compatible_immutable_runtime",
+        "phase": "call",
+        "last_error_line": "E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+      },
+      {
+        "nodeid": "cli/tests/test_cells.py::test_cell_stop_rejects_stale_or_reused_foreign_pid_without_signalling[definitely-not-the-live-start-stale-start]",
+        "phase": "call",
+        "last_error_line": "E   subprocess.CalledProcessError: Command '['ps', '-p', '2468', '-o', 'lstart=']' returned non-zero exit status 1."
+      },
+      {
+        "nodeid": "cli/tests/test_cells.py::test_cell_stop_rejects_stale_or_reused_foreign_pid_without_signalling[None-foreign-process]",
+        "phase": "call",
+        "last_error_line": "E   subprocess.CalledProcessError: Command '['ps', '-p', '2472', '-o', 'lstart=']' returned non-zero exit status 1."
+      },
+      {
+        "nodeid": "cli/tests/test_cells.py::test_cell_stop_requests_cooperative_broker_stop_for_owned_run_without_local_signal",
+        "phase": "call",
+        "last_error_line": "     +  where 1 = CompletedProcess(args=['bash', '<workspace>/limen/scripts/cells.sh', 'stop', 'demo'], returncode=1, stdout='', stderr=\"cell: ownership proof failed for 'demo' (stale-start); refusing to signal recorded PID\\n\").returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_cells.py::test_cell_stop_gracefully_terms_only_exact_owned_registration_loop",
+        "phase": "call",
+        "last_error_line": "     +  where 1 = CompletedProcess(args=['bash', '<workspace>/limen/scripts/cells.sh', 'stop', 'demo'], returncode=1, stdout='', stderr=\"cell: ownership proof failed for 'demo' (stale-start); refusing to signal recorded PID\\n\").returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_dependency_completion_integration.py::test_registered_executor_handoff_settles_actual_worker_hint_once[False]",
+        "phase": "call",
+        "last_error_line": "      + blocked"
+      },
+      {
+        "nodeid": "cli/tests/test_cells.py::test_cell_stop_refuses_human_protected_registration",
+        "phase": "call",
+        "last_error_line": "     +  where \"cell: ownership proof failed for 'demo' (stale-start); refusing to signal recorded PID\\n\" = CompletedProcess(args=['bash', '<workspace>/limen/scripts/cells.sh', 'stop', 'demo'], returncode=1, stdout='', stderr=\"cell: ownership proof failed for 'demo' (stale-start);"
+      },
+      {
+        "nodeid": "cli/tests/test_bounded_subprocess.py::test_spawn_bootstrap_preserves_native_context_and_closes_inherited_handles",
+        "phase": "call",
+        "last_error_line": "E   limen.bounded_subprocess.BoundedSubprocessError: unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_bounded_subprocess.py::test_rss_ceiling_terminates_process_group",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_bounded_subprocess.py::test_cpu_limit_is_applied_to_child",
+        "phase": "call",
+        "last_error_line": "E   limen.bounded_subprocess.BoundedSubprocessError: unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_bounded_subprocess.py::test_exited_wrapper_census_kills_detached_pipe_free_descendant",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_reservation_is_private_deterministic_and_byte_stable",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_reservation_identity_uses_the_committed_predecessor_blob",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_unconsumed_reservation_tracks_current_main_when_main_moves",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_primary_checkout_and_successor_worktree_derive_from_shared_common_dir",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_relay_receipt_accepts_exact_git_object_lengths[40]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_relay_receipt_accepts_exact_git_object_lengths[64]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_relay_receipt_rejects_intermediate_git_object_lengths[41]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_relay_receipt_rejects_intermediate_git_object_lengths[63]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_reservation_rejects_a_symlinked_store_before_external_writes",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign relay Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_verified_store_fd_prevents_parent_swap_from_redirecting_write",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_held_relay_lock_fails_at_a_finite_deadline",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_lock_open_retries_one_verified_enoent",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_lock_open_second_enoent_fails_closed",
+        "phase": "call",
+        "last_error_line": "      ?       ^^^"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_non_utf8_committed_predecessor_has_a_path_free_error",
+        "phase": "call",
+        "last_error_line": "      + relay_git_unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_non_scalar_contract_text_has_a_path_free_relay_error",
+        "phase": "call",
+        "last_error_line": "      + relay_git_unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_oversized_committed_predecessor_fails_before_blob_capture",
+        "phase": "call",
+        "last_error_line": "      + relay_git_unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay.py::test_unadmitted_predecessor_fails_before_reservation",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign relay Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_full_relay_exec_proof_closes_while_keepalive_remains_live",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_activation_serializes_a_delayed_accepting_confirmation_with_keepalive",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_front_door_starts_once_serves_the_site_and_stops",
+        "phase": "call",
+        "last_error_line": "     +  where True = answers(35809)"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_local_store_loss_during_live_remote_attempt_recovers_later_ready",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_spawn_oserror_is_terminal_and_remote_attempt_blocks_recreation",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_exec_failure_channel_prevents_false_readiness",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_startup_channel_terminal_errors_are_not_replaced_by_timeout[exec-failed\\n-relay_exec_failed]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_startup_channel_terminal_errors_are_not_replaced_by_timeout[control-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-relay_control_oversized]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_selector_setup_failure_terminates_the_owned_process_group_and_terminalizes",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_startup_timeout_uses_the_entry_reserved_cleanup_deadline_for_terminal_receipt",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_remote_attempt_publication_preserves_startup_timeout",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_startup_stream_read_error_after_partial_bytes_fails_closed",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_startup_output_ceiling_crossed_before_selected_ack_fails_closed",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_ready_publication_failure_rolls_broker_back_to_dormant",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_expired_startup_deadline_bounds_activation_rollback_and_terminalization",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_ready_discovery_propagates_one_absolute_deadline",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_uncertain_accepted_ready_push_refuses_to_adopt_a_terminated_provider",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_delegate_descendants_are_terminated",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_uncertain_absent_ready_push_rolls_back_after_owned_provider_termination",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_capacity_denial_keeps_attempt_unconsumed_and_refreshes_its_base",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_capacity_census_consumes_the_entry_time_startup_deadline",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_linked_worktree_reconciliation_rolls_back_the_primary_successor_session[False]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_linked_worktree_reconciliation_rolls_back_the_primary_successor_session[True]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_mcp_estate_contract.py::test_silent_clean_exit_and_partial_line_fail[pass]",
+        "phase": "call",
+        "last_error_line": "      + unmeasured"
+      },
+      {
+        "nodeid": "cli/tests/test_mcp_estate_contract.py::test_silent_clean_exit_and_partial_line_fail[import time; time.sleep(20)]",
+        "phase": "call",
+        "last_error_line": "      + unmeasured"
+      },
+      {
+        "nodeid": "cli/tests/test_mcp_estate_contract.py::test_silent_clean_exit_and_partial_line_fail[import sys,time; sys.stdout.write('{'); sys.stdout.flush(); time.sleep(20)]",
+        "phase": "call",
+        "last_error_line": "      + unmeasured"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_dead_controller_reconciles_to_indeterminate_without_respawn",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_mcp_estate_contract.py::test_json_rpc_error_is_classified_without_retaining_server_detail",
+        "phase": "call",
+        "last_error_line": "      + unmeasured"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_dead_controller_rolls_back_only_the_exact_activation_identity[True]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_dead_controller_rolls_back_only_the_exact_activation_identity[False]",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_relay_effector.py::test_terminalization_does_not_open_a_fresh_bound_after_startup_expiry",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_relay.CampaignRelayError: campaign relay Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_status_with_no_manifest_still_sees_the_running_server_and_its_pid",
+        "phase": "call",
+        "last_error_line": "     +    and   'open-knowledge: server up on port 52139\\n  url:          http://127.0.0.1:52139/\\n  archive:      not built on this host \u2014 run cce archive build (see docs/architecture/ai-exports-archive.md)\\n' = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw7/test_status_wit"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_stop_reaches_a_running_server_after_the_manifest_disappears",
+        "phase": "call",
+        "last_error_line": "     +    and   'open-knowledge: port 44939 answers but this script did not start it \u2014 nothing stopped\\n' = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw7/test_stop_reaches_a_running_se0/repo/scripts/o...urncode=0, stdout='open-knowledge: port 44939 answers but this script d"
+      },
+      {
+        "nodeid": "cli/tests/test_mcp_native_observer.py::test_native_wire_rejects_login_or_elicitation_request",
+        "phase": "call",
+        "last_error_line": "      + unmeasured"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_campaign_accepts_an_admitted_provider_neutral_v1_contract",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_immutable_capsule_ref_is_one_receipt_only_commit_on_its_expected_base",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_immutable_capsule_ref_rejects_a_mismatched_expected_base",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_immutable_capsule_ref_rejects_a_multifile_publication",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_stdin_and_delegate_share_one_deadline",
+        "phase": "call",
+        "last_error_line": "     +    where is_file = PosixPath('/tmp/pytest-of-root/pytest-32/popen-gw4/test_stdin_and_delegate_share_0/delegate-started').is_file"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_immutable_capsule_ref_rejects_a_multiparent_publication",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_campaign_accepts_a_human_explicit_v2_contract",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_campaign_rejects_an_unadmitted_provider_neutral_v1_contract",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_campaign_rejects_a_tampered_provider_neutral_v1_contract",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_failed_rungs_submit_one_atomic_typed_graph",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_keeper_acknowledgement_must_match_the_exact_graph",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_unavailable_required_capability_selects_switch_without_submission",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_t_minus_boundary_admits_no_work",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_t_minus_relay_budget_includes_elapsed_wake_preflight",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_concurrent_t_minus_beats_reserve_one_byte_stable_relay",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_settled_requires_green_strict_omega_and_three_two_pass_receipts",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.supervisor.CampaignSupervisorError: bounded campaign Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_settled_rejects_incomplete_or_changed_two_pass_receipts",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_untyped_or_mismatched_omega_rung_fails_before_submission",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_dirty_or_moved_main_fails_before_evaluation",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_clean_local_head_that_moved_past_remote_default_fails",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_supervisor.py::test_expired_capsule_fails_before_evaluation",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'bounded campaign Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_discovery_selects_latest_active_tracked_capsule",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_wake.CampaignWakeError: campaign wake Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_discovery_accepts_an_admitted_provider_neutral_v1_contract",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_wake.CampaignWakeError: campaign wake Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_wake_rejects_a_drifted_provider_neutral_v1_contract_before_runner",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign wake Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_wake_rejects_an_unadmitted_provider_neutral_v1_contract_before_runner",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign wake Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_wake_invokes_only_the_canonical_supervisor",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.campaign_wake.CampaignWakeError: campaign wake Git probe is unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_host_admission.py::test_json_cli_status_is_report_only_and_release_is_exact",
+        "phase": "call",
+        "last_error_line": "E   subprocess.CalledProcessError: Command '['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3', '<workspace>/limen/scripts/host-work-admission.py', '--state-root', '/tmp/pytest-of-root/pytest-32/popen-gw4/test_json_cli_status_is_report0/state', 'acquire'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_remote_default_preflight_failure_is_a_bounded_wake_error",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign wake Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_supervisor_output_and_exit_must_agree",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign wake Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_campaign_wake.py::test_supervisor_success_must_name_the_preflight_exact_head",
+        "phase": "call",
+        "last_error_line": "      Actual message: 'campaign wake Git probe is unavailable'"
+      },
+      {
+        "nodeid": "cli/tests/test_host_admission.py::test_shell_helper_acquires_refreshes_and_releases_exact_lease",
+        "phase": "call",
+        "last_error_line": "     +  where 64 = CompletedProcess(args=['bash', '-c', '\\nset -euo pipefail\\nexport LIMEN_HOST_ADMISSION_ROOT=/tmp/pytest-of-root/pytest...host_admission_release\\n'], returncode=64, stdout='', stderr='Host admission denied fixture: state-or-input-invalid\\n').returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_two_concurrent_starts_launch_exactly_one_engine",
+        "phase": "call",
+        "last_error_line": "     +    where [(8097, '34391'), (8149, '34391')] = <function layout.<locals>.launches at 0x7ff8d771fec0>()"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_start_waiting_on_a_held_lock_joins_the_server_that_comes_up",
+        "phase": "call",
+        "last_error_line": "E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-root/pytest-32/popen-gw7/test_a_start_waiting_on_a_held0/store/state/open-knowledge-39037.lock/pid'"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_holder_that_stalls_before_its_pid_write_cannot_share_the_lock_with_its_replacement",
+        "phase": "call",
+        "last_error_line": "     +    where [(9430, '47863'), (9549, '47863')] = <function layout.<locals>.launches at 0x7ff8d7b685e0>()"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_start_gives_up_at_a_wait_bound_that_follows_the_start_timeout",
+        "phase": "call",
+        "last_error_line": "     +  where 0 = <Popen: returncode: 0 args: ['bash', '/tmp/pytest-of-root/pytest-32/popen-gw...>.returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_lock_without_a_pid_that_gains_a_live_holder_is_left_alone_and_the_waiter_joins",
+        "phase": "call",
+        "last_error_line": "     +    where poll = <Popen: returncode: 0 args: ['bash', '/tmp/pytest-of-root/pytest-32/popen-gw...>.poll"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_malformed_delegate_verdict_fails_closed[{}]",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_malformed_delegate_verdict_fails_closed[{\"continue\":\"false\"}]",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_malformed_delegate_verdict_fails_closed[{\"hookSpecificOutput\":{\"permissionDecision\":\"bogus\"}}]",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_failed_delegate_is_bounded_and_redacted[raise RuntimeError('private payload')-runtime-delegate-nonzero]",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_failed_delegate_is_bounded_and_redacted[print('x' * 100000)-runtime-delegate-output]",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_hook_admission_boundary.py::test_failed_delegate_is_bounded_and_redacted[print('{}\\\\n{}')-runtime-delegate-malformed-output]",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Limen imm...on_reader.v2 policy_revision=2026-07-24.shared-action-admission.v3. Safe next command: domus-limen-runtime status\"}}\\n' = CompletedProcess(args=['/opt/codex/runtimes"
+      },
+      {
+        "nodeid": "cli/tests/test_private_vault.py::test_real_gpg_round_trip_with_scratch_key",
+        "phase": "call",
+        "last_error_line": "E   subprocess.CalledProcessError: Command '['gpg', '--batch', '--homedir', '/tmp/limen-vault-gpg-m4foy_rf', '--pinentry-mode', 'loopback', '--passphrase', '', '--quick-generate-key', 'Limen Vault Recovery Test <vault-recovery@example.invalid>', 'ed25519', 'sign', '1d']' returned non-zero exit statu"
+      },
+      {
+        "nodeid": "cli/tests/test_process_ownership.py::test_native_details_return_no_secrets",
+        "phase": "call",
+        "last_error_line": "E   FileNotFoundError: [Errno 2] No such file or directory: '/proc/23/cmdline'"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_lock_whose_holder_is_a_zombie_is_recovered",
+        "phase": "call",
+        "last_error_line": "E   Failed: timed out after 10.0s waiting for the child to become a zombie"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_external_native_job_waits_for_result_and_verified_completion",
+        "phase": "call",
+        "last_error_line": "E   KeyError: 'code'"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_native_output_limit_remains_a_visible_failure_and_cleans_host",
+        "phase": "call",
+        "last_error_line": "E   KeyError: 'code'"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_many_concurrent_starts_behind_one_stale_lock_launch_exactly_one_engine",
+        "phase": "call",
+        "last_error_line": "     +  where False = alive(18348)"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_successful_stop_keeps_a_pid_file_that_now_names_a_newer_start",
+        "phase": "call",
+        "last_error_line": "     +  where 'open-knowledge: port 50411 answers but this script did not start it \u2014 nothing stopped\\n' = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw7/test_a_successful_stop_keeps_a0/repo/scripts/o...urncode=0, stdout='open-knowledge: port 50411 answers but this script did"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_requester_cancellation_stops_only_its_owned_native_job",
+        "phase": "call",
+        "last_error_line": "     +    where exists = (PosixPath('/tmp/pytest-of-root/pytest-32/popen-gw8/test_requester_cancellation_st0/source') / 'worker.pid').exists"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_the_whole_lifecycle_runs_under_each_installed_bash[/bin/bash]",
+        "phase": "call",
+        "last_error_line": "     +  where 'open-knowledge: port 35465 answers but this script did not start it \u2014 nothing stopped\\n' = CompletedProcess(args=['/bin/bash', '/tmp/pytest-of-root/pytest-32/popen-gw7/test_the_whole_lifecycle_runs_0/repo/scri...urncode=0, stdout='open-knowledge: port 35465 answers but this script did"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_narrow_ps_cannot_hide_a_running_server_from_stop",
+        "phase": "call",
+        "last_error_line": "     +  where 'open-knowledge: port 54035 answers but this script did not start it \u2014 nothing stopped\\n' = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw7/test_a_narrow_ps_cannot_hide_a0/repo/scripts/o...urncode=0, stdout='open-knowledge: port 54035 answers but this script did"
+      },
+      {
+        "nodeid": "cli/tests/test_limen_knowledge_verb.py::test_a_narrow_ps_cannot_make_a_live_lock_holder_look_dead",
+        "phase": "call",
+        "last_error_line": "      ?     ^)"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_requester_loss_cannot_leave_the_native_worker_running",
+        "phase": "call",
+        "last_error_line": "     +    where exists = (PosixPath('/tmp/pytest-of-root/pytest-32/popen-gw8/test_requester_loss_cannot_lea0/source') / 'worker.pid').exists"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_forged_claim_cannot_signal_a_foreign_process",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"error\": \"native_audit_owner_identity_unavailable\"}\\n' = CompletedProcess(args=['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3', '/tmp/pytest-of-ro...0/source/scripts/launch.py'], returncode=0, stdout='{\"error\": \"native_audit_owner_identity_unavailable\"}\\n"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_external_native_rss_is_counted_and_unknown_census_fails_closed[536870913-resource]",
+        "phase": "call",
+        "last_error_line": "      + unavailable"
+      },
+      {
+        "nodeid": "cli/tests/test_protected_tcc_audit.py::test_native_import_hang_is_owned_and_cancelled_before_probe_work",
+        "phase": "call",
+        "last_error_line": "     +  where '{\"error\": \"native_audit_owner_identity_unavailable\"}\\n' = CompletedProcess(args=['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3', '/tmp/pytest-of-ro...0/source/scripts/launch.py'], returncode=0, stdout='{\"error\": \"native_audit_owner_identity_unavailable\"}\\n"
+      },
+      {
+        "nodeid": "cli/tests/test_workstream_command.py::test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv",
+        "phase": "call",
+        "last_error_line": "     +  where 2 = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw3/test_explicit_codex_profile_va0/launcher-32547... worktree (new branch 'work/explicit-agent-launch')\\nconduct keepalive could not bind the provider process identity\\n\").returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_workstream_command.py::test_sandbox_only_danger_profile_uses_exact_bypass_without_model_catalog",
+        "phase": "call",
+        "last_error_line": "     +  where 2 = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw0/test_sandbox_only_danger_profi0/launcher-32547...worktree (new branch 'work/permission-only-launch')\\nconduct keepalive could not bind the provider process identity\\n\").returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_workstream_command.py::test_conduct_keepalive_refreshes_without_exposing_credential_to_provider",
+        "phase": "call",
+        "last_error_line": "     +  where 2 = CompletedProcess(args=['bash', '/tmp/pytest-of-root/pytest-32/popen-gw3/test_conduct_keepalive_refresh0/demo-repo/.wor...keepalive-20261022T225951Z-44114 (codex)\\n', stderr='conduct keepalive could not bind the provider process identity\\n').returncode"
+      },
+      {
+        "nodeid": "cli/tests/test_assessment_executor.py::test_real_broker_and_child_settle_once_with_no_acceptance",
+        "phase": "call",
+        "last_error_line": "      + blocked"
+      },
+      {
+        "nodeid": "cli/tests/test_assessment_executor.py::test_lost_report_response_preserves_accepted_receipt_without_reexecution",
+        "phase": "call",
+        "last_error_line": "      + blocked"
+      },
+      {
+        "nodeid": "cli/tests/test_assessment_executor.py::test_callback_cli_requires_distinct_explicit_credentials",
+        "phase": "call",
+        "last_error_line": "     +  where 77 = <Result SystemExit(77)>.exit_code"
+      },
+      {
+        "nodeid": "cli/tests/test_assessment_transport.py::test_real_exchange_ignores_ambient_proxy_and_isolates_credential",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.client.BrokerUnavailable: assessment broker exchange is unmeasured; no automatic retry"
+      },
+      {
+        "nodeid": "cli/tests/test_assessment_transport.py::test_real_post_preserves_claim_binding",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.client.BrokerUnavailable: assessment broker exchange is unmeasured; no automatic retry"
+      },
+      {
+        "nodeid": "cli/tests/test_assessor_execution.py::test_real_child_isolated_environment_and_temporary_source_removed",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.assessor_execution.AssessorExecutionError: assessor execution is unmeasured"
+      },
+      {
+        "nodeid": "cli/tests/test_assessor_execution.py::test_hold_is_not_acceptance_and_unknown_fields_are_discarded",
+        "phase": "call",
+        "last_error_line": "E   limen.conduct.assessor_execution.AssessorExecutionError: assessor execution is unmeasured"
+      }
+    ]
+  },
+  "profile": {
+    "before_seconds": 25.564,
+    "after_seconds": 3.061,
+    "before_yaml_loads": 77,
+    "after_yaml_loads": 2,
+    "before_yaml_seconds": 22.791,
+    "audit_output_byte_equivalent": true
+  },
+  "scope_limit": "Linux evidence cannot identify the Mac run's nine unnamed failures or establish its timeout. Mac Desktop Commander was offline. Pip-audit issue #3145 is independent.",
+  "pr3161_run": {
+    "summary": "133 failed, 9243 passed, 91 skipped, 10 subtests; pytest wall 250.65s",
+    "exitstatus": 1,
+    "elapsed_seconds": 250.621631091999,
+    "same_failed_nodeid_phase_set_as_main": true,
+    "main_only_failures": [],
+    "pr_only_failures": [],
+    "interpretation": "No candidate-specific failed nodeid/phase observed in this environment. Does not identify the original unnamed Mac failures."
+  },
+  "candidate_worksteal_run": {
+    "summary": "133 failed, 9247 passed, 91 skipped, 10 subtests; pytest wall 124.33s",
+    "exitstatus": 1,
+    "elapsed_seconds": 124.29341808500249,
+    "observer_sha256": "a32936c09f0175b45923ce378adb0b6775c9422db10766fcbdd44f50dee2d7ea",
+    "failed_set_identical_to_main": true,
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto --dist=worksteal --maxfail=0 --tb=line --durations=30 --limen-diagnostics=.pytest_cache/limen-diagnostics"
+  },
+  "unchanged_main_worksteal_control": {
+    "summary": "133 failed, 9245 passed, 91 skipped, 10 subtests; pytest wall 145.60s",
+    "exitstatus": 1,
+    "elapsed_seconds": 145.52464775100088,
+    "failed_set_identical_to_main_load": true,
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto --dist=worksteal --maxfail=0 --tb=line --durations=30 -p pytest_diagnostics --limen-diagnostics=.pytest_cache/limen-diagnostics"
+  },
+  "focused_final": {
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_avtopoiesis.py scripts/tests/test_pytest_diagnostics.py cli/tests/test_run_pytest_hermetic.py -q --durations=5",
+    "result": "24 passed in 19.54s",
+    "exitstatus": 0
+  },
+  "scoped_verification": {
+    "exitstatus": 1,
+    "cheap_gates": 43,
+    "initial_failures": [
+      "positioning-foundry-technical-readiness-public-live",
+      "session-phase",
+      "private-vault"
+    ],
+    "corrected": {
+      "session-phase": "Added Issue: #3162 and PR: (pending); owning predicate subsequently passed"
+    },
+    "remaining": {
+      "private-vault": "gpg-agent cannot start; identical failure reproduced on unchanged main",
+      "positioning-foundry-technical-readiness-public-live": "live GitHub observation failed closed; identical failure reproduced on unchanged main"
+    },
+    "heavy_wave": "Not entered because cheap wave was red. Full CLI diagnostic candidate run is recorded separately; this is not a green scoped receipt."
+  },
+  "configured_pytest_cli_command": {
+    "summary": "72 failed, 9204 passed, 91 skipped; maxfail interrupted session after in-flight work; pytest wall 229.79s",
+    "exitstatus": 2,
+    "elapsed_seconds": 229.51165501500145,
+    "new_failed_nodeid_phases_against_main": [],
+    "timeout": false,
+    "scope": "Direct registry command under the owned heavy lease; not a green scoped resolver verdict. The resolver stopped at its cheap wave."
+  },
+  "api_gate": {
+    "command": "bash scripts/run-pytest-hermetic.sh web/api/tests -q",
+    "summary": "52 passed, 1 warning in 1.97s",
+    "exitstatus": 0
+  },
+  "additional_baseline_reproduction": {
+    "nodeids": [
+      "cli/tests/test_private_vault.py::test_real_gpg_round_trip_with_scratch_key",
+      "cli/tests/test_process_ownership.py::test_native_details_return_no_secrets"
+    ],
+    "main_result": "2 failed in 3.31s; gpg-agent cannot start and /proc environment access is denied"
+  },
+  "disposition": {
+    "branch": "fix/pytest-cli-diagnostics-3162",
+    "landing": "draft PR for review; no merge or issue closure",
+    "owner": "verify",
+    "remaining_acceptance": "Instrumented quiet Mac run, dispositions for original nine failures, green exact-head verification and repository merge policy",
+    "baseline_worktrees": "retained read-only; no retirement or cleanup attempted",
+    "private_raw_journals": "not published; redacted failure inventory in this record"
+  }
+}

@@ -71,7 +71,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pyyaml -r web/api/requirements.txt -e "cli[test]"  # ruff pin rides cli[test] (#1658)
 
-      # The CLI suite now contains about 8,000 tests. Its declared 1,500s
+      # The CLI suite now contains about 9,500 tests. Its declared 1,500s
       # budget previously lost to the implicit 300s per-gate / 600s batch caps.
       # These finite CI budgets do not extend any keeper/provider lease.
       - name: Verify implicated PR gates (scoped, CI mirrors deferred)
@@ -168,3 +168,13 @@ jobs:
           bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_research_adjudication.py -q
           python3 scripts/positioning-research-adjudication.py --verify-live
           python -m pytest web/api/tests cli/tests -q -n auto
+
+      - name: Preserve pytest diagnostics after success, failure, or gate timeout
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7
+        with:
+          name: pytest-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .pytest_cache/limen-diagnostics/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7

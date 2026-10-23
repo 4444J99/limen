@@ -21,7 +21,7 @@ export EDITOR=true
 # conftest sys.path applies only to its own interpreter; a child script must not
 # fall back to an absent package or an editable install from another worktree.
 pytest_source_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../cli/src" && pwd -P)"
-export PYTHONPATH="$pytest_source_root${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="$pytest_source_root:$pytest_source_root/../../scripts${PYTHONPATH:+:$PYTHONPATH}"
 
 # LIMEN_NOTIFY is an OUTPUT-side safety, not a test input — so it is re-armed AFTER the scrub
 # above, and the ordering is the whole point. The scrub is right: a fixture must never read the
@@ -35,4 +35,4 @@ export PYTHONPATH="$pytest_source_root${PYTHONPATH:+:$PYTHONPATH}"
 # LIMEN_NOTIFY. You cannot retro-patch old code; you can control the environment it runs in.
 export LIMEN_NOTIFY=0
 
-exec python3 -m pytest "$@"
+exec python3 -u -m pytest -p pytest_diagnostics "$@"

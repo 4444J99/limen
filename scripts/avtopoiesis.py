@@ -24,6 +24,7 @@ import json
 import os
 import re
 import sys
+from contextvars import ContextVar
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
@@ -40,8 +41,18 @@ except ImportError:
     yaml = None
 
 
+_AUDIT_YAML = ContextVar("avtopoiesis_audit_yaml", default=None)
+
+
 def _load(path):
-    return yaml.safe_load(path.read_text()) or {}
+    # Each build gets a coherent snapshot, never a cache shared with later
+    # audits. The same sensors.yaml previously parsed once per door (75 times).
+    snapshot = _AUDIT_YAML.get()
+    if snapshot is None:
+        return yaml.safe_load(path.read_text()) or {}
+    if path not in snapshot:
+        snapshot[path] = yaml.safe_load(path.read_text()) or {}
+    return snapshot[path]
 
 
 def discover_doors(canon):
@@ -406,6 +417,14 @@ def summarize(rows, threshold):
 
 
 def build():
+    token = _AUDIT_YAML.set({})
+    try:
+        return _build()
+    finally:
+        _AUDIT_YAML.reset(token)
+
+
+def _build():
     canon = _load(CANON)
     threshold = float(canon.get("alive_threshold", 0.67))
     rows = []
