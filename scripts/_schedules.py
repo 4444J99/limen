@@ -36,6 +36,7 @@ PLANE_WINDOWS = {"calendar-day", "rolling-24h", "per-hour", "active-tasks", "per
 PLANE_ENTITLEMENTS = {"verified", "unverified", "unpublished"}
 PLANE_FILL_POLICIES = {"declared", "floor", "idle-by-design"}
 EVIDENCE_KINDS = {
+    "native-snapshot",
     "gh-actions-runs",
     "bookend-tsv",
     "witness-audit",
@@ -172,8 +173,8 @@ class Job:
         return [parse_cron(c) for c in self.crons]
 
 
-def load_registry(root: Path) -> dict:
-    data = yaml.safe_load((root / REGISTRY_REL).read_text(encoding="utf-8")) or {}
+def load_registry(root: Path, registry_path: Path | None = None) -> dict:
+    data = yaml.safe_load((registry_path or root / REGISTRY_REL).read_text(encoding="utf-8")) or {}
     if not isinstance(data, dict):
         raise ValueError("schedules.yaml must be a mapping")
     data.setdefault("planes", {})
@@ -199,7 +200,9 @@ def _workflow_on_block(doc: dict) -> dict:
     return block if isinstance(block, dict) else {}
 
 
-def derive_workflow_jobs(root: Path, plane: str, locator: str | Path = WORKFLOWS_REL, prefix: str = "limen") -> list[Job]:
+def derive_workflow_jobs(
+    root: Path, plane: str, locator: str | Path = WORKFLOWS_REL, prefix: str = "limen"
+) -> list[Job]:
     jobs: list[Job] = []
     wf_dir = root / locator
     if not wf_dir.is_dir():

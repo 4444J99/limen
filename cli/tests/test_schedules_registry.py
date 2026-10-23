@@ -470,7 +470,7 @@ def test_verdict_matrix_unmeasured_is_never_red():
     jules = _plane(fill_policy="floor", floor=25, allotment={"runs": 100, "window": "rolling-24h"})
     assert UTIL.verdict_for(jules, declared=25, observed=3, fill_floor=0.5) == "underfilled"
     comments = _plane(evidence={"kind": "issue-comments", "locator": "x#1"})
-    assert UTIL.verdict_for(comments, declared=27, observed=1, fill_floor=0.5) == "full"
+    assert UTIL.verdict_for(comments, declared=27, observed=1, fill_floor=0.5) == "partial-evidence"
 
 
 def test_summarize_runs_counts_only_successes_as_observed():
@@ -592,7 +592,8 @@ def test_claude_snapshot_reader_age_and_enabled_count(tmp_path, monkeypatch):
     )
     report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
     plane = report["planes"][0]
-    assert plane["declared"] == 2 and plane["observed"] == 1 and plane["verdict"] == "underfilled"
+    assert plane["declared"] == 2 and plane["observed"] is None and plane["verdict"] == "unmeasured"
+    assert plane["configured_enabled"] == 1 and plane["measurement_kind"] == "configuration"
     assert "1 last failed ACCESS_DENIED" in plane["detail"]
     monkeypatch.setenv("LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS", "1")
     report = UTIL.evaluate(tmp_path, date(2026, 10, 30), now=datetime(2026, 10, 30, 12, tzinfo=timezone.utc))
