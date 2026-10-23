@@ -78,7 +78,7 @@
     "focused_exit_code": 0,
     "live_pre_fix": "offline; seven local branches retained as live-work",
     "live_post_fix": "online; six exact-head candidates reaped through existing authorized reaper",
-    "full_scoped_verification": "pending",
+    "full_scoped_verification": "exit 75: all 15 cheap gates pass; host denies heavy pytest-cli on disk-throughput",
     "merged": false,
     "deployed": false
   },

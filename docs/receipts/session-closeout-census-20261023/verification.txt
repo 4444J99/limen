@@ -38,3 +38,22 @@ First scoped run exit 1: seven cheap gates passed; Worker imports lacked locked 
 npm ci --ignore-scripts --no-audit --no-fund: exit 0, 45 locked packages installed; no tracked changes.
 Second scoped run exit 75: seven cheap gates passed; host denied heavy verification on disk-throughput.
 No Worker pass, merge, deployment or native recovery is claimed.
+
+Final reconciliation implementation/evidence head d89883c2304f2e0d7084776f6aac84b72575b0ca:
+bash scripts/verify-scoped.sh --total-timeout-seconds 360
+The initial invocation had an incomplete PATH and exited 75 on pressure-sensor-unavailable.
+After restoring the original system PATH with the existing CLI interpreter prefixed:
+Exit 75: all 15 cheap gates pass; host denies heavy pytest-cli on disk-throughput.
+No full scoped pass or merge is claimed. Unchanged implementation evidence is reused for the final documentation-only update.
+
+python3 scripts/credential-wall.py --check
+Exit 0: all 32 secret atoms registered.
+
+Native archive readback:
+All four exact IDs are archived=1 in the read-only native database. The native archive API also returns archived=true for all four.
+
+Branch readback:
+All six reaped refs are absent. The explicitly retained nonmatching ref remains at 2681027d77b4e86331c91defed699351b0f0b22e; that commit is an ancestor of the merged PR head, but the stricter exact-head cleanup allowlist remains unchanged.
+
+Domus phase-skill source readback:
+All three canonical source hashes match the original pre-repair manifest. No source/config application is claimed for #535.

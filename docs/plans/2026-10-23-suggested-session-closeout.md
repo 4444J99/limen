@@ -1,7 +1,7 @@
 # Suggested session closeout
 
 Issue: #3173
-PR: (pending)
+PR: #3174
 
 Goal: reconcile all 25 screenshot sessions and related work, complete eligible integration, safely reap disposable state, and archive only evidenced terminal native sessions.
 
