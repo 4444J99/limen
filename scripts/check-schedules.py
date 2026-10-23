@@ -57,7 +57,9 @@ def advise(check: str, message: str) -> None:
     _advisories.append(f"[{check}] {message}")
 
 
-def _require(check: str, where: str, mapping: dict, key: str, allowed: set | None = None, kind: type | tuple | None = None) -> object:
+def _require(
+    check: str, where: str, mapping: dict, key: str, allowed: set | None = None, kind: type | tuple | None = None
+) -> object:
     if key not in mapping:
         fail(check, f"{where}: missing `{key}`")
         return None
@@ -123,7 +125,10 @@ def check_schema(registry: dict) -> None:
         if plane_id not in planes:
             fail("A", f"{where}: plane {plane_id!r} is not declared")
         elif isinstance(planes.get(plane_id), dict) and planes[plane_id].get("jobs_source"):
-            fail("B", f"{where}: plane {plane_id} derives its jobs from {planes[plane_id]['jobs_source'].get('locator')} — a declared row duplicates it")
+            fail(
+                "B",
+                f"{where}: plane {plane_id} derives its jobs from {planes[plane_id]['jobs_source'].get('locator')} — a declared row duplicates it",
+            )
         _require("A", where, row, "class", allowed=S.JOB_CLASSES)
         _require("A", where, row, "enabled", kind=bool)
         _require("A", where, row, "source_of_truth", kind=str)
@@ -164,7 +169,11 @@ def check_derived(root: Path, registry: dict, derived: list[S.Job]) -> None:
 
 
 def check_claude_parity(root: Path, registry: dict, derived: list[S.Job]) -> None:
-    claude_planes = [pid for pid, p in (registry.get("planes") or {}).items() if isinstance(p, dict) and (p.get("jobs_source") or {}).get("kind") == "cloud-routines"]
+    claude_planes = [
+        pid
+        for pid, p in (registry.get("planes") or {}).items()
+        if isinstance(p, dict) and (p.get("jobs_source") or {}).get("kind") == "cloud-routines"
+    ]
     if not claude_planes:
         return
     path, snapshot = S.newest_snapshot(root)
@@ -174,7 +183,11 @@ def check_claude_parity(root: Path, registry: dict, derived: list[S.Job]) -> Non
     if snapshot is None:
         fail("C", f"{path.name}: unreadable snapshot receipt")
         return
-    live = {r["routine"]: r for r in snapshot.get("triggers") or [] if isinstance(r, dict) and isinstance(r.get("routine"), str)}
+    live = {
+        r["routine"]: r
+        for r in snapshot.get("triggers") or []
+        if isinstance(r, dict) and isinstance(r.get("routine"), str)
+    }
     manifest_names: set[str] = set()
     for job in derived:
         if job.plane not in claude_planes:
@@ -217,7 +230,9 @@ def check_sibling_parity(registry: dict, declared: list[S.Job], env: dict[str, s
     for repo, jobs in sorted(by_repo.items()):
         clone = S.sibling_root(repo, env, home)
         if clone is None:
-            advise("D", f"{repo}: no sibling clone on this host — {len(jobs)} projected rows unverifiable here, not drift")
+            advise(
+                "D", f"{repo}: no sibling clone on this host — {len(jobs)} projected rows unverifiable here, not drift"
+            )
             continue
         live = _sibling_workflow_crons(clone)
         manifest_rows = [j for j in jobs if j.source.endswith("manifest.ts")]
@@ -248,7 +263,7 @@ def check_sibling_parity(registry: dict, declared: list[S.Job], env: dict[str, s
                     runs = (job.allotment or {}).get("runs")
                     if runs != target["runs"]:
                         fail("D", f"{job.id}: allotment.runs {runs} != manifest maxInvocationsPerDay {target['runs']}")
-                for name in sorted(set(targets) - {j.id.split('/', 1)[1] for j in manifest_rows}):
+                for name in sorted(set(targets) - {j.id.split("/", 1)[1] for j in manifest_rows}):
                     fail("D", f"{repo}: manifest target {name!r} has no registry row")
         advise("D", f"{repo}: verified against sibling clone {clone}")
 
@@ -281,9 +296,15 @@ def stagger_violations(registry: dict, jobs: list[S.Job]) -> set[str]:
 def check_stagger(registry: dict, jobs: list[S.Job], baseline: set[str]) -> None:
     current = stagger_violations(registry, jobs)
     for line in sorted(current - baseline):
-        fail("E", f"new stagger violation {line} — move the cron off the hour / off a shared minute (house offsets {registry.get('house_offsets')}) or baseline it deliberately")
+        fail(
+            "E",
+            f"new stagger violation {line} — move the cron off the hour / off a shared minute (house offsets {registry.get('house_offsets')}) or baseline it deliberately",
+        )
     for line in sorted(baseline - current):
-        fail("E", f"baseline line {line} names a violation that no longer exists — delete the line (the baseline is shrink-only and must not rot)")
+        fail(
+            "E",
+            f"baseline line {line} names a violation that no longer exists — delete the line (the baseline is shrink-only and must not rot)",
+        )
 
 
 def check_consumers(root: Path) -> None:
@@ -295,11 +316,16 @@ def check_consumers(root: Path) -> None:
         sensors = {}
     runs_sensor = any(
         "scripts/schedule-utilization.py" in str(step.get("command", ""))
-        for s in sensors.values() if isinstance(s, dict)
-        for step in (s.get("steps") or []) if isinstance(step, dict)
+        for s in sensors.values()
+        if isinstance(s, dict)
+        for step in (s.get("steps") or [])
+        if isinstance(step, dict)
     )
     if not runs_sensor:
-        fail("F", "sensors.yaml has no step running scripts/schedule-utilization.py — the registry would be audited by nothing")
+        fail(
+            "F",
+            "sensors.yaml has no step running scripts/schedule-utilization.py — the registry would be audited by nothing",
+        )
     try:
         gates = (yaml.safe_load(gates_path.read_text(encoding="utf-8")) or {}).get("gates") or {}
     except (OSError, yaml.YAMLError):
@@ -308,7 +334,9 @@ def check_consumers(root: Path) -> None:
         fail("F", "gates.yaml does not register check-schedules — this predicate would run nowhere in CI")
 
 
-REGISTRY_READERS = frozenset({"scripts/check-schedules.py", "scripts/schedule-utilization.py"})
+REGISTRY_READERS = frozenset(
+    {"scripts/check-schedules.py", "scripts/schedule-utilization.py", "scripts/schedule-census.py"}
+)
 
 
 def check_readers(root: Path) -> None:
@@ -322,7 +350,10 @@ def check_readers(root: Path) -> None:
         if "import _schedules" in text or "from _schedules" in text:
             readers.add(f"scripts/{path.name}")
     for extra in sorted(readers - REGISTRY_READERS):
-        fail("G", f"{extra} reads the SCHEDULES registry but is not an allowlisted reader — a reader that can start, retry or deploy a run would make the registry a scheduler")
+        fail(
+            "G",
+            f"{extra} reads the SCHEDULES registry but is not an allowlisted reader — a reader that can start, retry or deploy a run would make the registry a scheduler",
+        )
     effectors_path = root / "institutio" / "governance" / "outbound-effectors.yaml"
     try:
         effectors_text = effectors_path.read_text(encoding="utf-8")
@@ -344,11 +375,35 @@ def slot_map(registry: dict, jobs: list[S.Job], day: date) -> list[dict]:
             cron = S.parse_cron(c)
             fires = S.fires_on_utc_day(cron, tz, day)
             if len(fires) > 24:
-                rows.append({"utc": "every " + ("minute" if len(fires) == 1440 else f"{1440 // len(fires)} min"), "sort": "00:00", "job": job.id, "plane": job.plane, "cron": c, "tz": job.tz, "enabled": job.enabled, "fires": len(fires), "flags": ""})
+                rows.append(
+                    {
+                        "utc": "every " + ("minute" if len(fires) == 1440 else f"{1440 // len(fires)} min"),
+                        "sort": "00:00",
+                        "job": job.id,
+                        "plane": job.plane,
+                        "cron": c,
+                        "tz": job.tz,
+                        "enabled": job.enabled,
+                        "fires": len(fires),
+                        "flags": "",
+                    }
+                )
                 continue
             for when in fires:
                 flags = ",".join(sorted(r.split(":")[-1] for r in violations if r.startswith(f"{job.plane}:{job.id}:")))
-                rows.append({"utc": when.strftime("%H:%M"), "sort": when.strftime("%H:%M"), "job": job.id, "plane": job.plane, "cron": c, "tz": job.tz, "enabled": job.enabled, "fires": 1, "flags": flags})
+                rows.append(
+                    {
+                        "utc": when.strftime("%H:%M"),
+                        "sort": when.strftime("%H:%M"),
+                        "job": job.id,
+                        "plane": job.plane,
+                        "cron": c,
+                        "tz": job.tz,
+                        "enabled": job.enabled,
+                        "fires": 1,
+                        "flags": flags,
+                    }
+                )
     rows.sort(key=lambda r: (r["sort"], r["plane"], r["job"]))
     return rows
 
@@ -367,14 +422,20 @@ def print_slot_map(registry: dict, jobs: list[S.Job], day: date, compact: bool =
             n = sum(g["fires"] for g in group)
             if len(group) > 1:
                 minute = cron.split()[0]
-                first["utc"] = f"{group[0]['utc']}–{group[-1]['utc']} ({n}/day at :{minute.zfill(2)})" if minute.isdigit() else f"{n}/day"
+                first["utc"] = (
+                    f"{group[0]['utc']}–{group[-1]['utc']} ({n}/day at :{minute.zfill(2)})"
+                    if minute.isdigit()
+                    else f"{n}/day"
+                )
                 first["sort"] = group[0]["sort"]
             rows.append(first)
         rows.sort(key=lambda r: (r["sort"], r["plane"], r["job"]))
     print(f"| UTC | job | plane | cron | tz | enabled | flags |  _(fires on {day.isoformat()})_")
     print("|---|---|---|---|---|---|---|")
     for r in rows:
-        print(f"| {r['utc']} | {r['job']} | {r['plane']} | `{r['cron']}` | {r['tz']} | {'yes' if r['enabled'] else 'NO'} | {r['flags']} |")
+        print(
+            f"| {r['utc']} | {r['job']} | {r['plane']} | `{r['cron']}` | {r['tz']} | {'yes' if r['enabled'] else 'NO'} | {r['flags']} |"
+        )
 
 
 def main(argv: list[str] | None = None) -> int:

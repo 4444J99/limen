@@ -6677,4 +6677,33 @@ parameters:
     self_update: none
     owner: governance
     note: "Explicit path of a local 4444J99/ops-witness clone for the SCHEDULES predicates; same resolution and fallback as LIMEN_OPS_ROOT."
-
+  LIMEN_SCHEDULE_CENSUS:
+    default: "1"
+    env: LIMEN_SCHEDULE_CENSUS
+    self_update: none
+    owner: governance
+    note: "Gate for the schedule-census sensor (metabolize pass): 1 runs it, 0 skips it. The organ owns its own interval; see LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS."
+  LIMEN_SCHEDULE_CENSUS_TIMEOUT:
+    default: 1800
+    env: LIMEN_SCHEDULE_CENSUS_TIMEOUT
+    self_update: none
+    owner: governance
+    note: "Bounded execution timeout (seconds) for the schedule-census sensor on a census pass; the script's own LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS stops scanning before this so the receipt is always written."
+  LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS:
+    default: 168
+    env: LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS
+    self_update: none
+    owner: governance
+    note: "Wall-clock hours between censuses; a younger logs/schedule-census.json makes the sensor a no-op (--force overrides)."
+  LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS:
+    default: 1500
+    env: LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS
+    self_update: none
+    owner: governance
+    note: "Scan time budget per census; repositories left unscanned when it runs out are listed in the receipt, never counted as unscheduled."
+  LIMEN_SCHEDULE_CENSUS_HISTORY_CAP:
+    default: 30
+    env: LIMEN_SCHEDULE_CENSUS_HISTORY_CAP
+    self_update: none
+    owner: governance
+    note: "Commits sampled per repository (newest and oldest halves) when workflow history must come from the Commits API instead of a full local clone; the receipt flags truncation."

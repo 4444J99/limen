@@ -1448,10 +1448,17 @@ gates:
   # ── SCHEDULES registry drift net (every scheduler plane's allotment and jobs) ────────────
   check-schedules:
     command: "python3 scripts/check-schedules.py"
-    paths: ["institutio/governance/schedules.yaml", "institutio/governance/schedule-stagger-baseline.txt", "scripts/check-schedules.py", "scripts/_schedules.py", "cloud-routines.json", "docs/receipts/claude-triggers-snapshot-*.json", ".github/workflows/**", "institutio/governance/sensors.yaml"]
+    paths: ["institutio/governance/schedules.yaml", "institutio/governance/schedule-stagger-baseline.txt", "scripts/check-schedules.py", "scripts/_schedules.py", "cloud-routines.json", "docs/receipts/claude-triggers-snapshot-*.json", ".github/workflows/**", "institutio/governance/sensors.yaml", "scripts/schedule-census.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SCHEDULES registry drift — schema, every cron parses, limen's own workflow/sensor/cloud-routine jobs DERIVE from their source files (never duplicated), cloud-routines.json agrees with the newest claude-triggers snapshot receipt by routine and cadence class, rows projected from 4444J99/ops and ops-witness agree with the sibling clone when one is on the host (absent ⇒ unverifiable here, not drift — the biography-registry precedent), the ops stagger rule holds except for the shrink-only baseline, and the sensor + this gate are wired. Born 2026-10-23 when all 13 contracted claude.ai routines were found disabled while cloud-routines.json declared every one enabled and nothing in the estate could say so: a schedule that exists in a vendor UI and nowhere in a registry is a run left on the floor by construction. `.github/workflows/**` is a path because a new cron workflow is a new derived job that must pass the stagger ratchet."
+  schedule-census-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_schedule_census.py -q"
+    paths: ["scripts/schedule-census.py", "scripts/_schedules.py", "cli/tests/test_schedule_census.py", "institutio/governance/schedules.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "The schedule-census organ's own contract: every carrier kind parses (Actions on.schedule incl. PyYAML's `on:`→True, wrangler toml/jsonc, vercel, launchd, crontab, systemd timers, dependabot, renovate, cloud-routines, the ops manifest); gh reads are classified ok/absent/unreachable/error and an unreachable repository is never 'nothing scheduled'; one repository scans end to end (carriers from one tree listing, Actions states incl. registrations absent from the tree, scheduled-run summary, Commits-API history with cron diffs); full-clone history records cron changes and removals; registry gaps name active schedules outside every plane; a budget cut lists the unscanned; the receipt states denominators and is written atomically; main exits 1 on findings and 3 when nothing could be read."
+
   schedules-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py -q"
     paths: ["scripts/_schedules.py", "scripts/check-schedules.py", "scripts/schedule-utilization.py", "cli/tests/test_schedules_registry.py", "institutio/governance/schedules.yaml", "institutio/governance/schedule-stagger-baseline.txt"]
