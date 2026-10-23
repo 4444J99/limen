@@ -336,6 +336,8 @@ def _gh_all_prs() -> list[dict] | None:
             [
                 "gh",
                 "api",
+                "--method",
+                "GET",
                 f"repos/{nwo}/pulls",
                 "-f",
                 "state=all",
