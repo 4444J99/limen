@@ -277,7 +277,8 @@ check-note-links' CLAUDE.md
 
 # check-runner-coverage is implicated because a workflow is a REACHABILITY ROOT: adding a
 # `run: bash scripts/metabolize.sh` step is exactly what would make an orphaned runner reachable,
-# so the verdict genuinely changes when a workflow does.
+# so the verdict genuinely changes when a workflow does. check-schedules is implicated too: a new or
+# moved cron trigger is a new derived job in the SCHEDULES registry and must pass the stagger ratchet.
 expect workflow-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
@@ -286,7 +287,8 @@ workflow-yaml
 check-gates
 check-runner-coverage
 check-note-links
-npm-audit-contract' .github/workflows/ci.yml
+npm-audit-contract
+check-schedules' .github/workflows/ci.yml
 
 expect foundry-pr-gate-permission-change 'syntax-changed
 diff-hygiene
@@ -297,7 +299,8 @@ research-adjudication-test
 workflow-yaml
 check-gates
 check-runner-coverage
-check-note-links' .github/workflows/pr-gate.yml
+check-note-links
+check-schedules' .github/workflows/pr-gate.yml
 
 expect dashboard-change 'syntax-changed
 diff-hygiene
