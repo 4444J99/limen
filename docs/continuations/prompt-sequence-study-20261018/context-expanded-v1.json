@@ -1,0 +1,3045 @@
+{
+  "schema": "limen.prompt_sequence_context_review.v1",
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "publication": "https://github.com/4444J99/limen/pull/3087",
+  "vocabulary": "vocabulary-v5.json",
+  "status": "same_coder_contextual_candidates_not_substitution_results",
+  "unit": "ordered post-opener position within an existing captured native file sequence",
+  "source_key_rule": "First 12 lowercase hex characters of SHA256(native session ID) in the existing private native-catalog.html dataset. Keys identify source columns; they are not hashes of prompt content.",
+  "coverage": {
+    "file_sequences": 36,
+    "retained_prompt_positions": 254,
+    "post_opener_positions": 218,
+    "all_captured_retained_bodies_marked_complete": true,
+    "all_source_eof": true,
+    "original_logical_session_completeness_proven": false,
+    "independent_human_intentions_count": null,
+    "substitution_success_rate": null
+  },
+  "rules": [
+    "Preserve the original operation, target, substantive payload, authority, constraints and completion predicate.",
+    "Candidate operations are a sequence when composite. Replacing wording does not execute an instruction or prove an outcome.",
+    "All historical replies remain attributed claims; this review does not verify current external state.",
+    "Shared native-turn replies are not independent per-input responses. Missing finals remain missing.",
+    "A complete retained text body does not prove attachment, original opener, side-history or logical-session completeness.",
+    "Quoted peer instructions and voice transcript_delta remain context, not fresh human authority.",
+    "In voice wrappers, disposition the new input only; preserve transcript_delta as lineage and do not count repeated text as new instructions.",
+    "Generic continuation does not expand time, path, send, spend, deletion, credential or host-exception authority.",
+    "Do not force an unresolved case into a bare command; preserve its payload and explicit status."
+  ],
+  "attachments": {
+    "read_in_place": [
+      "B06.1",
+      "C06.1",
+      "D11.1"
+    ],
+    "available_not_fully_reviewed": [
+      "D06.1",
+      "D08.4",
+      "D16.18"
+    ],
+    "other_referenced_files_pages_and_exports": "Not comprehensively resolved in this tranche. No source text or attachment was copied into public artifacts."
+  },
+  "sequences": [
+    {
+      "alias": "B01",
+      "key": "b49954a5cd3b",
+      "lines": [
+        13,
+        1045,
+        1439
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 11,
+      "frames": 8,
+      "order_ambiguous": false,
+      "opener_summary": "Persistent replay and reconciliation objective",
+      "historical_outcome_summary": "The closeout reply initially reports a running predicate; the final reply later asserts successful closure. This review does not independently rerun that predicate.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 1045,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Prove release of the current session; retain the existing replay objective and its obligations.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 1439,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Resume the unfinished closeout attempt; do not create a second goal or presume the pending predicate passed.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B02",
+      "key": "e2cfe23d988b",
+      "lines": [
+        12,
+        112,
+        122,
+        221
+      ],
+      "shared": [],
+      "missing_reply": [
+        1
+      ],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 7,
+      "frames": 3,
+      "order_ambiguous": false,
+      "opener_summary": "Preserve all project chat/work sessions locally",
+      "historical_outcome_summary": "The opener has no captured final. Later replies acknowledge local-only scope, report a partial archive, then recommend a fuller export. Preservation coverage remains explicitly partial.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 112,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Correct archive to mean local preservation in the named folder; do not infer app archival or deletion.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 122,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute that corrected local-preservation request with the existing source and destination bindings.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 221,
+          "candidate_operations": [
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Repair the inadequate preservation approach while retaining the complete-coverage goal; rhetorical wording is not a new unrelated question.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B03",
+      "key": "b68760497ba2",
+      "lines": [
+        12,
+        1099,
+        2012,
+        9902,
+        10044
+      ],
+      "shared": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 18,
+      "native_user_items": 23,
+      "frames": 18,
+      "order_ambiguous": false,
+      "opener_summary": "Simplify Git-first cleanup, retaining the non-Git pile for later",
+      "historical_outcome_summary": "Two follow-up pairs share turns and replies. A reply reports coordination; a later shared reply reports transfer progress without separately answering the Drive question. No individual response-quality or cleanup-completion result can be credited to each shared input.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 1099,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Bind the structured answer to its exact question: successive bounded batches replace the named time ceilings for this outcome only, preserving backup/restore/source checks.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 2012,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Send the authorized coordination message to the blocking chat, with the exact owner and scope; approval to interact is explicit here.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 9902,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Explain why the selected storage route requires Drive; asking why does not approve new account or transfer scope.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 10044,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Correct the assumed Chrome requirement and add the availability of another storage route; retain payload and preservation constraints.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B04",
+      "key": "773d85da6ec1",
+      "lines": [
+        9,
+        151,
+        319
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 5,
+      "frames": 2,
+      "order_ambiguous": false,
+      "opener_summary": "Reconcile admission and complete measured recovery",
+      "historical_outcome_summary": "The first answer reports one admitted extra attempt followed by host denial and zero removals. The next answer refers to a pressure override but still retains a cache whose recovery proof failed. The bare override lacks a structured rule/run binding in the captured prompt-final pair.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 151,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Approve the immediately offered single additional 30-minute attempt with cumulative accounting and all other gates preserved.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 319,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Candidate exception intent aimed at the just-reported pressure gate; retain as incompletely bound until the affected rule, scope and duration are established. Do not infer a general bypass.",
+          "interpretation_status": "exception_binding_incomplete"
+        }
+      ]
+    },
+    {
+      "alias": "B05",
+      "key": "d3beb360f0ff",
+      "lines": [
+        9,
+        116,
+        253,
+        263,
+        273
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 7,
+      "frames": 2,
+      "order_ambiguous": false,
+      "opener_summary": "Resume custody readback at the corrected staging destination",
+      "historical_outcome_summary": "Replies distinguish an unmeasured process predicate from incomplete remote custody. The last reply asserts both resolved and closure passed; those historical claims are not fresh custody proof.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 116,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Attempt the existing session-release contract; keep custody and process evidence requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 253,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Explain the specific unsuccessful closeout and separate custody failure.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 263,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Treat the rhetorical question as a correction that unfinished work still belongs to the agent, then advance it.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 273,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Resolve the measured causes and prove closeout, rather than repeat a handoff as success.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B06",
+      "key": "7e01a6772365",
+      "lines": [
+        12,
+        84,
+        95
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 5,
+      "frames": 2,
+      "order_ambiguous": false,
+      "opener_summary": "Implement the attached workspace-layout plan without publishing",
+      "historical_outcome_summary": "The original attachment was read in place. It explicitly defers pushing. A later pasted peer report asks about publication; the assistant then speaks as if authorizing another agent, but that assistant statement is not human authority. The subsequent human proceed binds to the prepared push/PR stage.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 84,
+          "candidate_operations": [
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Supply the peer verification report, its caveats and quoted question. Do not treat a relayed question as the human approving publication.",
+          "interpretation_status": "relayed_question_not_human_assent"
+        },
+        {
+          "position": 3,
+          "source_line": 95,
+          "candidate_operations": [
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Proceed with the prepared push and PR, preserving the proposed leave-unmerged boundary and excluded source-repository work.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B07",
+      "key": "36b3410bc919",
+      "lines": [
+        9,
+        198,
+        385,
+        822,
+        970,
+        2996
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 3,
+      "native_user_items": 17,
+      "frames": 11,
+      "order_ambiguous": false,
+      "opener_summary": "Complete the assigned host-configuration recovery stream",
+      "historical_outcome_summary": "Repeated completion directives produce further preservation/integration reports, while retained dependencies remain. The explicit allowlist exception broadens only that scope boundary. The final closeout reply reports failure.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 198,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish the existing stream, not merely its audit; preserve assigned scope and custody.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 385,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Carry all outstanding obligations to their actual predicates; no fresh budget or custody waiver follows from all.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 822,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Restore the original full-stream completion target after repeated partial checkpoints.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 970,
+          "candidate_operations": [
+            "/approve",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Apply the explicitly named stream-allowlist exception and advance that stream; other guards remain.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 2996,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure session release without relabeling retained stream obligations as completed.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B08",
+      "key": "b311088fa637",
+      "lines": [
+        12,
+        91,
+        124,
+        285,
+        375,
+        716,
+        2848
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 15,
+      "frames": 8,
+      "order_ambiguous": false,
+      "opener_summary": "Restore a quota-blocked OpenCode launch",
+      "historical_outcome_summary": "The same continue operation appears three times with different state. Structured permission separately authorizes messaging two tasks. The final answer claims deployed maintenance, a fresh below-target census and guarded launches; this study preserves those as historical reports.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 91,
+          "candidate_operations": [
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Repair the missing maintenance command durably and reach the named maintenance target while preserving chats/state.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 124,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance that repair; it does not independently authorize contacting other chats.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 285,
+          "candidate_operations": [
+            "/approve",
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Bind the yes answer to coordination with the two named tasks and preserve separate ownership.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 375,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Keep driving to both merges/deployments, a functioning command and a fresh below-target census; a checkpoint does not satisfy these predicates.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 716,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance under those unchanged acceptance conditions.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 2848,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance under those unchanged acceptance conditions; the later reported success is state-dependent.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B09",
+      "key": "190d4f503b26",
+      "lines": [
+        9,
+        163,
+        243,
+        373,
+        848,
+        924
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 9,
+      "frames": 3,
+      "order_ambiguous": false,
+      "opener_summary": "Complete the assigned archive-retirement recovery stream",
+      "historical_outcome_summary": "The supplied report triggers a correction to an out-of-scope preflight attribution. Subsequent replies report implementation without live restore proof. The rhetorical challenge elicits an explicit admission that zero removal/reclamation is not healing. Closeout remains failed.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 163,
+          "candidate_operations": [
+            "/context",
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Retain the supplied diagnosis and repair its exact custody failure within the assigned stream.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 243,
+          "candidate_operations": [
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Resolve the corrected archive-specific custody gap, not the unrelated directory named by the earlier bad attribution.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 373,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute the existing repair path while preserving its allowlist and restoration checks.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 848,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Treat the rhetorical challenge as a correction to stopping at code/tests instead of the requested live outcome.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 924,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure release while keeping unproven custody visible.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "B10",
+      "key": "0d87dbbf0bb8",
+      "lines": [
+        12,
+        67,
+        412,
+        522
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 10,
+      "frames": 6,
+      "order_ambiguous": false,
+      "opener_summary": "Advise on source-owned configuration cleanup",
+      "historical_outcome_summary": "Proceed transitions the offered cleanup into execution; subsequent continue prompts retain that objective. Replies distinguish prepared launcher migration from later claimed protocol checks and leave merge pending.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 67,
+          "candidate_operations": [
+            "/approve",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute the offered cleanup, retaining ownership boundaries, permissions and deliberate hook decisions.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 412,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish remaining cleanup and launcher verification; keep timed-out startup probes unresolved.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 522,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the same repair through its still-open verification/publication stages; do not equate application with merge.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C01",
+      "key": "40cc17a680ed",
+      "lines": [
+        10,
+        53,
+        101,
+        768
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 6,
+      "frames": 2,
+      "order_ambiguous": false,
+      "opener_summary": "Finish skills consolidation through native use and rollback",
+      "historical_outcome_summary": "Two continue replies describe resumption and then partial activation. The final question produces a sequenced finish-line explanation, with review/account/device acceptance still separate.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 53,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Resume the existing consolidation; preserve the original full-runtime use and recovery requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 101,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance that same objective; partial discovery/link counts do not replace actual use in every intended runtime.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 768,
+          "candidate_operations": [
+            "/next",
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Derive the complete remaining rollout and acceptance sequence from current evidence; explain real human gates without recasting engineering as operator work.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C02",
+      "key": "6f53d8877ed7",
+      "lines": [
+        9,
+        134,
+        176
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 4,
+      "frames": 1,
+      "order_ambiguous": false,
+      "opener_summary": "Execute only the assigned creative-project recovery tranche",
+      "historical_outcome_summary": "Both later replies report no completed synchronization, preservation or removal and exhausted/unresolved allowance. Corrective directives explicitly preserve the real remaining allowance, so they cannot be interpreted as creating a new one.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 134,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Correct unsupported parity/accounting conclusions, then resolve the assigned tranche using live upstream/custody evidence and the actual remaining allowance.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 176,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Demand concrete candidate resolution instead of another census; preserve the explicit existing-budget constraint and all custody/dependency gates.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C03",
+      "key": "90af1a5f81a4",
+      "lines": [
+        9,
+        338,
+        485,
+        624
+      ],
+      "shared": [
+        2,
+        3
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 5,
+      "frames": 1,
+      "order_ambiguous": false,
+      "opener_summary": "Implement the admission repair plan under its original verification cap",
+      "historical_outcome_summary": "Continue and the separately answered allowance question share a final. The answer grants 60 additional seconds explicitly; continue alone did not establish that exception. The last response recognizes disproportionate process overhead.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 338,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the prepared fix within current authority; do not infer an extension from this word.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 485,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Grant exactly the separately recorded 60-second verification window in the bound question, preserving prior usage.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 624,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Interpret the rhetorical cost challenge as a process-efficiency correction: focus on the real failures and compact evidence, not expanding paperwork.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C04",
+      "key": "6cc47a0497a7",
+      "lines": [
+        9,
+        168,
+        263
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 4,
+      "frames": 1,
+      "order_ambiguous": false,
+      "opener_summary": "Execute only the assigned institutional-repository recovery tranche",
+      "historical_outcome_summary": "The same two corrective messages as C02 concern a different assigned tranche. Their operation structure is equivalent, but their targets and result denominators differ. Replies report corrected findings and no mutation because allowance remains exhausted.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 168,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Repair parity/accounting attribution and finish this assigned tranche under its own verified allowance; do not import another tranche's budget or stop.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 263,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Demand concrete synchronization/preservation/removal where admitted, preserving the existing remaining-budget clause and dependency checks.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C05",
+      "key": "74751beb050f",
+      "lines": [
+        11,
+        674,
+        815,
+        1285,
+        1295,
+        1756
+      ],
+      "shared": [
+        1,
+        2
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 12,
+      "frames": 6,
+      "order_ambiguous": false,
+      "opener_summary": "Preserve and annotate all project artifacts locally",
+      "historical_outcome_summary": "Opener and extra-source input share a final. Later replies report recovery and organization while preserving missing-artifact counts. A skill-creator invocation yields a reusable preservation skill, not proof all source artifacts were recovered.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 674,
+          "candidate_operations": [
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Add the temporary-folder source location to the preservation scope; the exact path is substantive new payload.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 815,
+          "candidate_operations": [
+            "/fix",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Repair verified scanner false positives, commit temporary work, organize readable paths and continue missing-artifact recovery.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 1285,
+          "candidate_operations": [
+            "/next"
+          ],
+          "preserved_intent_and_payload": "Derive the next action from the unfinished recovery; no execution is authorized merely by asking.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 1295,
+          "candidate_operations": [
+            "/continue",
+            "/verify",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Finish the named recovery pass, verify the organized archive, commit it and retain the missing-artifact register; committing is the stated publication stage.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 1756,
+          "candidate_operations": [
+            "/codify"
+          ],
+          "preserved_intent_and_payload": "Invoke skill creation for the just-established preservation workflow; retain its lesson, target skill and verification. This is contextual inference, not a self-contained skill specification.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C06",
+      "key": "8d214cf3ae20",
+      "lines": [
+        12,
+        115,
+        1039,
+        1457,
+        1705,
+        2388
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 12,
+      "frames": 6,
+      "order_ambiguous": false,
+      "opener_summary": "Repair reservation ownership, then complete serial audiovisual acceptance",
+      "historical_outcome_summary": "The original short handoff attachment was read. Structured answers separately authorize extended allowance and a pressure exception. Replies progress through tests, merges and retained device/source requirements. The archival answer is expressly a handoff, not full artistic acceptance.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 115,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Bind unlimited-until-complete to the exact serial sequence and preserved ledger; it does not waive unrelated host or acceptance requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 1039,
+          "candidate_operations": [
+            "/correct",
+            "/fix",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Correct stopping at partial browser results; fix all five failures, publish exact heads and rerun acceptance while owning reversible work.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 1457,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Bind override to the structured pressure-gate question; preserve process-local scope and other gates. Exact executable exception bounds still need their own receipt.",
+          "interpretation_status": "executable_exception_bounds_not_established"
+        },
+        {
+          "position": 5,
+          "source_line": 1705,
+          "candidate_operations": [
+            "/ship",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Merge the three named PRs, then finish remaining reversible work and isolate only real physical/source operator actions.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 2388,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Assess archival eligibility of this conversation as a durable handoff, while preserving full audiovisual HOLD and custody originals.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C07",
+      "key": "3fe73c75e065",
+      "lines": [
+        9,
+        107,
+        209,
+        327,
+        337,
+        399,
+        818,
+        1118
+      ],
+      "shared": [],
+      "missing_reply": [
+        4
+      ],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 12,
+      "frames": 4,
+      "order_ambiguous": false,
+      "opener_summary": "Complete the assigned behavioral-project recovery stream",
+      "historical_outcome_summary": "A supplied accounting correction is followed by a targeted access repair. One of two identical proceed inputs has no final; the later final does not retrospectively establish that missing reply. The emphatic correction produces actual repository work, but both closeout attempts remain unmeasured.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 107,
+          "candidate_operations": [
+            "/context",
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Supply the accounting/lineage correction; distinguish assigned scope from spend authorization and avoid inheriting another group's stop.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 209,
+          "candidate_operations": [
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Repair the exact authenticated-reader failure while retaining the unresolved historical lineage/accounting gap.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 327,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the selected repair; the missing captured final leaves its immediate result unknown.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 337,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the same repair after the interrupted/no-final position; do not double-count the repeated wording as two successful executions.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 399,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Restore full task completion as the objective instead of treating access/accounting repair as the entire stream.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 818,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure release for the complete native scope; publication and zero leases are insufficient.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 1118,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Recheck the same release contract; retain an unmeasured result rather than inventing completion.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C08",
+      "key": "554872e8a0ae",
+      "lines": [
+        12,
+        258,
+        443
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 6,
+      "frames": 3,
+      "order_ambiguous": false,
+      "opener_summary": "Complete directory recovery, quota and legacy-source reconciliation",
+      "historical_outcome_summary": "The first continue produces a proposed plan; the next reports partial evidence and a policy hold. Advancement inherits the active interaction mode: the word continue does not itself convert planning into unrestricted execution.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 258,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the recovery within governing mode; the observed artifact is a proposed plan, not an implementation result.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 443,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the existing recovery plan while retaining transfer denominators, preserved histories and explicit source/native-acceptance gaps.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C09",
+      "key": "989f8fc7d7ca",
+      "lines": [
+        9,
+        257,
+        457,
+        752,
+        1048,
+        1356,
+        1577,
+        2067
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 3,
+      "native_user_items": 15,
+      "frames": 7,
+      "order_ambiguous": false,
+      "opener_summary": "Complete the assigned protected-source recovery stream",
+      "historical_outcome_summary": "Repeated completion requests preserve the full stream. A structured answer extends the exact shared-store scope. A later process correction rejects repeated unchanged checks; the final closeout still reports unmeasured native scope.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 257,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish all outstanding work in the existing stream, retaining independent custody requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 457,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Reassert full-stream completion after source-preservation progress; do not shrink to a preservation increment.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 752,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Reassert that same endpoint while retaining the explicit outside-scope dependency restriction until amended.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 1048,
+          "candidate_operations": [
+            "/approve",
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Extend the allowlist to the exact missing shared store and repair the evaluation checkout while preserving files and original marker.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 1356,
+          "candidate_operations": [
+            "/correct",
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Stop repeating unchanged access/admission checks and diagnose their owning causes; quoted prior goal status is evidence, not a fresh current goal command.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 1577,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute the selected recovery plan within the already established scope, preserving real native-metadata and custody requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 2067,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure release and keep the full-root task acceptance separate from a session-record restore.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "C10",
+      "key": "99e347b918b4",
+      "lines": [
+        9,
+        695,
+        1548
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 5,
+      "frames": 2,
+      "order_ambiguous": false,
+      "opener_summary": "Correct a stalled estate closeout and derive a complete recovery path",
+      "historical_outcome_summary": "Proceed advances the concrete corrective plan. The final closeout reports non-Git caller and restore gaps, so a resumed upload does not establish task completion.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 695,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute the corrective plan without silently resetting accounting or weakening custody/ownership gates.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 1548,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Prove release for the original scope; retain incomplete independent restoration as an unmet predicate.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D01",
+      "key": "a27c90dcaeb4",
+      "lines": [
+        9,
+        268,
+        482,
+        583,
+        876,
+        1021,
+        1460,
+        1901
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 17,
+      "frames": 9,
+      "order_ambiguous": false,
+      "opener_summary": "Complete the runtime-and-memory recovery stream",
+      "historical_outcome_summary": "Replies report integrity/preservation progress without retirement. An operator drive-connection result changes source availability. The encryption correction changes the intended custody policy, while preserving restoration and privacy. Closeout ultimately reports failure.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 268,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Complete the original stream across all assigned roots, not just the current repair batch.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 482,
+          "candidate_operations": [
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Supply the operator result that required drives are connected; verify identity/availability before using them.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 583,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Reassert the full-stream endpoint after the copies increment.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 876,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Clarify that encryption applies to remote Git payload, not local physical volumes; preserve the exact policy delta and all independent-restoration checks.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 1021,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute the revised plan with that correction and unchanged recovery/ownership requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 1460,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Correct stopping at solvable implementation work and retain the full original outcome.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 1901,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure session release without treating preserved snapshots as retirement proof.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D02",
+      "key": "fd651ff7dd3e",
+      "lines": [
+        10,
+        1626,
+        1723,
+        2032,
+        2132,
+        2599,
+        2813,
+        3605,
+        3728
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 3,
+      "native_user_items": 22,
+      "frames": 13,
+      "order_ambiguous": false,
+      "opener_summary": "Repair startup warnings and all intended MCP integrations",
+      "historical_outcome_summary": "Later inputs successively add OAuth refresh proof, merge repair, durable workflow repair, hosted exception, activation verification and local deployment. Replies explicitly separate warning removal from the still-old gateway runtime before later reporting activation.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 1626,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Retry the existing checks; changed authentication/environment evidence must justify replay rather than the word alone.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 1723,
+          "candidate_operations": [
+            "/fix",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Find and exercise a real OAuth refresh, preserving the named providers and persistence requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 2032,
+          "candidate_operations": [
+            "/fix",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Resolve the specific lifecycle hold and merge the exact named evidence PR.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 2132,
+          "candidate_operations": [
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Repair the workflow at its canonical source so delivery classification precedes submission; preserve all existing holds.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 2599,
+          "candidate_operations": [
+            "/fix",
+            "/verify",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Resolve the verification timeout, finish remaining checks and merge the named workflow PR.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 2813,
+          "candidate_operations": [
+            "/approve",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Bind override to the immediately offered hosted exact-head verification alternative; do not broaden it to arbitrary bypasses.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 3605,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Check actual runtime adoption and fresh warning-free client starts; a merge is not activation.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 3728,
+          "candidate_operations": [
+            "/apply",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Activate the exact merged gateway update, resolve its deployment owner and verify running version plus clients.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D03",
+      "key": "75a84af847da",
+      "lines": [
+        9,
+        20,
+        44
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 4,
+      "frames": 1,
+      "order_ambiguous": false,
+      "opener_summary": "Read-only cache audit only after a coordinator packet",
+      "historical_outcome_summary": "The exact opener is repeated and both initial answers wait. The last input explicitly corrects native role and removes the packet prerequisite for light inspection while keeping heavy work and mutations with the coordinator. The final reports an audit with all caches retained.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 20,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Restate the identical existing audit contract; do not create a duplicate reservation or assume its packet prerequisite cleared.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 44,
+          "candidate_operations": [
+            "/correct",
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Change this to direct human inspection, inspect the named current candidates, preserve read-only limits and leave heavy verification/mutations to the sole coordinator.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D04",
+      "key": "09e8d695fa4b",
+      "lines": [
+        9,
+        119,
+        331,
+        480
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 7,
+      "frames": 3,
+      "order_ambiguous": false,
+      "opener_summary": "Explain recurring lifecycle-unknown merge deferrals",
+      "historical_outcome_summary": "Planning, implementation and archival eligibility are separate stages. The final reply reports a later core fix elsewhere but broader plan acceptance and formal closeout still unverified.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 119,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Produce the implementation and verification plan for the diagnosed recurring defect.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 331,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Implement the selected plan, retaining normal verification and source ownership; the reply reports isolation denied and no code changes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 480,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Assess archival eligibility as a handoff; do not conflate a later related merge with the complete original plan.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D05",
+      "key": "c94fe756ded1",
+      "lines": [
+        12,
+        92,
+        154,
+        175,
+        194,
+        240,
+        301,
+        346,
+        406
+      ],
+      "shared": [
+        1,
+        2
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 16,
+      "frames": 7,
+      "order_ambiguous": false,
+      "opener_summary": "Recover a quota-blocked Codex launch without losing history",
+      "historical_outcome_summary": "The opener and pasted peer report share a final. Later recurrence reports change the failure evidence. Replies progress from inactive-release backups to a recreated custody download and then a persistent policy, still distinguishing transient headroom from durable prevention.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 92,
+          "candidate_operations": [
+            "/context",
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Supply the peer cleanup proposal and conditional-parity statement as attributed material; do not execute its quoted deletion commands.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 154,
+          "candidate_operations": [
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Identify regenerable candidates with replacement/process checks; asking deletability is not deleting authority.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 175,
+          "candidate_operations": [
+            "/next"
+          ],
+          "preserved_intent_and_payload": "Provide exact operator commands for the selected safe route, preserving backups and current running releases.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 194,
+          "candidate_operations": [
+            "/context",
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Supply a fresh recurrence log and repair that observed launch failure; do not presume the earlier advice ran successfully.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 240,
+          "candidate_operations": [
+            "/context",
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Supply another recurrence and diagnose the new staging source rather than repeat unchanged cleanup.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 301,
+          "candidate_operations": [
+            "/context",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Report an operator launch attempt and measure current startup/quota state.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 346,
+          "candidate_operations": [
+            "/fix"
+          ],
+          "preserved_intent_and_payload": "Resolve the active recurrence at its owning transfer destination; prepare any relay separately from sending.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 406,
+          "candidate_operations": [
+            "/fix",
+            "/codify"
+          ],
+          "preserved_intent_and_payload": "Make the staging correction persistent in owning configuration/instructions; policy presence alone does not prove mechanical enforcement.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D06",
+      "key": "08f1f2493745",
+      "lines": [
+        12,
+        83,
+        162,
+        354,
+        507,
+        931,
+        1071,
+        1151,
+        1403,
+        1477,
+        1812,
+        2068,
+        2134
+      ],
+      "shared": [
+        1,
+        2,
+        3,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 20,
+      "frames": 7,
+      "order_ambiguous": false,
+      "opener_summary": "Reconcile and implement the attached audiovisual evolution plan",
+      "historical_outcome_summary": "Several structured answers share finals with their parent inputs. The plan attachment exists but was not read in full during this tranche; opener/domain completeness remains limited. Later prompts explicitly identify merge/housekeeping targets and exceptions, so those operations remain classifiable with payload retained. Last reply still leaves hosted checks running.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 83,
+          "candidate_operations": [
+            "/choose",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Bind reconcile/harden/implement to the exact clarification question and referenced plan; preserve full plan payload rather than its title.",
+          "interpretation_status": "full_referenced_plan_not_reviewed_in_this_tranche"
+        },
+        {
+          "position": 3,
+          "source_line": 162,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Authorize only the one bounded code checkout with the stated allocation cap and existing-file preservation.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 354,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the approved implementation, keeping provisional qualification and artistic acceptance separate.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 507,
+          "candidate_operations": [
+            "/ship",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Merge the requested repository work and perform full local/remote housekeeping with recoverable history.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 931,
+          "candidate_operations": [
+            "/continue",
+            "/ship",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Include the newly named PR and finish the same repository's parity/housekeeping.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 1071,
+          "candidate_operations": [
+            "/ship",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Extend the requested sweep to the exact companion PR/repository, preserving source state.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 1151,
+          "candidate_operations": [
+            "/choose"
+          ],
+          "preserved_intent_and_payload": "Keep the two named custody PRs as separate review lanes; this restricts the merge sweep.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 1403,
+          "candidate_operations": [
+            "/ship",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Include three specifically named public companions; preserve the two excluded review lanes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 1477,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Authorize only the two bounded code checkouts with their combined cap and preserved existing files.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 11,
+          "source_line": 1812,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Grant exactly one additional 20-minute tranche for the named timed-text reconciliation and parity.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 12,
+          "source_line": 2068,
+          "candidate_operations": [
+            "/approve"
+          ],
+          "preserved_intent_and_payload": "Grant up to 10 additional minutes for the late review corrections and repeat parity; retain all earlier usage.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 13,
+          "source_line": 2134,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish the still-authorized companion sweep; refs/code parity does not establish sparse-checkout media custody or terminal hosted tests.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D07",
+      "key": "505f1643a65e",
+      "lines": [
+        9,
+        160,
+        432,
+        602,
+        666,
+        804,
+        874
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 9,
+      "frames": 2,
+      "order_ambiguous": false,
+      "opener_summary": "Integrate prior positioning material into a presentable workstation offer",
+      "historical_outcome_summary": "The same execution phrase recurs four times, advancing remaining work under one plan. A billing correction narrows an unsupported causal claim. Replies retain publication and physical recovery-trial gaps; closeout later fails process attribution.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 160,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Implement the offered presentation and recovery plan, retaining real acceptance and public-claim limits.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 432,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance unresolved work in that same plan; repeated wording does not reset scope or evidence.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 602,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Challenge billing as an assumed blocker given personal-repository migration; verify the actual admission cause rather than accept the claim as proof.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 666,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the corrected plan and pending review/publication stages.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 804,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the same plan; a passing artifact build does not prove publication or second-machine recovery.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 874,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure release of all accepted caller/worktree scopes without stopping unattributed peer processes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D08",
+      "key": "352d2f3adbdb",
+      "lines": [
+        12,
+        163,
+        186,
+        211,
+        234,
+        252,
+        264,
+        318,
+        356
+      ],
+      "shared": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 13,
+      "frames": 4,
+      "order_ambiguous": false,
+      "opener_summary": "Reach full remote recoverability and an empty workspace",
+      "historical_outcome_summary": "Initial role and later per-directory responsibility corrections reshape the execution plan. The supplied path list is a substantive payload. Relay drafting and scheduling advice do not dispatch agents. The final status distinguishes absent/empty/populated paths and allocation reduction from actual net free space.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 163,
+          "candidate_operations": [
+            "/correct",
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Record that the human will run the two peer sessions and prepare their handoffs; do not launch them automatically.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 186,
+          "candidate_operations": [
+            "/correct",
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Simplify the sequence to commit/preserve, push, prove full parity and reap while preserving history and dependencies.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 211,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Assign each named native session the full per-directory lifecycle rather than splitting execution from responsibility; retain the referenced list.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 234,
+          "candidate_operations": [
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Supply the exact 24-path target list; never replace it with a bare continuation.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 252,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Draft the general relay prompt for the assigned lifecycle; preparation sends nothing.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 264,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Group the supplied paths into logical tranches with complete membership and dependency order.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 318,
+          "candidate_operations": [
+            "/plan",
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Plan parallel inspection/serialized mutation waves and review whether the existing relay still preserves ownership.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 356,
+          "candidate_operations": [
+            "/status"
+          ],
+          "preserved_intent_and_payload": "Report actual progress after the operator's tranche execution claim; independently distinguish removals, retained paths, custody and measured disk effects.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D09",
+      "key": "03a67f54f4b1",
+      "lines": [
+        9,
+        40,
+        147
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 0,
+      "native_user_items": 4,
+      "frames": 1,
+      "order_ambiguous": false,
+      "opener_summary": "Explain conflated quota, storage admission and recovery blockers",
+      "historical_outcome_summary": "The bottleneck question yields a plan; the supplied peer checkpoint expands its evidence and causes a revised plan. Neither response establishes implementation, priority admission or reservations.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 40,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Derive a repair for the observed storage/quota bottleneck with separate target-volume, capacity and preservation predicates.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 147,
+          "candidate_operations": [
+            "/context",
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Supply the peer admission checkpoint and revise the existing plan around the authoritative broker route, preserving serial execution and accounting.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D10",
+      "key": "49a9853b658e",
+      "lines": [
+        12,
+        144,
+        192,
+        239,
+        401,
+        708,
+        731,
+        800,
+        996,
+        1006,
+        1126,
+        1178
+      ],
+      "shared": [
+        10,
+        11
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 19,
+      "frames": 7,
+      "order_ambiguous": false,
+      "opener_summary": "Derive the workstream's full root-to-leaf completion path",
+      "historical_outcome_summary": "Follow-ups add exact stages and evidence. The custody cohort grows beyond an earlier count; later physical-route questioning proposes a different backend, not weaker independence. Externally merged PRs are reported separately from this session's actions. Final custody remains incomplete.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 144,
+          "candidate_operations": [
+            "/continue",
+            "/verify",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Carry layout corrections then verifier hardening through checks, commit and push; explicitly leave the PR open.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 192,
+          "candidate_operations": [
+            "/continue",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Reconcile source authority and custody starting with the named conflicting repository; publish evidence without changing originals.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 239,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance that reconciliation, preserving source snapshots and open review lanes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 401,
+          "candidate_operations": [
+            "/continue",
+            "/verify",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Complete the specific private refs/stash/files custody with two independent copies and clean restore, then publish redacted evidence.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 708,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance that custody stage; a published runner is not a completed payload copy.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 731,
+          "candidate_operations": [
+            "/verify",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Recheck pressure and source stability; perform copies/restore only if both conditions pass.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 800,
+          "candidate_operations": [
+            "/fix",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Diagnose and safely reduce pressure without disrupting active work, then finish custody; do not kill unowned processes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 996,
+          "candidate_operations": [
+            "/next"
+          ],
+          "preserved_intent_and_payload": "Derive the next action from current custody/admission evidence.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 1006,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the selected next step under the preserved safety and ownership boundaries.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 11,
+          "source_line": 1126,
+          "candidate_operations": [
+            "/correct",
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Question the assumed physical-disk-only route and assess private-repository custody as an alternative, retaining independent copy/restore criteria.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 12,
+          "source_line": 1178,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish the same custody obligation; prepared destinations and reports do not satisfy copies or restore.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D11",
+      "key": "fde720569d14",
+      "lines": [
+        15,
+        90,
+        200,
+        212,
+        226,
+        305,
+        315,
+        417,
+        429,
+        472,
+        484,
+        506
+      ],
+      "shared": [
+        1,
+        2
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 1,
+      "native_user_items": 15,
+      "frames": 3,
+      "order_ambiguous": false,
+      "opener_summary": "Assess work left hanging by an external bot",
+      "historical_outcome_summary": "The original short attachment was read. The first clarification corrects app-freeze misinterpretation. Draft responses are repeatedly requested separately from direct verification; repeated checks report no new workflow until the last input expressly assigns implementation to this agent. Publication then occurs while hosted admission stays blocked.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 90,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Read the attached task material and correct hanging to unfinished work, not an unresponsive app.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 200,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Draft the requested response to the peer, retaining exact authorized merges and distinct human gates; do not send it.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 212,
+          "candidate_operations": [
+            "/context",
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Supply the peer reply and prepare a contextual correction; its assertions require attribution and verification.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 226,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Inspect the local notebook service and current exposure directly; scope is read-only inspection.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 305,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Draft a response containing the verified local-service findings and the proper closure boundary.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 315,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Inspect the exact PR and account admission evidence; distinguish billing from absent workflow triggers.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 417,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Draft the requested correction and implementation instruction for the peer, retaining current evidence and no-spend bounds.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 429,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Check whether the peer actually published and tested the missing workflow, with a fresh head/run comparison.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 472,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "preserved_intent_and_payload": "Draft an explicit implementation/test/push demand with exact evidence requirements; preparation does not execute or send it.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 11,
+          "source_line": 484,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Repeat the requested current-state check without claiming unchanged historical tests validate a missing new workflow.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 12,
+          "source_line": 506,
+          "candidate_operations": [
+            "/fix",
+            "/verify",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Take over the named workflow repair, test locally, push and return its SHA/results; leave the PR unmerged while hosted validation is blocked.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D12",
+      "key": "797e453394e1",
+      "lines": [
+        12,
+        326,
+        370,
+        417,
+        1309,
+        1342,
+        1406,
+        1515,
+        1604,
+        1766
+      ],
+      "shared": [
+        3,
+        4
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 23,
+      "frames": 13,
+      "order_ambiguous": false,
+      "opener_summary": "Standardize and consolidate the audiovisual project system",
+      "historical_outcome_summary": "Follow-ups alternate architectural understanding, integration execution, next-step advice and demonstration. The show request requires inspecting and opening working artifacts; a generated gallery is one historical implementation choice, not inherent in the word open. Closeout later remains unmeasured.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 326,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Explain a functional integration plan across actual project capabilities and authoritative records.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 370,
+          "candidate_operations": [
+            "/continue",
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Execute the selected composition integration and answer the governance-enforcement question; preserve both intents.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 417,
+          "candidate_operations": [
+            "/correct",
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Clarify the intended question as linter enforcement of governance, without repeating or restarting integration.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 1309,
+          "candidate_operations": [
+            "/next"
+          ],
+          "preserved_intent_and_payload": "Derive remaining artistic acceptance and pilot stages from current evidence.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 1342,
+          "candidate_operations": [
+            "/review",
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Assess actual source consolidation into logical containers, preserving access, history, storage and artistic behavior rather than assuming navigation already did it.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 1406,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Inspect and explain each directory's current role; retain actual source locations and distinctions from indexes/archives.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 1515,
+          "candidate_operations": [
+            "/verify",
+            "/open"
+          ],
+          "preserved_intent_and_payload": "Identify what actually works and display those specific demonstrations. This is a composite inventory/display request; bare open lacks the required verification and artifact set.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 1604,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish the already requested demonstration tour; preserve the limits on listening, source material and artistic acceptance.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 1766,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure release of the complete session scope with private-artifact custody retained.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D13",
+      "key": "af5cefa1ddae",
+      "lines": [
+        12,
+        43,
+        106,
+        116,
+        198,
+        330,
+        480,
+        607,
+        901,
+        924,
+        1106,
+        1205,
+        1765,
+        1792,
+        1838,
+        1906
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 22,
+      "frames": 6,
+      "order_ambiguous": false,
+      "opener_summary": "Reconcile an inherited four-step layout and preservation proposal",
+      "historical_outcome_summary": "The inherited proposal is partly stale; first proceed binds to the assistant's corrected next step, not old unpublished-history assumptions. Later steps add actual custody, escrow and publication. A logs-only follow-up has no explicit text request and an external ZIP payload not inspected here. Exact main CI is later requested separately.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 43,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Reconcile the existing layout PR using the corrected current-state plan; do not squash already-published history based on stale peer prose.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 106,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Explain the actual reconciliation and distinguish merge conflicts from unstable checks.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 116,
+          "candidate_operations": [
+            "/fix",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Inspect and address the exact unstable check; preserve evidence when the job never started instead of treating it as a test failure.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 198,
+          "candidate_operations": [
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Diff the named engine/tests sources and determine ownership of unique unversioned material without moving or importing it.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 330,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Create the requested private backup at a suitable existing destination, verify restoration and preserve originals.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 480,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Establish independent recovery-key escrow, verify retrieval/decryption and retain current copies.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 607,
+          "candidate_operations": [
+            "/continue",
+            "/verify",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Reconcile the exact source remote before publishing its local work and verify the second named source push; preserve active excluded work.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 901,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Finish that source-publication stage; portable artistic acceptance remains separate.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 924,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Archive the exact stale agent folder recoverably while preserving active work.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 11,
+          "source_line": 1106,
+          "candidate_operations": [
+            "/ship",
+            "/status"
+          ],
+          "preserved_intent_and_payload": "Open the evidence PR and report all four steps with explicit remaining blockers.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 12,
+          "source_line": 1205,
+          "candidate_operations": [
+            "/continue",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Resolve review, tidy permitted history and land the three exact PRs in order; explain any actual account action if it blocks completion.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 13,
+          "source_line": 1765,
+          "candidate_operations": [
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Supply the exact external logs ZIP. Review is suggested by the reply but the empty request body leaves intended action underdetermined; do not infer repair authority.",
+          "interpretation_status": "empty_text_request_and_external_log_not_reviewed"
+        },
+        {
+          "position": 14,
+          "source_line": 1792,
+          "candidate_operations": [
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Run hosted verification on exact main and verify the three merged changes; a passing different branch is insufficient.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 15,
+          "source_line": 1838,
+          "candidate_operations": [
+            "/correct",
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Update the closeout interpretation with exact main-run evidence and record the repository-separation directive while preserving unresolved source/custody gaps.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 16,
+          "source_line": 1906,
+          "candidate_operations": [
+            "/continue",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Implement the exact copied evidence-update plan and publish through its governed route; record separation as pending without changing visibility/remotes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D14",
+      "key": "b8e8d5f7aad8",
+      "lines": [
+        9,
+        173,
+        1358,
+        1471,
+        1636
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 2,
+      "native_user_items": 12,
+      "frames": 7,
+      "order_ambiguous": false,
+      "opener_summary": "Bring assigned repository copies to custody-qualified parity and retirement",
+      "historical_outcome_summary": "The first implementation reports safe partial actions. A new complete-workstream plan preserves every assigned path and acceptance gate; proceed then encounters admission/ownership gaps. Closeout remains unmeasured.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 173,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Implement the selected assigned-scope plan with exclusive ownership, full payload custody and exact retirement checks.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 1358,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Derive a complete remaining attack order from the supplied checkpoint; a handoff or interrupted upload must not become completion.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 1471,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute that full plan using its real allowance and preserved outside-scope boundaries.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 1636,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "preserved_intent_and_payload": "Measure release and retain missing custody/receipt/process evidence as failures.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D15",
+      "key": "aaf1c0845835",
+      "lines": [
+        9,
+        42,
+        54,
+        66,
+        128,
+        554,
+        666,
+        944,
+        1488,
+        1762,
+        1892,
+        2178,
+        2889,
+        9292,
+        11237,
+        11289,
+        11371,
+        18710,
+        18970,
+        18980,
+        18990,
+        19040
+      ],
+      "shared": [],
+      "missing_reply": [],
+      "voice": [
+        2,
+        3,
+        4,
+        7,
+        9,
+        10,
+        13
+      ],
+      "source_eof": true,
+      "compactions": 17,
+      "native_user_items": 137,
+      "frames": 115,
+      "order_ambiguous": false,
+      "opener_summary": "Recognize an uncertified multi-session closeout handoff",
+      "historical_outcome_summary": "Seven voice inputs embed repeated transcript context. Only each new input is dispositioned here. The sequence repeatedly corrects scope, permission and endpoint confusion; later directives change the time boundary and drive dependency. Its last reply acknowledges elapsed time and unresolved critical-path work, not completion.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 42,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Diagnose why closeout repeatedly fails, rather than merely restate the current receipt.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 54,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Broaden the diagnosis to the recurring cross-session failure; retain the new voice utterance separately from repeated transcript context.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 66,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Perform that cross-session diagnosis, with planning/inspection scope intact.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 128,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the concrete repair target identified by the diagnosis.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 554,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance remaining repair/delivery work; this word alone does not answer a new local-versus-hosted evidence exception.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 666,
+          "candidate_operations": [
+            "/approve",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Interpret full-admission language in context as completion pressure plus exception intent; precise executable exception bounds need their own authority binding, not retroactive proof.",
+          "interpretation_status": "broad_exception_intent_needs_precise_binding"
+        },
+        {
+          "position": 8,
+          "source_line": 944,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Carry all already-authorized scopes through the same full acceptance contract.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 1488,
+          "candidate_operations": [
+            "/approve",
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Explicitly remove the named 30-minute/time-lease cutoff for this objective and retain all other authorization/custody requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 1762,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Correct repeated permission requests by recalling existing scope, credential and checkout acceptance; missing proof is not missing permission.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 11,
+          "source_line": 1892,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance that authorized remediation while retaining actual management-access constraints.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 12,
+          "source_line": 2178,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance remaining proof and delivery without another scope/permission reset.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 13,
+          "source_line": 2889,
+          "candidate_operations": [
+            "/next"
+          ],
+          "preserved_intent_and_payload": "Explain the operator's authentication-code step using the existing secure credential source; do not expose or invent the code.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 14,
+          "source_line": 9292,
+          "candidate_operations": [
+            "/status"
+          ],
+          "preserved_intent_and_payload": "Report completion against defensible denominators rather than a transfer percentage posing as overall completion.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 15,
+          "source_line": 11237,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Correct the requirement that external drives are necessary; retain remote recoverability and independence as the actual engineering goal.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 16,
+          "source_line": 11289,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Plan drive-independent recovery and the remaining work in dependency order, preserving the original six scopes.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 17,
+          "source_line": 11371,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Execute that corrected plan through code adoption, custody and actual task predicates.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 18,
+          "source_line": 18710,
+          "candidate_operations": [
+            "/status"
+          ],
+          "preserved_intent_and_payload": "Report progress with explicit task/session/custody denominators, not an invented aggregate score.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 19,
+          "source_line": 18970,
+          "candidate_operations": [
+            "/correct",
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Clarify that zero certified sessions is not zero completed work; preserve both measured milestones and final-certification gaps.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 20,
+          "source_line": 18980,
+          "candidate_operations": [
+            "/status"
+          ],
+          "preserved_intent_and_payload": "Restate the current overall authorized directive from its source and acceptance contract.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 21,
+          "source_line": 18990,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "preserved_intent_and_payload": "Identify the exact six overlapping historical session scopes, not six repositories or six stages.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 22,
+          "source_line": 19040,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Treat elapsed-time feedback as a critical-path/process correction; reduce work that does not remove a real closure blocker.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        }
+      ]
+    },
+    {
+      "alias": "D16",
+      "key": "394cdb156221",
+      "lines": [
+        9,
+        78,
+        97,
+        133,
+        257,
+        609,
+        846,
+        910,
+        1096,
+        1201,
+        1312,
+        1501,
+        1615,
+        1765,
+        1986,
+        2145,
+        2288,
+        2440
+      ],
+      "shared": [
+        4,
+        5
+      ],
+      "missing_reply": [],
+      "voice": [],
+      "source_eof": true,
+      "compactions": 3,
+      "native_user_items": 27,
+      "frames": 9,
+      "order_ambiguous": false,
+      "opener_summary": "Design a rubric-grounded, class-aware essay feedback system",
+      "historical_outcome_summary": "Follow-ups contain substantive product requirements and sequenced implementation slices. Repeated keep-building language does not make those payloads interchangeable. Two positions share a final. The last prompt delegates its request to a long attached CI log, not fully inspected here; the reply reports fixes with hosted confirmation pending.",
+      "cases": [
+        {
+          "position": 2,
+          "source_line": 78,
+          "candidate_operations": [
+            "/choose",
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Select both retention controls and add pre-evaluation pseudonymization with stable IDs; preserve the new privacy requirement.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 3,
+          "source_line": 97,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "preserved_intent_and_payload": "Combine all established product, context, storage and privacy requirements into a full implementation plan.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 4,
+          "source_line": 133,
+          "candidate_operations": [
+            "/continue",
+            "/plan",
+            "/ship"
+          ],
+          "preserved_intent_and_payload": "Save the plan in a dedicated repository, establish delivery phases/tranches and begin building; retain governance and real launch acceptance.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 5,
+          "source_line": 257,
+          "candidate_operations": [
+            "/correct"
+          ],
+          "preserved_intent_and_payload": "Record the project's edu ownership affiliation, distinct from implementation progress.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 6,
+          "source_line": 609,
+          "candidate_operations": [
+            "/context",
+            "/review"
+          ],
+          "preserved_intent_and_payload": "Supply two previous implementation references for reuse assessment; retain their exact identities and provenance.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 7,
+          "source_line": 846,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Build the protected backend then reuse dashboard components, preserving edu ownership and the full plan.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 8,
+          "source_line": 910,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance that selected backend slice under existing constraints.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 9,
+          "source_line": 1096,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Start durable vault/login while database qualification is blocked; keep that gate open instead of dropping it.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 10,
+          "source_line": 1201,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Advance the vault/login slice with the same privacy and qualification requirements.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 11,
+          "source_line": 1312,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Integrate the named reusable dashboard components while qualification remains pending.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 12,
+          "source_line": 1501,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Carry dashboard build/browser checks where admitted, then implement class intake and exception resolution; preserve pending verification.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 13,
+          "source_line": 1615,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Implement bounded extraction and contextual privacy review, keeping blocked build/browser checks tracked.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 14,
+          "source_line": 1765,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Connect extraction and version-bound privacy review to protected intake; retain the explicit PDF/OCR/qualification gaps.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 15,
+          "source_line": 1986,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "preserved_intent_and_payload": "Add assignment/enrollment mapping and protected exception resolution with the named gates retained.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 16,
+          "source_line": 2145,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "preserved_intent_and_payload": "Add versioned roster updates and attempt admitted database/browser verification without weakening the preserved gates.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 17,
+          "source_line": 2288,
+          "candidate_operations": [
+            "/continue",
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Add roster-history review and carry verification forward; the operator's public-visibility report is context, not authority to publish student data.",
+          "interpretation_status": "contextual_candidate_not_independently_validated"
+        },
+        {
+          "position": 18,
+          "source_line": 2440,
+          "candidate_operations": [
+            "/context"
+          ],
+          "preserved_intent_and_payload": "Supply the attached log as the location of the actual request; its full instruction payload is unresolved in this tranche, so do not credit the later fix claim as a validated substitution.",
+          "interpretation_status": "actual_request_delegated_to_unreviewed_attachment"
+        }
+      ]
+    }
+  ]
+}

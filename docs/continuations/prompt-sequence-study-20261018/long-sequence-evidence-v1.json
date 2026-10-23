@@ -1,0 +1,67 @@
+{
+  "schema": "limen.prompt_sequence_review_evidence.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "review": "long-sequence-review-v1.md",
+  "vocabulary_frozen_for_review": "vocabulary-v2.json",
+  "post_review_proposal": "vocabulary-v3.json",
+  "scope": {
+    "new_file_sequences": 3,
+    "retained_inputs": 27,
+    "followup_positions": 24,
+    "all_retained_bodies_marked_complete": true,
+    "logical_session_completeness": false,
+    "independent_review": false,
+    "runtime_substitution": false,
+    "private_bindings": "Existing private study owner; long-sequence-bindings-v1.json",
+    "native_sources_modified": false
+  },
+  "dispositions": {
+    "control": 7,
+    "payload": 5,
+    "composite": 3,
+    "authority": 2,
+    "plan_revision_gap": 1,
+    "exact_response_gap": 6
+  },
+  "checks": [
+    {
+      "predicate": "jq -e: private binding id, captured digest, all source lines and retained-body flags against native-stream-v3-0000.json",
+      "exit_code": 0,
+      "result": true
+    },
+    {
+      "predicate": "jq -e: v3 has 20 unique operations, adds only recall/respond and preserves six-frame vocabulary unit",
+      "exit_code": 0,
+      "result": true
+    },
+    {
+      "predicate": "jq -e: all six U3 response literals match their specified literal and use native-turn attribution",
+      "exit_code": 0,
+      "result": true
+    },
+    {
+      "predicate": "git diff --check",
+      "exit_code": 0,
+      "result": "No whitespace errors before staging; rerun on staged publication required"
+    }
+  ],
+  "limits": [
+    "User role alone does not prove human authorship; six apparent recovery probes remain unresolved.",
+    "Original side-exchange provenance remains unresolved.",
+    "The original native catalog is unchanged; this review and private bindings form the additional review layer.",
+    "V3 is a post-review proposal with no new-source substitution validation and no command installation."
+  ],
+  "admission": {
+    "observed_at": "2026-10-19T15:48:14.807165+00:00",
+    "allowed": false,
+    "reasons": [
+      "vitals-shed"
+    ],
+    "full_scoped_verification": "Not run again under unchanged denial",
+    "host_hook": "Rejected ApplyPatch and Python commands anchored at shared checkout despite explicit owned targets/workdir.",
+    "documented_scope_path": "The host reference permits git -C to scope actions to a linked worktree; the explicit git apply operation succeeded in this existing owned worktree.",
+    "bypass": false
+  },
+  "completion": "Original goal remains active. Remaining source lineage, corpus review, independent substitution, provider collision, full gate, merge/live and release requirements are not satisfied."
+}

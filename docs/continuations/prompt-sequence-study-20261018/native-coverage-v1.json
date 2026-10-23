@@ -1,0 +1,833 @@
+{
+  "schema": "limen.prompt_sequence_coverage.v1",
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "status": "coverage_and_source_provenance_not_completion",
+  "counts": {
+    "all": {
+      "columns": 382,
+      "positions": 3500,
+      "flags": {
+        "true": 757,
+        "false": 100,
+        "null": 2643
+      }
+    },
+    "native": {
+      "columns": 381,
+      "positions": 3489,
+      "flags": {
+        "true": 757,
+        "false": 100,
+        "null": 2632
+      }
+    },
+    "explicitComplete": {
+      "columns": 70,
+      "positions": 395,
+      "owners": {
+        "prior annotations": 5,
+        "short_review": 16,
+        "four_sequence_review": 4,
+        "native-readback prior": 3,
+        "expanded_review": 36,
+        "duplicate native ID": 6
+      }
+    }
+  },
+  "interpretation": {
+    "true": "Explicit retained_source.complete true on the captured prompt.",
+    "false": "Explicit retained_source.complete false; preserve that limitation even when visible text matches the native record.",
+    "null": "No explicit retention-completeness value. This is unknown provenance, not a declared truncation or an extraction failure.",
+    "native_item_complete": "The decoder obtained the native item and accepted its represented content. This does not prove original pre-retention body or whole logical-session completeness.",
+    "claude_boundary": "The additional 11 rows in one column are the separate Claude example; native-item-complete fields are absent there."
+  },
+  "source_inspection": {
+    "decoder": "capture-native-projection.py",
+    "native_stream": "capture-native-stream.py",
+    "text_behavior": "Stored input_text blocks are joined without text slicing. Per-record, byte and deadline bounds fail a source capture rather than establish complete original provenance.",
+    "samples": [
+      {
+        "key": "01394dcfc507",
+        "line": 10,
+        "retained_complete": false,
+        "exact_native_text_match": true,
+        "source_location_changed_to_archived": true
+      },
+      {
+        "key": "4527421227db",
+        "line": 4,
+        "retained_complete": null,
+        "exact_native_text_match": true,
+        "retention_metadata_absent": true
+      }
+    ],
+    "sample_limit": "Two exact native-body comparisons do not validate all 2,743 non-true positions."
+  },
+  "complete_column_owners": [
+    {
+      "key": "e395f293ac1a",
+      "alias": "S1",
+      "inputs": 6,
+      "annotations": 5,
+      "owner": "prior annotations"
+    },
+    {
+      "key": "b760bfd40198",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E01"
+    },
+    {
+      "key": "9484ade1e6aa",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E02"
+    },
+    {
+      "key": "286d6e09fd72",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E03"
+    },
+    {
+      "key": "12f7510cf924",
+      "alias": "S3",
+      "inputs": 4,
+      "annotations": 3,
+      "owner": "prior annotations"
+    },
+    {
+      "key": "9549237286a5",
+      "alias": "S8",
+      "inputs": 4,
+      "annotations": 3,
+      "owner": "prior annotations"
+    },
+    {
+      "key": "fc4a4f08971c",
+      "alias": null,
+      "inputs": 17,
+      "annotations": 0,
+      "owner": "context-tranche-v1:T04"
+    },
+    {
+      "key": "28a34587c97f",
+      "alias": null,
+      "inputs": 6,
+      "annotations": 0,
+      "owner": "context-tranche-v1:T03"
+    },
+    {
+      "key": "bbea7c24644e",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-tranche-v1:T02"
+    },
+    {
+      "key": "e5486e84c834",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E04"
+    },
+    {
+      "key": "d72e4ff8bf64",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E05"
+    },
+    {
+      "key": "372f808b1d01",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E06"
+    },
+    {
+      "key": "31de60535e13",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "context-tranche-v1:T01"
+    },
+    {
+      "key": "b152d1b635cd",
+      "alias": null,
+      "inputs": 7,
+      "annotations": 0,
+      "owner": "native-readback prior"
+    },
+    {
+      "key": "fde720569d14",
+      "alias": null,
+      "inputs": 12,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D11"
+    },
+    {
+      "key": "6838400d1152",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E07"
+    },
+    {
+      "key": "fd651ff7dd3e",
+      "alias": null,
+      "inputs": 9,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D02"
+    },
+    {
+      "key": "40cc17a680ed",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C01"
+    },
+    {
+      "key": "09e8d695fa4b",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D04"
+    },
+    {
+      "key": "08f1f2493745",
+      "alias": null,
+      "inputs": 13,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D06"
+    },
+    {
+      "key": "b68760497ba2",
+      "alias": null,
+      "inputs": 5,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B03"
+    },
+    {
+      "key": "554872e8a0ae",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C08"
+    },
+    {
+      "key": "cffcc86b2fdf",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E08"
+    },
+    {
+      "key": "394cdb156221",
+      "alias": null,
+      "inputs": 18,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D16"
+    },
+    {
+      "key": "49a9853b658e",
+      "alias": null,
+      "inputs": 12,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D10"
+    },
+    {
+      "key": "b311088fa637",
+      "alias": null,
+      "inputs": 7,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B08"
+    },
+    {
+      "key": "af5cefa1ddae",
+      "alias": null,
+      "inputs": 16,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D13"
+    },
+    {
+      "key": "7e01a6772365",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B06"
+    },
+    {
+      "key": "0d87dbbf0bb8",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B10"
+    },
+    {
+      "key": "797e453394e1",
+      "alias": null,
+      "inputs": 10,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D12"
+    },
+    {
+      "key": "b49954a5cd3b",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B01"
+    },
+    {
+      "key": "4d1f91fe6718",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "branch-sequence-review-v1:a6ec9e820613"
+    },
+    {
+      "key": "8d214cf3ae20",
+      "alias": null,
+      "inputs": 6,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C06"
+    },
+    {
+      "key": "74751beb050f",
+      "alias": null,
+      "inputs": 6,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C05"
+    },
+    {
+      "key": "90af1a5f81a4",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C03"
+    },
+    {
+      "key": "4d1f91fe6718",
+      "alias": null,
+      "inputs": 5,
+      "annotations": 0,
+      "owner": "branch-sequence-review-v1:0479e9657ab3"
+    },
+    {
+      "key": "325388a4989e",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E09"
+    },
+    {
+      "key": "03a67f54f4b1",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D09"
+    },
+    {
+      "key": "a01b845e1fe4",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E10"
+    },
+    {
+      "key": "773d85da6ec1",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B04"
+    },
+    {
+      "key": "75a84af847da",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D03"
+    },
+    {
+      "key": "4d1f91fe6718",
+      "alias": null,
+      "inputs": 11,
+      "annotations": 0,
+      "owner": "branch-sequence-review-v1:e9a469256c79"
+    },
+    {
+      "key": "465717925324",
+      "alias": null,
+      "inputs": 5,
+      "annotations": 0,
+      "owner": "branch-sequence-review-v1:129fc0393717"
+    },
+    {
+      "key": "465717925324",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "branch-sequence-review-v1:66de6ccc61e4"
+    },
+    {
+      "key": "e2cfe23d988b",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B02"
+    },
+    {
+      "key": "3addcf764b75",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E11"
+    },
+    {
+      "key": "a92ca768e5a3",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E12"
+    },
+    {
+      "key": "f13fa11e9be1",
+      "alias": null,
+      "inputs": 10,
+      "annotations": 0,
+      "owner": "native-readback prior"
+    },
+    {
+      "key": "352d2f3adbdb",
+      "alias": null,
+      "inputs": 9,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D08"
+    },
+    {
+      "key": "d3beb360f0ff",
+      "alias": null,
+      "inputs": 5,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B05"
+    },
+    {
+      "key": "a301f8991d85",
+      "alias": null,
+      "inputs": 10,
+      "annotations": 0,
+      "owner": "native-readback prior"
+    },
+    {
+      "key": "5b82b5e03c09",
+      "alias": "D2",
+      "inputs": 4,
+      "annotations": 3,
+      "owner": "prior annotations"
+    },
+    {
+      "key": "d9a614769649",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E13"
+    },
+    {
+      "key": "fc79f3672823",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E14"
+    },
+    {
+      "key": "aaf1c0845835",
+      "alias": null,
+      "inputs": 22,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D15"
+    },
+    {
+      "key": "99e347b918b4",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C10"
+    },
+    {
+      "key": "704e82f73833",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E15"
+    },
+    {
+      "key": "190d4f503b26",
+      "alias": null,
+      "inputs": 6,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B09"
+    },
+    {
+      "key": "3fe73c75e065",
+      "alias": null,
+      "inputs": 8,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C07"
+    },
+    {
+      "key": "989f8fc7d7ca",
+      "alias": null,
+      "inputs": 8,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C09"
+    },
+    {
+      "key": "36b3410bc919",
+      "alias": null,
+      "inputs": 6,
+      "annotations": 0,
+      "owner": "context-expanded-v1:B07"
+    },
+    {
+      "key": "a27c90dcaeb4",
+      "alias": null,
+      "inputs": 8,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D01"
+    },
+    {
+      "key": "b8e8d5f7aad8",
+      "alias": null,
+      "inputs": 5,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D14"
+    },
+    {
+      "key": "c94fe756ded1",
+      "alias": null,
+      "inputs": 9,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D05"
+    },
+    {
+      "key": "e29f61b15f28",
+      "alias": null,
+      "inputs": 2,
+      "annotations": 0,
+      "owner": "short-sequence-review-v1:E16"
+    },
+    {
+      "key": "389bd96104a3",
+      "alias": "D1",
+      "inputs": 4,
+      "annotations": 3,
+      "owner": "prior annotations"
+    },
+    {
+      "key": "6cc47a0497a7",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C04"
+    },
+    {
+      "key": "6f53d8877ed7",
+      "alias": null,
+      "inputs": 3,
+      "annotations": 0,
+      "owner": "context-expanded-v1:C02"
+    },
+    {
+      "key": "505f1643a65e",
+      "alias": null,
+      "inputs": 7,
+      "annotations": 0,
+      "owner": "context-expanded-v1:D07"
+    },
+    {
+      "key": "346dcbc5844c",
+      "alias": null,
+      "inputs": 4,
+      "annotations": 0,
+      "owner": "branch-sequence-review-v1:2b3c94584076"
+    }
+  ],
+  "source_segments": [
+    {
+      "source_key": "4d1f91fe6718",
+      "column_key": "a6ec9e820613",
+      "bytes": 155928,
+      "record_count": 69,
+      "first_ordinal": 6700,
+      "last_ordinal": 6768,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": {
+        "reference_key": "3f0780eefa6d",
+        "end_ordinal_exclusive": 6700,
+        "end_byte_offset": 8434941
+      }
+    },
+    {
+      "source_key": "4d1f91fe6718",
+      "column_key": "0479e9657ab3",
+      "bytes": 8553857,
+      "record_count": 1359,
+      "first_ordinal": 5402,
+      "last_ordinal": 6760,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": {
+        "reference_key": "4d1f91fe6718",
+        "end_ordinal_exclusive": 5402,
+        "end_byte_offset": 25774596
+      }
+    },
+    {
+      "source_key": "4d1f91fe6718",
+      "column_key": "e9a469256c79",
+      "bytes": 25784516,
+      "record_count": 5410,
+      "first_ordinal": 0,
+      "last_ordinal": 5409,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": null
+    },
+    {
+      "source_key": "465717925324",
+      "column_key": "129fc0393717",
+      "bytes": 5344940,
+      "record_count": 752,
+      "first_ordinal": 513,
+      "last_ordinal": 1264,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": {
+        "reference_key": "465717925324",
+        "end_ordinal_exclusive": 513,
+        "end_byte_offset": 2073568
+      }
+    },
+    {
+      "source_key": "465717925324",
+      "column_key": "66de6ccc61e4",
+      "bytes": 2154737,
+      "record_count": 528,
+      "first_ordinal": 0,
+      "last_ordinal": 527,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": null
+    },
+    {
+      "source_key": "346dcbc5844c",
+      "column_key": "2b3c94584076",
+      "bytes": 2671355,
+      "record_count": 384,
+      "first_ordinal": 397,
+      "last_ordinal": 780,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": {
+        "reference_key": "346dcbc5844c",
+        "end_ordinal_exclusive": 397,
+        "end_byte_offset": 9100976
+      }
+    },
+    {
+      "source_key": "346dcbc5844c",
+      "column_key": "c0924a69626b",
+      "bytes": 9606111,
+      "record_count": 418,
+      "first_ordinal": 0,
+      "last_ordinal": 417,
+      "ordinal_consecutive": true,
+      "records_without_ordinal": 0,
+      "snapshot_hash_match": true,
+      "header_id_matches_session_id": true,
+      "history_mode": "paginated",
+      "history_base": null
+    }
+  ],
+  "prefix_boundaries": [
+    {
+      "child_column": "a6ec9e820613",
+      "parent_column": "0479e9657ab3",
+      "referenced_thread_matches_parent_header": false,
+      "reference_matches_unique_filename_token": true,
+      "prefix_bytes": 8434941,
+      "parent_bytes": 8553857,
+      "prefix_end_ordinal_exclusive": 6700,
+      "parent_first_ordinal": 5402,
+      "parent_last_ordinal": 6760,
+      "boundary_newline": true,
+      "consecutive_prefix": true,
+      "last_ordinal_matches_endpoint": true,
+      "included_parent_prompt_positions": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "excluded_parent_tail_positions": [
+        5
+      ],
+      "prefix_hash": "62a9d2ad5b0c",
+      "whole_parent_snapshot_hash_match": true
+    },
+    {
+      "child_column": "0479e9657ab3",
+      "parent_column": "e9a469256c79",
+      "referenced_thread_matches_parent_header": true,
+      "reference_matches_unique_filename_token": true,
+      "prefix_bytes": 25774596,
+      "parent_bytes": 25784516,
+      "prefix_end_ordinal_exclusive": 5402,
+      "parent_first_ordinal": 0,
+      "parent_last_ordinal": 5409,
+      "boundary_newline": true,
+      "consecutive_prefix": true,
+      "last_ordinal_matches_endpoint": true,
+      "included_parent_prompt_positions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "excluded_parent_tail_positions": [
+        11
+      ],
+      "prefix_hash": "2756f19e4f3a",
+      "whole_parent_snapshot_hash_match": true
+    },
+    {
+      "child_column": "129fc0393717",
+      "parent_column": "66de6ccc61e4",
+      "referenced_thread_matches_parent_header": true,
+      "reference_matches_unique_filename_token": true,
+      "prefix_bytes": 2073568,
+      "parent_bytes": 2154737,
+      "prefix_end_ordinal_exclusive": 513,
+      "parent_first_ordinal": 0,
+      "parent_last_ordinal": 527,
+      "boundary_newline": true,
+      "consecutive_prefix": true,
+      "last_ordinal_matches_endpoint": true,
+      "included_parent_prompt_positions": [
+        1,
+        2
+      ],
+      "excluded_parent_tail_positions": [
+        3
+      ],
+      "prefix_hash": "9759ad75b3c0",
+      "whole_parent_snapshot_hash_match": true
+    },
+    {
+      "child_column": "2b3c94584076",
+      "parent_column": "c0924a69626b",
+      "referenced_thread_matches_parent_header": true,
+      "reference_matches_unique_filename_token": true,
+      "prefix_bytes": 9100976,
+      "parent_bytes": 9606111,
+      "prefix_end_ordinal_exclusive": 397,
+      "parent_first_ordinal": 0,
+      "parent_last_ordinal": 417,
+      "boundary_newline": true,
+      "consecutive_prefix": true,
+      "last_ordinal_matches_endpoint": true,
+      "included_parent_prompt_positions": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "excluded_parent_tail_positions": [
+        6
+      ],
+      "prefix_hash": "9a5b459f0cb7",
+      "whole_parent_snapshot_hash_match": true
+    }
+  ],
+  "selection": {
+    "concern": "Duplicate native IDs might cause picker selection to alias distinct file columns.",
+    "result": "Disproved. Existing picker uses numeric file indices; all nine duplicate-ID columns rendered their own full prompt sets.",
+    "tested_columns": [
+      {
+        "index": 61,
+        "prompts": 2
+      },
+      {
+        "index": 68,
+        "prompts": 5
+      },
+      {
+        "index": 83,
+        "prompts": 11
+      },
+      {
+        "index": 84,
+        "prompts": 5
+      },
+      {
+        "index": 85,
+        "prompts": 3
+      },
+      {
+        "index": 129,
+        "prompts": 4
+      },
+      {
+        "index": 133,
+        "prompts": 6
+      },
+      {
+        "index": 188,
+        "prompts": 5
+      },
+      {
+        "index": 191,
+        "prompts": 6
+      }
+    ],
+    "distinct_captured_ids": 377,
+    "duplicate_id_groups": 4,
+    "code_changes": 0
+  },
+  "native_app_readback": {
+    "target": "One historical continuation handle",
+    "result": "list_turns is not supported yet",
+    "limit": "Native app identity/turn readback for this handle remains unavailable; storage-prefix evidence is not substituted for that acceptance."
+  },
+  "remaining": "The six explicitly complete duplicate-header columns and one naming parent now have cutoff-aware reference reconstruction and same-coder prompt/reply assessments in branch-sequence-review-v1.json. Native app identity and complete original logical sessions remain unproved; one reference token differs from its candidate parent's header ID. Excluded parent tails remain separate branches. Earlier fork/parent, attachment, side-history and independent-substitution gaps remain separately open; this census does not close them."
+}
