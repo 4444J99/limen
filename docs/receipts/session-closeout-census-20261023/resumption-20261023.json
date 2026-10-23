@@ -1,0 +1,198 @@
+{
+  "schema": "limen.session_reconciliation_observation.v1",
+  "observed_at": "2026-10-23T13:41:31.921035+00:00",
+  "session_id": "01a168c7-6215-7601-8a2c-49a3f128c7fb",
+  "owner_url": "https://github.com/4444J99/limen/issues/3173",
+  "original_scope": "Complete, merge, reap and close out all 25 screenshot sessions and owner-linked suggested sessions.",
+  "overall_task_completed": false,
+  "session_released": false,
+  "deletion_authorized": false,
+  "attempt": {
+    "resumed_at": "2026-10-23T13:16:12Z",
+    "deadline": "2026-10-23T13:46:12Z",
+    "new_helpers": 0,
+    "new_worktrees": 0,
+    "continuation_renews_budget": false
+  },
+  "merge_readbacks": [
+    {
+      "number": 3174,
+      "url": "https://github.com/4444J99/limen/pull/3174",
+      "state": "MERGED",
+      "headRefOid": "52e1c10256e27308e9900439963903c714303aa2",
+      "mergedAt": "2026-10-23T13:22:55Z",
+      "mergeCommit": {
+        "oid": "fad6c4f428beb6719f94c225bc869dd46a50dc93"
+      },
+      "fetched_main_ancestry_exit": 0,
+      "live_checkout_ancestry_exit": 0
+    },
+    {
+      "number": 3117,
+      "url": "https://github.com/4444J99/limen/pull/3117",
+      "state": "MERGED",
+      "headRefOid": "7b4b98c706d32d13a2820765ed6d665c151dcc55",
+      "mergedAt": "2026-10-23T13:25:00Z",
+      "mergeCommit": {
+        "oid": "0d72ed17cccdff2d7717a7599b88e16bdc8d20a7"
+      },
+      "fetched_main_ancestry_exit": 0,
+      "live_checkout_ancestry_exit": 0
+    },
+    {
+      "number": 3130,
+      "url": "https://github.com/4444J99/limen/pull/3130",
+      "state": "MERGED",
+      "headRefOid": "f4925be09f75a83cc7a88c0bbbd5fa27b934bb1a",
+      "mergedAt": "2026-10-23T13:28:01Z",
+      "mergeCommit": {
+        "oid": "7999ae9bc070acf3006c65c4be90790e1846a46e"
+      },
+      "fetched_main_ancestry_exit": 0,
+      "live_checkout_ancestry_exit": 0
+    }
+  ],
+  "live_checks": {
+    "live_checkout": {
+      "exit_code": 0,
+      "stdout": "live-checkout: state=coherent branch=main drift=0 ahead=0 behind=0 dirty=0\n  root: /Users/4jp/Workspace/limen",
+      "stderr": ""
+    },
+    "installed_runtime_lag": {
+      "exit_code": 0,
+      "stdout": "runtime-lag: OK \u2014 scheduled runtime 7999ae9bc070 is 0 commit(s) behind origin/main (0.0d old)",
+      "stderr": ""
+    }
+  },
+  "installed_runtime": {
+    "status": "ready",
+    "receipt": {
+      "closeout_protocol_sha256": "3bb370813f7e33f630a3d2c8d34114fa99671026e4e69825a76dcfb3c362aaf9",
+      "default_branch": "main",
+      "installed_at": "2026-10-23T13:29:40+00:00",
+      "limen_launcher_body_sha256": "27f013c183fe09611bb92be9f32dd5d11c178fb0cf49d3664fc88edafe100c06",
+      "limen_package_sha256": "bce973f80c370ff5616b456db12231cd33453cb471f7acd28934eec5a8977a35",
+      "python_interpreter": "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+      "python_interpreter_sha256": "9520366c4a127326582aa17cbdcd95fe615ba8d2e6fc350af8dac328f204af2a",
+      "repository": "https://github.com/organvm/limen.git",
+      "schema": "domus-limen-runtime-receipt.v1",
+      "sha": "7999ae9bc070acf3006c65c4be90790e1846a46e",
+      "wheel": "limen-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "60f9d6867c60208e03f2982366c377aa83b61500e9606324fb89e4cce9bdf488"
+    },
+    "closeout_protocol_sha256": "3bb370813f7e33f630a3d2c8d34114fa99671026e4e69825a76dcfb3c362aaf9"
+  },
+  "native_broker_audit": {
+    "session_id": "01a168c7-6215-7601-8a2c-49a3f128c7fb",
+    "session_present": true,
+    "coverage": {
+      "scope": "retained-keeper-state",
+      "retained_state_complete": true,
+      "request_history": "unmeasured",
+      "rejected_or_uncommitted_requests": "unmeasured",
+      "registration_witness": "observed",
+      "projection_history": "latest-retained-receipts-per-run",
+      "truncated": false,
+      "row_limit": 250,
+      "next_event_sequence": 12286
+    },
+    "retained_run_count": 0,
+    "active_lease_count": 0,
+    "nonterminal_run_count": null,
+    "binding_present": true,
+    "native_anchor_matches": true,
+    "human_protected": true,
+    "accepting_work": false
+  },
+  "unchanged_implementation_verification": [
+    {
+      "pr": 3174,
+      "head": "3e8ddd044da726fa5dfbbf16cd8eef73c7aca1c3",
+      "url": "https://github.com/4444J99/limen/actions/runs/39958154767/job/120429086400",
+      "cli_passed": 9394,
+      "cli_skipped": 75,
+      "api_passed": 52,
+      "exit_code": 0
+    },
+    {
+      "pr": 3117,
+      "head": "7b4b98c706d32d13a2820765ed6d665c151dcc55",
+      "command": "bash scripts/verify-scoped.sh",
+      "cheap_gates_passed": 7,
+      "worker_passed": 413,
+      "worker_failed": 0,
+      "exit_code": 0
+    },
+    {
+      "pr": 3130,
+      "head": "f4925be09f75a83cc7a88c0bbbd5fa27b934bb1a",
+      "url": "https://github.com/4444J99/limen/actions/runs/39281253169/job/118156174607",
+      "cheap_gates_passed": 18,
+      "cli_passed": 9386,
+      "cli_skipped": 75,
+      "api_passed": 52,
+      "exit_code": 0
+    }
+  ],
+  "av_bootstrap_observation": {
+    "observed_at": "2026-10-23T13:36:37Z",
+    "mode": "dry-run",
+    "exit_code": 75,
+    "status": "blocked",
+    "gate": "approved_attempt_deadline_exhausted",
+    "owner_url": "https://github.com/4444J99/audiovisual-composition-system/issues/12",
+    "applied": false,
+    "deadline_renewed": false
+  },
+  "retained_owners": {
+    "coordinator_and_historical_custody": "https://github.com/4444J99/limen/issues/3173",
+    "native_runtime_and_restoration": "https://github.com/4444J99/limen/issues/2848",
+    "broker_deployment_and_observed_recovery": "https://github.com/4444J99/limen/issues/2054",
+    "broker_review_debt": "https://github.com/4444J99/limen/issues/3118",
+    "witness_authentication": "https://github.com/4444J99/limen/issues/3003",
+    "python_dependency_audit": "https://github.com/4444J99/limen/issues/3145",
+    "next_dependency_audit": "https://github.com/4444J99/limen/issues/3175",
+    "unready_receipt_producer": "https://github.com/4444J99/limen/pull/2988",
+    "unapplied_source_skills_and_config": "https://github.com/4444J99/domus-genoma-private/issues/535"
+  },
+  "preservation": {
+    "previous_archived_task_count": 4,
+    "previous_reaped_branch_count": 6,
+    "removed_worktrees": 0,
+    "private_payloads": "retained with original owners",
+    "active_sibling": "preserved under its own writer; no result adopted"
+  },
+  "raw_log_integrity": {
+    "3117-resumed-scoped.log": {
+      "sha256": "3dfe20b3f4d299435da3adc634496837a86975c3cb3e962e22f0d32584cfe1da",
+      "bytes": 50231,
+      "retention": "local scratch; summarized acceptance and hosted links committed here"
+    },
+    "pr-gate-3e8ddd04.log": {
+      "sha256": "29928477b7527e71840f0c3556492849705725292bb11fc10bd22b427cf5e09a",
+      "bytes": 181399,
+      "retention": "local scratch; summarized acceptance and hosted links committed here"
+    },
+    "3130-pr-gate.log": {
+      "sha256": "761a81233f2a2ecc0a282db6d4bb451346326d7ff50bf44d1824007887eafd32",
+      "bytes": 156054,
+      "retention": "local scratch; summarized acceptance and hosted links committed here"
+    },
+    "review-docs-scoped.log": {
+      "sha256": "b24f778f521119f35ccd6ae62ea314b6a20213dec73bbc5251b7d340bf9ec73d",
+      "bytes": 19377,
+      "retention": "local scratch; summarized acceptance and hosted links committed here"
+    },
+    "runtime-install.log": {
+      "sha256": "26e496f01e388af6d513e718e78494cb11173d63712e37d08f5c35dd031b64b7",
+      "bytes": 258,
+      "retention": "local scratch; summarized acceptance and hosted links committed here"
+    }
+  },
+  "release_limits": [
+    "This observation is not a canonical session-release receipt.",
+    "Complete independent custody and restoration evidence is unavailable for retained private payloads and absent historical roots.",
+    "Source merges and CLI installation do not prove remote Worker deployment, native broker recovery or artistic/device acceptance.",
+    "The 25-entry historical census is retained unchanged; this dated observation supersedes its three PR states and runtime state only."
+  ]
+}
