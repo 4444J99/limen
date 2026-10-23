@@ -51,6 +51,8 @@
 #   evidence        {kind, locator, note}: what the utilization sensor reads. kind ∈
 #                   gh-actions-runs | bookend-tsv | witness-audit | voice-stamps | claude-snapshot |
 #                   board-dispatch-receipts | issue-comments | none
+#   declared_on     ISO date the plane entered this registry; a plane with evidence kind `none` reads as a
+#                   stale readback once LIMEN_SCHEDULE_READBACK_MAX_AGE_DAYS have passed since this date
 #   enabled         false = plane declared but deliberately not audited (reason in note)
 #
 # job schema (declared rows only — derived planes carry none):
@@ -89,6 +91,7 @@ planes:
       - {file: deploy-danse.yml, since: "unknown (read 2026-10-23)", reason: "disabled_manually; canonical Danse deploy rail parked — declared so the off-state is owned (danse)"}
       - {file: deploy.yml, since: "unknown (read 2026-10-23)", reason: "disabled_manually; dashboard deploy rail parked (Cloudflare Pages via deploy.yml) — declared so the off-state is owned (fleet)"}
     evidence: {kind: gh-actions-runs, locator: "4444J99/limen", note: "successful scheduled-event runs today per ACTIVE cron workflow, via gh run list; live workflow state is read and reconciled against declared_off"}
+    declared_on: 2026-10-23
     enabled: true
 
   github-actions-ops:
@@ -102,6 +105,7 @@ planes:
     floor: null
     jobs_source: null
     evidence: {kind: bookend-tsv, locator: "4444J99/ops:bookends", note: "start/end pairs in bookends/<day>.tsv; read from the sibling clone when present, else gh api contents"}
+    declared_on: 2026-10-23
     enabled: true
 
   github-actions-ops-witness:
@@ -115,6 +119,7 @@ planes:
     floor: null
     jobs_source: null
     evidence: {kind: gh-actions-runs, locator: "4444J99/ops-witness", note: "scheduled-event runs today per workflow"}
+    declared_on: 2026-10-23
     enabled: true
 
   cloudflare-ops-scheduler:
@@ -128,6 +133,7 @@ planes:
     floor: null
     jobs_source: null
     evidence: {kind: witness-audit, locator: "4444J99/ops-witness:audit", note: "newest audit/*-witness.md, last-7-day bookend pairing per target (weekly; stale beyond 8 days)"}
+    declared_on: 2026-10-23
     enabled: true
 
   limen-beat:
@@ -140,6 +146,7 @@ planes:
     floor: null
     jobs_source: {kind: sensors, locator: institutio/governance/sensors.yaml}
     evidence: {kind: voice-stamps, locator: logs/.voice, note: "one stamp per visited cadence sensor; absent directory = unmeasured (CI, worktree)"}
+    declared_on: 2026-10-23
     enabled: true
 
   claude-cloud:
@@ -152,6 +159,7 @@ planes:
     floor: 13
     jobs_source: {kind: cloud-routines, locator: cloud-routines.json}
     evidence: {kind: claude-snapshot, locator: "docs/receipts/claude-triggers-snapshot-*.json", note: "list_triggers is in-session-only (RemoteTrigger), so an interactive session exports a dated snapshot receipt; the sensor reads the newest and reports its age; beyond LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS the plane is unmeasured"}
+    declared_on: 2026-10-23
     enabled: true
 
   chatgpt-scheduled-tasks:
@@ -164,6 +172,7 @@ planes:
     floor: null
     jobs_source: null
     evidence: {kind: issue-comments, locator: "4444J99/limen#2680", note: "any comment today = delivered; native telemetry goes to a private destination, so this undercounts"}
+    declared_on: 2026-10-23
     enabled: true
 
   grok-automations:
@@ -176,6 +185,7 @@ planes:
     floor: null
     jobs_source: null
     evidence: {kind: none, locator: null, note: "no receipt path exists anywhere in the estate; ~/.grokbot residue only (docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md)"}
+    declared_on: 2026-10-23
     enabled: true
 
   gemini-scheduled-actions:
@@ -188,6 +198,7 @@ planes:
     floor: null
     jobs_source: null
     evidence: {kind: none, locator: null, note: "the 2026-09-17 Gemini artifact proposed 08:00/10:30/14:30/19:00 America/New_York windows — proposals, not receipts (limen#2680)"}
+    declared_on: 2026-10-23
     enabled: true
 
   jules:
@@ -200,6 +211,7 @@ planes:
     floor: 25
     jobs_source: null
     evidence: {kind: board-dispatch-receipts, locator: tasks.yaml, note: "dispatch_log rows agent=jules status=dispatched in the last rolling 24h — this broker's launches only, never vendor remaining quota; competing callers (ChatGPT steward routine, Jules native scheduled tasks, CLI/manual, GitHub label webhook) are reconciled by limen#2680, not here"}
+    declared_on: 2026-10-23
     enabled: true
 
 jobs:
@@ -212,6 +224,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "4444J99/ops:bookends/<day>.tsv"}
     class: report
     source_of_truth: "4444J99/ops:.github/workflows/org-hygiene-report.yml"
+    declared_on: 2026-10-23
     enabled: true
     note: "daily org hygiene report; the only job that writes ops bookends today"
   - id: ops/keepalive
@@ -221,6 +234,7 @@ jobs:
     delivery: {kind: commit, locator: "4444J99/ops:.keepalive"}
     class: keepalive
     source_of_truth: "4444J99/ops:.github/workflows/keepalive.yml"
+    declared_on: 2026-10-23
     enabled: true
     note: "dead-man's-switch reset: touches .keepalive and re-enables inactivity-disabled workflows"
 
@@ -232,6 +246,7 @@ jobs:
     delivery: {kind: commit, locator: "4444J99/ops-witness:audit/<day>-witness.md"}
     class: witness
     source_of_truth: "4444J99/ops-witness:.github/workflows/weekly-witness.yml"
+    declared_on: 2026-10-23
     enabled: true
     note: "reconciles ops bookends + the six Cloudflare targets over the last 7 days"
   - id: ops-witness/keepalive
@@ -241,6 +256,7 @@ jobs:
     delivery: {kind: commit, locator: "4444J99/ops-witness:.keepalive"}
     class: keepalive
     source_of_truth: "4444J99/ops-witness:.github/workflows/keepalive.yml"
+    declared_on: 2026-10-23
     enabled: true
   - id: ops-witness/jules-api-witness
     plane: github-actions-ops-witness
@@ -249,6 +265,7 @@ jobs:
     delivery: {kind: artifact, locator: "4444J99/ops-witness:actions artifact jules-api-witness-<run>"}
     class: witness
     source_of_truth: "4444J99/ops-witness:.github/workflows/jules-orchestrator.yml"
+    declared_on: 2026-10-23
     enabled: true
     note: "read-only Jules API observer at the four historical diagnostic opportunities; NOT dispatch timers (2026-09-21 correction)"
 
@@ -261,6 +278,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
+    declared_on: 2026-10-23
     enabled: true
   - id: cloudflare/edgarflash
     plane: cloudflare-ops-scheduler
@@ -270,6 +288,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
+    declared_on: 2026-10-23
     enabled: true
   - id: cloudflare/trendpulse
     plane: cloudflare-ops-scheduler
@@ -279,6 +298,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
+    declared_on: 2026-10-23
     enabled: true
   - id: cloudflare/vulnpulse
     plane: cloudflare-ops-scheduler
@@ -288,6 +308,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
+    declared_on: 2026-10-23
     enabled: true
   - id: cloudflare/ucc-staging
     plane: cloudflare-ops-scheduler
@@ -297,6 +318,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
+    declared_on: 2026-10-23
     enabled: true
     note: "continuationSchedule */10 * * * * carries the per-day allowance of 144; the 5 clock slots are the primary cron"
   - id: cloudflare/ucc-production
@@ -307,6 +329,7 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
+    declared_on: 2026-10-23
     enabled: true
 
   # ── ChatGPT scheduled tasks — configured 2026-09-20 in the ChatGPT app (limen#2680) ─────────
@@ -317,6 +340,7 @@ jobs:
     delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
     class: report
     source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
+    declared_on: 2026-10-23
     enabled: true
     note: "'around 08:00' — vendor windows are flexible, not exact"
   - id: chatgpt/jules-backlog-steward
@@ -326,6 +350,7 @@ jobs:
     delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
     class: dispatch
     source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-pilot-2026-09-20-r2"
+    declared_on: 2026-10-23
     enabled: true
     note: "the sole scheduled Jules capacity-filling caller among the five; reported zero launches as of limen#2680's last update"
   - id: chatgpt/github-debt-landing
@@ -335,6 +360,7 @@ jobs:
     delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
     class: landing
     source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
+    declared_on: 2026-10-23
     enabled: true
   - id: chatgpt/github-debt-weekly
     plane: chatgpt-scheduled-tasks
@@ -343,6 +369,7 @@ jobs:
     delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
     class: report
     source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
+    declared_on: 2026-10-23
     enabled: true
   - id: chatgpt/github-debt-integrity
     plane: chatgpt-scheduled-tasks
@@ -351,4 +378,5 @@ jobs:
     delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
     class: report
     source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
+    declared_on: 2026-10-23
     enabled: true

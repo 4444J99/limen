@@ -6634,13 +6634,7 @@ parameters:
     env: LIMEN_SCHEDULE_UTILIZATION
     self_update: none
     owner: governance
-    note: "Beat gate for the schedule-utilization sensor (scripts/schedule-utilization.py) run by the derive runner from sensors.yaml (section 0z5) on both the metabolize and heartbeat lanes. Measures every scheduler plane declared in institutio/governance/schedules.yaml — allotment vs declared vs observed — and names the owner effector when a plane is dark, underfilled or has unscheduled headroom. Advisory; unmeasured planes are never red. 1=enabled; 0=skip."
-  LIMEN_SCHEDULE_UTILIZATION_CADENCE:
-    default: 4
-    env: LIMEN_SCHEDULE_UTILIZATION_CADENCE
-    self_update: none
-    owner: governance
-    note: "Beat cadence (hours) for the schedule-utilization sensor."
+    note: "Beat gate for the schedule-utilization sensor (scripts/schedule-utilization.py) run by the derive runner from sensors.yaml (section 0z5) on the hourly metabolize sensor pass. Measures every scheduler plane declared in institutio/governance/schedules.yaml — allotment vs declared vs observed — and names the owner effector when a plane is dark, underfilled or has unscheduled headroom. Advisory; unmeasured planes are never red. 1=enabled; 0=skip."
   LIMEN_SCHEDULE_UTILIZATION_TIMEOUT:
     default: 120
     env: LIMEN_SCHEDULE_UTILIZATION_TIMEOUT
@@ -6659,6 +6653,12 @@ parameters:
     self_update: none
     owner: governance
     note: "How old the newest docs/receipts/claude-triggers-snapshot-*.json may be before the claude-cloud plane reads as unmeasured instead of trusting a stale export. The snapshot is the only fire-side evidence for claude.ai routines (list_triggers is in-session-only), so a session must re-export it at least weekly for the gauge to stay live."
+  LIMEN_SCHEDULE_READBACK_MAX_AGE_DAYS:
+    default: 31
+    env: LIMEN_SCHEDULE_READBACK_MAX_AGE_DAYS
+    self_update: none
+    owner: governance
+    note: "How long a plane declared with evidence kind `none` (a UI-only scheduler nobody can read) may sit unmeasured, counted from its registry `declared_on` date, before schedule-utilization reports it as a stale readback (exit 3). Without this a plane that no one ever reads back would stay silently green forever; with it the silence has a deadline and a lever (L-SCHED-READBACKS)."
   LIMEN_SCHEDULE_WITNESS_MAX_AGE_DAYS:
     default: 8
     env: LIMEN_SCHEDULE_WITNESS_MAX_AGE_DAYS

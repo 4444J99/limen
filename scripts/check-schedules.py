@@ -20,6 +20,10 @@ Named checks (the check-*.py ratchet discipline):
                     a minute, except lines in schedule-stagger-baseline.txt (shrink-only: a listed line whose
                     violation is gone is itself a failure, so the baseline cannot rot)
   F consumers     — sensors.yaml runs scripts/schedule-utilization.py; gates.yaml registers this predicate
+  G not-a-scheduler — every reader of the registry (any scripts/*.py importing _schedules) is on the
+                    declared allowlist, and none of them is an outbound effector: a new reader must be
+                    added here deliberately, which is how "nothing that reads this can start a run" stays
+                    a predicate instead of prose
 
   python3 scripts/check-schedules.py              # gate (CI): exit 1 on any drift
   python3 scripts/check-schedules.py --slot-map   # print the 24h UTC slot map of every clock-scheduled job
@@ -304,6 +308,31 @@ def check_consumers(root: Path) -> None:
         fail("F", "gates.yaml does not register check-schedules — this predicate would run nowhere in CI")
 
 
+REGISTRY_READERS = frozenset({"scripts/check-schedules.py", "scripts/schedule-utilization.py"})
+
+
+def check_readers(root: Path) -> None:
+    """G: the registry's readers are an allowlist, and none of them may be an outbound effector."""
+    readers: set[str] = set()
+    for path in sorted((root / "scripts").glob("*.py")):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if "import _schedules" in text or "from _schedules" in text:
+            readers.add(f"scripts/{path.name}")
+    for extra in sorted(readers - REGISTRY_READERS):
+        fail("G", f"{extra} reads the SCHEDULES registry but is not an allowlisted reader — a reader that can start, retry or deploy a run would make the registry a scheduler")
+    effectors_path = root / "institutio" / "governance" / "outbound-effectors.yaml"
+    try:
+        effectors_text = effectors_path.read_text(encoding="utf-8")
+    except OSError:
+        effectors_text = ""
+    for reader in sorted(readers & REGISTRY_READERS):
+        if reader in effectors_text:
+            fail("G", f"{reader} is named in outbound-effectors.yaml — a registry reader must never be an effector")
+
+
 def slot_map(registry: dict, jobs: list[S.Job], day: date) -> list[dict]:
     rows: list[dict] = []
     violations = stagger_violations(registry, jobs)
@@ -375,6 +404,7 @@ def main(argv: list[str] | None = None) -> int:
     check_sibling_parity(registry, declared, dict(os.environ), Path.home())
     check_stagger(registry, jobs, S.load_baseline(root))
     check_consumers(root)
+    check_readers(root)
     if not args.quiet:
         for a in _advisories:
             print(f"  · {a}")
@@ -387,7 +417,7 @@ def main(argv: list[str] | None = None) -> int:
     planes = registry.get("planes") or {}
     print(
         f"check-schedules: OK — {len(planes)} planes, {len(declared)} declared + {len(derived)} derived jobs; "
-        f"schema valid, derivations resolve, claude parity, sibling parity, stagger ratchet, consumers wired"
+        f"schema valid, derivations resolve, claude parity, sibling parity, stagger ratchet, consumers wired, readers allowlisted"
     )
     return 0
 

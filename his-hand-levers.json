@@ -5780,6 +5780,108 @@
         "decision_status": "chosen_pending_evidence"
       },
       "note": "Found while building the SCHEDULES registry: the gauge said github-actions-ops was dark (no bookend today) and ops-witness had 3 fired-but-failed runs; the step list could not be read (job logs 404) but the check-run annotations could. The ops-witness head commit 7ef2bc3 had earlier blamed a dependabot actions@v7 bump and pinned back to v4/v5; that pin did not change the 3-5s failures, which is consistent with a job that never starts."
+    },
+    {
+      "id": "L-SCHED-READBACKS",
+      "label": "Post one schedule readback per UI-only scheduler — ChatGPT scheduled tasks, Gemini scheduled actions, Grok automations, Jules native scheduled tasks — naming each active task, its cadence and time zone, and where its result lands. None of the four has an API: no organ can list, create, pause or read them, so until a readback exists each plane is `unmeasured` in institutio/governance/schedules.yaml by construction (never zero), and its allotment is left on the floor by default.",
+      "owner": "yours",
+      "cost": "~10 min across four apps: ChatGPT > Scheduled tasks (Pro: 15 active), Gemini app > Scheduled actions (10 active), grok.com/automations, Jules > Scheduled tab. Post each readback as one comment on limen#3177 (or paste it in a session); the agent turns it into registry rows with a delivery locator",
+      "unlocks": "ChatGPT's 10 unused slots and Gemini's 10 slots become a deliberate allocation (filled or declared idle-by-design); Grok and Jules-native stop being blind spots; schedule-utilization's `measured k/n` rises by up to four planes. Also: copy ~/.grokbot before the unify-contain v2 retirement erases the only on-disk Grok trace.",
+      "source_task": "schedule-estate registry (limen#3177; docs/plans/2026-10-23-schedule-estate-registry.md). Inventory 2026-10-23: limen holds no receipt, sensor or registry row for a ChatGPT, Grok or Gemini scheduled run; the 5 ChatGPT debt routines are known only from limen#2680's text; Jules native scheduled tasks are UI-only with no edit (delete + recreate).",
+      "gate": "vendor UIs only the account holder can open; a readback is a human act. The 2026-09-17 Gemini four-window proposal and the 'seven Eastern windows' in the ops-witness audit are conflicting unratified proposals — the readback decides, not a guess.",
+      "status": "needs_human",
+      "added": "2026-10-23",
+      "steps": [
+        "REMAINING (human): ChatGPT — list the active scheduled tasks (name, cadence, tz, destination); confirm whether the five 2026-09-20 debt routines are still active and where their receipts go.",
+        "REMAINING (human): Gemini — list active scheduled actions and the plan tier (Pro/Ultra decides the 10-cap); say whether any of the Sept-17 windows were ever created.",
+        "REMAINING (human): Grok — list grok.com/automations (count, names, cadence, destination); copy ~/.grokbot aside before it is retired.",
+        "REMAINING (human): Jules — list native scheduled tasks (Scheduled tab) and confirm the entitlement tier (Pro=100 per rolling 24h is unverified).",
+        "REMAINING (agent): turn each readback into schedules.yaml rows with a delivery locator; the next sensor run moves the plane from unmeasured to measured."
+      ],
+      "issue": 3177,
+      "sovereignty": {
+        "reason": "identity"
+      },
+      "diagnosed_at": "2026-10-23T18:32:00Z",
+      "diagnosis_provenance": "schedule-estate-registry-20261023.inventory",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Declare UI-only schedulers in the SCHEDULES registry from human readbacks only; report them unmeasured until a delivery locator exists; never infer an active count.",
+        "rationale": "A plane nothing can read is a plane whose allotment is lost silently; declaring it unmeasured makes the loss a number the gauge carries until a human supplies the readback.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-SCHED-READBACKS",
+          "institutio/governance/schedules.yaml",
+          "https://github.com/4444J99/limen/issues/3177",
+          "https://github.com/4444J99/limen/issues/2680"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#engage-the-real-problem-first",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedule-estate registry (limen#3177)",
+        "acceptance": {
+          "condition": "Each of the four planes has at least one declared job row with a delivery locator, or an explicit idle-by-design fill_policy, and schedule-utilization reports it measured.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); sys.exit(0 if not any(p['plane'] in ('chatgpt-scheduled-tasks','grok-automations','gemini-scheduled-actions') and p['verdict']=='unmeasured' for p in r['planes']) else 1)\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [],
+        "remaining_human_action": "Post the four readbacks.",
+        "historical_gate_requires_verification": "vendor UIs are the account holder's alone",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Filed from the SCHEDULES registry's first reading; the registry rows for ChatGPT come from limen#2680's 2026-09-20 configuration text and are themselves unverified until this readback."
+    },
+    {
+      "id": "L-SCHED-CLAUDE-REENABLE",
+      "label": "Bring plane (iii) back: all 13 contracted claude.ai scheduled tasks are off. Cohort A (7) failed with ACCESS_DENIED from 2026-08-31..09-05 and auto-disabled after the vendor's 72h GitHub-connection grace; cohort B (6) succeeded on 2026-10-16 and were switched off together at 2026-10-17T00:12:48Z..00:13:36Z by an action this repo does not record. Deliveries to the session-meta rolling issues had already stopped around 2026-08-17, so 'succeeded' runs were succeeding at being blocked (gate probe fails, exit 0).",
+      "owner": "yours",
+      "cost": "~15 min: at claude.ai/code/routines check the GitHub connection the routines run under (session-meta, organvm-corpvs-testamentvm, domus-genoma must be reachable), state why the six were disabled on 10-17, re-enable ONE canary routine and watch it deliver for 72h before the rest",
+      "unlocks": "12 routine runs/day of estate audit (fleet, PRs, plans, atoms, docs, memory, omega) resume against a 100 runs/hour allotment; routine-freshness-audit gets deliveries to measure again; schedule-utilization's claude-cloud row leaves dark on the next snapshot export",
+      "source_task": "schedule-estate registry (limen#3177); live list_triggers census docs/receipts/claude-triggers-snapshot-20261023.json; delivery dates read from session-meta issues 36/34/29/32/79/28/30/31 on 2026-10-23",
+      "gate": "re-enabling spends subscription usage and acts through the operator's GitHub identity — a human toggle at claude.ai/code/routines. Re-enabling before the GitHub connection is repaired repeats the 72h auto-off.",
+      "status": "needs_human",
+      "added": "2026-10-23",
+      "steps": [
+        "DONE: fire-side census exported (20 triggers, 0 enabled) and committed as a dated receipt the registry reads.",
+        "REMAINING (human): repair/confirm the GitHub connection for the routine account; record the reason for the 2026-10-17 bulk disable (one sentence on limen#3177).",
+        "REMAINING (human): re-enable one canary routine (friction-federation delivered most recently, 2026-10-16); after a delivered comment within 72h, re-enable the rest you still want.",
+        "REMAINING (agent): re-export the trigger snapshot from an interactive session so claude-cloud reads measured; follow-up PR fixes routine-freshness-audit's any-comment-counts-as-delivery blind spot (limen#894)."
+      ],
+      "issue": 3177,
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "diagnosed_at": "2026-10-23T18:32:00Z",
+      "diagnosis_provenance": "schedule-estate-registry-20261023.list_triggers",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Measure the claude plane from a dated trigger snapshot plus delivery evidence; never re-enable a routine from an agent; a snapshot older than LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS reads unmeasured.",
+        "rationale": "The trigger API is in-session-only and re-enabling spends; the registry can only declare, snapshot and audit this plane.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-SCHED-CLAUDE-REENABLE",
+          "docs/receipts/claude-triggers-snapshot-20261023.json",
+          "cloud-routines.json",
+          "https://github.com/4444J99/limen/issues/3177",
+          "https://github.com/4444J99/limen/issues/894"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#credentials-are-organ-owned-never-recited-in-chat",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedule-estate registry (limen#3177); routine contract cloud-routines.json (governance)",
+        "acceptance": {
+          "condition": "A fresh snapshot receipt shows the chosen routines enabled and schedule-utilization reports claude-cloud as full or underfilled, not dark.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); sys.exit(0 if all(p['verdict']!='dark' for p in r['planes'] if p['plane']=='claude-cloud') else 1)\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "GitHub connection for the claude.ai routine account"
+        ],
+        "remaining_human_action": "Repair the connection, record the 10-17 reason, re-enable a canary then the rest.",
+        "historical_gate_requires_verification": "re-enabling spends subscription usage",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Cohort B's 'SUCCEEDED' with no delivery is consistent with each prompt's gate probe (`gh auth status` fails → print GATE FAILED and stop) exiting 0; the vendor's run status is infrastructure success, not work success (code.claude.com/docs/en/routines)."
     }
   ]
 }

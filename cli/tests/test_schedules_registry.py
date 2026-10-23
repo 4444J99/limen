@@ -60,6 +60,7 @@ def _plane(**over) -> dict:
         "floor": None,
         "jobs_source": None,
         "evidence": {"kind": "none", "locator": None},
+        "declared_on": "2026-10-23",
         "enabled": True,
     }
     base.update(over)
@@ -383,6 +384,26 @@ def test_claude_parity_reads_newest_snapshot_by_routine_and_cadence(tmp_path):
     assert "live trigger routine 'ghost-routine' (trig_x) is not in cloud-routines.json" in run.stdout
 
 
+def test_registry_readers_are_an_allowlist_and_never_effectors(tmp_path):
+    write_registry(tmp_path, {"p": _plane(fill_policy="idle-by-design")}, [])
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "schedule-utilization.py").write_text("import _schedules\n")
+    assert run_check(tmp_path).returncode == 0
+    (scripts / "jules-dispatch.py").write_text("from _schedules import load_registry\n")
+    run = run_check(tmp_path)
+    assert (
+        run.returncode == 1
+        and "[G] scripts/jules-dispatch.py reads the SCHEDULES registry but is not an allowlisted reader" in run.stdout
+    )
+    (scripts / "jules-dispatch.py").unlink()
+    (tmp_path / "institutio" / "governance" / "outbound-effectors.yaml").write_text(
+        "effectors:\n  - predicate: scripts/schedule-utilization.py\n"
+    )
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and "named in outbound-effectors.yaml" in run.stdout
+
+
 def test_slot_map_lists_every_fire_in_utc_with_flags(tmp_path):
     write_workflow(tmp_path, "deploy", ["0 */12 * * *"])
     planes = {
@@ -654,6 +675,43 @@ def test_stale_readback_is_distinct_from_green_and_red(tmp_path):
     assert report["status"] == "pass" and report["measured"] == "1/1"
     by = {p["plane"]: p for p in report["planes"]}
     assert by["measurable"]["execution_gap"] == 0 and by["declared-unmeasurable"]["allocation_gap"] is None
+
+
+def test_unreadable_plane_becomes_stale_readback_after_its_budget(tmp_path, monkeypatch):
+    planes = {
+        "grok": _plane(
+            provider="xai",
+            surface="ui",
+            declared_on="2026-10-01",
+            allotment={
+                "runs": None,
+                "window": "active-tasks",
+                "concurrency": None,
+                "source": "t",
+                "entitlement": "unpublished",
+            },
+            authority={"owner_repo": "4444J99/ops", "upstream_state": "proposed", "note": "t"},
+        )
+    }
+    write_registry(tmp_path, planes, [])
+    fresh = UTIL.evaluate(tmp_path, date(2026, 10, 23), now=datetime(2026, 10, 23, 12, tzinfo=timezone.utc))
+    assert (
+        fresh["status"] == "pass"
+        and fresh["planes"][0]["verdict"] == "unmeasured"
+        and "readback budget left" in fresh["planes"][0]["detail"]
+    )
+    assert fresh["planes"][0]["upstream_state"] == "proposed"
+    late = UTIL.evaluate(tmp_path, date(2026, 11, 5), now=datetime(2026, 11, 5, 12, tzinfo=timezone.utc))
+    assert (
+        late["status"] == "stale-readback"
+        and late["stale_readback"] == ["grok"]
+        and late["planes"][0]["readback_overdue"]
+    )
+    monkeypatch.setenv("LIMEN_SCHEDULE_READBACK_MAX_AGE_DAYS", "60")
+    assert (
+        UTIL.evaluate(tmp_path, date(2026, 11, 5), now=datetime(2026, 11, 5, 12, tzinfo=timezone.utc))["status"]
+        == "pass"
+    )
 
 
 def test_receipt_is_written_atomically_with_history(tmp_path):

@@ -316,8 +316,22 @@ def read_issue_comments(plane_id: str, plane: dict, jobs: list[S.Job], today: da
     return len(rows), f"{len(rows)} comment(s) on {locator} today (delivery signal, not a run count)"
 
 
-def read_none(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
-    return None, "no evidence path declared — the owner must declare a delivery locator before this plane can be measured"
+def read_none(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
+    """A plane nobody can read. Unmeasured, never zero — but not forever: after the readback budget
+    (counted from the plane's `declared_on`) the silence itself becomes a stale readback (exit 3)."""
+    declared_on = plane.get("declared_on")
+    try:
+        since = date.fromisoformat(str(declared_on))
+    except (TypeError, ValueError):
+        since = None
+    budget = _env_int("LIMEN_SCHEDULE_READBACK_MAX_AGE_DAYS", 31)
+    detail = "no evidence path declared — the owner must declare a delivery locator before this plane can be measured"
+    if since is None:
+        return None, detail + " (no declared_on date; readback budget cannot be applied)", {"readback_overdue": True}
+    age = (today - since).days
+    if age > budget:
+        return None, f"{detail}; unmeasured for {age}d, past the {budget}d readback budget (L-SCHED-READBACKS)", {"readback_overdue": True}
+    return None, f"{detail}; {budget - age}d of readback budget left", {}
 
 
 READERS = {
@@ -408,6 +422,7 @@ def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datet
             extra = result[2] if len(result) > 2 and isinstance(result[2], dict) else {}
         except Exception as exc:  # a broken reader is an unmeasured plane, never a crash of the beat
             observed, detail = None, f"reader error: {exc.__class__.__name__}: {exc}"
+        readback_overdue = bool(extra.get("readback_overdue"))
         declared_jobs = extra.get("declared_jobs")
         declared = declared_for(plane, declared_jobs if isinstance(declared_jobs, list) else plane_jobs, today, now)
         allot = plane.get("allotment") or {}
@@ -435,6 +450,8 @@ def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datet
                 "execution_gap": execution_gap,
                 "verdict": verdict,
                 "evidence": kind,
+                "readback_overdue": readback_overdue,
+                "upstream_state": (plane.get("authority") or {}).get("upstream_state"),
                 "detail": detail,
                 "owner": plane.get("owner"),
                 "effector": plane.get("effector"),
@@ -443,7 +460,8 @@ def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datet
         )
     red = [p for p in planes if p["verdict"] in RED_VERDICTS]
     unmeasured = [p for p in planes if p["verdict"] == "unmeasured"]
-    stale = [p["plane"] for p in unmeasured if p["evidence"] != "none"]  # had a way to look and could not
+    # had a way to look and could not, or has had no way to look for longer than the readback budget
+    stale = [p["plane"] for p in unmeasured if p["evidence"] != "none" or p["readback_overdue"]]
     measurable = [p for p in planes if p["evidence"] != "none"]
     measured = [p for p in measurable if p["observed"] is not None]
     status = "fail" if red else ("stale-readback" if stale else "pass")
