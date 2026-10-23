@@ -1,0 +1,40 @@
+2026-10-23 direct session reconciliation, owner #3173
+
+Initial documentation tree f54b17bf:
+bash scripts/verify-scoped.sh
+Exit 0: seven implicated cheap gates passed.
+
+Reaper regression, before implementation:
+PATH selects the existing pytest-capable CLI environment; mandatory hermetic wrapper remains in use.
+bash scripts/run-pytest-hermetic.sh cli/tests/test_reap_branches.py::test_gh_head_states_paginates_the_whole_repo -q
+Exit 1: missing explicit GET method, expected assertion failure.
+
+After explicit GET selection:
+bash scripts/run-pytest-hermetic.sh cli/tests/test_reap_branches.py -q
+Exit 0: 49 passed in 2.56s.
+
+Live reaper check before fix:
+reap-branches.py --check with exact branch allowlist
+Exit 0: incorrectly reported offline, all seven branches kept as live-work.
+
+Live reaper check after fix:
+reap-branches.py --check with the same exact allowlist
+Exit 1: online; seven branches classified landed. Independent exact-head comparison accepted six and rejected the seventh.
+
+Live reaper apply:
+reap-branches.py --apply with the six independently verified exact branches
+Exit 0: online; six branches reaped, zero decided/unmerged branches. All six merge commits independently verified as ancestors of origin/main.
+
+PSP-P00-W02:
+python3 scripts/positioning-program.py --verify-work PSP-P00-W02
+Exit 0: marked owner receipt valid, receipt digest e25ac289b1950b037fdd758ae67c9b6389fb0c5c6cd1ed0d531fec4ef7371a79.
+
+Audit native release:
+Installed protocol no-tasks-on-me.sh, exact audit session and existing receipt
+Exit 2: broker session/worktree binding mismatch. Not session-released.
+
+PR #3117 exact head 7b4b98c706d32d13a2820765ed6d665c151dcc55:
+First scoped run exit 1: seven cheap gates passed; Worker imports lacked locked yaml/ajv dependencies.
+npm ci --ignore-scripts --no-audit --no-fund: exit 0, 45 locked packages installed; no tracked changes.
+Second scoped run exit 75: seven cheap gates passed; host denied heavy verification on disk-throughput.
+No Worker pass, merge, deployment or native recovery is claimed.

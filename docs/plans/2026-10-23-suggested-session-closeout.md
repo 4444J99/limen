@@ -32,3 +32,7 @@ New checkout growth was refused by the existing 200 GiB reopening latch. Broker 
 - Time: attempt ends by 13:11:46 UTC, including at most ten minutes verification. Record retained checkout and existing owners if unfinished.
 
 Rollback: restore reversible archive flags through the native API; preserve published branches and all source/private state. Reaping has its separate custody predicate and is never inferred from this plan.
+
+## Reaper repair discovered during execution
+
+The live read-only reaper reproduced #3041: query fields make `gh api` select POST, so PR enumeration fails and all squash-merge evidence is mislabeled offline. Within the authorized reaping outcome, add a request-method regression to `cli/tests/test_reap_branches.py`, explicitly select GET in `scripts/reap-branches.py`, run the focused tests and implicated scoped gates, and retain the correction as unmerged if any required gate is unavailable. No landing or custody rule changes.

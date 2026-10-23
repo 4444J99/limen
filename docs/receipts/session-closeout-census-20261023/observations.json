@@ -1,0 +1,403 @@
+{
+  "observed_at": "2026-10-23T12:57:03Z",
+  "owner_url": "https://github.com/4444J99/limen/issues/3173",
+  "coordinator_session_id": "01a168c7-6215-7601-8a2c-49a3f128c7fb",
+  "screenshot_session_count": 25,
+  "initial_recent_api_count": 20,
+  "initial_named_native_count": 26,
+  "initial_active_sibling_count": 1,
+  "older_sessions_omitted_by_recent_api": 6,
+  "scope": "All named non-archived direct native sessions corresponding to the supplied screenshot, plus owner-linked PR/branch evidence. Anonymous guardian sessions and arbitrary backlog are not inferred to be additional approved work.",
+  "overall_task_completed": false,
+  "entries": [
+    {
+      "session_id": "01a168a9-7069-74d3-80d7-ebf36267fd73",
+      "title": "Close out opencode session",
+      "disposition": "active_preserved",
+      "owner_urls": [
+        "https://github.com/4444J99/domus-genoma-private/issues/547"
+      ],
+      "evidence": "Sibling is actively finalizing Domus closeout; its checkout, branches and native task remain under its own writer.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a165e1-0d16-7933-bb3a-ac74f3a021c3",
+      "title": "Determine next steps",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/audiovisual-composition-system/issues/12"
+      ],
+      "evidence": "Fifteen-project production plan is local and validated; publication, admitted production and physical/artistic acceptance remain unfinished.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a165a8-61aa-7120-8bf0-c0b3c0f6a506",
+      "title": "Identify next steps",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/audiovisual-composition-system/issues/12"
+      ],
+      "evidence": "Override approval exists; bootstrap application and project execution remain unverified.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a165c9-1982-7793-8901-4510e0bc2a3d",
+      "title": "Review live coding integration plan",
+      "disposition": "archived_completed_response",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3173"
+      ],
+      "evidence": "Requested response was delivered. Retained decisions: same-machine browser, Gemini/Claude interface, server-side credentials, execution separate from accepting edits, shared gateway implementation, explicit licensing and sandbox verification. This session did not implement the external plan.",
+      "archived": true,
+      "session_released": false
+    },
+    {
+      "session_id": "01a16550-b981-7bd0-b382-1b27ed8f1d84",
+      "title": "Define an autonomous work goal",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/estate-vault/pull/6"
+      ],
+      "evidence": "Private archive checkpoint remains draft and incomplete; access, source coverage, historical gaps and independent restore acceptance remain open. No time-budget reset.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14e66-dd33-79d2-8b81-fccbda7c8c2d",
+      "title": "Describe CLI session flow (2)",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3056",
+        "https://github.com/4444J99/limen/pull/3087"
+      ],
+      "evidence": "Draft #3087 carries newer attribution work and a narrow admission change. Full scoped verification, source/permission repair, independent review and native acceptance remain open. An untracked native-validation file is retained.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a154c1-f69f-7013-979c-69516316a258",
+      "title": "Finish runtime repairs for #2848",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/2848",
+        "https://github.com/4444J99/limen/pull/3130"
+      ],
+      "evidence": "Draft #3130 retains interpreter/restoration repair. Original execution checkout is absent; its custody cannot be inferred from PR publication. Heavy predicates and independent custody remain open.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a151ee-58f1-78b3-be5f-4aec5527476b",
+      "title": "Review model debug output: phase skills",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/domus-genoma-private/issues/535"
+      ],
+      "evidence": "Fixture-validated phase-skill patch is preserved in the owner issue and ignored local payload. Owning Domus source application/installation is unfinished. Existing clean checkout was reused for reconciliation; private payload retained.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a151b0-d6e3-7ea1-b434-87bcef91ae74",
+      "title": "Review model debug output: Codex config",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/domus-genoma-private/issues/535"
+      ],
+      "evidence": "Configuration cleanup plan and bootstrap remain unapplied; source-owned validation and native acceptance remain required.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a15441-853a-71c3-88a5-8be937e7a18d",
+      "title": "Audit agent runtime",
+      "disposition": "audit_merged_release_unmeasured",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/pull/3124",
+        "https://github.com/4444J99/limen/issues/2848"
+      ],
+      "evidence": "PR #3124 is an ancestor of fetched main; published audit content is unchanged. Fresh session predicate exits 2 for broker/worktree binding mismatch. Historical two-green release is not promoted to a current release. Broader runtime work stays with #2848.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a1032c-5252-7822-9ea7-337550141ab9",
+      "title": "Add directories to VS Code",
+      "disposition": "historical_completion_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3173"
+      ],
+      "evidence": "Native transcript records seven directories loaded and later recovery canaries. Fresh code --status reports Code is not running, so live workspace loading was not re-certified.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a15145-f188-7290-ac5a-5e31aed63887",
+      "title": "Fix broker quota recovery",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/2054",
+        "https://github.com/4444J99/limen/pull/3117"
+      ],
+      "evidence": "Clean exact PR checkout retained. Seven cheap gates pass; worker gate initially failed because dependencies were absent. Locked dependencies were restored without source changes; next scoped run exits 75 on disk throughput before the heavy gate. Deployment and native recovery remain unverified.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14d95-6949-79d1-b836-c39edf9158f4",
+      "title": "Repair scope and unblock merges",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/pull/3042"
+      ],
+      "evidence": "R5/R1 run was interrupted and draft #3042 remains open. External-volume checkout metadata points to unavailable paths; no prune or fabricated retired-root proof.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a1515c-48d7-7cf0-b911-353fcd711a89",
+      "title": "Generate vendor insights report",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/2887",
+        "https://github.com/4444J99/limen/issues/3084"
+      ],
+      "evidence": "Six-vendor fresh report remains unfinished. Existing vendor-insights checkout has two modified source/test files and an untracked plan; all retained. Older reports are not relabeled fresh.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14e57-4c15-7d11-af05-a3f77b53e11f",
+      "title": "Complete Archive4T repair #2961: reconciliation",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/2961"
+      ],
+      "evidence": "Credential consumer/wording PRs #3043/#3051 are merged and their merge commits are on main. Native OpenCode root/child reservation, terminal harvest, shared-gateway repair and deployed acceptance remain unfinished.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14eb8-3863-7283-a6e5-ea53017bffaa",
+      "title": "Complete Archive4T repair #2961: renewed approval",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/2961"
+      ],
+      "evidence": "Renewed human authorization is preserved; it does not substitute for authenticated native execution and broker reservation. No duplicate implementation or unsafe lease cleanup.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14db5-99fc-7f10-86b0-0e4953d2fe1d",
+      "title": "Add docs edit permission / TMB acceptance",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/time-moment-brief/pull/18",
+        "https://github.com/4444J99/time-moment-brief/issues/14",
+        "https://github.com/4444J99/time-moment-brief/issues/16"
+      ],
+      "evidence": "Draft #18 preserves timing-probe correction and diagnostics. Safari full-tier natural playback and physical A/V acceptance remain open; no weakened threshold or inferred pass.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14e44-df56-74d3-aad4-c4356be5694a",
+      "title": "Describe CLI session flow",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3056",
+        "https://github.com/4444J99/limen/pull/3067",
+        "https://github.com/4444J99/domus-genoma-private/issues/403"
+      ],
+      "evidence": "Study/handoff owners remain open. Historical discovery failure is superseded by successful installed protocol discovery in this reconciliation; original session release is not newly proven.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "01a14eab-8da4-71d1-bdf0-9aacde1c07a7",
+      "title": "Study Prompt Sequences for Slash",
+      "disposition": "unfinished_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3056",
+        "https://github.com/4444J99/limen/pull/3067"
+      ],
+      "evidence": "Draft #3067 has partial extraction study; resumed/forked lineage, contextual coding, held-out substitution and browser review remain explicit. Private caches retained.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "019fe937-4ff7-7272-84fe-6c846c18f044",
+      "title": "PSP-P00-W02 exact-model executor",
+      "disposition": "durable_task_predicate_pass",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/2160",
+        "https://github.com/4444J99/limen/pull/2292"
+      ],
+      "evidence": "Owning verify-work PSP-P00-W02 predicate passes against the marked durable receipt. Native historical checkout and original rollout path are absent; no current session-release or deletion proof is inferred.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "019fdbe7-981a-7090-bed0-020107dcbacb",
+      "title": "Reply with exactly: ok (1)",
+      "disposition": "archived_failed_empty_probe",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3173"
+      ],
+      "evidence": "Usage-limit failure before assistant/tool execution. Native archive API returned archived=true; transcript retained. Not labeled successful task execution.",
+      "archived": true,
+      "session_released": false
+    },
+    {
+      "session_id": "019fdbe7-296d-74f3-909e-a93634db5da0",
+      "title": "Reply with exactly: ok (2)",
+      "disposition": "archived_failed_empty_probe",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3173"
+      ],
+      "evidence": "Usage-limit failure before assistant/tool execution. Native archive API returned archived=true; transcript retained. Not labeled successful task execution.",
+      "archived": true,
+      "session_released": false
+    },
+    {
+      "session_id": "019fdbe3-d35c-7610-9b45-e170fe5eeaf9",
+      "title": "Reply with exactly: ok (3)",
+      "disposition": "archived_failed_empty_probe",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/issues/3173"
+      ],
+      "evidence": "Usage-limit failure before assistant/tool execution. Native archive API returned archived=true; transcript retained. Not labeled successful task execution.",
+      "archived": true,
+      "session_released": false
+    },
+    {
+      "session_id": "019fc2d9-671c-7fa2-8e16-e5717fb2e204",
+      "title": "Collaboration operations genesis continuation",
+      "disposition": "historical_merge_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/pull/1778"
+      ],
+      "evidence": "GitHub reports #1778 merged and the authority reconciliation is tracked. Its historical merge commit is not an ancestor of current main; original checkout is absent. No current task/session completion is inferred.",
+      "archived": false,
+      "session_released": false
+    },
+    {
+      "session_id": "019fa0e9-0d25-79e2-9175-1c888e43213c",
+      "title": "Laptop-wide recovery S15 continuation",
+      "disposition": "historical_merge_retained",
+      "owner_urls": [
+        "https://github.com/4444J99/limen/pull/1573"
+      ],
+      "evidence": "GitHub reports #1573 merged; original checkout and local historical commit are unavailable. Old host/provider handoff is not replayed or treated as current authority. Retired-root custody remains unmeasured.",
+      "archived": false,
+      "session_released": false
+    }
+  ],
+  "branch_reap_preflight": [
+    {
+      "branch": "docs/agent-runtime-audit-20261019",
+      "local_head": "31fde9b03edb7126de493e6ec0b8fc2f88c7b588",
+      "proof": {
+        "headRefOid": "31fde9b03edb7126de493e6ec0b8fc2f88c7b588",
+        "mergeCommit": {
+          "oid": "7ef53762a6599540f2f18659ffd3983e1bcd5b36"
+        },
+        "mergedAt": "2026-10-19T15:08:48Z",
+        "number": 3124,
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/3124"
+      },
+      "exact_head_matched": true
+    },
+    {
+      "branch": "docs/lane-credential-single-lane-wording-2961",
+      "local_head": "7b820542ec7bd74740e2b53873e82a3b4555e33a",
+      "proof": {
+        "headRefOid": "7b820542ec7bd74740e2b53873e82a3b4555e33a",
+        "mergeCommit": {
+          "oid": "0e6ead6ea93763cd4328fd0c99a234a84bf5d588"
+        },
+        "mergedAt": "2026-10-18T10:02:53Z",
+        "number": 3051,
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/3051"
+      },
+      "exact_head_matched": true
+    },
+    {
+      "branch": "docs/pickup-2961-landing-plan-20261018",
+      "local_head": "0aec2014f7628e7a56c42dd893b890abd2bee0b8",
+      "proof": {
+        "headRefOid": "0aec2014f7628e7a56c42dd893b890abd2bee0b8",
+        "mergeCommit": {
+          "oid": "bd4e539347cc4e25ceaba3256d14c4e7744fc011"
+        },
+        "mergedAt": "2026-10-18T10:06:30Z",
+        "number": 3053,
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/3053"
+      },
+      "exact_head_matched": true
+    },
+    {
+      "branch": "docs/session-closeout-lane-credential-consumer-2961",
+      "local_head": "72a7306d5d49ab7926fce8beaa72fcfedb7c6235",
+      "proof": {
+        "headRefOid": "72a7306d5d49ab7926fce8beaa72fcfedb7c6235",
+        "mergeCommit": {
+          "oid": "427625b3af9be957563453fa155b202d9bd472ba"
+        },
+        "mergedAt": "2026-10-18T10:35:40Z",
+        "number": 3054,
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/3054"
+      },
+      "exact_head_matched": true
+    },
+    {
+      "branch": "docs/session-closeout-pickup-2961-harvest-20261018",
+      "local_head": "51a14cdc9464350e7f76cdef8dbc62be8af33ff4",
+      "proof": {
+        "headRefOid": "51a14cdc9464350e7f76cdef8dbc62be8af33ff4",
+        "mergeCommit": {
+          "oid": "131893420c6b5e1f3d3c433527634f016198621e"
+        },
+        "mergedAt": "2026-10-18T17:46:24Z",
+        "number": 3095,
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/3095"
+      },
+      "exact_head_matched": true
+    },
+    {
+      "branch": "docs/session-closeout-pickup-2961-landing-20261018",
+      "local_head": "0e4532313fa24914d4763aa2b7706c7df9272a8c",
+      "proof": {
+        "headRefOid": "0e4532313fa24914d4763aa2b7706c7df9272a8c",
+        "mergeCommit": {
+          "oid": "faf27d7b5f21e8287db1337cc6fe2bafaabb02fc"
+        },
+        "mergedAt": "2026-10-18T10:36:15Z",
+        "number": 3055,
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/3055"
+      },
+      "exact_head_matched": true
+    },
+    {
+      "branch": "worktree-lane-credential-consumer-2961",
+      "local_head": "2681027d77b4e86331c91defed699351b0f0b22e",
+      "exact_head_matched": false
+    }
+  ],
+  "limits": [
+    "Native archive is reversible and preserves transcripts; no task atom was closed.",
+    "Session release, task completion, merge, deployment, observation and retirement remain separate.",
+    "This is an observation/census, not a canonical limen.session_closeout release receipt.",
+    "No new helper or checkout was created after admission refusals."
+  ]
+}

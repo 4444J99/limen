@@ -1,0 +1,96 @@
+{
+  "observed_at": "2026-10-23T12:59:30Z",
+  "owner_url": "https://github.com/4444J99/limen/issues/3173",
+  "native_archived_session_ids": [
+    "019fdbe7-981a-7090-bed0-020107dcbacb",
+    "019fdbe7-296d-74f3-909e-a93634db5da0",
+    "019fdbe3-d35c-7610-9b45-e170fe5eeaf9",
+    "01a165c9-1982-7793-8901-4510e0bc2a3d"
+  ],
+  "archive_preserves_transcripts": true,
+  "task_atoms_closed": 0,
+  "branches_reaped": [
+    {
+      "branch": "docs/agent-runtime-audit-20261019",
+      "head": "31fde9b03edb7126de493e6ec0b8fc2f88c7b588",
+      "merged_pr": 3124,
+      "merge_commit": "7ef53762a6599540f2f18659ffd3983e1bcd5b36",
+      "exact_head_matched": true,
+      "merge_ancestor_verified": true
+    },
+    {
+      "branch": "docs/lane-credential-single-lane-wording-2961",
+      "head": "7b820542ec7bd74740e2b53873e82a3b4555e33a",
+      "merged_pr": 3051,
+      "merge_commit": "0e6ead6ea93763cd4328fd0c99a234a84bf5d588",
+      "exact_head_matched": true,
+      "merge_ancestor_verified": true
+    },
+    {
+      "branch": "docs/pickup-2961-landing-plan-20261018",
+      "head": "0aec2014f7628e7a56c42dd893b890abd2bee0b8",
+      "merged_pr": 3053,
+      "merge_commit": "bd4e539347cc4e25ceaba3256d14c4e7744fc011",
+      "exact_head_matched": true,
+      "merge_ancestor_verified": true
+    },
+    {
+      "branch": "docs/session-closeout-lane-credential-consumer-2961",
+      "head": "72a7306d5d49ab7926fce8beaa72fcfedb7c6235",
+      "merged_pr": 3054,
+      "merge_commit": "427625b3af9be957563453fa155b202d9bd472ba",
+      "exact_head_matched": true,
+      "merge_ancestor_verified": true
+    },
+    {
+      "branch": "docs/session-closeout-pickup-2961-harvest-20261018",
+      "head": "51a14cdc9464350e7f76cdef8dbc62be8af33ff4",
+      "merged_pr": 3095,
+      "merge_commit": "131893420c6b5e1f3d3c433527634f016198621e",
+      "exact_head_matched": true,
+      "merge_ancestor_verified": true
+    },
+    {
+      "branch": "docs/session-closeout-pickup-2961-landing-20261018",
+      "head": "0e4532313fa24914d4763aa2b7706c7df9272a8c",
+      "merged_pr": 3055,
+      "merge_commit": "faf27d7b5f21e8287db1337cc6fe2bafaabb02fc",
+      "exact_head_matched": true,
+      "merge_ancestor_verified": true
+    }
+  ],
+  "reaper_apply_exit_code": 0,
+  "worktrees_removed": 0,
+  "retained_branch": {
+    "name": "worktree-lane-credential-consumer-2961",
+    "local_head": "2681027d77b4e86331c91defed699351b0f0b22e",
+    "merged_pr_head": "6b7e60fb77a392a529e01315d773789864f86c4d",
+    "reason": "Local tip differs from merged PR head; timestamp-only classification does not authorize deletion."
+  },
+  "source_repair": {
+    "owner_url": "https://github.com/4444J99/limen/issues/3041",
+    "paths": [
+      "scripts/reap-branches.py",
+      "cli/tests/test_reap_branches.py"
+    ],
+    "regression_failed_before_fix": true,
+    "focused_test_count": 49,
+    "focused_exit_code": 0,
+    "live_pre_fix": "offline; seven local branches retained as live-work",
+    "live_post_fix": "online; six exact-head candidates reaped through existing authorized reaper",
+    "full_scoped_verification": "pending",
+    "merged": false,
+    "deployed": false
+  },
+  "retained_state": [
+    "Private skill-repair payload in reused managed checkout",
+    "Dirty vendor-insights implementation/test/plan",
+    "Untracked native prompt validation",
+    "Private study caches",
+    "Unavailable-volume worktree records",
+    "Locked shared-OS checkout",
+    "Active sibling closeout",
+    "Original histories and databases"
+  ],
+  "overall_task_completed": false
+}
