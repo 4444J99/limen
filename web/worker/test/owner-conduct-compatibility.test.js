@@ -10,6 +10,11 @@ class FakeStorage {
     this.values = new Map();
   }
 
+  async transaction(callback) {
+    const before = structuredClone(this.values);
+    try { return await callback(this); } catch (error) { this.values = before; throw error; }
+  }
+
   async get(key) {
     if (Array.isArray(key)) {
       return new Map(

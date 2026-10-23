@@ -145,7 +145,7 @@ async function cleanupUnselected(storage, generation, contract) {
     storage,
     [...listed.keys()].filter((key) => !key.startsWith(selectedPrefix)),
   );
-  await storage.delete(contract.legacy_key);
+  if (await storage.get(contract.legacy_key) != null) await storage.delete(contract.legacy_key);
 }
 
 async function cleanupLiveness(storage) {

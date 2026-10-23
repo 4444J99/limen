@@ -1,0 +1,352 @@
+Changed paths (9):
+  .codex/plans/2026-10-19-runtime-restoration-2848.md
+  cli/src/limen/cli.py
+  cli/tests/test_workstream_command.py
+  docs/receipts/runtime-restoration-2848-20261019/README.md
+  docs/receipts/runtime-restoration-2848-20261019/observations.json
+  docs/receipts/runtime-restoration-2848-20261019/verification-corrected.txt
+  docs/receipts/runtime-restoration-2848-20261019/verification.txt
+  institutio/governance/parameters.yaml
+  scripts/start-worktree-session.sh
+Historical-only paths (13): [redacted; retained internally for gate selection]
+skipped: recovery-completion-contract (no implicated change)
+skipped: py-syntax-set (whole-matrix only)
+skipped: bash-syntax-set (whole-matrix only)
+skipped: plist-lint (whole-matrix only)
+skipped: cvrsvs-seed (whole-matrix only)
+skipped: consulting-records (whole-matrix only)
+skipped: constellation-registry (no implicated change)
+skipped: biography-registry (no implicated change)
+skipped: consulting-phase0 (no implicated change)
+skipped: artist-records (whole-matrix only)
+skipped: social-records (whole-matrix only)
+skipped: representation-records (whole-matrix only)
+skipped: horrevm-capacity (no implicated change)
+skipped: portable-storage-policy (no implicated change)
+skipped: ucc-credential-delivery (no implicated change)
+skipped: representation-substrate-test (no implicated change)
+skipped: observation-records (whole-matrix only)
+skipped: observation-feed-test (no implicated change)
+skipped: danse-invariants (no implicated change)
+skipped: downs-style-preview (no implicated change)
+skipped: merge-policy-test (no implicated change)
+skipped: relay-merge-test (no implicated change)
+skipped: dependency-acceptance-test (no implicated change)
+skipped: merge-queue-contract-test (no implicated change)
+skipped: worktree-preserve-dirty-test (no implicated change)
+skipped: estate-audit-heal-test (no implicated change)
+skipped: estate-audit-custody-test (no implicated change)
+skipped: estate-audit-paired-custody-test (no implicated change)
+skipped: session-opening-floor (no implicated change)
+skipped: fable-cadence (no implicated change)
+skipped: live-checkout-currency-test (no implicated change)
+skipped: ianva-tunnel-test (no implicated change)
+skipped: ianva-unit-test (no implicated change)
+skipped: sensitive-history-receipt-test (no implicated change)
+skipped: prerewrite-containment-test (no implicated change)
+skipped: closeout-evidence-test (no implicated change)
+skipped: conduct-principal-merge-test (no implicated change)
+skipped: chat-principal-provision-test (no implicated change)
+skipped: pr-autotype-scope-test (no implicated change)
+skipped: his-hand-registry-test (no implicated change)
+skipped: board-publication-acceptance-test (no implicated change)
+skipped: stale-claim-ownership-test (no implicated change)
+skipped: decorum-coverage-test (no implicated change)
+skipped: heartbeat-notification-contract (no implicated change)
+skipped: review-harvest-test (no implicated change)
+skipped: diff-removal-count-test (no implicated change)
+skipped: await-pr-test (no implicated change)
+skipped: verify-resolver-test (no implicated change)
+skipped: verify-parallel-test (no implicated change)
+skipped: verify-ci-hardening-test (no implicated change)
+skipped: enactment-test (no implicated change)
+skipped: enactment-wiring (whole-matrix only)
+skipped: armed-valve-test (whole-matrix only)
+skipped: armed-valve-contract (whole-matrix only)
+skipped: ship-gate-test (whole-matrix only)
+skipped: heal-convergence-test (whole-matrix only)
+skipped: heal-retirement (no implicated change)
+skipped: ask-gate-test (whole-matrix only)
+skipped: worktree-guard-test (whole-matrix only)
+skipped: no-hand-poll-guard-test (whole-matrix only)
+skipped: codex-host-admission-test (no implicated change)
+skipped: direct-run-interpreter-test (no implicated change)
+skipped: branch-preservation (no implicated change)
+skipped: outbound-preflight-test (whole-matrix only)
+skipped: pytest-scope-guard-test (whole-matrix only)
+skipped: conduct-register-hook-test (no implicated change)
+skipped: trusted-bash-hook-test (whole-matrix only)
+skipped: dispatch-admission (whole-matrix only)
+skipped: omega-test (whole-matrix only)
+skipped: main-green-test (no implicated change)
+skipped: orphan-watchers-test (no implicated change)
+skipped: handoff-relay-test (no implicated change)
+skipped: autonomy-governor-test (no implicated change)
+skipped: session-orient (no implicated change)
+skipped: session-closeout-test (no implicated change)
+skipped: agent-docs (no implicated change)
+skipped: github-estate-census-custody-test (no implicated change)
+skipped: universe-recovery-control-plane-test (no implicated change)
+skipped: remote-execution-admission-test (no implicated change)
+skipped: estate-classification-test (no implicated change)
+skipped: positioning-report-reviewed-source (no implicated change)
+skipped: positioning-foundry-technical-readiness-test (no implicated change)
+skipped: positioning-foundry-technical-readiness-public-live (no implicated change)
+skipped: positioning-foundry-technical-readiness-live (whole-matrix only)
+skipped: flagship-proof-set-test (no implicated change)
+skipped: flagship-evidence-test (no implicated change)
+skipped: claim-policy-test (no implicated change)
+skipped: agentic-delivery-audit-decision-test (no implicated change)
+skipped: positioning-offer-contract-test (no implicated change)
+skipped: profile-engine-test (no implicated change)
+skipped: research-adjudication-test (no implicated change)
+skipped: research-adjudication-live-test (whole-matrix only)
+skipped: positioning-launch-prompts-test (no implicated change)
+skipped: positioning-connector-test (no implicated change)
+skipped: positioning-p14-control-plane-test (no implicated change)
+skipped: operator-gates (no implicated change)
+skipped: operator-gates-test (no implicated change)
+skipped: engagement-guard (no implicated change)
+skipped: ledger-custody (no implicated change)
+skipped: private-vault (no implicated change)
+skipped: nomenclator (no implicated change)
+skipped: removal-acceptance (whole-matrix only)
+skipped: reap-remote-branches-test (no implicated change)
+skipped: task-board (no implicated change)
+skipped: tasks-parse (no implicated change)
+skipped: worktree-debt (whole-matrix only)
+skipped: workflow-yaml (no implicated change)
+skipped: check-gates (no implicated change)
+skipped: check-covenant (whole-matrix only)
+skipped: check-sensors (no implicated change)
+skipped: check-beat-diagnostics (no implicated change)
+skipped: check-diurnal (no implicated change)
+skipped: check-runner-coverage (no implicated change)
+skipped: loop-self-load-test (no implicated change)
+skipped: metabolize-pass-output-test (no implicated change)
+skipped: check-audience (no implicated change)
+skipped: collaboration-operations-boundary (no implicated change)
+skipped: check-lifecycle (no implicated change)
+skipped: check-corpora (no implicated change)
+skipped: check-convergence (no implicated change)
+skipped: check-atom-homing (no implicated change)
+skipped: check-custody (no implicated change)
+skipped: check-potestas (no implicated change)
+skipped: check-ideal-forms (no implicated change)
+skipped: host-pressure-estate (no implicated change)
+skipped: session-contention (no implicated change)
+skipped: check-decorum (no implicated change)
+skipped: check-root-manifest (no implicated change)
+skipped: check-branch-families (no implicated change)
+skipped: check-mail-tiers (no implicated change)
+skipped: check-board-partition (no implicated change)
+skipped: estate-posture-test (no implicated change)
+skipped: gitvs-parity (no implicated change)
+skipped: gitvs-test (no implicated change)
+skipped: arca-generation-test (no implicated change)
+skipped: sealed-custody-test (no implicated change)
+skipped: sync-marketplace-config-test (no implicated change)
+skipped: publish-flip-test (no implicated change)
+skipped: seo-registry-parity (no implicated change)
+skipped: split-hygiene-test (no implicated change)
+skipped: dependency-completion-integration (no implicated change)
+skipped: vendor-insights-test (no implicated change)
+skipped: lesson-harvest-test (no implicated change)
+skipped: reserved-tier-test (no implicated change)
+skipped: hot-cache-test (no implicated change)
+skipped: check-knowledge-alive (no implicated change)
+skipped: web-build (no implicated change)
+skipped: lifecycle-adapters (whole-matrix only)
+skipped: contract-schemas (whole-matrix only)
+skipped: npm-audit-contract (no implicated change)
+skipped: chat-github-runner (no implicated change)
+skipped: worker-check (no implicated change)
+skipped: keeper-publication-test (no implicated change)
+skipped: moneta-tests (no implicated change)
+skipped: probe-runtime (whole-matrix only)
+skipped: probe-worker (whole-matrix only)
+skipped: identity-verification-test (no implicated change)
+skipped: personal-facts-drift (no implicated change)
+skipped: fact-wall (no implicated change)
+skipped: session-streams-drift (no implicated change)
+
+WAVE cheap: START gates=19 jobs=4 gate_timeout=registry-budget output_limit=1048576B
+WAVE cheap: START gate=python-typecheck
+WAVE cheap: START gate=diff-hygiene
+WAVE cheap: START gate=direct-main-writer-contract
+WAVE cheap: START gate=syntax-changed
+WAVE cheap: FINISH gate=diff-hygiene status=PASS duration=1.99s
+WAVE cheap: FINISH gate=syntax-changed status=PASS duration=2.27s
+WAVE cheap: START gate=sync-release-test
+WAVE cheap: FINISH gate=direct-main-writer-contract status=PASS duration=3.14s
+WAVE cheap: START gate=guard-degradation
+WAVE cheap: START gate=lane-liveness-test
+WAVE cheap: FINISH gate=guard-degradation status=PASS duration=2.26s
+WAVE cheap: FINISH gate=lane-liveness-test status=PASS duration=1.61s
+WAVE cheap: START gate=session-phase
+WAVE cheap: START gate=check-params
+WAVE cheap: FINISH gate=session-phase status=PASS duration=1.05s
+WAVE cheap: START gate=check-test-hygiene
+WAVE cheap: FINISH gate=check-params status=PASS duration=1.57s
+WAVE cheap: START gate=paused-beat-test
+WAVE cheap: FINISH gate=check-test-hygiene status=PASS duration=2.12s
+WAVE cheap: START gate=check-plan-decisions
+WAVE cheap: FINISH gate=paused-beat-test status=PASS duration=2.01s
+WAVE cheap: FINISH gate=check-plan-decisions status=PASS duration=1.40s
+WAVE cheap: START gate=check-docs-manifest
+WAVE cheap: START gate=check-docs-exports
+WAVE cheap: FINISH gate=check-docs-manifest status=PASS duration=1.51s
+WAVE cheap: START gate=check-note-links
+WAVE cheap: FINISH gate=check-docs-exports status=PASS duration=1.41s
+WAVE cheap: START gate=check-board-consumers
+WAVE cheap: FINISH gate=check-note-links status=PASS duration=1.23s
+WAVE cheap: START gate=check-effectors
+WAVE cheap: FINISH gate=check-board-consumers status=PASS duration=1.27s
+WAVE cheap: START gate=ruff-lint
+WAVE cheap: FINISH gate=ruff-lint status=PASS duration=0.43s
+WAVE cheap: START gate=ruff-format
+WAVE cheap: FINISH gate=ruff-format status=PASS duration=0.49s
+WAVE cheap: FINISH gate=sync-release-test status=PASS duration=10.84s
+WAVE cheap: FINISH gate=python-typecheck status=PASS duration=13.87s
+WAVE cheap: FINISH gate=check-effectors status=PASS duration=5.05s
+
+==> syntax-changed: Syntax on exactly the files touched — the floor under every push; the resolver's built-in.
+
+==> diff-hygiene: Whitespace/conflict-marker hygiene; closes every run, scoped and whole.
+
+==> python-typecheck: Static type checking across Limen Python codebase using mypy; mirrors ci.yml:python's two mypy invocations.
+Success: no issues found in 217 source files
+Success: no issues found in 14 source files
+
+==> direct-main-writer-contract: Every executable Git push, GitHub Contents PUT, and literal default-ref seam is count-bound to a reviewed disposition; the lifecycle publisher additionally proves it refuses the actual default branch before any remote write.
+direct-main-writer-audit: PASS — 40 classified surfaces; no unclassified production write seam
+PASS: lifecycle receipt publisher refuses the repository default branch before any push
+PASS: unchanged preservation evidence is an idempotent apply fixed point
+
+==> sync-release-test: The live daemon preserves only real topic branches before unpark; a mutable release override cannot reclassify, commit, or push the repository's actual default branch.
+PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + content-identity reconcile + partially-unique fail-open + organ-uses-own-helper + --check predicate + contended receipts-only unpark + held-name detach/advance/re-attach
+
+==> guard-degradation: IF-GUARD-FAIL-TOWARD-WARNING's predicate: every guard declared by a `guard_state:` block in parameters.yaml is EXECUTED against its degenerate inputs, and one that returns TRUSTED on an input it cannot resolve is a finding. Executed, never inspected — verify-fable-gate.sh was green through the entire 2026-08-07 incident, all five blocks passing, because the question it asked was answered correctly by a meter that was itself lying; inspection cannot catch a guard whose code looks right and whose input is wrong. The declared population is grow-only (guard-state-baseline.txt): deleting a declaration is exactly how a class-wide invariant quietly stops covering its subject, so a shrink is RED rather than a cleanup.
+  ok   LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER: 5 degenerate case(s) all degrade toward the warning
+  ok   LIMEN_FABLE_BALANCE_MAX_AGE_S: 5 degenerate case(s) all degrade toward the warning
+guard-degradation: declared=2 findings=0
+check-guard-degradation: OK — 2 declared guard(s), every degenerate input degrades
+.........                                                                [100%]
+9 passed in 0.16s
+
+==> lane-liveness-test: Lane liveness must distinguish idle from stalled, surface unreadable projections as unmeasured, use the census catalog, and preserve a receipt atomically across restarts without taking lifecycle action.
+...............                                                          [100%]
+15 passed in 0.34s
+lane-liveness regression test PASSED
+
+==> session-phase: The plan→issue→PR chain holds: every non-baselined dated plan declares `Issue: #N` and a `PR:` state (#M, (pending), or a reasoned Status:). Binds the entry joint of session-phases.yaml, which shipped advisory-only in Phase 1 and left this as its named Phase-2 gate. Chain organ: scripts/session-plan.py.
+check-session-phase: PASS — 41 plans held to the chain, all declare issue + PR state
+
+==> check-params: No-hardcode ratchet: new LIMEN_* vars must be declared in the parameter panel.
+check-params: OK — 1084 declared, 237 undeclared (baseline 237), 19 orphan (baseline 19), no new hardcodes, no new orphans.
+
+==> check-test-hygiene: Keeps the suite order-independent so pr-gate can't silently go red: every test root must carry the autouse os.environ-restore conftest, and no NEW direct os.environ writes may appear beyond the baseline (use monkeypatch).
+<unknown>:423: SyntaxWarning: invalid escape sequence '\['
+check-test-hygiene: OK — env-isolation conftest present in 2 test root(s); 4 grandfathered direct write(s), 0 new.
+
+==> paused-beat-test: What survives a pause. A pause withdraws the authority to act ON THE WORLD (dispatch, spend, send, merge); it was never a decision to stop LOOKING (run_monitoring) or to stop the machine keeping its own body coherent (run_release_sync). Both rungs sat BELOW the paused branch's `continue`, and both defects were invisible to any test that exercised the function in isolation — they were ordering bugs, so these fixtures are deliberately structural: they slice the paused branch and assert each rung appears before the `continue`, that each has exactly one implementation with two call sites, that each paused call keeps its escape hatch, and that the hatch is declared in the parameter panel. paused-coherence additionally carries a negative control against origin/main, because a guard test that passes on the buggy code proves nothing. paused-sensing.test.sh shipped in #1713 registered to NO gate and therefore never ran in CI — a declared-but-unwired artifact, which is the very class check-runner-coverage exists to catch; this row is its runner.
+paused-sensing matrix
+  ok   heartbeat-loop.sh parses
+  ok   run_monitoring defined exactly once
+  ok   the paused branch runs monitoring BEFORE it continues
+  ok   run_monitoring called from both the paused branch and the live body
+  ok   paused sensing is gated on network reach
+  ok   LIMEN_PAUSED_SENSING declared in the parameter panel
+  ok   run_monitoring invokes the scheduled sensor pass
+
+paused-sensing: all checks passed
+paused-coherence matrix
+  ok   heartbeat-loop.sh parses
+  ok   run_release_sync defined exactly once
+  ok   the paused branch re-converges the checkout BEFORE it continues
+  ok   run_release_sync called from both the paused branch and the live body
+  ok   paused re-convergence is gated on LIMEN_PAUSED_SYNC
+  ok   LIMEN_PAUSED_SYNC declared in the parameter panel
+  ok   run_release_sync invokes sync-release.sh
+  ok   base ref already re-converges while paused (fix landed upstream — expected after merge)
+
+paused-coherence: all checks passed
+
+==> check-plan-decisions: PLAN-DECISIONS drift: a decision recorded only in prose binds nothing. Every numbered decision under a '## Decision' heading must name where it binds — a registry path, a predicate script, a lever id, a precedent id — or write `owed:` and declare the vacuum out loud. Founded on the measured defect (PREC-2026-07-30-plan-decisions-dont-bind): the operator restated two decisions that were already committed to main in his own words, because docs/plans/ is a Tier-2 prose surface nothing reads. Pre-existing decisions sit in a shrink-only baseline; a baselined row that becomes homed, or vanishes, is itself a red check so the baseline cannot rot into a hiding place.
+check-plan-decisions: 49 decision(s) in 67 plan(s) — 40 homed, 0 unhomed, 9 baselined
+  ok    2026-07-30-danse-generative-engine.md#1              → predicate
+  ok    2026-07-30-danse-generative-engine.md#2              → predicate
+  ok    2026-07-30-danse-generative-engine.md#3              → predicate
+  ok    2026-07-30-docs-subject-ownership-export-program.md#2 → registry
+  ok    2026-07-30-portvs-astra-consolidation.md#4           → registry
+  ok    2026-07-30-portvs-astra-consolidation.md#5           → predicate
+  ok    2026-08-07-pr-autotype-rung.md#1                     → registry
+  ok    2026-08-07-pr-autotype-rung.md#2                     → registry
+  ok    2026-08-07-pr-autotype-rung.md#3                     → lever
+  ok    2026-08-07-pr-autotype-rung.md#4                     → registry
+  ok    2026-08-07-pr-autotype-rung.md#5                     → predicate
+  ok    2026-08-07-pr-autotype-rung.md#6                     → predicate
+  ok    2026-08-07-pr-autotype-rung.md#7                     → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#1          → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#2          → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#3          → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#4          → predicate
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#5          → predicate
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#6          → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#7          → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#8          → registry
+  ok    2026-08-07-pr-estate-drain-full-fix-v2.md#9          → predicate
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#1          → predicate
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#2          → registry
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#3          → registry
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#4          → predicate
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#5          → predicate
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#6          → predicate
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#7          → registry
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#8          → predicate
+  ok    2026-08-13-dustin-alpha-omega-roadmaps.md#9          → predicate
+  ok    2026-10-18-close-front-door-verification-gaps.md#1   → predicate
+  ok    2026-10-18-close-front-door-verification-gaps.md#2   → predicate
+  ok    2026-10-18-close-front-door-verification-gaps.md#3   → predicate
+  ok    2026-10-18-close-front-door-verification-gaps.md#4   → predicate
+  ok    2026-10-18-close-front-door-verification-gaps.md#5   → lever
+  ok    2026-10-18-close-front-door-verification-gaps.md#6   → predicate
+  ok    2026-10-18-close-front-door-verification-gaps.md#7   → owed
+  ok    2026-10-18-close-front-door-verification-gaps.md#8   → owed
+  ok    ci-bounded-shards.md#4                               → registry
+  base  2026-07-30-docs-subject-ownership-export-program.md#1 → unhomed (baselined; shrink, never grow)
+  base  2026-07-30-portvs-astra-consolidation.md#1           → unhomed (baselined; shrink, never grow)
+  base  2026-07-30-portvs-astra-consolidation.md#2           → unhomed (baselined; shrink, never grow)
+  base  2026-07-30-portvs-astra-consolidation.md#3           → unhomed (baselined; shrink, never grow)
+  base  2026-07-30-portvs-astra-consolidation.md#6           → unhomed (baselined; shrink, never grow)
+  base  2026-07-30-portvs-astra-consolidation.md#7           → unhomed (baselined; shrink, never grow)
+  base  ci-bounded-shards.md#1                               → unhomed (baselined; shrink, never grow)
+  base  ci-bounded-shards.md#2                               → unhomed (baselined; shrink, never grow)
+  base  ci-bounded-shards.md#3                               → unhomed (baselined; shrink, never grow)
+
+check-plan-decisions: OK — every new decision names where it binds
+
+==> check-docs-manifest: DOCS-MANIFEST drift (docs/** added 2026-10-18: in this glob dialect docs/* is direct children only, so a PR that created a NEW top-level docs directory — its diff holds only nested files — never selected this gate, which is how #3039 put main red until #3048 rehomed it; adding a top-level entry is exactly what the gate exists to catch, and it costs under a second): docs/ top level is a curated surface, not a landing strip — same predicate as check-root-manifest, one surface below (`--surface docs` selects docs-manifest.yaml vs `git ls-tree HEAD -- docs/`). Every loose file is declared sanctioned (pinned by an exact-path consumer named in its why) or counted grandfathered fat carrying its target home; a rehomed file takes its row with it. Founded on the measured defect: 177 loose files at docs/ top level beside 17 proper subdirs, accumulated with no predicate watching the surface — the operator had to re-issue the rehoming directive across 3+ sessions because nothing red-checked a misplaced doc.
+check-root-manifest [docs/]: OK — 146 sanctioned, 3 grandfathered fat remaining (shrink to zero via rehoming PRs)
+
+==> check-docs-exports: DOCS-EXPORTS drift: the cross-repo export program is a shrinking work-list, not a parity claim — every row names a limen doc whose SUBJECT another repo owns, and shipping the move DELETES the row. Without a predicate the two halves drift silently: the file leaves and the row lingers (a phantom work item an agent re-executes), or the row retires and the file stays (a claimed export that never happened). Checks every row's path is still tracked, every target is a real cross-repo destination or DELETE, and every declared patch-consumer is a real path. Scoped to docs/** because deleting a doc that still carries a row is exactly the drift this catches.
+check-docs-exports: OK — 48 export rows, every path real and every target homed (shrink to zero by shipping tranches)
+
+==> check-note-links: NOTE-LINK drift: a `[[wikilink]]` citation must resolve to a tracked file whose stem is that slug, or be recorded in the shrink-only note-link-baseline.txt. The `**` path implicates the gate on ANY change, the same idiom check-root-manifest uses with `*`: a citation can be introduced in any file, so path-scoping this gate would put the blind spot exactly where the defect lives. It costs ~0.4s, which is what makes always-on affordable — and `scoped: false` would have been WRONG here (that means whole-matrix-only, so a scoped push gate would never run it). Founded on the measured defect behind IF-GATEKEEPER-INERT: the root cause of the six-week `ClaudeCode.app is damaged` loop was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]`, cited from FIVE registry surfaces (dialogs-silenced.sh x2, sensors.yaml, parameters.yaml, his-hand-levers.json x2) and written NOWHERE — so every session followed it, found nothing, and re-derived the root from an effector header carrying a false premise. Five cures shipped against that premise. A citation that resolves and one that dangles are byte-identical at the call site; only the filesystem knows, and nothing was asking it. Measured at introduction: 49 of 50 cited slugs dangled. The baseline can only shrink — a stale line (the note now exists) FAILS, so the ratchet cannot silently accumulate permission.
+check-note-links: 50 note slug(s) cited across 4657 tracked files — 1 resolve, 49 dangle (49 baselined, 0 fresh)
+  unclassified (single-token, not gated — see SCOPE): link, redirects, wikilink, wikilinks
+OK — every gated citation resolves; the baseline is exact.
+
+==> check-board-consumers: BOARD-CONSUMER ROUTING: the partition's quietest failure. After cutover the public tasks.yaml is the keeper's counts-only aggregate, so a reader that parses it directly does not crash — it gets `tasks: []` and reports ZERO work, and nothing anywhere turns red. Measured 2026-08-15 before the sweep: of 121 python files naming tasks.yaml, 62 honored LIMEN_TASKS (the beat points that at custody), 35 only mentioned it in prose, and 24 resolved a path and parsed it — 19 of those with raw yaml.safe_load, so no shared loader could have fixed them. Each of the 24 now reads through limen.private_board.operational_board_path (or _board_custody.board_path where cli/src is not already on sys.path), which returns the same path pre-cutover and hydrated private custody after. Four readers are baselined IN the predicate with their reason: the supply-registry loader (false positive), tabularius (takes board_path from its caller), check-operator-gates (must read the PUBLISHED ref to judge authorship), and validate-task-board (must parse exactly the file it is handed, and is shape-aware). That baseline is shrink-only: a stale entry fails, so it cannot accumulate permission. Companion to PrivateCustodyUnavailable inheriting BaseException — one declaration that a broad `except Exception` cannot absorb, instead of auditing every reader's handler.
+check-board-consumers: OK — 24 routed, 58 honor LIMEN_TASKS, 4 baselined, 0 unrouted
+
+==> check-effectors: OUTBOUND-EFFECTORS registry drift, the fifth VIGILIA-shaped panel's predicate. Class A holds declaration↔disk parity (a `predicate:` naming a file that does not exist would, because the guard fails CLOSED inside its match, deny EVERY matching action the moment the hook is armed — the live 2026-07-31 state of github.comment). Class B holds the single-capture-group bound the registry states in prose: the guard reads group(1) only, so a two-group target pattern silently discards the second half and runs the predicate against a PARTIAL target — checking the ambient repo's #N while the command addresses another repo's #N. Class C is the structural one: a PreToolUse(Bash) hook sees a COMMAND STRING, so it can never see subprocess.run(["gh","pr","comment",...]) inside a Python module — which is the form every dangerous outward action in this estate actually takes, unattended, on the beat. 24 such sites are baselined; the surface is now visible and cannot grow. A hand grep found only 17 of them (argv bound to a name, argv through a local sh() wrapper), which is why this is an AST walk and not a pattern.
+effectors: no new findings (40 baselined)
+
+==> ruff-lint: Lint the whole Python estate whenever any Python surface changes. apps/ and organs/ joined 2026-08-06 (35 .py files sat outside both ruff gates — a documented component was unlinted); their paths are *.py-scoped so an organs/apps docs change never pays for a lint run, with the direct-child glob listed explicitly (the ** dialect matches only NESTED files). Version-locked to the ONE ruff pin in cli/pyproject.toml (issue #1658) — a mismatched host ruff fails loud instead of red-noising 1,300 findings.
+All checks passed!
+
+==> ruff-format: Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint; same 2026-08-06 apps/organs extension.
+801 files already formatted
+WAVE cheap: PASS
+Host admission denied scoped heavy verification: heavy-lease-held

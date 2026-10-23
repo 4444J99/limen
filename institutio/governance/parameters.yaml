@@ -1958,6 +1958,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional path or command name for the Limen CLI used to register a protected workstream session."
+  LIMEN_WORKSTREAM_PYTHON:
+    default: null
+    env: LIMEN_WORKSTREAM_PYTHON
+    self_update: "set from the running CLI interpreter for worktree inventory reservation"
+    owner: continuity
+    note: "limen workstream supplies its own interpreter to broker-backed worktree and branch reservation so PATH Python cannot lose the CLI dependencies. Direct shell invocation defaults to python3; this binding changes no admission predicate."
   LIMEN_WORKSTREAM_SESSION_ID:
     default: null
     env: LIMEN_WORKSTREAM_SESSION_ID

@@ -17,6 +17,19 @@
 #   Google Drive these stay REQUIRED even after headless adoption — a desktop app appearing IS drift
 #   ("adopted without trust gates", the exact past failure). Custody, when it comes, is API-level
 #   (rclone via HORREVM custody, PR2), never a File Provider reinstall.
+#
+# 2026-10-23 owner decision (git copies on externals). The external volumes hold DATA, not git
+#   checkouts. Backup git copies and worktrees on Archive4T and T7Recovery (laptop-evacuation,
+#   RecoveryCopies, CleanUnique-Lifeboat-2026-06-13, limen-private/estate-audit-git-custody,
+#   limen-private/group02-custody-20261001, mac-exit-20261021/worktree-stores,
+#   mac-exit-20261021/git-preserve, and similar) are each either pushed to a new archive ref
+#   (refs/heads/archive/mac-exit-20261023/<copy-slug>/<original-branch>; never an existing branch,
+#   never a public repo) or kept as a bundle/tar file, and then reaped. This SUPERSEDES the
+#   "never deleted" / "re-layout of existing paths" / "moving a code-pinned path" text below for GIT
+#   COPIES ONLY; it changes no declared_state, rail, trust gate or probe. Non-git data, bundle and
+#   tar capture files, MacExitPrivate.sparsebundle and receipt directories keep their existing
+#   protection. Code and tests that still read or write a reaped family path are follow-ups,
+#   tracked in the PR that recorded this decision.
 schema_version: 0.1
 owner: horrevm
 provenance:
@@ -168,7 +181,7 @@ rails:
   archive4t:
     service: "Archive4T (APFS volume, 4TB SSD)"
     declared_state: adopted
-    role: "Organized local archive and Mac-exit consolidation target (mac-exit-20261021/, sha256 manifests). Holds MacExitPrivate.sparsebundle (AES-256, key in the owner's password manager; ciphertext mirrored to T7Recovery/mac-exit-20261021/, 17,182 bands sha256-identical) with the homed core and runtime non-git sets and the people-private repo. Ingress is slated to be folded into Archive4T and removed after the audiovisual footage work completes. Shares one physical drive with Ingress, Scratch and TM-Mac. Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
+    role: "Organized local archive and Mac-exit consolidation target (mac-exit-20261021/, sha256 manifests). Holds MacExitPrivate.sparsebundle (AES-256, key in the owner's password manager; ciphertext mirrored to T7Recovery/mac-exit-20261021/, 17,182 bands sha256-identical) with the homed core and runtime non-git sets and the people-private repo. Ingress is slated to be folded into Archive4T and removed after the audiovisual footage work completes. Shares one physical drive with Ingress, Scratch and TM-Mac. Backblaze-backed when attached. Per the 2026-10-23 owner decision it holds data, not git checkouts: backup git copies here are pushed to archive refs or kept as bundle files, then reaped. Portable session recovery uses independently verified remote custody and does not require this mount."
     never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder", "counting a same-drive copy as a second copy", "moving a code-pinned path"]
     mount: "/Volumes/Archive4T"
     required_mounted: false   # absence stays visible; portable recovery is separately gated
@@ -178,7 +191,7 @@ rails:
   t7recovery:
     service: "T7Recovery (second local copy)"
     declared_state: adopted
-    role: "Second local copy on a device separate from the 4 TB drive: CleanUnique, custody replicas, and the Mac-exit set at Archive4T-identical relative paths. Kept until offsite restore proof exists; then re-evaluate. The T7's empty volumes Blank and Fresh were deleted 2026-10-22 (Blank's content preserved inside the encrypted MacExitPrivate bundle first); T7Recovery is now the only volume on the T7."
+    role: "Second local copy on a device separate from the 4 TB drive: CleanUnique, custody replicas, and the Mac-exit set at Archive4T-identical relative paths. Kept until offsite restore proof exists; then re-evaluate. The T7's empty volumes Blank and Fresh were deleted 2026-10-22 (Blank's content preserved inside the encrypted MacExitPrivate bundle first); T7Recovery is now the only volume on the T7. Per the 2026-10-23 owner decision it holds data, not git checkouts: git copies here are pushed to archive refs or kept as bundle files, then reaped, superseding the never-delete and never-re-layout text for git copies."
     never: ["scratch", "active workspace", "new unsorted data", "deletion before offsite restore proof", "re-layout of existing paths"]
     mount: "/Volumes/T7Recovery"
     required_mounted: false   # may be detached; report-only
