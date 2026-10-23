@@ -2496,3 +2496,30 @@ sensors:
       - command: "python3 scripts/covenant-attribution.py --check"
         severity: advisory
         escalation: "a memory atom/MEMORY.md changed with NO keeper receipt — a session wrote memory directly; route captures through the memoria lane (memory-ticket.py)"
+
+  schedule-utilization:
+    section: "0z5"
+    title: "schedule utilization — every scheduler plane's allotment vs declared vs observed; runs left on the floor"
+    gate: LIMEN_SCHEDULE_UTILIZATION
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: governance
+    cadence:
+      env: LIMEN_SCHEDULE_UTILIZATION_CADENCE
+      default: 4
+    timeout:
+      env: LIMEN_SCHEDULE_UTILIZATION_TIMEOUT
+      default: 120
+    # The cross-plane gauge over institutio/governance/schedules.yaml: GitHub Actions cron (ops, limen,
+    # ops-witness), the Cloudflare scheduler ops operates, this beat's own cadence sensors, claude.ai
+    # cloud routines (via the newest claude-triggers snapshot receipt — list_triggers is in-session-
+    # only), ChatGPT scheduled tasks (delivery on limen#2680), Grok and Gemini (declared, unmeasured
+    # until a delivery locator exists), and Jules (this broker's rolling-24h launch receipts). Each
+    # plane's verdict is full / idle-by-design / unscheduled-headroom / underfilled / dark / unmeasured;
+    # red lines name the plane's registry `effector`. Unmeasured is never red. Read-only; the only
+    # writes are logs/schedule-utilization.json (atomic) and its .jsonl history.
+    steps:
+      - command: "python3 scripts/schedule-utilization.py --receipt logs/schedule-utilization.json"
+        severity: advisory
+        escalation: "a scheduler plane is dark, underfilled or has unscheduled headroom — logs/schedule-utilization.json names the owner effector per plane; UI-only planes (claude.ai routines, ChatGPT, Grok, Gemini) need the operator's native-app action, never a chat ask"
+

@@ -5730,6 +5730,56 @@
         "historical_gate_requires_verification": "Upload completeness is observable only in the vendor's own console.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-GITHUB-ACTIONS-BILLING",
+      "label": "Restore GitHub Actions on the 4444J99 private repositories: since 2026-10-07 every scheduled job in 4444J99/ops and 4444J99/ops-witness has been refused at job start with GitHub's own annotation 'The job was not started because recent account payments have failed or your spending limit needs to be increased' — the plane (i) cron backbone (org-hygiene-report, both keepalives, the weekly witness, the Jules API witness) is dark, and nothing in plane (i) can prove any run happened. Public-repo Actions (limen) still run.",
+      "owner": "yours",
+      "cost": "~5 min in GitHub > Settings > Billing & plans for the 4444J99 account: fix the failed payment method or raise the Actions spending limit; then re-run one scheduled workflow (gh workflow run org-hygiene-report.yml --repo 4444J99/ops) and read back a paired start/end bookend in 4444J99/ops:bookends/<day>.tsv",
+      "unlocks": "plane (i) and its witness come back: the daily hygiene report and bookends resume, the two keepalives stop failing (the 60-day auto-disable clock is otherwise unguarded), the weekly witness writes audit/<day>-witness.md again (which is also the only evidence path for the six Cloudflare scheduler targets), and the schedule-utilization sensor's github-actions-ops / github-actions-ops-witness / cloudflare-ops-scheduler rows leave dark/unmeasured",
+      "source_task": "schedule-estate registry (limen#3177), observed 2026-10-23: 4444J99/ops org-hygiene-report runs 124-140 (10-07..10-23) all failed in 3-5s; keepalive 10-12 and 10-19 failed; ops-witness weekly-witness 10-11 and 10-18 failed; Jules API witness runs 143-144 failed; check-run annotations on jobs 120447871476 (ops) and 120476682144 (ops-witness) carry the billing message verbatim. Workflow states are all `active`, so this is not the inactivity auto-disable.",
+      "gate": "account billing — a vendor-side payment/spending-limit change only the account holder can make; no organ can mint or approve it. This record names the CURRENT provider-evidenced action only; it does not attribute the cause to the discharged L-CARD-FRAUD-HOLD or to any earlier billing row.",
+      "status": "needs_human",
+      "added": "2026-10-23",
+      "steps": [
+        "DONE: diagnosed from provider annotations (not from a 404 log or a guess): every failed job in both private repos carries the billing message; limen (public) scheduled runs continue, which isolates the cause to private-repo Actions billing.",
+        "REMAINING (human): open GitHub > Settings > Billing & plans for 4444J99; resolve the failed payment or raise the spending limit for Actions.",
+        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own."
+      ],
+      "issue": 3177,
+      "sovereignty": {
+        "reason": "wallet_custody"
+      },
+      "diagnosed_at": "2026-10-23T18:32:00Z",
+      "diagnosis_provenance": "schedule-estate-registry-20261023.provider-annotation",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Keep plane (i) measured, not re-tried: the schedule-utilization sensor reads ops bookends and ops-witness audit reports and names this lever's effector when they are dark; no organ retries, re-enables, or pays. The human restores billing; the agent step afterwards is one manual dispatch plus a readback.",
+        "rationale": "A vendor-side billing refusal is the one scheduling failure no registry, predicate or keepalive can route around; recording it as a lever keeps it off chat and off memory, and keeps the discharged card-hold history from being reused as a diagnosis.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-GITHUB-ACTIONS-BILLING",
+          "institutio/governance/schedules.yaml",
+          "https://github.com/4444J99/ops/actions/runs/39963682185",
+          "https://github.com/4444J99/ops-witness/actions/runs/39971960272",
+          "https://github.com/4444J99/ops-witness/actions/runs/39129246586",
+          "https://github.com/4444J99/limen/issues/3177"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#credentials-are-organ-owned-never-recited-in-chat",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedule-estate registry (limen#3177); plane (i) owner 4444J99/ops (ops#6)",
+        "acceptance": {
+          "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day and the ops-witness weekly witness writes a new audit report.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); sys.exit(0 if all(p['verdict']!='dark' for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')) else 1)\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [],
+        "remaining_human_action": "Fix the failed payment method or raise the Actions spending limit for the 4444J99 GitHub account.",
+        "historical_gate_requires_verification": "account billing is the account holder's alone",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Found while building the SCHEDULES registry: the gauge said github-actions-ops was dark (no bookend today) and ops-witness had 3 fired-but-failed runs; the step list could not be read (job logs 404) but the check-run annotations could. The ops-witness head commit 7ef2bc3 had earlier blamed a dependabot actions@v7 bump and pinned back to v4/v5; that pin did not change the 3-5s failures, which is consistent with a job that never starts."
     }
   ]
 }

@@ -6628,3 +6628,53 @@ parameters:
     self_update: none
     owner: continuity
     note: "Optional JSON sibling mapping used by capture-prompt evidence acquisition; absence retains native source lineage."
+
+  LIMEN_SCHEDULE_UTILIZATION:
+    default: "1"
+    env: LIMEN_SCHEDULE_UTILIZATION
+    self_update: none
+    owner: governance
+    note: "Beat gate for the schedule-utilization sensor (scripts/schedule-utilization.py) run by the derive runner from sensors.yaml (section 0z5) on both the metabolize and heartbeat lanes. Measures every scheduler plane declared in institutio/governance/schedules.yaml — allotment vs declared vs observed — and names the owner effector when a plane is dark, underfilled or has unscheduled headroom. Advisory; unmeasured planes are never red. 1=enabled; 0=skip."
+  LIMEN_SCHEDULE_UTILIZATION_CADENCE:
+    default: 4
+    env: LIMEN_SCHEDULE_UTILIZATION_CADENCE
+    self_update: none
+    owner: governance
+    note: "Beat cadence (hours) for the schedule-utilization sensor."
+  LIMEN_SCHEDULE_UTILIZATION_TIMEOUT:
+    default: 120
+    env: LIMEN_SCHEDULE_UTILIZATION_TIMEOUT
+    self_update: none
+    owner: governance
+    note: "Bounded execution timeout (seconds) for the schedule-utilization sensor; it makes at most a handful of bounded gh reads (25s each)."
+  LIMEN_SCHEDULE_FILL_FLOOR:
+    default: 0.5
+    env: LIMEN_SCHEDULE_FILL_FLOOR
+    self_update: none
+    owner: governance
+    note: "Fraction of a plane's declared (pro-rated) fires that must be observed before the schedule-utilization verdict drops from full to underfilled. 0.5 tolerates GitHub's documented drop/delay of congested cron slots without hiding a half-dead plane; raise toward 1.0 once every plane is off the hour."
+  LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS:
+    default: 7
+    env: LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS
+    self_update: none
+    owner: governance
+    note: "How old the newest docs/receipts/claude-triggers-snapshot-*.json may be before the claude-cloud plane reads as unmeasured instead of trusting a stale export. The snapshot is the only fire-side evidence for claude.ai routines (list_triggers is in-session-only), so a session must re-export it at least weekly for the gauge to stay live."
+  LIMEN_SCHEDULE_WITNESS_MAX_AGE_DAYS:
+    default: 8
+    env: LIMEN_SCHEDULE_WITNESS_MAX_AGE_DAYS
+    self_update: none
+    owner: governance
+    note: "How old the newest ops-witness audit/*-witness.md may be before the cloudflare-ops-scheduler plane reads as unmeasured. The witness runs weekly (Sundays 12:49 UTC), so 8 days tolerates one late run and no more."
+  LIMEN_OPS_ROOT:
+    default: ""
+    env: LIMEN_OPS_ROOT
+    self_update: none
+    owner: governance
+    note: "Explicit path of a local 4444J99/ops clone for the SCHEDULES predicates (scripts/_schedules.py sibling_root). Unset ⇒ $LIMEN_WORKDIR/ops, then ~/Workspace/ops, then none: check-schedules reports the projected ops rows as unverifiable-here (not drift) and schedule-utilization falls back to bounded gh reads. Never triggers a clone."
+  LIMEN_OPS_WITNESS_ROOT:
+    default: ""
+    env: LIMEN_OPS_WITNESS_ROOT
+    self_update: none
+    owner: governance
+    note: "Explicit path of a local 4444J99/ops-witness clone for the SCHEDULES predicates; same resolution and fallback as LIMEN_OPS_ROOT."
+
