@@ -74,6 +74,9 @@ RATE_CHECK_EVERY_CALLS = 50
 WORKFLOW_LIST_PAGES = 10
 ESSENTIAL_CHANNELS = ("tree", "actions-workflows", "contents", "scheduled-runs")
 FINDING_VERDICTS = frozenset({"declared-never-fired", "firing-but-failing", "auto-disabled"})
+HYGIENE_KINDS = frozenset({"dependabot", "renovate"})  # dependency-update schedules: hygiene, not an operator scheduler
+RUN_LISTING_CAP = 2500  # the Actions run listing stops counting here; a total at the cap is a floor, not a count
+HOURS_PER_DAY, DAYS_PER_WEEK, DAYS_PER_MONTH, MONTHS_PER_YEAR = 24, 7, 30.44, 12
 DEFAULT_RETRY_HOURS = 24.0
 MAX_INCOMPLETE_SHARE = 0.25
 
@@ -289,11 +292,50 @@ def _on_block(data: object) -> dict | None:
     return on if isinstance(on, dict) else None
 
 
-def _cron_cadence(cron: str) -> str:
+def cron_rate(cron: str) -> tuple[float | None, str]:
+    """(nominal fires per day, cadence label) from the cron's own fields — never the registry's routine-parity
+    classes, which read `*/30 * * * *` as "daily" because no day field is restricted."""
     try:
-        return S.cadence_class(S.parse_cron(cron))
+        c = S.parse_cron(cron)
     except Exception:  # noqa: BLE001 — a cron we cannot parse is still a declaration
-        return "unparsed"
+        return None, "unparsed"
+    base = float(len(c.minutes) * len(c.hours))
+    dow_share = len(c.dow) / DAYS_PER_WEEK
+    dom_share = len(c.dom) / DAYS_PER_MONTH
+    if c.dow_restricted and c.dom_restricted:
+        day_share = min(1.0, dow_share + dom_share)  # vixie OR
+    elif c.dow_restricted:
+        day_share = dow_share
+    elif c.dom_restricted:
+        day_share = dom_share
+    else:
+        day_share = 1.0
+    per_day = base * day_share * (len(c.months) / MONTHS_PER_YEAR)
+    if c.dow_restricted and c.dow == frozenset({1, 2, 3, 4, 5}) and base == 1:
+        label = "weekdays"
+    elif c.dow_restricted and len(c.dow) == 1 and base == 1 and not c.dom_restricted:
+        label = "weekly"
+    elif c.dom_restricted and len(c.dom) == 1 and base == 1 and not c.dow_restricted:
+        label = "monthly"
+    elif per_day > HOURS_PER_DAY:
+        label = "sub-hourly"
+    elif len(c.hours) == HOURS_PER_DAY and len(c.minutes) == 1 and day_share == 1.0:
+        label = "hourly"
+    elif per_day > 1:
+        label = "intraday"
+    elif per_day == 1:
+        label = "daily"
+    else:
+        label = "other"
+    return round(per_day, 3), label
+
+
+def _cron_cadence(cron: str) -> str:
+    return cron_rate(cron)[1]
+
+
+def _fires_per_day(crons: list[str]) -> float:
+    return round(sum(cron_rate(c)[0] or 0.0 for c in crons), 3)
 
 
 def parse_workflow(text: str) -> list[str] | None:
@@ -331,14 +373,28 @@ def _str_list(value: object) -> list[str]:
     return [str(value)] if isinstance(value, (str, int)) and value != "" else []
 
 
+_WRANGLER_TRIGGERS_RX = re.compile(r"^\s*\[triggers\]\s*$", re.M)
+_WRANGLER_CRONS_RX = re.compile(r"^\s*crons\s*=\s*\[(.*?)\]", re.M | re.S)
+_QUOTED_RX = re.compile(r"""["']([^"']+)["']""")
+
+
 def parse_wrangler(path: str, text: str) -> list[str] | None:
+    """[triggers] crons. A file the TOML/JSON parser rejects (wrangler tolerates e.g. a `[vars]` table declared
+    twice) is read again by regex: no `[triggers]` table means no schedule; a table whose crons cannot be read
+    is unparseable."""
     if path.endswith(".toml"):
-        if tomllib is None:
-            return None
-        try:
-            data = tomllib.loads(text)
-        except (tomllib.TOMLDecodeError, ValueError):
-            return None
+        data = None
+        if tomllib is not None:
+            try:
+                data = tomllib.loads(text)
+            except (tomllib.TOMLDecodeError, ValueError):
+                data = None
+        if data is None:
+            if not _WRANGLER_TRIGGERS_RX.search(text):
+                return None if re.search(r"\bcrons\b", text) else []  # a cron mentioned outside a table is unreadable
+            block = text[_WRANGLER_TRIGGERS_RX.search(text).end() :]
+            m = _WRANGLER_CRONS_RX.search(block)
+            return _QUOTED_RX.findall(m.group(1)) if m else None
     else:
         try:
             data = json.loads(_strip_json_comments(text))
@@ -357,12 +413,22 @@ def parse_vercel(text: str) -> list[dict] | None:
     return [c for c in crons if isinstance(c, dict)] if isinstance(crons, list) else []
 
 
+_PLIST_INTERVAL_RX = re.compile(r"<key>\s*StartInterval\s*</key>\s*<integer>\s*(\d+)\s*</integer>")
+
+
 def parse_launchd(text: str) -> dict | None:
-    """None = not a plist; {} = a plist that schedules nothing; else interval/calendar keys."""
+    """None = not a plist; {} = a plist that schedules nothing; else interval/calendar keys. A plist expat
+    rejects (a `--` inside an XML comment is the common case) is read again by regex for StartInterval; one
+    that also carries StartCalendarInterval stays unparseable rather than half-read."""
     try:
         data = plistlib.loads(text.encode("utf-8"))
-    except Exception:  # noqa: BLE001 — not a plist
-        return None
+    except Exception:  # noqa: BLE001 — not a well-formed plist
+        if "<plist" not in text:
+            return None
+        m = _PLIST_INTERVAL_RX.search(text)
+        if "StartCalendarInterval" in text:
+            return None
+        return {"interval_seconds": int(m.group(1)), "parse": "regex"} if m else {}
     if not isinstance(data, dict):
         return {}
     out: dict = {}
@@ -444,12 +510,30 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
         crons = parse_workflow(text)
         if crons is None:
             return unparseable
-        return {**base, "crons": crons, "cadence": [_cron_cadence(c) for c in crons]} if crons else None
+        return (
+            {
+                **base,
+                "crons": crons,
+                "cadence": [_cron_cadence(c) for c in crons],
+                "fires_per_day": _fires_per_day(crons),
+            }
+            if crons
+            else None
+        )
     if kind == "wrangler":
         crons = parse_wrangler(path, text)
         if crons is None:
             return unparseable
-        return {**base, "crons": crons, "cadence": [_cron_cadence(c) for c in crons]} if crons else None
+        return (
+            {
+                **base,
+                "crons": crons,
+                "cadence": [_cron_cadence(c) for c in crons],
+                "fires_per_day": _fires_per_day(crons),
+            }
+            if crons
+            else None
+        )
     if kind == "cloudflare-manifest":
         targets = parse_manifest(text)
         return {**base, "targets": targets} if targets else None
@@ -495,6 +579,8 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
 
 
 def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None) -> dict:
+    """Newest page (and the deepest page when it could be read). total_count at RUN_LISTING_CAP is a floor;
+    oldest_seen without the deepest page is page one's edge, never the first run."""
     runs = (page1 or {}).get("workflow_runs")
     runs = [r for r in runs if isinstance(r, dict)] if isinstance(runs, list) else []
     try:
@@ -519,6 +605,8 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
     oldest = old_runs[-1].get("created_at") if old_runs else (runs[-1].get("created_at") if runs else None)
     return {
         "total_scheduled_runs": total,
+        "listing_capped": total >= RUN_LISTING_CAP,
+        "oldest_page_read": bool(old_runs),
         "newest": newest,
         "oldest_seen": oldest,
         "by_workflow": by_workflow,
@@ -535,6 +623,7 @@ def read_attempts(repo: str, call, pages: int = ATTEMPT_PAGES) -> dict:
     items: list[dict] = []
     seen = 0
     truncated = False
+    repo_tokens = {tok for tok in re.split(r"[^a-z0-9]+", repo.lower()) if tok}
     for page in range(1, pages + 1):
         st, rows = call(f"repos/{repo}/issues?state=all&per_page=100&page={page}&sort=created&direction=desc")
         if st != OK or not isinstance(rows, list):
@@ -554,7 +643,12 @@ def read_attempts(repo: str, call, pages: int = ATTEMPT_PAGES) -> dict:
             title = str(it.get("title") or "")
             raw_labels = it.get("labels") if isinstance(it.get("labels"), list) else []
             labels = [str(lab.get("name") or "") for lab in raw_labels if isinstance(lab, dict)]
-            if not (ATTEMPT_RX.search(title) or any(ATTEMPT_RX.search(lab) for lab in labels)):
+            hits = {m.group(1).lower() for m in ATTEMPT_RX.finditer(title)}
+            for lab in labels:
+                hits |= {m.group(1).lower() for m in ATTEMPT_RX.finditer(lab)}
+            if (
+                not hits or hits <= repo_tokens
+            ):  # "automation" inside universal-mail--automation names the repo, not a schedule
                 continue
             pr = it.get("pull_request") if isinstance(it.get("pull_request"), dict) else None
             items.append(
@@ -914,7 +1008,8 @@ def verdict_for_repo(row: dict) -> str:
     could not be read, declared-never-fired, firing-but-failing, active) → a disabled one (auto-disabled is a
     state GitHub passes only on scheduled workflows, so it stands without the cron lines; a manual disable or a
     fork disable needs them) → a declared cron whose state could not be verified → a schedule outside Actions →
-    a cron removed in history → partial (something essential was not read) → none."""
+    a cron removed in history → partial (something essential was not read) → none. A row whose only non-Actions
+    carriers are dependabot/renovate is hygiene-only: dependency updates are not an operator's scheduler."""
     if row.get("reach") != OK:
         return "unreachable"
     decls = [d for d in row.get("declarations") or [] if isinstance(d, dict)]
@@ -942,7 +1037,7 @@ def verdict_for_repo(row: dict) -> str:
     if timed:
         return "declared-state-unknown"
     if others:
-        return "declared-outside-actions"
+        return "hygiene-only" if {d.get("kind") for d in others} <= HYGIENE_KINDS else "declared-outside-actions"
     hist = row.get("history") or {}
     if any(e.get("crons_removed") for e in (hist.get("events") or []) if isinstance(e, dict)):
         return "abandoned-in-history"

@@ -263,6 +263,41 @@ def test_every_carrier_kind_parses_and_a_carrier_without_a_schedule_is_no_declar
     assert C.parse_cloud_routines('"just a string"') == 0 and C.parse_cloud_routines("{bad") is None
     assert C.parse_workflow("on:\n  schedule:\n    cron: '5 5 * * *'\n") == ["5 5 * * *"]  # schedule as a mapping
     assert C.parse_workflow("on: [push]\n") == [] and C.parse_workflow("on:\n  - [broken\n") is None
+    # real-world carriers the strict parsers reject: a wrangler.toml declaring [vars] twice (wrangler tolerates it)
+    # has no [triggers] table → no schedule; the same file with a [triggers] table is read by regex
+    twice = 'name = "api"\n[vars]\nA = "1"\n[env.staging]\nname = "s"\n[vars]\nA = "2"\n'
+    assert C.parse_wrangler("apps/api/wrangler.toml", twice) == []
+    assert C.parse_wrangler("wrangler.toml", twice + "crons = [\n") is None  # a cron outside any table: unreadable
+    assert C.parse_wrangler("wrangler.toml", twice + '[triggers]\ncrons = ["*/15 * * * *", "0 3 * * 1"]\n') == [
+        "*/15 * * * *",
+        "0 3 * * 1",
+    ]
+    assert C.parse_wrangler("wrangler.toml", twice + "[triggers]\ncrons = garbage\n") is None  # table, unreadable
+    # a launchd plist whose XML comment holds `--` (expat rejects it) still yields its StartInterval by regex
+    commented = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n<!-- install: organvm heartbeat --install -->\n'
+        '<plist version="1.0"><dict><key>Label</key><string>x</string><key>StartInterval</key><integer>900</integer></dict></plist>\n'
+    )
+    assert C.parse_launchd(commented) == {"interval_seconds": 900, "parse": "regex"}
+    assert (
+        C.parse_launchd('<!-- a -- b --><plist version="1.0"><dict><key>Label</key><string>x</string></dict></plist>')
+        == {}
+    )
+    assert C.parse_launchd("<!-- a -- b --><plist><dict><key>StartCalendarInterval</key><dict/></dict></plist>") is None
+    # cadence comes from fire frequency, never from the routine-parity classes (`*/30` is not "daily")
+    assert [
+        C.cron_rate(c) for c in ("*/30 * * * *", "0 * * * *", "0 */4 * * *", "0 9 * * *", "0 9 * * 1", "0 9 * * 1-5")
+    ] == [
+        (48.0, "sub-hourly"),
+        (24.0, "hourly"),
+        (6.0, "intraday"),
+        (1.0, "daily"),
+        (0.143, "weekly"),
+        (0.714, "weekdays"),
+    ]
+    assert C.cron_rate("0 0 1 * *") == (0.033, "monthly") and C.cron_rate("not a cron") == (None, "unparsed")
+    half_hourly = C.declaration_for("wrangler", "wrangler.toml", '[triggers]\ncrons = ["*/30 * * * *", "0 9 * * 1"]\n')
+    assert half_hourly["cadence"] == ["sub-hourly", "weekly"] and half_hourly["fires_per_day"] == 48.143
     d = C.declaration_for("gh-workflow", ".github/workflows/x.yml", WORKFLOW_CRON)
     assert d and d["cadence"] == ["daily"]
 
@@ -326,6 +361,27 @@ def test_scan_repo_reads_carriers_states_runs_and_history(monkeypatch, tmp_path)
     assert (
         row["fired"]["total_scheduled_runs"] == 3
         and row["fired"]["by_workflow"]["hygiene"]["last_conclusion"] == "success"
+    )
+    assert row["fired"]["listing_capped"] is False and row["fired"]["oldest_page_read"] is False
+    by_path = {d["path"]: d for d in row["declarations"]}
+    assert by_path["wrangler.toml"]["cadence"] == ["sub-hourly"] and by_path["wrangler.toml"]["fires_per_day"] == 48.0
+    # a listing at the cap is a floor; without the deepest page, oldest_seen is page one's edge
+    capped = C.summarize_scheduled_runs(
+        {"total_count": C.RUN_LISTING_CAP, "workflow_runs": [{"name": "w", "created_at": "2026-10-20T00:00:00Z"}]}
+    )
+    assert (
+        capped["listing_capped"] is True
+        and capped["oldest_page_read"] is False
+        and capped["oldest_seen"] == "2026-10-20T00:00:00Z"
+    )
+    deep = C.summarize_scheduled_runs(
+        {"total_count": 150, "workflow_runs": [{"name": "w", "created_at": "2026-10-20T00:00:00Z"}]},
+        {"workflow_runs": [{"name": "w", "created_at": "2026-01-01T00:00:00Z"}]},
+    )
+    assert (
+        deep["listing_capped"] is False
+        and deep["oldest_page_read"] is True
+        and deep["oldest_seen"] == "2026-01-01T00:00:00Z"
     )
     assert row["failing_workflows"] == [] and row["actions_registered_not_in_tree"] == [
         ".github/workflows/tmp-diag.yml"
@@ -419,6 +475,13 @@ def test_verdict_matrix():
     assert C.verdict_for_repo(row(history={"events": [{"change": "removed", "crons_removed": []}]})) == "none"
     wrangler = {"kind": "wrangler", "path": "wrangler.toml", "crons": ["0 * * * *"]}
     assert C.verdict_for_repo(row(declarations=[wrangler])) == "declared-outside-actions"
+    # dependency-update schedules are hygiene, not an operator scheduler: their own verdict, not a finding
+    dependabot = {"kind": "dependabot", "path": ".github/dependabot.yml", "intervals": ["weekly"]}
+    renovate = {"kind": "renovate", "path": "renovate.json", "schedule": ["after 10pm"]}
+    assert C.verdict_for_repo(row(declarations=[dependabot])) == "hygiene-only"
+    assert C.verdict_for_repo(row(declarations=[dependabot, renovate])) == "hygiene-only"
+    assert C.verdict_for_repo(row(declarations=[dependabot, wrangler])) == "declared-outside-actions"
+    assert "hygiene-only" not in C.FINDING_VERDICTS
     # a live schedule outside Actions outranks a cron removed long ago
     assert (
         C.verdict_for_repo(
@@ -797,6 +860,14 @@ def test_attempt_discourse_is_keyword_matched_and_an_unreadable_listing_is_not_z
     assert len(att["items"]) == 200 and att["seen"] == 200 and att["truncated"] is True and len(calls) == 2
     att = C.read_attempts("4444J99/x", lambda path: (C.UNREACHABLE, None))
     assert att["readable"] is False and att["items"] == [] and att["truncated"] is True
+    # a word that only names the repository is not scheduling intent: "automation" inside universal-mail--automation
+    rows = [
+        {"number": 1, "title": "Activate release automation", "state": "closed", "labels": []},
+        {"number": 2, "title": "Fix scheduler repo paths", "state": "closed", "labels": []},
+        {"number": 3, "title": "Automation: add nightly cron", "state": "open", "labels": []},
+    ]
+    att = C.read_attempts("4444J99/universal-mail--automation", lambda path: (C.OK, rows), pages=1)
+    assert [i["number"] for i in att["items"]] == [2, 3] and att["seen"] == 3
     assert (
         C.ATTEMPT_RX.search("Scheduled tasks for the digest")
         and C.ATTEMPT_RX.search("keepalive")
