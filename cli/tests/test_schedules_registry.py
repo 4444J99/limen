@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from datetime import date, datetime, timezone
@@ -924,3 +925,205 @@ def test_voice_reader_treats_a_never_stamped_directory_as_unmeasured(tmp_path):
     (tmp_path / "logs" / ".voice" / "y").write_text("")  # a stale stamp from another day: now it IS a beating host
     observed, detail = UTIL.read_voice_stamps("limen-beat", plane, jobs, date(2020, 1, 1), tmp_path)
     assert observed == 0 and "0/1" in detail
+
+
+# ── review round 2 (PR #3178, Codex): claims vs launches, cadence windows vs midnight, four readbacks ──
+
+
+def test_board_reader_counts_confirmed_launches_not_claims(tmp_path, monkeypatch):
+    """A `dispatched` row is a claim (AGENTS.md task states). The serial dispatcher writes a reservation row
+    before the provider runs and `_apply_result` writes the confirmed submission; only the latter is a launch,
+    and a launch echoed by several rows is still one launch."""
+    monkeypatch.delenv("LIMEN_TASKS", raising=False)
+    monkeypatch.delenv("LIMEN_ROOT", raising=False)
+    import datetime as _dt
+
+    now = datetime.now(timezone.utc)
+    stamp = lambda hours: (now - _dt.timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: E731
+    reservation = "dispatch-serial: canonical claim requested before provider execution"
+    board = {
+        "tasks": [
+            {  # serial: reservation + confirmed submission = ONE launch
+                "id": "t1",
+                "dispatch_log": [
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "a" * 64,
+                        "timestamp": stamp(2),
+                        "output": reservation,
+                    },
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "jules://session/1",
+                        "timestamp": stamp(2),
+                    },
+                ],
+            },
+            {  # parallel: reservation + confirmed submission = ONE launch
+                "id": "t2",
+                "dispatch_log": [
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "reserve",
+                        "timestamp": stamp(3),
+                        "output": "dispatch-parallel: reserved before agent execution",
+                    },
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "jules://session/2",
+                        "timestamp": stamp(3),
+                    },
+                ],
+            },
+            {  # reservation whose provider launch never started: released, NOT a launch
+                "id": "t3",
+                "dispatch_log": [
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "b" * 64,
+                        "timestamp": stamp(4),
+                        "output": reservation,
+                    },
+                    {
+                        "agent": "jules",
+                        "status": "open",
+                        "session_id": "daemon",
+                        "timestamp": stamp(4),
+                        "output": "provider launch did not start; canonical claim released: x",
+                    },
+                ],
+            },
+            {  # lifecycle guard keeping an open-PR task out of churn: NOT a launch
+                "id": "t4",
+                "dispatch_log": [
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "pr-open-lifecycle-guard",
+                        "timestamp": stamp(1),
+                        "output": "dispatch result ignored because this task already recorded an open PR",
+                    },
+                ],
+            },
+            {  # the same confirmed submission echoed twice = ONE launch; one outside the window = none
+                "id": "t5",
+                "dispatch_log": [
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "jules://session/5",
+                        "timestamp": stamp(5),
+                    },
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "jules://session/5",
+                        "timestamp": stamp(5),
+                    },
+                    {
+                        "agent": "jules",
+                        "status": "dispatched",
+                        "session_id": "jules://session/old",
+                        "timestamp": stamp(30),
+                    },
+                ],
+            },
+        ]
+    }
+    (tmp_path / "tasks.yaml").write_text(yaml.safe_dump(board))
+    plane = _plane(
+        evidence={"kind": "board-dispatch-receipts", "locator": "tasks.yaml"},
+        allotment={"runs": 100, "window": "rolling-24h", "concurrency": 15, "source": "t", "entitlement": "unverified"},
+        fill_policy="floor",
+        floor=25,
+    )
+    observed, detail = UTIL.read_board_dispatch_receipts("jules", plane, [], TODAY, tmp_path)
+    assert observed == 3, detail
+    assert "3 confirmed jules launches" in detail and "4 pre-launch claim/guard rows not counted" in detail
+    assert UTIL.is_confirmed_launch({"status": "dispatched", "session_id": "x"})
+    assert not UTIL.is_confirmed_launch({"status": "dispatched", "session_id": "serial-reserve"})
+    assert not UTIL.is_confirmed_launch({"status": "done", "session_id": "x"})
+
+
+def test_voice_reader_scores_stamps_against_their_cadence_window_not_midnight(tmp_path):
+    """A cadence-48 sensor stamped at 23:59 is not missing at 00:01: a stamp is current while younger than
+    2 × its worst-case cadence window (the beat-sensors canary bound), whatever UTC day it was written on."""
+    import os
+    import time
+
+    voice = tmp_path / "logs" / ".voice"
+    voice.mkdir(parents=True)
+    now = time.time()
+
+    def job(sid, beats):
+        return S.Job(
+            id=f"beat/{sid}",
+            plane="limen-beat",
+            crons=[],
+            tz="UTC",
+            enabled=True,
+            derived=True,
+            source="s",
+            cadence_hours=S.beats_to_hours(beats, 1800),
+            cadence_beats=beats,
+            extra={"loop_max_seconds": 1800},
+        )
+
+    jobs = [job("daily", 48), job("four-beat", 4), job("twelve-beat", 12), job("two-day", 96)]
+    for sid, age_hours in (("daily", 30), ("four-beat", 6), ("twelve-beat", 0)):
+        p = voice / sid
+        p.write_text("")
+        os.utime(p, (now - age_hours * 3600, now - age_hours * 3600))
+    # daily: 30h old, bound 48h → current (a midnight cutoff would have faulted it); four-beat: 6h old,
+    # bound 4h → late; twelve-beat: fresh → current; two-day (96 beats = 48h) is not in the daily set.
+    plane = _plane(evidence={"kind": "voice-stamps", "locator": "logs/.voice"})
+    observed, detail = UTIL.read_voice_stamps("limen-beat", plane, jobs, TODAY, tmp_path)
+    assert (
+        observed == 2
+        and detail.startswith("2/3 ")
+        and "four-beat (6h)" in detail
+        and "daily" not in detail.split("late:")[1]
+    )
+    assert UTIL.declared_for(plane, jobs, TODAY, NOW) == 3
+    assert UTIL._stamp_bound_seconds(job("daily", 48)) == 48 * 1800 * 2
+
+
+def test_readbacks_lever_predicate_requires_all_four_ui_only_planes():
+    """L-SCHED-READBACKS names four UI-only schedulers; its predicate must not discharge on three."""
+    import shlex
+
+    levers = json.loads((ROOT / "his-hand-levers.json").read_text())
+
+    def walk(o):
+        if isinstance(o, dict):
+            if o.get("id") == "L-SCHED-READBACKS":
+                yield o
+            for v in o.values():
+                yield from walk(v)
+        elif isinstance(o, list):
+            for i in o:
+                yield from walk(i)
+
+    lever = next(walk(levers))
+    predicate = json.dumps(lever, ensure_ascii=False)
+    m = re.search(r"schedule-utilization\.py --json \| (python3 -c .*?)(?<!\\\\)\"(?=[,}])", predicate)
+    assert m, "predicate not found"
+    argv = shlex.split(json.loads('"' + m.group(1) + '"'))
+    four = ["chatgpt-scheduled-tasks", "grok-automations", "gemini-scheduled-actions", "jules-native-scheduled-tasks"]
+
+    def run(verdicts):
+        report = {"planes": [{"plane": p, "verdict": v} for p, v in verdicts.items()]}
+        return subprocess.run(argv, input=json.dumps(report), capture_output=True, text=True, check=False).returncode
+
+    assert run({p: "full" for p in four}) == 0
+    assert run({p: "full" for p in four[:3]}) == 1  # three measured, Jules-native missing from the report
+    assert run({**{p: "full" for p in four[:3]}, "jules-native-scheduled-tasks": "unmeasured"}) == 1
+    assert run({**{p: "full" for p in four}, "gemini-scheduled-actions": "unmeasured"}) == 1
+    # the registry carries the fourth plane, unmeasured by construction until the readback lands
+    planes = S.load_registry(ROOT)["planes"]
+    assert planes["jules-native-scheduled-tasks"]["evidence"]["kind"] == "none"

@@ -68,6 +68,13 @@ What shipped already answers the two blockers, and the rest are recorded here as
 - **A failed sibling read scored as an observed 0.** Fixed: the sibling read is tri-state (present / absent / unreadable); absence is confirmed only by a parent-folder listing that lacks the file, because an unauthenticated read of a private repository is also a 404. Unreadable is unmeasured, never zero.
 - Found while verifying: a `logs/.voice` directory that exists but was never stamped (a worktree, CI) read as a dark heartbeat; it is now unmeasured.
 
+## Review round 2 (PR #3178 head `f1dda55`, Codex, 2026-10-23) — three claims verified, all three real, fixed; the two-round bound is now spent
+
+- **A `dispatched` row is a claim, not a launch.** The serial dispatcher writes a reservation row before the provider runs and `_apply_result` writes the confirmed submission, so every launch was counted twice and a reservation whose launch never started counted once. Fixed: only confirmed submissions count (reservation/guard rows are recognised by their output prefix and guard session ids), deduplicated per task and provider session; the detail names the claim rows it skipped.
+- **Voice stamps were scored against UTC midnight.** A cadence-48 sensor stamped at 23:59 read as missing at 00:01. Fixed: a stamp is current while younger than 2 × its worst-case cadence window, the same bound `beat-sensors.py --canary` uses for STALE, so the two can never disagree.
+- **The readbacks lever discharged on three of its four planes.** Jules native scheduled tasks had no plane row, and the broker's launch count says nothing about which native tasks exist. Fixed: `jules-native-scheduled-tasks` is a plane of its own (evidence `none`, unmeasured by construction, under the same readback budget as Grok and Gemini) and the predicate requires all four present and measured.
+- Any further automated-review round is a generator, not a gate (`PREC-2026-08-12-advisory-review-loop-has-no-fixed-point`): residual findings become follow-up issues; `scripts/merge-policy.sh` alone decides the merge.
+
 ## Done predicate
 
 `scripts/check-schedules.py` exit 0 and `bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py -q` green on the merged tree; on the host, `python3 scripts/schedule-utilization.py --receipt logs/schedule-utilization.json` writes a receipt whose `measured` numerator rises as the atoms above are pulled.

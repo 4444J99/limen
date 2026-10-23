@@ -5821,7 +5821,7 @@
         "owner": "schedule-estate registry (limen#3177)",
         "acceptance": {
           "condition": "Each of the four planes has at least one declared job row with a delivery locator, or an explicit idle-by-design fill_policy, and schedule-utilization reports it measured.",
-          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('chatgpt-scheduled-tasks','grok-automations','gemini-scheduled-actions')]; sys.exit(0 if len(ps)==3 and not any(p['verdict']=='unmeasured' for p in ps) else 1)\"",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('chatgpt-scheduled-tasks','grok-automations','gemini-scheduled-actions','jules-native-scheduled-tasks')]; sys.exit(0 if len(ps)==4 and not any(p['verdict']=='unmeasured' for p in ps) else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [],

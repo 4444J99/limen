@@ -298,17 +298,37 @@ def read_voice_stamps(plane_id: str, plane: dict, jobs: list[S.Job], today: date
         # The directory exists (a sensor run or hook created it) but no heartbeat has ever stamped here:
         # this checkout is not a beating host, so there is nothing to score.
         return None, f"{voice} holds no stamps at all — no heartbeat beats on this checkout (CI or worktree) — unmeasured"
-    expected = {j.id.split("/", 1)[1] for j in jobs if j.cadence_hours and j.cadence_hours <= 24}
-    stamped_today = 0
-    for sid in expected:
-        stamp = voice / sid
+    daily = [j for j in jobs if j.cadence_hours and j.cadence_hours <= 24]
+    now_ts = datetime.now(timezone.utc).timestamp()
+    current = 0
+    late: list[str] = []
+    for job in daily:
+        sid = job.id.split("/", 1)[1]
         try:
-            mtime = datetime.fromtimestamp(stamp.stat().st_mtime, tz=timezone.utc).date()
+            age = now_ts - (voice / sid).stat().st_mtime
         except OSError:
+            late.append(f"{sid} (never)")
             continue
-        if mtime == today:
-            stamped_today += 1
-    return stamped_today, f"{stamped_today}/{len(expected)} daily-or-faster cadence sensors stamped today"
+        if age <= _stamp_bound_seconds(job):
+            current += 1
+        else:
+            late.append(f"{sid} ({int(age // 3600)}h)")
+    detail = (
+        f"{current}/{len(daily)} daily-or-faster cadence sensors stamped within 2× their worst-case cadence window "
+        "(the beat-sensors canary bound; a UTC-midnight cutoff would fault every sensor not yet due)"
+    )
+    if late:
+        detail += f"; late: {', '.join(sorted(late))}"
+    return current, detail
+
+
+def _stamp_bound_seconds(job: S.Job) -> float:
+    """beat-sensors.py canary: a stamp older than cadence × loop_max × 2 is STALE. The same bound here, so
+    the two never disagree about a sensor's health."""
+    loop_max = int((job.extra or {}).get("loop_max_seconds") or S.BEAT_LOOP_MAX_SECONDS)
+    if job.cadence_beats:
+        return job.cadence_beats * max(1, loop_max) * 2
+    return (job.cadence_hours or 1) * S.SECONDS_PER_HOUR * 2
 
 
 def read_claude_snapshot(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
@@ -338,6 +358,24 @@ def _as_utc(stamp: object) -> datetime | None:
 
 
 PUBLIC_PROJECTION_SCHEMA_PREFIX = "limen.public_board_projection"
+
+# A `dispatched` dispatch_log row is a CLAIM, not an execution (AGENTS.md task states). The dispatcher
+# writes one before the provider runs (serial: "dispatch-serial: canonical claim requested before
+# provider execution", parallel: "dispatch-parallel: reserved before agent execution") and `_apply_result`
+# writes another for the confirmed submission; lifecycle guards write more without launching anything.
+# Only the confirmed submission is a launch.
+RESERVATION_OUTPUT_PREFIXES = ("dispatch-serial:", "dispatch-parallel:", "dispatch result ignored")
+GUARD_SESSION_IDS = {"reserve", "serial-reserve", "pr-open-lifecycle-guard", "result-lifecycle-guard"}
+
+
+def is_confirmed_launch(entry: dict) -> bool:
+    """True for a dispatch_log row that records a provider submission, not a pre-launch claim or a guard."""
+    if str(entry.get("status") or "").lower() != "dispatched":
+        return False
+    if str(entry.get("session_id") or "") in GUARD_SESSION_IDS:
+        return False
+    output = str(entry.get("output") or "")
+    return not output.startswith(RESERVATION_OUTPUT_PREFIXES)
 
 
 def board_path(root: Path, locator: str, env: dict[str, str] | None = None) -> Path:
@@ -380,17 +418,28 @@ def read_board_dispatch_receipts(plane_id: str, plane: dict, jobs: list[S.Job], 
         )
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(hours=24)
-    used = 0
+    launches: set[tuple[str, str]] = set()  # (task id, provider session) — one launch, however many rows echo it
+    claims = 0
     for task in data.get("tasks") or []:
-        for entry in (task.get("dispatch_log") or []) if isinstance(task, dict) else []:
-            if not isinstance(entry, dict):
+        if not isinstance(task, dict):
+            continue
+        for entry in task.get("dispatch_log") or []:
+            if not isinstance(entry, dict) or str(entry.get("agent") or "").lower() != "jules":
                 continue
-            if str(entry.get("agent") or "").lower() != "jules" or str(entry.get("status") or "").lower() != "dispatched":
+            if str(entry.get("status") or "").lower() != "dispatched":
                 continue
             when = _as_utc(entry.get("timestamp"))
-            if when is not None and cutoff < when <= now:
-                used += 1
-    return used, f"{used} jules launches in the rolling 24h recorded by this broker (not vendor remaining quota)"
+            if when is None or not (cutoff < when <= now):
+                continue
+            if not is_confirmed_launch(entry):
+                claims += 1
+                continue
+            launches.add((str(task.get("id") or ""), str(entry.get("session_id") or "")))
+    used = len(launches)
+    return used, (
+        f"{used} confirmed jules launches in the rolling 24h recorded by this broker "
+        f"({claims} pre-launch claim/guard rows not counted; not vendor remaining quota)"
+    )
 
 
 def read_issue_comments(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:

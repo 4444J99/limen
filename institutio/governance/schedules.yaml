@@ -214,6 +214,27 @@ planes:
     declared_on: 2026-10-23
     enabled: true
 
+  jules-native-scheduled-tasks:
+    provider: google
+    surface: ui
+    owner: governance
+    effector: "the operator posts one readback (Jules > Scheduled tab: each task, cadence, time zone, destination) and declares the rows here with a delivery locator; no list/edit API exists (delete + recreate only)"
+    allotment:
+      runs: null
+      window: active-tasks
+      concurrency: null
+      source: "shares the jules plane's rolling-24h task allotment (https://jules.google/docs/usage-limits); native scheduled tasks are one of its competing callers, reconciled by limen#2680"
+      entitlement: unverified
+    fill_policy: declared
+    floor: null
+    jobs_source: null
+    evidence:
+      kind: none
+      locator: null
+      note: "the jules plane's board-dispatch-receipts count this broker's launches only and say nothing about which native scheduled tasks exist — that is what the readback (L-SCHED-READBACKS) establishes"
+    declared_on: 2026-10-23
+    enabled: true
+
 jobs:
 
   # ── plane (i): 4444J99/ops — source of truth is that repo's workflow files ──────────────────
