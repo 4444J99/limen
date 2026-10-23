@@ -1,0 +1,59 @@
+....................FF.....................                              [100%]
+=================================== FAILURES ===================================
+__________________________ test_memory_pass_succeeds ___________________________
+
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-13/test_memory_pass_succeeds0')
+
+    def test_memory_pass_succeeds(tmp_path):
+        """Separate from error propagation: the memory pass must actually work.
+    
+        Guards against a repair that merely propagates `memory_error` while leaving
+        the invalid import in place. A valid ticket is pending, so an all-zero
+        result is NOT success and must not satisfy this assertion.
+        """
+        sb = KeeperSandbox(tmp_path, "memory-succeeds", memoria=True, memory_populated=True)
+        proc = sb.run()
+        state = sb.state_payload()
+        kind = _memory_state(state)
+>       assert kind != "error", (
+            f"memory pass still failing: state={state}\nstdout: {proc.stdout}\n"
+            f"stderr: {proc.stderr}"
+        )
+E       AssertionError: memory pass still failing: state={'updated': '2026-10-16T18:34:05Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: OK — inbox empty; local publication skipped (remote-keeper-owns-projection)
+E         
+E         stderr: 
+E       assert 'error' != 'error'
+
+cli/tests/test_tabularius_organ_memory.py:278: AssertionError
+____________ test_valid_ticket_lifecycle_is_applied_then_idempotent ____________
+
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-13/test_valid_ticket_lifecycle_is0')
+
+    def test_valid_ticket_lifecycle_is_applied_then_idempotent(tmp_path):
+        """The synthetic lifecycle: applied content, then no duplicate on re-run.
+    
+        Idempotence concerns the ticket's effects. The liveness `updated` timestamp
+        legitimately changes on a second normal-mode run, so only ticket-derived
+        content is compared.
+        """
+        sb = KeeperSandbox(tmp_path, "lifecycle", memoria=True, memory_populated=True)
+        proc = sb.run()
+        state = sb.state_payload()
+>       assert state.get("memory_applied", 0) >= 1, (
+            f"pending valid ticket was not applied: state={state}\nstdout: {proc.stdout}"
+        )
+E       AssertionError: pending valid ticket was not applied: state={'updated': '2026-10-16T18:34:05Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: OK — inbox empty; local publication skipped (remote-keeper-owns-projection)
+E         
+E       assert 0 >= 1
+E        +  where 0 = <built-in method get of dict object at 0x10bf215c0>('memory_applied', 0)
+E        +    where <built-in method get of dict object at 0x10bf215c0> = {'updated': '2026-10-16T18:34:05Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
+
+cli/tests/test_tabularius_organ_memory.py:302: AssertionError
+=========================== short test summary info ============================
+FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_pass_succeeds
+FAILED cli/tests/test_tabularius_organ_memory.py::test_valid_ticket_lifecycle_is_applied_then_idempotent
+2 failed, 41 passed in 4.12s

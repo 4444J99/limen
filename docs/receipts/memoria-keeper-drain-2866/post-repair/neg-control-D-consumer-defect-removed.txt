@@ -1,0 +1,58 @@
+.......................................F..F                              [100%]
+=================================== FAILURES ===================================
+___ test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down ____
+
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-15/test_a_fresh_keeper_stamp_over0')
+
+    def test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down(tmp_path: Path) -> None:
+        """Freshness says the organ ran; the recorded failure says its memory half did not.
+    
+        Every age-based signal here is deliberately perfect — the state file was written seconds
+        ago. Only `memory_error` says otherwise. Without the defect channel this exact artifact
+        reads green indefinitely, because the keeper writes the stamp even when memory fails.
+        """
+        mod = _load()
+        _tabularius_state(mod, tmp_path, {
+            "pending": 0, "applied": 0, "rejected": 0,
+            "memory_error": "ImportError",
+        })
+    
+        row = _tabularius_row(mod)
+>       assert row["status"] == "down", row
+E       AssertionError: {'key': 'tabularius', 'rung': 'TABVLARIVS', 'what': 'the conduct relay — submit the lock-free ticket inbox to the authenticated remote keeper and archive only acknowledged projection receipts', 'voice': 'tabularius', ...}
+E       assert 'green' == 'down'
+E         
+E         - down
+E         + green
+
+cli/tests/test_organ_health_defect.py:324: AssertionError
+_________ test_a_recorded_memory_error_names_its_own_age_not_the_voice _________
+
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-15/test_a_recorded_memory_error_n0')
+
+    def test_a_recorded_memory_error_names_its_own_age_not_the_voice(tmp_path: Path) -> None:
+        """The state stamp is the artifact's own clock; the suffix must not claim false immediacy."""
+        mod = _load()
+        logs = tmp_path / "logs"
+        logs.mkdir(parents=True, exist_ok=True)
+        stale = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=3)
+        (logs / "tabularius-organ-state.json").write_text(json.dumps({
+            "updated": stale.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "memory_error": "ImportError",
+        }))
+        mod.LOGS = logs
+    
+        row = _tabularius_row(mod)
+        # Staleness alone already reads not-green; what matters is that the reason travels.
+>       assert row["status"] == "down", row
+E       AssertionError: {'key': 'tabularius', 'rung': 'TABVLARIVS', 'what': 'the conduct relay — submit the lock-free ticket inbox to the authenticated remote keeper and archive only acknowledged projection receipts', 'voice': 'tabularius', ...}
+E       assert 'green' == 'down'
+E         
+E         - down
+E         + green
+
+cli/tests/test_organ_health_defect.py:373: AssertionError
+=========================== short test summary info ============================
+FAILED cli/tests/test_organ_health_defect.py::test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down
+FAILED cli/tests/test_organ_health_defect.py::test_a_recorded_memory_error_names_its_own_age_not_the_voice
+2 failed, 41 passed in 4.48s

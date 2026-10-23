@@ -1,0 +1,245 @@
+.FFFFFFFF.....                                                           [100%]
+=================================== FAILURES ===================================
+_______________ test_mode_does_not_create_health_state[--check] ________________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal0')
+flag = '--check'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    def test_mode_does_not_create_health_state(tmp_path, flag):
+        """A non-mutating mode must not create the health-state directory or file."""
+        sb = KeeperSandbox(tmp_path, f"create-{flag.strip('-')}")
+        assert not sb.state_path.exists(), "precondition: health-state file absent"
+        proc = sb.run(flag)
+>       assert not sb.state_path.exists(), (
+            f"{flag} created {sb.state_path} despite a non-mutating contract\n"
+            f"stdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: --check created /private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal0/create-check/root/logs/tabularius-organ-state.json despite a non-mutating contract
+E         stdout: tabularius: inbox empty
+E         tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         
+E         stderr: 
+E       assert not True
+E        +  where True = exists()
+E        +    where exists = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal0/create-check/root/logs/tabularius-organ-state.json').exists
+E        +      where PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal0/create-check/root/logs/tabularius-organ-state.json') = <tabularius_organ_fixtures.KeeperSandbox object at 0x107a0af90>.state_path
+
+cli/tests/test_tabularius_organ_memory.py:67: AssertionError
+______________ test_mode_does_not_create_health_state[--dry-run] _______________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal1')
+flag = '--dry-run'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    def test_mode_does_not_create_health_state(tmp_path, flag):
+        """A non-mutating mode must not create the health-state directory or file."""
+        sb = KeeperSandbox(tmp_path, f"create-{flag.strip('-')}")
+        assert not sb.state_path.exists(), "precondition: health-state file absent"
+        proc = sb.run(flag)
+>       assert not sb.state_path.exists(), (
+            f"{flag} created {sb.state_path} despite a non-mutating contract\n"
+            f"stdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: --dry-run created /private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal1/create-dry-run/root/logs/tabularius-organ-state.json despite a non-mutating contract
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: OK — inbox empty (no-op)
+E         
+E         stderr: 
+E       assert not True
+E        +  where True = exists()
+E        +    where exists = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal1/create-dry-run/root/logs/tabularius-organ-state.json').exists
+E        +      where PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_create_heal1/create-dry-run/root/logs/tabularius-organ-state.json') = <tabularius_organ_fixtures.KeeperSandbox object at 0x1079a3c50>.state_path
+
+cli/tests/test_tabularius_organ_memory.py:67: AssertionError
+_________ test_mode_does_not_overwrite_existing_health_state[--check] __________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_overwrite_e0')
+flag = '--check'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    def test_mode_does_not_overwrite_existing_health_state(tmp_path, flag):
+        """A non-mutating mode must leave an existing health-state file byte-identical."""
+        sb = KeeperSandbox(tmp_path, f"overwrite-{flag.strip('-')}", health_state="preexisting")
+        before = sb.state_path.read_bytes()
+        before_mtime = sb.state_path.stat().st_mtime_ns
+        proc = sb.run(flag)
+>       assert sb.state_path.read_bytes() == before, (
+            f"{flag} overwrote an existing health-state file\n"
+            f"stdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: --check overwrote an existing health-state file
+E         stdout: tabularius: inbox empty
+E         tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         
+E         stderr: 
+E       assert b'{\n  "updat...portError"\n}' == b'{"updated":...sting": true}'
+E         
+E         At index 1 diff: b'\n' != b'"'
+E         Use -v to get more diff
+
+cli/tests/test_tabularius_organ_memory.py:84: AssertionError
+________ test_mode_does_not_overwrite_existing_health_state[--dry-run] _________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_mode_does_not_overwrite_e1')
+flag = '--dry-run'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    def test_mode_does_not_overwrite_existing_health_state(tmp_path, flag):
+        """A non-mutating mode must leave an existing health-state file byte-identical."""
+        sb = KeeperSandbox(tmp_path, f"overwrite-{flag.strip('-')}", health_state="preexisting")
+        before = sb.state_path.read_bytes()
+        before_mtime = sb.state_path.stat().st_mtime_ns
+        proc = sb.run(flag)
+>       assert sb.state_path.read_bytes() == before, (
+            f"{flag} overwrote an existing health-state file\n"
+            f"stdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: --dry-run overwrote an existing health-state file
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: OK — inbox empty (no-op)
+E         
+E         stderr: 
+E       assert b'{\n  "updat...eason": ""\n}' == b'{"updated":...sting": true}'
+E         
+E         At index 1 diff: b'\n' != b'"'
+E         Use -v to get more diff
+
+cli/tests/test_tabularius_organ_memory.py:84: AssertionError
+____________ test_check_mode_writes_independently_of_memory_enabled ____________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_check_mode_writes_indepen0')
+
+    def test_check_mode_writes_independently_of_memory_enabled(tmp_path):
+        """Characterisation: the outer write does not depend on the memory pass.
+    
+        Documents that the no-write violation is a separate defect from the broken
+        memory import, not a consequence of it.
+        """
+        sb = KeeperSandbox(tmp_path, "control-memoria-disabled", memoria=False)
+        proc = sb.run("--check")
+        # On the defective baseline this writes; the assertion documents the control.
+        wrote = sb.state_path.exists()
+>       assert wrote is False, (
+            "--check wrote a health-state file with MEMORIA disabled, confirming the "
+            "outer write is unconditional rather than caused by the memory failure\n"
+            f"stdout: {proc.stdout}"
+        )
+E       AssertionError: --check wrote a health-state file with MEMORIA disabled, confirming the outer write is unconditional rather than caused by the memory failure
+E         stdout: tabularius: inbox empty
+E         
+E       assert True is False
+
+cli/tests/test_tabularius_organ_memory.py:104: AssertionError
+_______________ test_normal_mode_propagates_memory_outcome[None] _______________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_normal_mode_propagates_me0')
+board_mode = None
+
+    @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
+    def test_normal_mode_propagates_memory_outcome(tmp_path, board_mode):
+        """Normal execution must publish the memory outcome it computed.
+    
+        Covers the empty, deferred, and processed board branches. The deferred and
+        processed branches stub only the external board boundary; the real entry
+        point and the real state writer are exercised.
+        """
+        name = f"propagate-{board_mode or 'empty'}"
+        sb = KeeperSandbox(
+            tmp_path, name, memoria=True, memory_populated=True,
+            health_state="preexisting", board_mode=board_mode,
+        )
+        proc = sb.run()
+        state = sb.state_payload()
+        assert state, f"no health-state artifact was published; stdout: {proc.stdout}"
+>       assert _memory_evidence(state), (
+            "the memory outcome was computed but is absent from the published state "
+            f"stamp; state={state}\nstdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: the memory outcome was computed but is absent from the published state stamp; state={'updated': '2026-10-16T17:22:23.578703+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection'}
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: OK — inbox empty; local publication skipped (remote-keeper-owns-projection)
+E         
+E         stderr: 
+E       assert False
+E        +  where False = _memory_evidence({'updated': '2026-10-16T17:22:23.578703+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, ...})
+
+cli/tests/test_tabularius_organ_memory.py:136: AssertionError
+_____________ test_normal_mode_propagates_memory_outcome[deferred] _____________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_normal_mode_propagates_me1')
+board_mode = 'deferred'
+
+    @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
+    def test_normal_mode_propagates_memory_outcome(tmp_path, board_mode):
+        """Normal execution must publish the memory outcome it computed.
+    
+        Covers the empty, deferred, and processed board branches. The deferred and
+        processed branches stub only the external board boundary; the real entry
+        point and the real state writer are exercised.
+        """
+        name = f"propagate-{board_mode or 'empty'}"
+        sb = KeeperSandbox(
+            tmp_path, name, memoria=True, memory_populated=True,
+            health_state="preexisting", board_mode=board_mode,
+        )
+        proc = sb.run()
+        state = sb.state_payload()
+        assert state, f"no health-state artifact was published; stdout: {proc.stdout}"
+>       assert _memory_evidence(state), (
+            "the memory outcome was computed but is absent from the published state "
+            f"stamp; state={state}\nstdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: the memory outcome was computed but is absent from the published state stamp; state={'updated': '2026-10-16T17:22:23.751027+00:00', 'pending': 3, 'applied': 0, 'rejected': 0, 'deferred': True}
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: 3 ticket(s) deferred (synthetic deferral (fault injection))
+E         
+E         stderr: 
+E       assert False
+E        +  where False = _memory_evidence({'updated': '2026-10-16T17:22:23.751027+00:00', 'pending': 3, 'applied': 0, 'rejected': 0, ...})
+
+cli/tests/test_tabularius_organ_memory.py:136: AssertionError
+____________ test_normal_mode_propagates_memory_outcome[processed] _____________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-99/test_normal_mode_propagates_me2')
+board_mode = 'processed'
+
+    @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
+    def test_normal_mode_propagates_memory_outcome(tmp_path, board_mode):
+        """Normal execution must publish the memory outcome it computed.
+    
+        Covers the empty, deferred, and processed board branches. The deferred and
+        processed branches stub only the external board boundary; the real entry
+        point and the real state writer are exercised.
+        """
+        name = f"propagate-{board_mode or 'empty'}"
+        sb = KeeperSandbox(
+            tmp_path, name, memoria=True, memory_populated=True,
+            health_state="preexisting", board_mode=board_mode,
+        )
+        proc = sb.run()
+        state = sb.state_payload()
+        assert state, f"no health-state artifact was published; stdout: {proc.stdout}"
+>       assert _memory_evidence(state), (
+            "the memory outcome was computed but is absent from the published state "
+            f"stamp; state={state}\nstdout: {proc.stdout}\nstderr: {proc.stderr}"
+        )
+E       AssertionError: the memory outcome was computed but is absent from the published state stamp; state={'updated': '2026-10-16T17:22:23.930701+00:00', 'pending': 2, 'applied': 2, 'rejected': 1, 'wrote': 2, 'dry_run': False, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection'}
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: broker acknowledged 2 ticket(s); quarantined 1; local publication skipped: remote-keeper-owns-projection
+E         
+E         stderr: 
+E       assert False
+E        +  where False = _memory_evidence({'updated': '2026-10-16T17:22:23.930701+00:00', 'pending': 2, 'applied': 2, 'rejected': 1, ...})
+
+cli/tests/test_tabularius_organ_memory.py:136: AssertionError
+=========================== short test summary info ============================
+FAILED cli/tests/test_tabularius_organ_memory.py::test_mode_does_not_create_health_state[--check]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_mode_does_not_create_health_state[--dry-run]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_mode_does_not_overwrite_existing_health_state[--check]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_mode_does_not_overwrite_existing_health_state[--dry-run]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_check_mode_writes_independently_of_memory_enabled
+FAILED cli/tests/test_tabularius_organ_memory.py::test_normal_mode_propagates_memory_outcome[None]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_normal_mode_propagates_memory_outcome[deferred]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_normal_mode_propagates_memory_outcome[processed]
+8 failed, 6 passed in 2.04s
