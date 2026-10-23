@@ -164,30 +164,77 @@ def read_gh_actions_runs(plane_id: str, plane: dict, jobs: list[S.Job], today: d
     return total, detail, extra
 
 
-def _sibling_file(repo: str, rel: str, root: Path) -> str | None:
+PRESENT, ABSENT, UNREADABLE = "present", "absent", "unreadable"
+
+
+def _gh_api(path: str) -> tuple[int, object | None]:
+    """(exit code, parsed stdout JSON or None). `gh api` prints the error body to stdout on an HTTP error, so
+    the body survives for inspection; -1 means gh itself could not run."""
+    try:
+        run = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return -1, None
+    try:
+        return run.returncode, json.loads(run.stdout) if run.stdout.strip() else None
+    except json.JSONDecodeError:
+        return run.returncode, None
+
+
+def _is_404(payload: object) -> bool:
+    return isinstance(payload, dict) and (str(payload.get("status", "")) == "404" or payload.get("message") == "Not Found")
+
+
+def _gh_contents(repo: str, rel: str) -> tuple[str | None, str]:
+    """GitHub Contents read with the three outcomes kept apart: (text, PRESENT) on a decodable file,
+    (None, ABSENT) only when the parent folder LISTS and does not contain the file, (None, UNREADABLE) on
+    anything else — missing or unauthenticated gh, a network cut, a non-file payload. A bare 404 proves
+    nothing: an unauthenticated read of a private repository is also a 404, so absence is confirmed by
+    reading the folder the file would live in."""
+    if not gh_available():
+        return None, UNREADABLE
+    code, payload = _gh_api(f"repos/{repo}/contents/{rel}")
+    if code == 0 and isinstance(payload, dict) and payload.get("encoding") == "base64":
+        try:
+            return base64.b64decode(payload.get("content") or "").decode("utf-8"), PRESENT
+        except (ValueError, UnicodeDecodeError):
+            return None, UNREADABLE
+    if code != 0 and _is_404(payload):
+        folder, _, name = rel.rpartition("/")
+        lcode, listing = _gh_api(f"repos/{repo}/contents/{folder}")
+        if lcode == 0 and isinstance(listing, list):
+            names = {str(e.get("name")) for e in listing if isinstance(e, dict)}
+            return (None, ABSENT) if name not in names else (None, UNREADABLE)
+    return None, UNREADABLE
+
+
+def _sibling_file(repo: str, rel: str, root: Path) -> tuple[str | None, str]:
+    """(text, state) for a sibling repo's file: from the local clone when one is configured, else via the
+    GitHub Contents API. ABSENT is a confirmed observation (the store answered "no such file"); UNREADABLE
+    is the absence of an observation (nothing could be read) and must never be scored as zero."""
     clone = S.sibling_root(repo, dict(os.environ), Path.home())
     if clone is not None:
         path = clone / rel
-        return path.read_text(encoding="utf-8") if path.exists() else None
-    payload = gh_json(["api", f"repos/{repo}/contents/{rel}"])
-    if isinstance(payload, dict) and payload.get("encoding") == "base64":
+        if not path.exists():
+            return None, ABSENT
         try:
-            return base64.b64decode(payload.get("content") or "").decode("utf-8")
-        except (ValueError, UnicodeDecodeError):
-            return None
-    return None
+            return path.read_text(encoding="utf-8"), PRESENT
+        except (OSError, UnicodeDecodeError):
+            return None, UNREADABLE
+    return _gh_contents(repo, rel)
 
 
 def read_bookend_tsv(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
     locator = str(plane["evidence"].get("locator"))  # "owner/repo:bookends"
     repo, _, folder = locator.partition(":")
-    text = _sibling_file(repo, f"{folder}/{today.isoformat()}.tsv", root)
-    if text is None:
-        clone = S.sibling_root(repo, dict(os.environ), Path.home())
-        if clone is None and not gh_available():
-            return None, "no sibling clone and gh unavailable"
-        # Readable source, but no file for today: that is an observation (nothing bookended today).
-        return 0, f"no {folder}/{today.isoformat()}.tsv in {repo} (readable, absent)"
+    rel = f"{folder}/{today.isoformat()}.tsv"
+    text, state = _sibling_file(repo, rel, root)
+    if state == UNREADABLE:
+        # No clone and the API read failed (auth, network, gh missing): nothing was observed, so nothing is
+        # scored — a failed read is not an empty day.
+        return None, f"cannot read {repo}:{rel} (no sibling clone; gh contents read failed) — unmeasured, not zero"
+    if state == ABSENT or text is None:
+        # The store answered: no file for today. That IS an observation (nothing bookended today).
+        return 0, f"no {rel} in {repo} (readable, confirmed absent)"
     starts: set[str] = set()
     ends: set[str] = set()
     for line in text.splitlines():
@@ -224,9 +271,9 @@ def read_witness_audit(plane_id: str, plane: dict, jobs: list[S.Job], today: dat
     max_age = _env_int("LIMEN_SCHEDULE_WITNESS_MAX_AGE_DAYS", 8)
     if (today - report_day).days > max_age:
         return None, f"newest witness report {newest} is {(today - report_day).days}d old (> {max_age}d)"
-    text = _sibling_file(repo, f"{folder}/{newest}", root)
+    text, state = _sibling_file(repo, f"{folder}/{newest}", root)
     if text is None:
-        return None, f"cannot read {repo}:{folder}/{newest}"
+        return None, f"cannot read {repo}:{folder}/{newest} ({state})"
     targets = {j.id.split("/", 1)[1] for j in jobs if j.enabled}
     latest_day: dict[str, tuple[str, bool]] = {}
     for day, job, start, end in _WITNESS_ROW_RX.findall(text):
@@ -243,6 +290,14 @@ def read_voice_stamps(plane_id: str, plane: dict, jobs: list[S.Job], today: date
     voice = root / str(plane["evidence"].get("locator"))
     if not voice.is_dir():
         return None, f"{voice} absent (CI or worktree) — unmeasured"
+    try:
+        ever_stamped = any(voice.iterdir())
+    except OSError:
+        ever_stamped = False
+    if not ever_stamped:
+        # The directory exists (a sensor run or hook created it) but no heartbeat has ever stamped here:
+        # this checkout is not a beating host, so there is nothing to score.
+        return None, f"{voice} holds no stamps at all — no heartbeat beats on this checkout (CI or worktree) — unmeasured"
     expected = {j.id.split("/", 1)[1] for j in jobs if j.cadence_hours and j.cadence_hours <= 24}
     stamped_today = 0
     for sid in expected:
@@ -282,14 +337,47 @@ def _as_utc(stamp: object) -> datetime | None:
     return None
 
 
+PUBLIC_PROJECTION_SCHEMA_PREFIX = "limen.public_board_projection"
+
+
+def board_path(root: Path, locator: str, env: dict[str, str] | None = None) -> Path:
+    """The board projection this host actually reads: `LIMEN_TASKS`, else `$LIMEN_ROOT/<locator>`, else the
+    checkout's own copy (AGENTS.md: tasks.yaml at $LIMEN_ROOT is TABVLARIVS's local read-only projection)."""
+    environ = env if env is not None else os.environ
+    explicit = (environ.get("LIMEN_TASKS") or "").strip()
+    if explicit:
+        return Path(explicit).expanduser()
+    limen_root = (environ.get("LIMEN_ROOT") or "").strip()
+    if limen_root:
+        return Path(limen_root).expanduser() / locator
+    return root / locator
+
+
+def is_public_projection(data: object) -> bool:
+    """The redacted projection the public checkout carries (`schema_version: limen.public_board_projection.v1`,
+    `tasks: []`) — aggregate counts only, no dispatch_log — so it can prove nothing about launches."""
+    if not isinstance(data, dict):
+        return False
+    schema = str(data.get("schema_version") or "")
+    if schema.startswith(PUBLIC_PROJECTION_SCHEMA_PREFIX):
+        return True
+    portal = data.get("portal")
+    return not data.get("tasks") and isinstance(portal, dict) and "public_projection" in portal
+
+
 def read_board_dispatch_receipts(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
-    board = root / str(plane["evidence"].get("locator"))
+    board = board_path(root, str(plane["evidence"].get("locator")))
     if not board.exists():
-        return None, f"{board.name} absent"
+        return None, f"{board} absent"
     try:
         data = yaml.safe_load(board.read_text(encoding="utf-8")) or {}
     except (OSError, yaml.YAMLError) as exc:
         return None, f"{board.name} unreadable: {exc.__class__.__name__}"
+    if is_public_projection(data):
+        return None, (
+            f"{board} is the redacted public projection (tasks: [], no dispatch_log) — the broker's launch receipts "
+            "are not in this checkout; point LIMEN_TASKS or LIMEN_ROOT at the live local projection to measure jules"
+        )
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(hours=24)
     used = 0

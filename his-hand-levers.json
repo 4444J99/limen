@@ -5771,7 +5771,7 @@
         "owner": "schedule-estate registry (limen#3177); plane (i) owner 4444J99/ops (ops#6)",
         "acceptance": {
           "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day and the ops-witness weekly witness writes a new audit report.",
-          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); sys.exit(0 if all(p['verdict']!='dark' for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')) else 1)\"",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')]; sys.exit(0 if len(ps)==2 and all(p['verdict'] in ('full','underfilled') for p in ps) else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [],
@@ -5821,7 +5821,7 @@
         "owner": "schedule-estate registry (limen#3177)",
         "acceptance": {
           "condition": "Each of the four planes has at least one declared job row with a delivery locator, or an explicit idle-by-design fill_policy, and schedule-utilization reports it measured.",
-          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); sys.exit(0 if not any(p['plane'] in ('chatgpt-scheduled-tasks','grok-automations','gemini-scheduled-actions') and p['verdict']=='unmeasured' for p in r['planes']) else 1)\"",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('chatgpt-scheduled-tasks','grok-automations','gemini-scheduled-actions')]; sys.exit(0 if len(ps)==3 and not any(p['verdict']=='unmeasured' for p in ps) else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [],
@@ -5871,7 +5871,7 @@
         "owner": "schedule-estate registry (limen#3177); routine contract cloud-routines.json (governance)",
         "acceptance": {
           "condition": "A fresh snapshot receipt shows the chosen routines enabled and schedule-utilization reports claude-cloud as full or underfilled, not dark.",
-          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); sys.exit(0 if all(p['verdict']!='dark' for p in r['planes'] if p['plane']=='claude-cloud') else 1)\"",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane']=='claude-cloud']; sys.exit(0 if ps and all(p['verdict'] in ('full','underfilled') for p in ps) else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [

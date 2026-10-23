@@ -9,6 +9,7 @@ schedule-utilization.py (the beat sensor) cannot disagree about the estate they 
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
@@ -23,6 +24,12 @@ SENSORS_REL = Path("institutio/governance/sensors.yaml")
 CLOUD_ROUTINES_REL = Path("cloud-routines.json")
 WORKFLOWS_REL = Path(".github/workflows")
 SNAPSHOT_GLOB = "docs/receipts/claude-triggers-snapshot-*.json"
+# A sensor `cadence` is counted in BEATS (beat-sensors.py `_due`: `beat % cadence == 0`, or stamp age ≥
+# cadence × loop_max). The beat is adaptive (LIMEN_LOOP_MIN…LIMEN_LOOP_MAX seconds), so the only wall-clock
+# bound a cadence carries is its WORST case: cadence × LIMEN_LOOP_MAX. `cadence: 48` is 24h at the default
+# 1,800s ceiling — a daily sensor — never "48 hours".
+BEAT_LOOP_MAX_SECONDS = 1800
+SECONDS_PER_HOUR = 3600
 
 PLANE_SURFACES = {"cron", "launchd", "ui", "ui+api", "api"}
 PLANE_WINDOWS = {"calendar-day", "rolling-24h", "per-hour", "active-tasks", "per-beat"}
@@ -155,7 +162,10 @@ class Job:
     klass: str = "unknown"
     delivery: dict = field(default_factory=dict)
     allotment: dict | None = None
-    cadence_hours: int | None = None  # beat sensors only
+    # beat sensors only. cadence_beats is the declared `cadence` as written (beats between due-checks);
+    # cadence_hours is its WORST-CASE wall-clock bound, ceil(cadence_beats × loop_max / 3600).
+    cadence_hours: int | None = None
+    cadence_beats: int | None = None
     extra: dict = field(default_factory=dict)
 
     def parsed(self) -> list[Cron]:
@@ -223,25 +233,44 @@ def derive_workflow_jobs(root: Path, plane: str, locator: str | Path = WORKFLOWS
     return jobs
 
 
-def derive_sensor_jobs(root: Path, plane: str, locator: str | Path = SENSORS_REL) -> list[Job]:
+def beat_loop_max(env: dict[str, str] | None = None) -> int:
+    """The heartbeat's maximum beat interval in seconds (heartbeat-loop.sh `MAX="${LIMEN_LOOP_MAX:-1800}"`)."""
+    raw = (env if env is not None else os.environ).get("LIMEN_LOOP_MAX", "")
+    try:
+        value = int(str(raw).strip() or BEAT_LOOP_MAX_SECONDS)
+    except ValueError:
+        value = BEAT_LOOP_MAX_SECONDS
+    return value if value > 0 else BEAT_LOOP_MAX_SECONDS
+
+
+def beats_to_hours(cadence_beats: int, loop_max: int) -> int:
+    """Worst-case wall-clock hours one cadence window can span: ceil(beats × loop_max / 3600), at least 1."""
+    return max(1, -(-(cadence_beats * max(1, loop_max)) // SECONDS_PER_HOUR))
+
+
+def derive_sensor_jobs(
+    root: Path, plane: str, locator: str | Path = SENSORS_REL, *, loop_max: int | None = None
+) -> list[Job]:
     path = root / locator
     if not path.exists():
         return []
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     sensors = data.get("sensors") if isinstance(data, dict) else None
+    ceiling = loop_max if loop_max is not None else beat_loop_max()
     jobs: list[Job] = []
     for sid, sensor in (sensors or {}).items():
         if not isinstance(sensor, dict):
             continue
         cadence = sensor.get("cadence")
-        hours: int | None = None
+        beats: int | None = None
         if isinstance(cadence, dict):
             default = cadence.get("default")
-            hours = int(default) if isinstance(default, (int, float)) and default > 0 else None
+            beats = int(default) if isinstance(default, (int, float)) and default > 0 else None
         elif isinstance(cadence, (int, float)) and cadence > 0:
-            hours = int(cadence)
-        if hours is None:
+            beats = int(cadence)
+        if beats is None:
             continue
+        hours = beats_to_hours(beats, ceiling)
         jobs.append(
             Job(
                 id=f"beat/{sid}",
@@ -253,7 +282,8 @@ def derive_sensor_jobs(root: Path, plane: str, locator: str | Path = SENSORS_REL
                 source=str(locator),
                 klass="audit",
                 cadence_hours=hours,
-                extra={"sources": list(sensor.get("source") or [])},
+                cadence_beats=beats,
+                extra={"sources": list(sensor.get("source") or []), "loop_max_seconds": ceiling},
             )
         )
     return jobs

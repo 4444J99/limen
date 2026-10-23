@@ -752,3 +752,175 @@ def test_real_registry_evaluates_without_network(tmp_path, monkeypatch):
     assert all(p["verdict"] in {"unmeasured", "idle-by-design", "unscheduled-headroom"} for p in report["planes"]), (
         report["planes"]
     )
+
+
+# ── review round 1 (PR #3178, Codex): the three ways a plane read GREEN or RED for the wrong reason ──
+
+
+def test_sensor_cadence_is_beats_and_converts_at_worst_case_loop_max(tmp_path):
+    """sensors.yaml `cadence` is BEATS (beat-sensors.py `_due`), not hours: cadence 48 at the default 1,800s
+    loop ceiling is a daily sensor and must stay inside the daily-or-faster set."""
+    (tmp_path / "sensors.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "sensors": {
+                    "daily-at-48": {"cadence": {"default": 48}, "source": ["heartbeat"]},
+                    "six-hourly": {"cadence": 12, "source": ["heartbeat"]},
+                    "over-a-day": {"cadence": {"default": 49}, "source": ["heartbeat"]},
+                    "every-beat": {"cadence": 1, "source": ["metabolize"]},
+                    "uncadenced": {"source": ["metabolize"]},
+                }
+            }
+        )
+    )
+    jobs = S.derive_sensor_jobs(tmp_path, "limen-beat", "sensors.yaml", loop_max=1800)
+    by_id = {j.id: (j.cadence_beats, j.cadence_hours) for j in jobs}
+    assert by_id == {
+        "beat/daily-at-48": (48, 24),
+        "beat/six-hourly": (12, 6),
+        "beat/over-a-day": (49, 25),
+        "beat/every-beat": (1, 1),
+    }
+    assert all(j.extra["loop_max_seconds"] == 1800 for j in jobs)
+    assert S.beats_to_hours(48, 900) == 12 and S.beats_to_hours(1, 60) == 1
+    assert S.beat_loop_max({"LIMEN_LOOP_MAX": "900"}) == 900
+    assert S.beat_loop_max({"LIMEN_LOOP_MAX": "junk"}) == S.BEAT_LOOP_MAX_SECONDS
+    assert S.beat_loop_max({}) == 1800
+    plane = _plane(
+        evidence={"kind": "voice-stamps", "locator": "logs/.voice"},
+        allotment={"runs": None, "window": "per-beat", "concurrency": 1, "source": "t", "entitlement": "verified"},
+    )
+    assert UTIL.declared_for(plane, jobs, TODAY, NOW) == 3  # 48, 12 and 1 beats; 49 beats is 25h, excluded
+    # The shipped registry: the three cadence-48 sensors Codex named are daily, so they count.
+    real = {j.id: j.cadence_hours for j in S.derive_sensor_jobs(ROOT, "limen-beat", loop_max=1800)}
+    assert {real["beat/daily-execution"], real["beat/conversion-funnel"], real["beat/collaboration-hub-sync"]} == {24}
+
+
+def test_board_reader_treats_public_projection_as_unmeasured(tmp_path, monkeypatch):
+    """The public checkout's tasks.yaml is a redacted projection (schema limen.public_board_projection.v1,
+    tasks: []). It proves nothing about jules launches, so it is UNMEASURED — never 0 and never dark."""
+    monkeypatch.delenv("LIMEN_TASKS", raising=False)
+    monkeypatch.delenv("LIMEN_ROOT", raising=False)
+    plane = _plane(
+        evidence={"kind": "board-dispatch-receipts", "locator": "tasks.yaml"},
+        allotment={"runs": 100, "window": "rolling-24h", "concurrency": 15, "source": "t", "entitlement": "unverified"},
+        fill_policy="floor",
+        floor=25,
+    )
+    # the shipped checkout IS the public projection
+    observed, detail = UTIL.read_board_dispatch_receipts("jules", plane, [], TODAY, ROOT)
+    assert observed is None and "public projection" in detail and "LIMEN_TASKS" in detail
+    assert UTIL.verdict_for(plane, 25, observed, 0.5) == "unmeasured"
+    # a copy of it under a tmp root reads the same way
+    (tmp_path / "tasks.yaml").write_text((ROOT / "tasks.yaml").read_text())
+    assert UTIL.read_board_dispatch_receipts("jules", plane, [], TODAY, tmp_path)[0] is None
+    assert UTIL.is_public_projection({"portal": {"public_projection": {}}, "tasks": []})
+    assert not UTIL.is_public_projection({"tasks": [{"id": "t1"}]})
+    # a real board (dispatch_log rows) counts jules launches inside the rolling 24h only
+    now = datetime.now(timezone.utc)
+    stamp = lambda hours: (now - __import__("datetime").timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: E731
+    board = {
+        "tasks": [
+            {
+                "id": "t1",
+                "dispatch_log": [
+                    {"agent": "jules", "status": "dispatched", "timestamp": stamp(1)},
+                    {"agent": "jules", "status": "dispatched", "timestamp": stamp(30)},
+                    {"agent": "codex", "status": "dispatched", "timestamp": stamp(1)},
+                    {"agent": "jules", "status": "failed", "timestamp": stamp(2)},
+                ],
+            }
+        ]
+    }
+    live = tmp_path / "live"
+    live.mkdir()
+    (live / "tasks.yaml").write_text(yaml.safe_dump(board))
+    monkeypatch.setenv("LIMEN_ROOT", str(live))
+    assert UTIL.board_path(tmp_path, "tasks.yaml") == live / "tasks.yaml"
+    observed, detail = UTIL.read_board_dispatch_receipts("jules", plane, [], TODAY, tmp_path)
+    assert observed == 1 and "jules launches" in detail
+    explicit = tmp_path / "elsewhere.yaml"
+    explicit.write_text(yaml.safe_dump({"tasks": []}))
+    monkeypatch.setenv("LIMEN_TASKS", str(explicit))
+    assert UTIL.board_path(tmp_path, "tasks.yaml") == explicit
+    assert UTIL.read_board_dispatch_receipts("jules", plane, [], TODAY, tmp_path)[0] == 0  # a real, empty board IS zero
+
+
+def test_bookend_reader_distinguishes_unreadable_from_absent(tmp_path, monkeypatch):
+    """No clone + a failed Contents read is UNMEASURED; a confirmed 404 is an observed empty day (0)."""
+    monkeypatch.delenv("LIMEN_OPS_ROOT", raising=False)
+    monkeypatch.delenv("LIMEN_WORKDIR", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))  # no ~/Workspace/ops here
+    plane = _plane(evidence={"kind": "bookend-tsv", "locator": "4444J99/ops:bookends"})
+    rel = f"bookends/{TODAY.isoformat()}.tsv"
+    real_gh_contents = UTIL._gh_contents
+
+    monkeypatch.setattr(UTIL, "_gh_contents", lambda repo, r: (None, UTIL.UNREADABLE))
+    observed, detail = UTIL.read_bookend_tsv("github-actions-ops", plane, [], TODAY, tmp_path)
+    assert observed is None and "unmeasured, not zero" in detail
+    assert UTIL.verdict_for(plane, 3, observed, 0.5) == "unmeasured"
+
+    monkeypatch.setattr(UTIL, "_gh_contents", lambda repo, r: (None, UTIL.ABSENT))
+    observed, detail = UTIL.read_bookend_tsv("github-actions-ops", plane, [], TODAY, tmp_path)
+    assert observed == 0 and "confirmed absent" in detail and rel in detail
+
+    tsv = "2026-10-23T13:36:00Z\torg-hygiene-report\t-\t-\tstart\trunning\n2026-10-23T13:37:00Z\torg-hygiene-report\t-\t-\tend\tsuccess\n"
+    monkeypatch.setattr(UTIL, "_gh_contents", lambda repo, r: (tsv, UTIL.PRESENT))
+    assert UTIL.read_bookend_tsv("github-actions-ops", plane, [], TODAY, tmp_path)[0] == 1
+
+    # _gh_contents itself: a bare 404 proves nothing (an unauthenticated read of a private repo is a 404 too);
+    # absence is confirmed only by a parent-folder listing that lacks the file.
+    class Run:
+        def __init__(self, code, out):
+            self.returncode, self.stdout = code, out
+
+    file_api, folder_api = f"repos/4444J99/ops/contents/{rel}", "repos/4444J99/ops/contents/bookends"
+    not_found = Run(1, '{"message":"Not Found","status":"404"}')
+    listing_without = Run(0, json.dumps([{"name": ".gitkeep"}, {"name": "2026-10-22.tsv"}]))
+    listing_with = Run(0, json.dumps([{"name": ".gitkeep"}, {"name": f"{TODAY.isoformat()}.tsv"}]))
+
+    def fake_run(responses):
+        return lambda argv, **k: responses[argv[2]]
+
+    monkeypatch.setattr(UTIL, "gh_available", lambda: True)
+    monkeypatch.setattr(UTIL.subprocess, "run", fake_run({file_api: not_found, folder_api: listing_without}))
+    assert real_gh_contents("4444J99/ops", rel) == (None, UTIL.ABSENT)
+    monkeypatch.setattr(UTIL.subprocess, "run", fake_run({file_api: not_found, folder_api: not_found}))
+    assert real_gh_contents("4444J99/ops", rel) == (
+        None,
+        UTIL.UNREADABLE,
+    )  # the folder is invisible too: private+unauth
+    monkeypatch.setattr(UTIL.subprocess, "run", fake_run({file_api: not_found, folder_api: listing_with}))
+    assert real_gh_contents("4444J99/ops", rel) == (
+        None,
+        UTIL.UNREADABLE,
+    )  # listed but unreadable: contradictory, not absent
+    monkeypatch.setattr(UTIL.subprocess, "run", fake_run({file_api: Run(1, ""), folder_api: listing_without}))
+    assert real_gh_contents("4444J99/ops", rel) == (None, UTIL.UNREADABLE)  # network cut: no body, no 404
+    monkeypatch.setattr(
+        UTIL.subprocess, "run", fake_run({file_api: Run(1, '{"message":"Bad credentials","status":"401"}')})
+    )
+    assert real_gh_contents("4444J99/ops", rel) == (None, UTIL.UNREADABLE)
+    encoded = __import__("base64").b64encode(tsv.encode()).decode()
+    monkeypatch.setattr(
+        UTIL.subprocess, "run", fake_run({file_api: Run(0, json.dumps({"encoding": "base64", "content": encoded}))})
+    )
+    assert real_gh_contents("4444J99/ops", rel) == (tsv, UTIL.PRESENT)
+    monkeypatch.setattr(UTIL, "gh_available", lambda: False)
+    assert real_gh_contents("4444J99/ops", rel) == (None, UTIL.UNREADABLE)
+
+
+def test_voice_reader_treats_a_never_stamped_directory_as_unmeasured(tmp_path):
+    """A voice dir that exists but was never stamped (a worktree, CI) is not a dark heartbeat — unmeasured."""
+    (tmp_path / "logs" / ".voice").mkdir(parents=True)
+    plane = _plane(evidence={"kind": "voice-stamps", "locator": "logs/.voice"})
+    jobs = [
+        S.Job(
+            id="beat/x", plane="limen-beat", crons=[], tz="UTC", enabled=True, derived=True, source="s", cadence_hours=6
+        )
+    ]
+    observed, detail = UTIL.read_voice_stamps("limen-beat", plane, jobs, TODAY, tmp_path)
+    assert observed is None and "no stamps at all" in detail
+    (tmp_path / "logs" / ".voice" / "y").write_text("")  # a stale stamp from another day: now it IS a beating host
+    observed, detail = UTIL.read_voice_stamps("limen-beat", plane, jobs, date(2020, 1, 1), tmp_path)
+    assert observed == 0 and "0/1" in detail

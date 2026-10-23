@@ -61,6 +61,13 @@ What shipped already answers the two blockers, and the rest are recorded here as
 - Minimality cautions for later PRs: no new in-process sender for bookend markers (post via the Bash rail or a sanctioned publisher); do not suppress Jules supply minting while the vendor count is unmeasured; cross-plane same-minute sharing is informational, the per-repo rule is the one GitHub's congestion actually punishes.
 - Slot map: conversions and coverage held under both EDT and EST; the Cloudflare 12:00 tick has 5 targets due against 4 per tick (an ops#6 note, not a limen change).
 
+## Review round 1 (PR #3178 head `2ba8109`, Codex, 2026-10-23) — three claims verified, all three real, fixed
+
+- **Jules read 0 → `dark` from the public projection.** `tasks.yaml` in the checkout is `limen.public_board_projection.v1` (`tasks: []`, no `dispatch_log`), so it proves nothing about launches. Fixed: the board reader resolves `LIMEN_TASKS`, then `$LIMEN_ROOT/tasks.yaml`, then the checkout, and a public projection is **unmeasured** with the reason in `detail`; a real but empty board is still 0.
+- **Sensor `cadence` is beats, not hours.** `beat-sensors.py::_due` fires on `beat % cadence == 0` or stamp age ≥ cadence × loop_max, so the only wall-clock bound is the worst case, cadence × `LIMEN_LOOP_MAX` (1,800s default). Fixed: `Job.cadence_hours` is now that worst-case bound (`cadence_beats` keeps the declared value); `cadence: 48` is daily and `daily-execution`, `conversion-funnel`, `collaboration-hub-sync` are back in the daily set (57 declared, was 54).
+- **A failed sibling read scored as an observed 0.** Fixed: the sibling read is tri-state (present / absent / unreadable); absence is confirmed only by a parent-folder listing that lacks the file, because an unauthenticated read of a private repository is also a 404. Unreadable is unmeasured, never zero.
+- Found while verifying: a `logs/.voice` directory that exists but was never stamped (a worktree, CI) read as a dark heartbeat; it is now unmeasured.
+
 ## Done predicate
 
 `scripts/check-schedules.py` exit 0 and `bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py -q` green on the merged tree; on the host, `python3 scripts/schedule-utilization.py --receipt logs/schedule-utilization.json` writes a receipt whose `measured` numerator rises as the atoms above are pulled.
