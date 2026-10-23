@@ -124,6 +124,11 @@ test("keeper stores private facts while responses and public projection exclude 
 test("authenticated HTTP ingestion survives private chunk-store reload without a facts endpoint", async () => {
   class Storage {
     values = new Map();
+  async transaction(callback) {
+    const before = structuredClone(this.values);
+    try { return await callback(this); } catch (error) { this.values = before; throw error; }
+  }
+
     async get(key) { return Array.isArray(key) ? new Map(key.map((name) => [name, structuredClone(this.values.get(name))]))
       : structuredClone(this.values.get(key)); }
     async put(key, value) { this.values.set(key, structuredClone(value)); }

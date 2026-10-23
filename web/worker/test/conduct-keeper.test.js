@@ -8,6 +8,7 @@ import {
   ConductKeeperDurableObject,
 } from "../src/conduct/durable-object.js";
 import { durableStateStoreContract } from "../src/conduct/durable-store.js";
+import { recordStateStoreContract } from "../src/conduct/record-store.js";
 import {
   DurableConductStore,
   MemoryConductStore,
@@ -342,6 +343,11 @@ class InstrumentedConductStorage {
     return new InstrumentedConductStorage(this.values);
   }
 
+  async transaction(callback) {
+    const before = structuredClone(this.values);
+    try { return await callback(this); } catch (error) { this.values = before; throw error; }
+  }
+
   async get(key) {
     if (Array.isArray(key)) {
       return new Map(
@@ -475,7 +481,7 @@ async function steadyHeartbeat(fixture, storage, now) {
   });
 }
 
-function assertHeartbeatLiveness(state, fixture, timestamp, count, sequence) {
+function assertHeartbeatLiveness(state, fixture, timestamp, count, sequence, nextSequence = sequence) {
   const leaseId = fixture.reserved.lease.lease_id;
   const runId = fixture.reserved.run_id;
   assert.equal(state.leases[leaseId].heartbeat_at, timestamp);
@@ -489,7 +495,7 @@ function assertHeartbeatLiveness(state, fixture, timestamp, count, sequence) {
   assert.equal(audit[0].last_timestamp, timestamp);
   assert.equal(audit[0].timestamp, timestamp);
   assert.equal(audit[0].sequence, sequence);
-  assert.equal(state.next_event_sequence, sequence);
+  assert.equal(state.next_event_sequence, nextSequence);
 }
 
 test("conduct auth fails closed without a principal registry and derives identity from its secret", async () => {
@@ -2782,7 +2788,7 @@ test("steady heartbeats use an atomic bounded liveness overlay independent of co
       const fixture = await coldHeartbeatFixture(historySize);
       const failedStorage = fixture.storage.clone();
       const coldManifest = structuredClone(
-        fixture.storage.values.get(durableStateStoreContract.manifest_key),
+        fixture.storage.values.get(recordStateStoreContract.manifest_key),
       );
       const secondHeartbeat = new Date(NOW.getTime() + 60 * 1000);
 
@@ -2790,12 +2796,12 @@ test("steady heartbeats use an atomic bounded liveness overlay independent of co
       const heartbeat = await steadyHeartbeat(fixture, fixture.storage, secondHeartbeat);
       assert.equal(heartbeat.status, "active");
       assert.deepEqual(
-        fixture.storage.values.get(durableStateStoreContract.manifest_key),
+        fixture.storage.values.get(recordStateStoreContract.manifest_key),
         coldManifest,
       );
       assert.ok(fixture.storage.writtenKeys.length > 0);
       assert.ok(
-        fixture.storage.writtenKeys.length <= 3,
+        fixture.storage.writtenKeys.length === 1,
         `${historySize} historical events caused ${fixture.storage.writtenKeys.length} row writes`,
       );
       assert.equal(fixture.storage.deletedKeys.length, 0);
@@ -2825,7 +2831,7 @@ test("steady heartbeats use an atomic bounded liveness overlay independent of co
         /injected durable commit failure/,
       );
       assert.deepEqual(
-        failedStorage.values.get(durableStateStoreContract.manifest_key),
+        failedStorage.values.get(recordStateStoreContract.manifest_key),
         coldManifest,
       );
       assertHeartbeatLiveness(
@@ -2842,7 +2848,7 @@ test("steady heartbeats use an atomic bounded liveness overlay independent of co
 test("a newer cold checkpoint wins over a stale heartbeat overlay", async () => {
   const fixture = await coldHeartbeatFixture(2_400);
   const originalManifest = structuredClone(
-    fixture.storage.values.get(durableStateStoreContract.manifest_key),
+    fixture.storage.values.get(recordStateStoreContract.manifest_key),
   );
   await steadyHeartbeat(fixture, fixture.storage, new Date(NOW.getTime() + 60 * 1000));
 
@@ -2868,7 +2874,7 @@ test("a newer cold checkpoint wins over a stale heartbeat overlay", async () => 
   await new DurableConductStore(fixture.storage).save(replacement);
 
   assert.notDeepEqual(
-    fixture.storage.values.get(durableStateStoreContract.manifest_key),
+    fixture.storage.values.get(recordStateStoreContract.manifest_key),
     originalManifest,
   );
   const reloaded = await new DurableConductStore(fixture.storage).load();
@@ -2882,7 +2888,7 @@ test("a newer cold checkpoint wins over a stale heartbeat overlay", async () => 
   );
 });
 
-test("disabling the heartbeat fast path materializes overlays before rollback", async () => {
+test("disabling persistence materializes overlays on a successful mutation before rollback", async () => {
   const fixture = await coldHeartbeatFixture(2_400);
   const heartbeatAt = new Date(NOW.getTime() + 60 * 1000);
   await steadyHeartbeat(fixture, fixture.storage, heartbeatAt);
@@ -2891,13 +2897,15 @@ test("disabling the heartbeat fast path materializes overlays before rollback", 
       key.startsWith(durableStateStoreContract.liveness_prefix)),
   );
 
-  const drainingStore = new DurableConductStore(fixture.storage);
+  const drainingStore = new DurableConductStore(fixture.storage, {recordPersistence:false});
   const drainingService = new SerializedConductService(drainingStore, {
     clock: () => heartbeatAt,
     capabilitySecret: fixture.capabilitySecret,
     steadyHeartbeatPersistence: false,
   });
   await drainingService.call("capabilities");
+  assert.ok(drainingStore.hasLivenessOverlays());
+  await drainingService.call("register", { session: fixture.codex });
 
   assert.equal(
     [...fixture.storage.values.keys()].some((key) =>
@@ -2916,6 +2924,7 @@ test("disabling the heartbeat fast path materializes overlays before rollback", 
     heartbeatAt.toISOString(),
     2,
     fixture.historySize + 2,
+    fixture.historySize + 3,
   );
 });
 
@@ -4086,6 +4095,10 @@ test("GitHub task projection quotes strings for YAML 1.1-compatible consumers", 
 test("Durable Object HTTP routes match the authenticated client surface and survive recreation", async () => {
   class FakeStorage {
     constructor() { this.values = new Map(); }
+    async transaction(callback) {
+      const before = structuredClone(this.values);
+      try { return await callback(this); } catch (error) { this.values = before; throw error; }
+    }
     async get(key) {
       if (Array.isArray(key)) {
         return new Map(
@@ -4279,4 +4292,58 @@ test("HTTP capabilities preserve the authenticated principal for safe native bin
   const response = await durable.route(new Request("https://limen.example/api/conduct/capabilities"), principal);
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).authenticated_principal, principal);
+});
+
+test("observer requests never write with selected overlays and either persistence flag", async () => {
+  for (const enabled of [true, false]) {
+    const fixture = await coldHeartbeatFixture(2400);
+    const at = new Date(NOW.getTime() + 60 * 1000);
+    await steadyHeartbeat(fixture,fixture.storage,at);
+    const store = new DurableConductStore(fixture.storage, {recordPersistence:enabled});
+    const service = new SerializedConductService(store, {
+      clock:() => at, capabilitySecret:fixture.capabilitySecret, steadyHeartbeatPersistence:enabled,
+    });
+    fixture.storage.resetMutationTrace({failAtWrite:1});
+    fixture.storage.delete = async () => { throw new Error("observer attempted durable delete"); };
+    await service.call("capabilities");
+    await service.call("graph",{run_id:fixture.reserved.run_id});
+    await service.call("session_audit",{session_id:fixture.codex.session_id});
+    await assert.rejects(service.call("not_an_operation"), /unsupported|unknown/);
+    assert.equal(fixture.storage.attemptedWriteKeys.length,0);
+  }
+});
+
+test("real cold registrations retain a constant write bound across history sizes", async () => {
+  for (const size of [0,2400,12000]) {
+    const fixture = await coldHeartbeatFixture(size);
+    fixture.storage.resetMutationTrace();
+    const service = new SerializedConductService(new DurableConductStore(fixture.storage), {
+      clock:() => NOW, capabilitySecret:fixture.capabilitySecret,
+    });
+    await service.call("register",{session:session("codex",{sessionId:"new-history-registration"})});
+    assert.equal(fixture.storage.writtenKeys.length,6);
+    assert.equal(fixture.storage.deletedKeys.length,0);
+    const restored = await new DurableConductStore(fixture.storage).load();
+    assert.equal(restored.events.filter(event => event.kind === "test.history").length,size);
+    assert.ok(restored.sessions["new-history-registration"]);
+  }
+});
+
+test("a failed cold manifest commit restores deleted overlays and all lease evidence", async () => {
+  const fixture = await coldHeartbeatFixture(2400);
+  const at = new Date(NOW.getTime() + 60 * 1000);
+  await steadyHeartbeat(fixture,fixture.storage,at);
+  const before = await new DurableConductStore(fixture.storage).load();
+  const probe = fixture.storage.clone();
+  probe.resetMutationTrace();
+  const options = {clock:() => at,capabilitySecret:fixture.capabilitySecret};
+  const registration = {session:session("codex",{sessionId:"overlay-fold-registration",heartbeatAt:at})};
+  await new SerializedConductService(new DurableConductStore(probe),options).call("register",registration);
+  assert.ok(probe.deletedKeys.some(key => key.startsWith(durableStateStoreContract.liveness_prefix)));
+  fixture.storage.resetMutationTrace({failAtWrite:probe.writtenKeys.length});
+  const failedStore = new DurableConductStore(fixture.storage);
+  await assert.rejects(new SerializedConductService(failedStore,options).call("register",registration),
+    /injected durable commit failure/);
+  assert.deepEqual(await new DurableConductStore(fixture.storage).load(),before);
+  assert.deepEqual(await failedStore.load(),before);
 });

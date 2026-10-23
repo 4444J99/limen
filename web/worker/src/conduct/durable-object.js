@@ -163,7 +163,9 @@ export class ConductKeeperDurableObject {
     try { inventoryAuthority = configuredInventoryAuthority(env); } catch { /* Disabled until installed. */ }
     const executionPolicy = {};
     this.service = new SerializedConductService(
-      new DurableConductStore(ctx.storage),
+      new DurableConductStore(ctx.storage, {
+        recordPersistence: String(env.LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY ?? "1") !== "0",
+      }),
       {
         projectTaskEvent: (event, inventory) => commitTaskCompatibilityEvent(env, event, { storage: ctx.storage, ...inventory }),
         inventoryAuthority,
