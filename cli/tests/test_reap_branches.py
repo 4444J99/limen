@@ -611,6 +611,9 @@ def test_gh_head_states_paginates_the_whole_repo(monkeypatch, capsys):
 
     assert online is True
     assert any("pulls" in a for c in calls for a in c)  # the paginated pulls endpoint
+    api_call = next(call for call in calls if call[1] == "api")
+    assert "--method" in api_call, "query fields otherwise turn read-only enumeration into POST"
+    assert api_call[api_call.index("--method") + 1] == "GET"
     assert len(merged) == 100  # every page-1 head is visible, not just a window
     assert open_ == {"late": f"{101:040d}"}
     assert set(closed) == {"old"}
