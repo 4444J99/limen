@@ -24,7 +24,15 @@ nothing" (unreachable) is never rendered as "nothing is scheduled" (no declarati
 
 Reads only: every GitHub call is a `gh api` GET; nothing here can start, retry, disable or deploy a run.
 Receipt: logs/schedule-census.json (atomic) + optional Markdown ledger. The organ owns its own wall-clock
-interval (`--interval-hours`, default 168) so a metabolize-pass caller stays cheap between censuses.
+interval (`--interval-hours`, default 168) so a metabolize-pass caller stays cheap between censuses; an
+incomplete receipt (read nothing, or more than a quarter of the universe unread) earns only the shorter
+`--retry-hours` horizon, and a pass that reads fewer repositories than the standing receipt is written beside
+it as `*.last-attempt.json` instead of over it.
+
+Every repository row carries a per-channel read status; a row whose essential channels were not all read is
+`partial` and may confirm what it saw but never concludes absence. Exit codes: 0 clean and complete · 1 findings
+on the scanned set (a registry gap, declared-never-fired, firing-but-failing, auto-disabled) · 2 no findings
+but coverage incomplete · 3 read nothing · 4 an internal error in the engine itself (the receipt names it).
 """
 
 from __future__ import annotations
@@ -61,6 +69,13 @@ DEFAULT_LEDGER = ROOT / "logs" / "schedule-census.md"
 DEFAULT_ESTATE_CACHE = ROOT / "logs" / "estate-repos.json"
 WORKFLOW_DIR = ".github/workflows"
 OK, ABSENT, UNREACHABLE, ERROR = "ok", "absent", "unreachable", "error"
+RATE_FLOOR = 200  # core-quota calls kept in hand before a repository scan (the largest single scan stays under it)
+RATE_CHECK_EVERY_CALLS = 50
+WORKFLOW_LIST_PAGES = 10
+ESSENTIAL_CHANNELS = ("tree", "actions-workflows", "contents", "scheduled-runs")
+FINDING_VERDICTS = frozenset({"declared-never-fired", "firing-but-failing", "auto-disabled"})
+DEFAULT_RETRY_HOURS = 24.0
+MAX_INCOMPLETE_SHARE = 0.25
 
 CHANNELS = {
     "gh-workflow": "Actions workflow files with on.schedule; state from the Actions API",
@@ -150,7 +165,8 @@ def _decode_contents(payload: object) -> str | None:
 def rate_limit_state() -> tuple[int, int] | None:
     """(remaining, reset_epoch) for the core API, or None when it cannot be read."""
     st, payload = gh_api("rate_limit")
-    core = (payload or {}).get("resources", {}).get("core") if st == OK and isinstance(payload, dict) else None
+    resources = payload.get("resources") if st == OK and isinstance(payload, dict) else None
+    core = resources.get("core") if isinstance(resources, dict) else None
     if not isinstance(core, dict):
         return None
     try:
@@ -159,7 +175,7 @@ def rate_limit_state() -> tuple[int, int] | None:
         return None
 
 
-def rate_guard(*, floor: int = 60, deadline: float | None = None, sleep=time.sleep, now=time.time) -> str:
+def rate_guard(*, floor: int = RATE_FLOOR, deadline: float | None = None, sleep=time.sleep, now=time.time) -> str:
     """Before a repository scan: if the core quota is nearly spent, wait for the reset when the budget allows it,
     else say so. Returns "ok", "slept:<seconds>" or "exhausted" (the caller stops and lists the unscanned)."""
     state = rate_limit_state()
@@ -261,7 +277,7 @@ def _owners_pin() -> list[str] | None:
     return [o.strip() for o in raw.split(",") if o.strip()] or None
 
 
-# ── carrier parsers: text -> declaration dict (or None when the carrier declares no schedule) ─
+# ── carrier parsers: text -> schedule (None = the carrier could not be parsed; empty = parsed, no schedule) ─
 
 
 def _on_block(data: object) -> dict | None:
@@ -280,59 +296,75 @@ def _cron_cadence(cron: str) -> str:
         return "unparsed"
 
 
-def parse_workflow(text: str) -> list[str]:
+def parse_workflow(text: str) -> list[str] | None:
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError:
-        return [m.group(1).strip() for m in map(CRON_LINE_RX.match, text.splitlines()) if m]
+        found = [m.group(1).strip() for m in map(CRON_LINE_RX.match, text.splitlines()) if m]
+        return found or None  # regex fallback; a broken file with no cron line is unparseable, not "no schedule"
     on = _on_block(data)
     sched = on.get("schedule") if on else None
+    if isinstance(sched, dict):
+        sched = [sched]
+    if not isinstance(sched, list):
+        return []
     crons: list[str] = []
-    for entry in sched or []:
+    for entry in sched:
         if isinstance(entry, dict) and entry.get("cron"):
             crons.append(str(entry["cron"]).strip())
     return crons
 
 
 _JSON_COMMENT_RX = re.compile(r'("(?:\\.|[^"\\])*")|/\*.*?\*/|//[^\n]*', re.S)
+_JSON_TRAILING_COMMA_RX = re.compile(r'("(?:\\.|[^"\\])*")|,(\s*[}\]])', re.S)
 
 
 def _strip_json_comments(text: str) -> str:
-    """Drop // and /* */ comments outside string literals (jsonc), leaving strings such as URLs intact."""
-    return _JSON_COMMENT_RX.sub(lambda m: m.group(1) or "", text)
+    """Drop // and /* */ comments and trailing commas outside string literals (jsonc), leaving strings intact."""
+    without_comments = _JSON_COMMENT_RX.sub(lambda m: m.group(1) or "", text)
+    return _JSON_TRAILING_COMMA_RX.sub(lambda m: m.group(1) or m.group(2), without_comments)
 
 
-def parse_wrangler(path: str, text: str) -> list[str]:
+def _str_list(value: object) -> list[str]:
+    if isinstance(value, (list, tuple)):
+        return [str(v) for v in value if v is not None]
+    return [str(value)] if isinstance(value, (str, int)) and value != "" else []
+
+
+def parse_wrangler(path: str, text: str) -> list[str] | None:
     if path.endswith(".toml"):
         if tomllib is None:
-            return []
+            return None
         try:
             data = tomllib.loads(text)
         except (tomllib.TOMLDecodeError, ValueError):
-            return []
+            return None
     else:
-        stripped = _strip_json_comments(text)
         try:
-            data = json.loads(stripped)
+            data = json.loads(_strip_json_comments(text))
         except json.JSONDecodeError:
-            return []
-    crons = ((data.get("triggers") or {}).get("crons") if isinstance(data, dict) else None) or []
-    return [str(c) for c in crons]
+            return None
+    triggers = data.get("triggers") if isinstance(data, dict) else None
+    return _str_list(triggers.get("crons")) if isinstance(triggers, dict) else []
 
 
-def parse_vercel(text: str) -> list[dict]:
+def parse_vercel(text: str) -> list[dict] | None:
     try:
-        data = json.loads(text)
+        data = json.loads(_strip_json_comments(text))
     except json.JSONDecodeError:
-        return []
-    return [c for c in (data.get("crons") or []) if isinstance(c, dict)] if isinstance(data, dict) else []
+        return None
+    crons = data.get("crons") if isinstance(data, dict) else None
+    return [c for c in crons if isinstance(c, dict)] if isinstance(crons, list) else []
 
 
 def parse_launchd(text: str) -> dict | None:
+    """None = not a plist; {} = a plist that schedules nothing; else interval/calendar keys."""
     try:
         data = plistlib.loads(text.encode("utf-8"))
-    except Exception:  # noqa: BLE001 — not a launchd plist
+    except Exception:  # noqa: BLE001 — not a plist
         return None
+    if not isinstance(data, dict):
+        return {}
     out: dict = {}
     if isinstance(data.get("StartInterval"), int):
         out["interval_seconds"] = data["StartInterval"]
@@ -341,9 +373,7 @@ def parse_launchd(text: str) -> dict | None:
         cal = [cal]
     if isinstance(cal, list):
         out["calendar"] = [{k: v for k, v in c.items()} for c in cal if isinstance(c, dict)]
-    if data.get("RunAtLoad") and not out:
-        return None
-    return out or None
+    return out
 
 
 def parse_crontab(text: str) -> list[str]:
@@ -358,13 +388,14 @@ def parse_timer(text: str) -> list[str]:
     return [ln.split("=", 1)[1].strip() for ln in text.splitlines() if ln.strip().startswith("OnCalendar=")]
 
 
-def parse_dependabot(text: str) -> list[str]:
+def parse_dependabot(text: str) -> list[str] | None:
     try:
         data = yaml.safe_load(text)
     except yaml.YAMLError:
-        return []
+        return None
+    updates = data.get("updates") if isinstance(data, dict) else None
     out = []
-    for upd in (data.get("updates") or []) if isinstance(data, dict) else []:
+    for upd in updates if isinstance(updates, list) else []:
         sched = upd.get("schedule") if isinstance(upd, dict) else None
         if isinstance(sched, dict) and sched.get("interval"):
             out.append(
@@ -375,26 +406,26 @@ def parse_dependabot(text: str) -> list[str]:
     return out
 
 
-def parse_renovate(text: str) -> list[str]:
+def parse_renovate(text: str) -> list[str] | None:
     try:
         data = json.loads(_strip_json_comments(text))
     except json.JSONDecodeError:
-        return []
+        return None
     sched = data.get("schedule") if isinstance(data, dict) else None
-    return [str(s) for s in sched] if isinstance(sched, list) else ([str(sched)] if sched else [])
+    return _str_list(sched)
 
 
-def parse_cloud_routines(text: str) -> int:
+def parse_cloud_routines(text: str) -> int | None:
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        return 0
+        return None
     rows = data.get("routines") if isinstance(data, dict) else data
     if isinstance(rows, dict):
         rows = list(rows.values())
-    return sum(
-        1 for r in (rows or []) if isinstance(r, dict) and (r.get("cron") or r.get("cadence") or r.get("schedule"))
-    )
+    if not isinstance(rows, list):
+        return 0
+    return sum(1 for r in rows if isinstance(r, dict) and (r.get("cron") or r.get("cadence") or r.get("schedule")))
 
 
 def parse_manifest(text: str) -> list[dict]:
@@ -405,18 +436,27 @@ def parse_manifest(text: str) -> list[dict]:
 
 
 def declaration_for(kind: str, path: str, text: str) -> dict | None:
+    """The declaration a carrier file makes, None when it schedules nothing, or {"unparseable": True} when the
+    file could not be read as its format — a tri-state, because an unreadable carrier is not "no schedule"."""
     base = {"kind": kind, "path": path}
+    unparseable = {**base, "unparseable": True}
     if kind == "gh-workflow":
         crons = parse_workflow(text)
+        if crons is None:
+            return unparseable
         return {**base, "crons": crons, "cadence": [_cron_cadence(c) for c in crons]} if crons else None
     if kind == "wrangler":
         crons = parse_wrangler(path, text)
+        if crons is None:
+            return unparseable
         return {**base, "crons": crons, "cadence": [_cron_cadence(c) for c in crons]} if crons else None
     if kind == "cloudflare-manifest":
         targets = parse_manifest(text)
         return {**base, "targets": targets} if targets else None
     if kind == "vercel":
         crons = parse_vercel(text)
+        if crons is None:
+            return unparseable
         return (
             {**base, "crons": [str(c.get("schedule")) for c in crons], "paths": [str(c.get("path")) for c in crons]}
             if crons
@@ -424,6 +464,8 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
         )
     if kind == "launchd":
         parsed = parse_launchd(text)
+        if parsed is None:
+            return unparseable
         return {**base, **parsed} if parsed else None
     if kind == "crontab":
         lines = parse_crontab(text)
@@ -433,12 +475,18 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
         return {**base, "on_calendar": cal} if cal else None
     if kind == "dependabot":
         intervals = parse_dependabot(text)
+        if intervals is None:
+            return unparseable
         return {**base, "intervals": intervals} if intervals else None
     if kind == "renovate":
         sched = parse_renovate(text)
+        if sched is None:
+            return unparseable
         return {**base, "schedule": sched} if sched else None
     if kind == "cloud-routines":
         n = parse_cloud_routines(text)
+        if n is None:
+            return unparseable
         return {**base, "routines": n} if n else None
     return None
 
@@ -447,12 +495,14 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
 
 
 def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None) -> dict:
-    runs = (page1 or {}).get("workflow_runs") or []
-    total = int((page1 or {}).get("total_count") or 0)
+    runs = (page1 or {}).get("workflow_runs")
+    runs = [r for r in runs if isinstance(r, dict)] if isinstance(runs, list) else []
+    try:
+        total = int((page1 or {}).get("total_count") or 0)
+    except (TypeError, ValueError):
+        total = len(runs)
     by_workflow: dict[str, dict] = {}
     for r in runs:
-        if not isinstance(r, dict):
-            continue
         name = str(r.get("name") or r.get("path") or "?")
         row = by_workflow.setdefault(
             name, {"runs_on_page": 0, "last_at": None, "last_conclusion": None, "failed_on_page": 0}
@@ -463,13 +513,10 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
             row["last_conclusion"] = r.get("conclusion")
         if r.get("conclusion") in BAD_CONCLUSIONS:
             row["failed_on_page"] += 1
-    newest = runs[0].get("created_at") if runs and isinstance(runs[0], dict) else None
-    old_runs = (oldest_page or {}).get("workflow_runs") or []
-    oldest = (
-        old_runs[-1].get("created_at")
-        if old_runs and isinstance(old_runs[-1], dict)
-        else (runs[-1].get("created_at") if runs else None)
-    )
+    newest = runs[0].get("created_at") if runs else None
+    old_runs = (oldest_page or {}).get("workflow_runs")
+    old_runs = [r for r in old_runs if isinstance(r, dict)] if isinstance(old_runs, list) else []
+    oldest = old_runs[-1].get("created_at") if old_runs else (runs[-1].get("created_at") if runs else None)
     return {
         "total_scheduled_runs": total,
         "newest": newest,
@@ -491,13 +538,22 @@ def read_attempts(repo: str, call, pages: int = ATTEMPT_PAGES) -> dict:
     for page in range(1, pages + 1):
         st, rows = call(f"repos/{repo}/issues?state=all&per_page=100&page={page}&sort=created&direction=desc")
         if st != OK or not isinstance(rows, list):
-            return {"readable": False, "items": items, "seen": seen, "truncated": True, "note": f"issues listing {st}"}
+            status = st if st != OK else ERROR
+            return {
+                "readable": False,
+                "status": status,
+                "items": items,
+                "seen": seen,
+                "truncated": True,
+                "note": f"issues listing {status}",
+            }
         seen += len(rows)
         for it in rows:
             if not isinstance(it, dict):
                 continue
             title = str(it.get("title") or "")
-            labels = [str(lab.get("name") or "") for lab in it.get("labels") or [] if isinstance(lab, dict)]
+            raw_labels = it.get("labels") if isinstance(it.get("labels"), list) else []
+            labels = [str(lab.get("name") or "") for lab in raw_labels if isinstance(lab, dict)]
             if not (ATTEMPT_RX.search(title) or any(ATTEMPT_RX.search(lab) for lab in labels)):
                 continue
             pr = it.get("pull_request") if isinstance(it.get("pull_request"), dict) else None
@@ -517,7 +573,7 @@ def read_attempts(repo: str, call, pages: int = ATTEMPT_PAGES) -> dict:
             break
         if page == pages:
             truncated = True
-    return {"readable": True, "items": items, "seen": seen, "truncated": truncated}
+    return {"readable": True, "status": OK, "items": items, "seen": seen, "truncated": truncated}
 
 
 # ── history ─────────────────────────────────────────────────────────────────────────────────
@@ -574,119 +630,193 @@ def history_from_git(clone: Path) -> dict:
         ev["crons_added"] = added.get(ev["sha"], [])
         ev["crons_removed"] = removed.get(ev["sha"], [])
     commits = {e["sha"] for e in events}
-    return {"source": "git", "commits_seen": len(commits), "truncated": False, "events": events}
+    return {"source": "git", "status": OK, "commits_seen": len(commits), "truncated": False, "events": events}
+
+
+def _patch_crons(patch: str, sign: str) -> list[str]:
+    return [
+        m.group(1).strip()
+        for m in (CRON_LINE_RX.match(ln[1:]) for ln in patch.splitlines() if ln.startswith(sign))
+        if m
+    ]
 
 
 def history_from_api(repo: str, cap: int) -> dict:
     st, commits = gh_api(f"repos/{repo}/commits?path={WORKFLOW_DIR}&per_page=100")
     if st != OK or not isinstance(commits, list):
-        return {"source": "api", "commits_seen": 0, "truncated": True, "events": [], "note": f"commit listing {st}"}
-    shas = [c.get("sha") for c in commits if isinstance(c, dict) and c.get("sha")]
+        status = st if st != OK else ERROR
+        return {
+            "source": "api",
+            "status": status,
+            "commits_seen": 0,
+            "truncated": True,
+            "events": [],
+            "note": f"commit listing {status}",
+        }
+    shas = [str(c.get("sha")) for c in commits if isinstance(c, dict) and c.get("sha")]
+    cap = max(2, int(cap))
     sample = shas if len(shas) <= cap else shas[: cap - cap // 2] + shas[-(cap // 2) :]
     events: list[dict] = []
+    unread = 0
     for sha in sample:
         st, detail = gh_api(f"repos/{repo}/commits/{sha}")
         if st != OK or not isinstance(detail, dict):
+            unread += 1
             continue
-        at = ((detail.get("commit") or {}).get("committer") or {}).get("date")
-        for f in detail.get("files") or []:
+        commit = detail.get("commit") if isinstance(detail.get("commit"), dict) else {}
+        committer = commit.get("committer") if isinstance(commit.get("committer"), dict) else {}
+        at = committer.get("date")
+        files = detail.get("files") if isinstance(detail.get("files"), list) else []
+        for f in files:
             if not isinstance(f, dict) or not str(f.get("filename", "")).startswith(WORKFLOW_DIR + "/"):
                 continue
             patch = str(f.get("patch") or "")
-            added = [
-                m.group(1).strip()
-                for m in (CRON_LINE_RX.match(ln[1:]) for ln in patch.splitlines() if ln.startswith("+"))
-                if m
-            ]
-            removed = [
-                m.group(1).strip()
-                for m in (CRON_LINE_RX.match(ln[1:]) for ln in patch.splitlines() if ln.startswith("-"))
-                if m
-            ]
             events.append(
                 {
                     "at": at,
                     "sha": sha[:10],
                     "path": f["filename"],
                     "change": str(f.get("status")),
-                    "crons_added": added,
-                    "crons_removed": removed,
+                    "crons_added": _patch_crons(patch, "+"),
+                    "crons_removed": _patch_crons(patch, "-"),
                 }
             )
     truncated = len(shas) > cap or len(commits) >= 100
-    return {
+    out = {
         "source": "api",
+        "status": OK if not unread else "partial",
         "commits_seen": len(shas),
         "truncated": truncated,
         "events": events,
         "sampled": len(sample),
     }
+    if unread:
+        out["note"] = f"{unread} of {len(sample)} sampled commits unreadable"
+    return out
 
 
 # ── per-repo scan ───────────────────────────────────────────────────────────────────────────
 
 
-def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30) -> dict:
-    out: dict = {
+def _blank_row(repo: str) -> dict:
+    return {
         "repo": repo,
         "reach": OK,
         "declarations": [],
         "fired": None,
         "history": None,
+        "attempts": None,
         "notes": [],
         "api_calls": 0,
         "failing_workflows": [],
         "actions_registered_not_in_tree": [],
+        "channels": {},
+        "partial": False,
+        "verdict": None,
     }
+
+
+def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, deadline: float | None = None) -> dict:
+    """One repository, every channel. Each channel's read status lands in row["channels"]; a repository whose
+    essential channels (tree, workflow states, scheduled runs, every carrier's contents) were not all read is
+    marked partial — its verdict may confirm what it saw but never concludes absence. `deadline` is a
+    time.monotonic() bound: past it, the remaining channels are recorded as skipped:budget instead of read."""
+    out = _blank_row(repo)
+    channels: dict[str, str] = out["channels"]
 
     def call(path: str) -> tuple[str, object | None]:
         out["api_calls"] += 1
         return gh_api(path)
 
+    def over() -> bool:
+        return deadline is not None and time.monotonic() > deadline
+
     st, meta = call(f"repos/{repo}")
     if st != OK or not isinstance(meta, dict):
-        out["reach"] = st if st != OK else ERROR
-        out["notes"].append(f"repository metadata {st}")
+        status = st if st != OK else ERROR
+        out["reach"] = UNREACHABLE if status in {ABSENT, UNREACHABLE} else ERROR
+        channels["metadata"] = status
+        out["notes"].append(
+            f"repository metadata {status}"
+            + (" (missing, renamed, or not visible from this runner)" if status == ABSENT else "")
+        )
         out["verdict"] = "unreachable"
         return out
+    channels["metadata"] = OK
     out["private"] = bool(meta.get("private"))
     out["archived"] = bool(meta.get("archived"))
+    out["fork"] = bool(meta.get("fork"))
     out["default_branch"] = str(meta.get("default_branch") or "main")
     out["pushed_at"] = meta.get("pushed_at")
     branch = out["default_branch"]
 
     st, tree = call(f"repos/{repo}/git/trees/{branch}?recursive=1")
     paths: list[str] = []
-    if st == OK and isinstance(tree, dict):
-        paths = [str(e.get("path")) for e in tree.get("tree") or [] if isinstance(e, dict) and e.get("type") == "blob"]
+    tree_complete = False
+    if st == OK and isinstance(tree, dict) and isinstance(tree.get("tree"), list):
+        paths = [str(e.get("path")) for e in tree["tree"] if isinstance(e, dict) and e.get("type") == "blob"]
         if tree.get("truncated"):
+            channels["tree"] = "truncated"
             out["notes"].append("tree listing truncated by GitHub — carriers beyond the limit were not seen")
+        else:
+            channels["tree"] = OK
+            tree_complete = True
+    elif st == ABSENT and meta.get("size") == 0:
+        channels["tree"] = "empty"  # a repository with no commits has no tree to list
+        tree_complete = True
     else:
-        out["notes"].append(f"tree listing {st}")
+        channels["tree"] = st if st != OK else ERROR
+        out["notes"].append(f"tree listing {channels['tree']}")
     carriers = [(kind, p) for p in paths for kind, rx in CARRIER_RX.items() if rx.search(p)]
 
-    st, wf = call(f"repos/{repo}/actions/workflows?per_page=100")
     states: dict[str, dict] = {}
-    if st == OK and isinstance(wf, dict):
-        for w in wf.get("workflows") or []:
+    states_status = OK
+    page = 1
+    while True:
+        st, wf = call(f"repos/{repo}/actions/workflows?per_page=100&page={page}")
+        if st != OK or not isinstance(wf, dict):
+            states_status = st if st != OK else ERROR
+            break
+        items = wf.get("workflows") if isinstance(wf.get("workflows"), list) else []
+        for w in items:
             if isinstance(w, dict) and w.get("path"):
                 states[str(w["path"])] = {"state": str(w.get("state")), "name": str(w.get("name")), "id": w.get("id")}
-    else:
-        out["notes"].append(f"actions workflows listing {st} (workflow states unknown)")
+        total = wf.get("total_count")
+        if len(items) < 100 or (isinstance(total, int) and len(states) >= total):
+            break
+        if page >= WORKFLOW_LIST_PAGES:
+            states_status = "truncated"
+            out["notes"].append(f"actions workflows listing stopped after {WORKFLOW_LIST_PAGES} pages")
+            break
+        page += 1
+    channels["actions-workflows"] = states_status
+    if states_status not in {OK, "truncated"}:
+        out["notes"].append(f"actions workflows listing {states_status} (workflow states unknown)")
 
     seen_workflow_paths: set[str] = set()
+    unread_carriers = 0
+    skipped_carriers = 0
     for kind, path in carriers:
+        if kind == "gh-workflow":
+            seen_workflow_paths.add(path)  # in the tree is in the tree, whether or not its contents could be read
+        if over():
+            skipped_carriers += 1
+            continue
         st, c = call(f"repos/{repo}/contents/{path}?ref={branch}")
         text = _decode_contents(c) if st == OK else None
         if text is None:
-            out["notes"].append(f"{path}: contents {st}")
+            unread_carriers += 1
+            out["notes"].append(f"{path}: contents {st if st != OK else 'undecodable'}")
             continue
         decl = declaration_for(kind, path, text)
+        if decl is not None and decl.get("unparseable"):
+            unread_carriers += 1
+            out["notes"].append(f"{path}: {kind} carrier could not be parsed — counted neither way")
+            continue
         if kind == "gh-workflow":
-            seen_workflow_paths.add(path)
             state = states.get(path, {}).get("state", "unknown")
-            if decl is None and not state.startswith("disabled"):
-                continue
+            if decl is None and state != "disabled_inactivity":
+                continue  # disabled_inactivity is a verdict GitHub passes only on scheduled workflows
             decl = {
                 **(decl or {"kind": kind, "path": path, "crons": [], "cadence": []}),
                 "state": state,
@@ -694,71 +824,130 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30) ->
             }
         if decl:
             out["declarations"].append(decl)
-    for path, s in states.items():  # registered with Actions but gone from the default branch tree
-        if path not in seen_workflow_paths and path.startswith(WORKFLOW_DIR):
+    if unread_carriers or skipped_carriers:
+        channels["contents"] = f"partial:{unread_carriers} unread,{skipped_carriers} skipped"
+    else:
+        channels["contents"] = OK
+    declared_paths = {d["path"] for d in out["declarations"] if d.get("kind") == "gh-workflow"}
+    for path, s in states.items():
+        if path in declared_paths or not path.startswith(WORKFLOW_DIR):
+            continue
+        registered = {
+            "kind": "gh-workflow",
+            "path": path,
+            "crons": [],
+            "cadence": [],
+            "state": s["state"],
+            "name": s["name"],
+        }
+        if tree_complete and path not in seen_workflow_paths:  # only a complete tree can say a workflow is gone
             out["declarations"].append(
                 {
-                    "kind": "gh-workflow",
-                    "path": path,
-                    "crons": [],
-                    "cadence": [],
-                    "state": s["state"],
-                    "name": s["name"],
+                    **registered,
+                    "absent_from_tree": True,
                     "note": "registered with Actions but absent from the default branch",
                 }
             )
+        elif (
+            s["state"] == "disabled_inactivity"
+        ):  # a verdict GitHub passes only on scheduled workflows: evidence on its own
+            out["declarations"].append(
+                {**registered, "note": "state from the Actions API; the workflow file itself was not read"}
+            )
 
-    st, page1 = call(f"repos/{repo}/actions/runs?event=schedule&per_page=100")
-    if st == OK and isinstance(page1, dict):
-        total = int(page1.get("total_count") or 0)
-        oldest_page = None
-        if total > 100:
-            last = (total + 99) // 100
-            st2, oldest_page = call(f"repos/{repo}/actions/runs?event=schedule&per_page=100&page={last}")
-            if st2 != OK:
-                oldest_page = None
-        out["fired"] = summarize_scheduled_runs(page1, oldest_page if isinstance(oldest_page, dict) else None)
+    if over():
+        channels["scheduled-runs"] = "skipped:budget"
     else:
-        out["notes"].append(f"scheduled runs listing {st}")
+        st, page1 = call(f"repos/{repo}/actions/runs?event=schedule&per_page=100")
+        if st == OK and isinstance(page1, dict):
+            channels["scheduled-runs"] = OK
+            try:
+                total = int(page1.get("total_count") or 0)
+            except (TypeError, ValueError):
+                total = 0
+            oldest_page = None
+            if total > 100:
+                last = (total + 99) // 100
+                st2, oldest_page = call(f"repos/{repo}/actions/runs?event=schedule&per_page=100&page={last}")
+                if st2 != OK:
+                    oldest_page = None
+            out["fired"] = summarize_scheduled_runs(page1, oldest_page if isinstance(oldest_page, dict) else None)
+        else:
+            channels["scheduled-runs"] = st if st != OK else ERROR
+            out["notes"].append(f"scheduled runs listing {channels['scheduled-runs']}")
 
-    out["attempts"] = read_attempts(repo, call)
+    if over():
+        channels["issues-prs"] = "skipped:budget"
+        out["attempts"] = {"readable": False, "status": "skipped:budget", "items": [], "seen": 0, "truncated": True}
+    else:
+        out["attempts"] = read_attempts(repo, call)
+        channels["issues-prs"] = str(out["attempts"].get("status") or (OK if out["attempts"]["readable"] else ERROR))
+
     by = (out.get("fired") or {}).get("by_workflow") or {}
     out["failing_workflows"] = sorted(n for n, v in by.items() if v.get("last_conclusion") in BAD_CONCLUSIONS)
-    out["actions_registered_not_in_tree"] = sorted(d["path"] for d in out["declarations"] if d.get("note"))
+    out["actions_registered_not_in_tree"] = sorted(d["path"] for d in out["declarations"] if d.get("absent_from_tree"))
+
     if clone_is_full(clone):
         out["history"] = history_from_git(clone)  # type: ignore[arg-type]
+        channels["history"] = "git"
+    elif over():
+        channels["history"] = "skipped:budget"
     else:
         if clone is not None:
             out["notes"].append("local clone is shallow — history read through the Commits API instead")
         out["history"] = history_from_api(repo, history_cap)
+        channels["history"] = (
+            "api"
+            + ("" if out["history"].get("status") == OK else f":{out['history'].get('status')}")
+            + (":truncated" if out["history"].get("truncated") and out["history"].get("status") == OK else "")
+        )
+
+    out["partial"] = any(channels.get(name) not in {OK, "empty"} for name in ESSENTIAL_CHANNELS)
     out["verdict"] = verdict_for_repo(out)
     return out
 
 
 def verdict_for_repo(row: dict) -> str:
-    """One word per repo, from evidence only. unreachable ≠ none."""
+    """One word per repository, from evidence only. unreachable ≠ none, and a partial read ≠ none.
+
+    Positive evidence wins in this order: an active Actions schedule (then: fired-unmeasured when the run listing
+    could not be read, declared-never-fired, firing-but-failing, active) → a disabled one (auto-disabled is a
+    state GitHub passes only on scheduled workflows, so it stands without the cron lines; a manual disable or a
+    fork disable needs them) → a declared cron whose state could not be verified → a schedule outside Actions →
+    a cron removed in history → partial (something essential was not read) → none."""
     if row.get("reach") != OK:
         return "unreachable"
-    gh = [d for d in row["declarations"] if d["kind"] == "gh-workflow"]
-    others = [d for d in row["declarations"] if d["kind"] != "gh-workflow"]
-    active = [d for d in gh if d.get("state") == "active" and d.get("crons")]
-    fired = row.get("fired") or {}
-    if any(d.get("state") == "disabled_manually" for d in gh) and not active:
-        return "manually-disabled"
-    if any(d.get("state") == "disabled_inactivity" for d in gh) and not active:
-        return "auto-disabled"
+    decls = [d for d in row.get("declarations") or [] if isinstance(d, dict)]
+    gh = [d for d in decls if d.get("kind") == "gh-workflow"]
+    others = [d for d in decls if d.get("kind") != "gh-workflow"]
+    timed = [d for d in gh if d.get("crons")]
+    active = [d for d in timed if d.get("state") == "active"]
     if active:
-        if fired.get("total_scheduled_runs", 0) == 0:
+        fired = row.get("fired")
+        if not isinstance(fired, dict):
+            return "fired-unmeasured"
+        if int(fired.get("total_scheduled_runs") or 0) == 0:
             return "declared-never-fired"
         by = fired.get("by_workflow") or {}
         if by and all(v.get("last_conclusion") in BAD_CONCLUSIONS for v in by.values()):
             return "firing-but-failing"
         return "active"
-    hist = row.get("history") or {}
-    if any(e.get("change") == "removed" for e in hist.get("events") or []):
-        return "abandoned-in-history"
+    if any(d.get("state") == "disabled_inactivity" for d in gh):
+        return "auto-disabled"
+    timed_states = {str(d.get("state")) for d in timed}
+    if "disabled_manually" in timed_states:
+        return "manually-disabled"
+    if "disabled_fork" in timed_states:
+        return "disabled-fork"
+    if timed:
+        return "declared-state-unknown"
     if others:
         return "declared-outside-actions"
+    hist = row.get("history") or {}
+    if any(e.get("crons_removed") for e in (hist.get("events") or []) if isinstance(e, dict)):
+        return "abandoned-in-history"
+    if row.get("partial"):
+        return "partial"
     return "none"
 
 
@@ -787,21 +976,24 @@ def registry_covered_repos(root: Path, self_repo: str) -> set[str]:
 
 
 def registry_gaps(rows: list[dict], covered: set[str]) -> list[dict]:
+    """Repositories outside every plane that declare an Actions cron GitHub reports active — or whose state could
+    not be read (listed under `unverified`: declared, possibly burning, not confirmed)."""
     gaps = []
     for row in rows:
         if row.get("reach") != OK or row["repo"] in covered:
             continue
-        active = [
+        timed = [
             d
-            for d in row["declarations"]
-            if d["kind"] == "gh-workflow" and d.get("state") == "active" and d.get("crons")
+            for d in row.get("declarations") or []
+            if d.get("kind") == "gh-workflow" and d.get("crons") and d.get("state") in {"active", "unknown"}
         ]
-        if active:
+        if timed:
             gaps.append(
                 {
                     "repo": row["repo"],
-                    "workflows": [d["path"] for d in active],
-                    "crons": [c for d in active for c in d["crons"]],
+                    "workflows": [d["path"] for d in timed],
+                    "crons": [c for d in timed for c in d["crons"]],
+                    "unverified": [d["path"] for d in timed if d.get("state") != "active"],
                 }
             )
     return gaps
@@ -818,12 +1010,15 @@ def build_report(
     unscanned: list[str],
     gaps: list[dict] | None,
     started: float,
+    skipped: list[str] | None = None,
 ) -> dict:
+    errors = [r for r in rows if r.get("verdict") == "error"]
     scanned = [r for r in rows if r.get("reach") == OK]
-    unreachable = [r["repo"] for r in rows if r.get("reach") != OK]
+    unreachable = [r["repo"] for r in rows if r.get("reach") != OK and r.get("verdict") != "error"]
+    partial = [r["repo"] for r in scanned if r.get("partial")]
     verdicts: dict[str, int] = {}
     for r in rows:
-        verdicts[r.get("verdict", "?")] = verdicts.get(r.get("verdict", "?"), 0) + 1
+        verdicts[r.get("verdict") or "?"] = verdicts.get(r.get("verdict") or "?", 0) + 1
     gh_decl = [d for r in scanned for d in r["declarations"] if d["kind"] == "gh-workflow"]
     return {
         "schema": SCHEMA,
@@ -833,9 +1028,12 @@ def build_report(
             "universe_source": universe_source,
             "universe_count": len(universe),
             "scanned": len(scanned),
+            "scanned_partial": len(partial),
             "unreachable": len(unreachable),
             "unscanned_by_budget": len(unscanned),
-            "note": "conclusions below are about the scanned set only; unreachable and unscanned repositories (time budget or API quota) are listed, never counted as unscheduled",
+            "skipped_archived": len(skipped or []),
+            "internal_errors": len(errors),
+            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not",
         },
         "channels_read": CHANNELS,
         "channels_not_read": NOT_READ,
@@ -843,25 +1041,30 @@ def build_report(
             "repos_with_any_declaration": sum(1 for r in scanned if r["declarations"]),
             "gh_workflows_with_schedule": sum(1 for d in gh_decl if d.get("crons")),
             "gh_workflows_active": sum(1 for d in gh_decl if d.get("state") == "active" and d.get("crons")),
-            "gh_workflows_disabled_inactivity": sum(
-                1 for d in gh_decl if d.get("crons") and d.get("state") == "disabled_inactivity"
-            ),
+            "gh_workflows_disabled_inactivity": sum(1 for d in gh_decl if d.get("state") == "disabled_inactivity"),
             "gh_workflows_disabled_manually": sum(
                 1 for d in gh_decl if d.get("crons") and d.get("state") == "disabled_manually"
             ),
+            "gh_workflows_state_unknown": sum(1 for d in gh_decl if d.get("crons") and d.get("state") == "unknown"),
             "workflows_disabled_any_trigger": sum(1 for d in gh_decl if str(d.get("state", "")).startswith("disabled")),
             "workflows_failing_last_scheduled_run": sum(len(r.get("failing_workflows") or []) for r in scanned),
             "actions_registered_not_in_tree": sum(len(r.get("actions_registered_not_in_tree") or []) for r in scanned),
             "attempt_discourse_items": sum(len((r.get("attempts") or {}).get("items") or []) for r in scanned),
             "repos_with_attempt_discourse": sum(1 for r in scanned if (r.get("attempts") or {}).get("items")),
-            "scheduled_runs_in_retention": sum(
-                int((r.get("fired") or {}).get("total_scheduled_runs") or 0) for r in scanned
+            "scheduled_runs_listed": sum(int((r.get("fired") or {}).get("total_scheduled_runs") or 0) for r in scanned),
+            "repos_with_cron_removed_in_history": sum(
+                1
+                for r in scanned
+                if any(e.get("crons_removed") for e in ((r.get("history") or {}).get("events") or []))
             ),
             "verdicts": verdicts,
         },
         "registry_gaps": gaps,
         "unreachable": unreachable,
         "unscanned_by_budget": unscanned,
+        "skipped_archived": list(skipped or []),
+        "partial": partial,
+        "internal_errors": [{"repo": r["repo"], "notes": r.get("notes") or []} for r in errors],
         "repos": rows,
     }
 
@@ -879,33 +1082,44 @@ def write_receipt(path: Path, report: dict) -> None:
             os.unlink(tmp)
 
 
+def load_receipt(path: Path) -> dict | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+    return data if isinstance(data, dict) and data.get("schema") == SCHEMA else None
+
+
+def _timed_declarations(decls: list[dict]) -> tuple[list[dict], list[dict]]:
+    timed = [
+        x
+        for x in decls
+        if x.get("crons") or x.get("targets") or x.get("interval_seconds") or x.get("calendar") or x.get("on_calendar")
+    ]
+    return timed, [x for x in decls if x not in timed]
+
+
 def render_markdown(report: dict) -> str:
     d = report["denominators"]
     t = report["totals"]
     lines = [
         "# Schedule census",
         "",
-        f"Generated {report['generated_at']} · universe {d['universe_count']} ({d['universe_source']}) · scanned {d['scanned']} · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']}",
+        f"Generated {report['generated_at']} · universe {d['universe_count']} ({d['universe_source']}) · scanned {d['scanned']} "
+        f"(partial {d.get('scanned_partial', 0)}) · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']} "
+        f"· skipped archived {d.get('skipped_archived', 0)} · internal errors {d.get('internal_errors', 0)}",
         "",
         f"Channels read: {', '.join(report['channels_read'])}. Not read here: {', '.join(report['channels_not_read'])}.",
         "",
-        f"Declared Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, auto-disabled {t['gh_workflows_disabled_inactivity']}, manually disabled {t['gh_workflows_disabled_manually']}); scheduled runs in retention {t['scheduled_runs_in_retention']}.",
+        f"Declared Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, auto-disabled {t['gh_workflows_disabled_inactivity']}, "
+        f"manually disabled {t['gh_workflows_disabled_manually']}, state unknown {t.get('gh_workflows_state_unknown', 0)}); "
+        f"scheduled runs listed {t['scheduled_runs_listed']}; repositories with a cron removed in history {t.get('repos_with_cron_removed_in_history', 0)}.",
         "",
-        "| repo | verdict | declarations | fired (retention) | history | issues/PRs about scheduling |",
+        "| repo | verdict | declarations | fired (listed) | history | issues/PRs about scheduling |",
         "|---|---|---|---|---|---|",
     ]
     for r in report["repos"]:
-        decls = r.get("declarations") or []
-        timed = [
-            x
-            for x in decls
-            if x.get("crons")
-            or x.get("targets")
-            or x.get("interval_seconds")
-            or x.get("calendar")
-            or x.get("on_calendar")
-        ]
-        rest = [x for x in decls if x not in timed]
+        timed, rest = _timed_declarations(r.get("declarations") or [])
         parts = [
             f"{x['kind']}:{Path(x['path']).name}"
             + (f"[{x.get('state')}]" if x.get("state") else "")
@@ -943,7 +1157,33 @@ def render_markdown(report: dict) -> str:
             if att.get("readable")
             else ("—" if not att else "unreadable")
         )
-        lines.append(f"| {r['repo']} | {r.get('verdict', '?')} | {decl} | {fired_s} | {hist_s} | {att_s} |")
+        verdict = str(r.get("verdict") or "?") + (
+            " (partial)" if r.get("partial") and r.get("verdict") != "partial" else ""
+        )
+        lines.append(f"| {r['repo']} | {verdict} | {decl} | {fired_s} | {hist_s} | {att_s} |")
+    history_rows = []
+    for r in report["repos"]:
+        events = [
+            e
+            for e in ((r.get("history") or {}).get("events") or [])
+            if isinstance(e, dict) and (e.get("crons_added") or e.get("crons_removed") or e.get("change") == "removed")
+        ]
+        if events:
+            history_rows.append((r["repo"], events))
+    if history_rows:
+        lines += ["", "## Historical attempts (workflow schedules added, changed or removed)", ""]
+        for repo, events in history_rows:
+            shown = events[:12]
+            lines.append(
+                f"- **{repo}** ({len(events)}): "
+                + "; ".join(
+                    f"{str(e.get('at') or '')[:10]} {e.get('change')} {Path(str(e.get('path') or '')).name}"
+                    + (f" +[{', '.join(e['crons_added'])}]" if e.get("crons_added") else "")
+                    + (f" -[{', '.join(e['crons_removed'])}]" if e.get("crons_removed") else "")
+                    for e in shown
+                )
+                + (f"; +{len(events) - 12} more" if len(events) > 12 else "")
+            )
     discourse = [(r["repo"], (r.get("attempts") or {}).get("items") or []) for r in report["repos"]]
     discourse = [(repo, items) for repo, items in discourse if items]
     if discourse:
@@ -959,9 +1199,27 @@ def render_markdown(report: dict) -> str:
                 + (f"; +{len(items) - 10} more" if len(items) > 10 else "")
             )
     if report.get("registry_gaps"):
-        lines += ["", "## Not declared in schedules.yaml (active Actions schedules outside any plane)", ""]
-        lines += [
-            f"- {g['repo']}: {', '.join(g['workflows'])} — {', '.join(g['crons'])}" for g in report["registry_gaps"]
+        lines += ["", "## Not declared in schedules.yaml (Actions crons outside any plane)", ""]
+        for g in report["registry_gaps"]:
+            unverified = g.get("unverified") or []
+            lines.append(
+                f"- {g['repo']}: {', '.join(g['workflows'])} — {', '.join(g['crons'])}"
+                + (f" (state unverified: {', '.join(unverified)})" if unverified else "")
+            )
+    partial = [r for r in report["repos"] if r.get("partial")]
+    if partial:
+        lines += ["", "## Partially read (a channel was unreadable or skipped — absence is not concluded)", ""]
+        for r in partial:
+            bad = {k: v for k, v in (r.get("channels") or {}).items() if v not in {OK, "empty", "git", "api"}}
+            lines.append(f"- {r['repo']}: " + ", ".join(f"{k} {v}" for k, v in sorted(bad.items())))
+    notes = [(r["repo"], r.get("notes") or []) for r in report["repos"] if r.get("notes") and r.get("reach") == OK]
+    if notes:
+        lines += ["", "## Notes", ""]
+        for repo, ns in notes:
+            lines.append(f"- {repo}: " + "; ".join(ns[:6]) + (f"; +{len(ns) - 6} more" if len(ns) > 6 else ""))
+    if report.get("internal_errors"):
+        lines += ["", "## Internal errors (the engine, not the repository — fix the census)", ""] + [
+            f"- {e['repo']}: {'; '.join(e.get('notes') or [])}" for e in report["internal_errors"]
         ]
     if report.get("unreachable"):
         lines += ["", "## Unreachable from this runner (not scanned, not concluded)", ""] + [
@@ -969,18 +1227,45 @@ def render_markdown(report: dict) -> str:
         ]
     if report.get("unscanned_by_budget"):
         lines += ["", "## Left unscanned by the time budget", ""] + [f"- {u}" for u in report["unscanned_by_budget"]]
+    if report.get("skipped_archived"):
+        lines += ["", "## Skipped (archived; --skip-archived — their historical attempts were not read)", ""] + [
+            f"- {u}" for u in report["skipped_archived"]
+        ]
     return "\n".join(lines) + "\n"
 
 
-def receipt_is_fresh(path: Path, interval_hours: float, now: datetime | None = None) -> bool:
+def receipt_is_complete(report: dict, *, max_incomplete_share: float = MAX_INCOMPLETE_SHARE) -> bool:
+    """A receipt that read nothing, or left more than `max_incomplete_share` of its universe unread, is not a
+    census to rest on for a whole interval."""
+    d = report.get("denominators") or {}
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        scanned = int(d.get("scanned") or 0)
+        universe = int(d.get("universe_count") or 0)
+        unread = (
+            int(d.get("unreachable") or 0) + int(d.get("unscanned_by_budget") or 0) + int(d.get("internal_errors") or 0)
+        )
+    except (TypeError, ValueError):
+        return False
+    if scanned == 0:
+        return False
+    return universe == 0 or unread / universe <= max_incomplete_share
+
+
+def receipt_is_fresh(
+    path: Path, interval_hours: float, now: datetime | None = None, *, retry_hours: float = DEFAULT_RETRY_HOURS
+) -> bool:
+    """Younger than the interval — but an incomplete receipt only earns the shorter retry horizon."""
+    data = load_receipt(path)
+    if data is None:
+        return False
+    try:
         generated = datetime.fromisoformat(str(data.get("generated_at")))
-    except (OSError, json.JSONDecodeError, ValueError, TypeError):
+    except (ValueError, TypeError):
         return False
     if generated.tzinfo is None:
         generated = generated.replace(tzinfo=timezone.utc)
-    return (now or datetime.now(timezone.utc)) - generated < timedelta(hours=interval_hours)
+    horizon = interval_hours if receipt_is_complete(data) else min(interval_hours, retry_hours)
+    return (now or datetime.now(timezone.utc)) - generated < timedelta(hours=horizon)
 
 
 # ── main ────────────────────────────────────────────────────────────────────────────────────
@@ -997,29 +1282,66 @@ def run_census(
     root: Path = ROOT,
     self_repo: str = "4444J99/limen",
     skip_archived: bool = False,
-    rate_check_every: int = 10,
+    rate_check_every_calls: int = RATE_CHECK_EVERY_CALLS,
 ) -> dict:
     started = time.monotonic()
-    deadline = time.time() + budget_seconds
+    deadline = started + budget_seconds
+    wall_deadline = time.time() + budget_seconds
     rows: list[dict] = []
     unscanned: list[str] = []
+    skipped: list[str] = []
     exhausted = False
-    for index, entry in enumerate(universe):
+    calls_since_check: int | None = None  # None → check the quota before the first scan
+    for entry in universe:
         repo = entry["repo"]
         if skip_archived and entry.get("archived"):
+            skipped.append(repo)
             continue
-        if exhausted or time.monotonic() - started > budget_seconds:
+        if exhausted or time.monotonic() > deadline:
             unscanned.append(repo)
             continue
-        if index % rate_check_every == 0 and rate_guard(deadline=deadline) == "exhausted":
-            exhausted = True
-            unscanned.append(repo)
-            continue
-        rows.append(scan_repo(repo, clone=(clones or {}).get(repo), history_cap=history_cap))
+        if calls_since_check is None or calls_since_check >= rate_check_every_calls:
+            if rate_guard(deadline=wall_deadline) == "exhausted":
+                exhausted = True
+                unscanned.append(repo)
+                continue
+            calls_since_check = 0
+        try:
+            row = scan_repo(repo, clone=(clones or {}).get(repo), history_cap=history_cap, deadline=deadline)
+        except Exception as exc:  # noqa: BLE001 — one repository's surprise never aborts the census
+            row = {
+                **_blank_row(repo),
+                "reach": ERROR,
+                "verdict": "error",
+                "notes": [f"internal error: {type(exc).__name__}: {exc}"],
+            }
+        calls_since_check += int(row.get("api_calls") or 0)
+        rows.append(row)
     gaps = registry_gaps(rows, registry_covered_repos(root, self_repo)) if check_registry else None
     return build_report(
-        rows, universe=universe, universe_source=universe_source, unscanned=unscanned, gaps=gaps, started=started
+        rows,
+        universe=universe,
+        universe_source=universe_source,
+        unscanned=unscanned,
+        gaps=gaps,
+        started=started,
+        skipped=skipped,
     )
+
+
+def exit_code_for(report: dict) -> int:
+    """4 internal errors (fix the engine) · 3 read nothing · 1 findings on the scanned set · 2 no findings but
+    coverage incomplete (unreachable, unscanned, partial) · 0 clean and complete."""
+    d, t = report["denominators"], report["totals"]
+    if d.get("internal_errors"):
+        return 4
+    if d["scanned"] == 0:
+        return 3
+    if report.get("registry_gaps") or any(v in FINDING_VERDICTS for v in t["verdicts"]):
+        return 1
+    if d["unreachable"] or d["unscanned_by_budget"] or d.get("scanned_partial"):
+        return 2
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1042,6 +1364,12 @@ def main(argv: list[str] | None = None) -> int:
         "--interval-hours", type=float, default=float(os.environ.get("LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS") or 168)
     )
     ap.add_argument(
+        "--retry-hours",
+        type=float,
+        default=float(os.environ.get("LIMEN_SCHEDULE_CENSUS_RETRY_HOURS") or DEFAULT_RETRY_HOURS),
+        help="hours before an incomplete receipt (read nothing, or too much unread) is retried",
+    )
+    ap.add_argument(
         "--budget-seconds", type=float, default=float(os.environ.get("LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS") or 1500)
     )
     ap.add_argument("--history-cap", type=int, default=int(os.environ.get("LIMEN_SCHEDULE_CENSUS_HISTORY_CAP") or 30))
@@ -1049,14 +1377,26 @@ def main(argv: list[str] | None = None) -> int:
         "--check-registry", action="store_true", help="list active Actions schedules outside every schedules.yaml plane"
     )
     ap.add_argument("--self-repo", default="4444J99/limen")
-    ap.add_argument("--skip-archived", action="store_true")
+    ap.add_argument(
+        "--skip-archived", action="store_true", help="skip archived repositories (their historical attempts go unread)"
+    )
     ap.add_argument("--force", action="store_true", help="run even when the receipt is younger than --interval-hours")
+    ap.add_argument(
+        "--replace",
+        action="store_true",
+        help="overwrite the receipt even when this pass read fewer repositories than the standing one",
+    )
     ap.add_argument("--json", action="store_true", help="print the report JSON")
     args = ap.parse_args(argv)
 
-    if not args.force and args.receipt.exists() and receipt_is_fresh(args.receipt, args.interval_hours):
+    if (
+        not args.force
+        and args.receipt.exists()
+        and receipt_is_fresh(args.receipt, args.interval_hours, retry_hours=args.retry_hours)
+    ):
         print(
-            f"schedule-census: receipt {args.receipt} is younger than {args.interval_hours:g}h — nothing to do (use --force)"
+            f"schedule-census: receipt {args.receipt} is younger than its horizon ({args.interval_hours:g}h complete, "
+            f"{args.retry_hours:g}h incomplete) — nothing to do (use --force)"
         )
         return 0
     universe, source = resolve_universe(args.repos, args.repos_file, args.estate_cache)
@@ -1081,26 +1421,33 @@ def main(argv: list[str] | None = None) -> int:
         self_repo=args.self_repo,
         skip_archived=args.skip_archived,
     )
-    write_receipt(args.receipt, report)
-    ledger = args.ledger if args.ledger is not None else args.receipt.with_suffix(".md")
-    if str(ledger) != "-":
-        ledger.parent.mkdir(parents=True, exist_ok=True)
-        ledger.write_text(render_markdown(report), encoding="utf-8")
+    d, t = report["denominators"], report["totals"]
+    previous = load_receipt(args.receipt)
+    previous_scanned = int(((previous or {}).get("denominators") or {}).get("scanned") or 0)
+    if previous is not None and not args.replace and d["scanned"] < previous_scanned:
+        sidecar = args.receipt.with_name(args.receipt.stem + ".last-attempt" + args.receipt.suffix)
+        write_receipt(sidecar, report)
+        print(
+            f"schedule-census: this pass read {d['scanned']} repositories, the standing receipt holds {previous_scanned} — "
+            f"kept {args.receipt}, wrote {sidecar} (--replace overrides)"
+        )
+    else:
+        write_receipt(args.receipt, report)
+        ledger = args.ledger if args.ledger is not None else args.receipt.with_suffix(".md")
+        if str(ledger) != "-":
+            ledger.parent.mkdir(parents=True, exist_ok=True)
+            ledger.write_text(render_markdown(report), encoding="utf-8")
     if args.json:
         print(json.dumps(report, indent=1))
-    d, t = report["denominators"], report["totals"]
     print(
-        f"schedule-census: universe {d['universe_count']} ({d['universe_source']}), scanned {d['scanned']}, unreachable {d['unreachable']}, "
-        f"unscanned {d['unscanned_by_budget']}; Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, "
-        f"auto-off {t['gh_workflows_disabled_inactivity']}, manual-off {t['gh_workflows_disabled_manually']}); verdicts {t['verdicts']}"
+        f"schedule-census: universe {d['universe_count']} ({d['universe_source']}), scanned {d['scanned']} (partial {d['scanned_partial']}), "
+        f"unreachable {d['unreachable']}, unscanned {d['unscanned_by_budget']}, skipped archived {d['skipped_archived']}, "
+        f"internal errors {d['internal_errors']}; Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, "
+        f"auto-off {t['gh_workflows_disabled_inactivity']}, manual-off {t['gh_workflows_disabled_manually']}, "
+        f"state unknown {t['gh_workflows_state_unknown']}); verdicts {t['verdicts']}"
         + (f"; registry gaps {len(report['registry_gaps'])}" if report.get("registry_gaps") is not None else "")
     )
-    if d["scanned"] == 0 and (d["unreachable"] or d["unscanned_by_budget"]):
-        return 3
-    findings = (report.get("registry_gaps") or []) or any(
-        v in {"declared-never-fired", "firing-but-failing", "auto-disabled"} for v in t["verdicts"]
-    )
-    return 1 if findings else 0
+    return exit_code_for(report)
 
 
 if __name__ == "__main__":

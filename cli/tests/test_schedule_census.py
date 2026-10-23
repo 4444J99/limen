@@ -73,7 +73,7 @@ def _table(repo: str = "4444J99/example", *, total_runs: int = 3, last_conclusio
                 ],
             },
         ),
-        f"repos/{repo}/actions/workflows?per_page=100": (
+        f"repos/{repo}/actions/workflows?per_page=100&page=1": (
             C.OK,
             {
                 "workflows": [
@@ -238,7 +238,31 @@ def test_every_carrier_kind_parses_and_a_carrier_without_a_schedule_is_no_declar
         "max_per_day": 6,
     }
     assert C.declaration_for("gh-workflow", ".github/workflows/x.yml", WORKFLOW_NO_CRON) is None
-    assert C.declaration_for("launchd", "a.plist", "not a plist") is None
+    # tri-state: a carrier that cannot be parsed is neither a declaration nor "no schedule"
+    assert C.declaration_for("launchd", "a.plist", "not a plist") == {
+        "kind": "launchd",
+        "path": "a.plist",
+        "unparseable": True,
+    }
+    assert C.parse_wrangler("wrangler.toml", "[triggers\ncrons = [") is None
+    assert C.declaration_for("wrangler", "wrangler.toml", "[triggers\ncrons = [")["unparseable"] is True
+    assert C.declaration_for("vercel", "vercel.json", "{not json") == {
+        "kind": "vercel",
+        "path": "vercel.json",
+        "unparseable": True,
+    }
+    assert C.parse_wrangler("wrangler.jsonc", '{"triggers": {"crons": ["1 2 * * *",],},}') == [
+        "1 2 * * *"
+    ]  # trailing commas
+    assert C.parse_wrangler("wrangler.json", '{"triggers": {"crons": "0 * * * *"}}') == ["0 * * * *"]  # scalar cron
+    assert C.parse_wrangler("wrangler.json", '{"triggers": ["not", "a", "dict"]}') == []
+    # malformed carriers never raise: the shape GitHub hands back is data, not a contract
+    assert C.parse_launchd('<plist version="1.0"><array><string>x</string></array></plist>') == {}
+    assert C.parse_vercel('{"crons": {"path": "/x"}}') == [] and C.parse_vercel("[1,2]") == []
+    assert C.parse_dependabot("updates: notalist\n") == [] and C.parse_renovate('{"schedule": {"x": 1}}') == []
+    assert C.parse_cloud_routines('"just a string"') == 0 and C.parse_cloud_routines("{bad") is None
+    assert C.parse_workflow("on:\n  schedule:\n    cron: '5 5 * * *'\n") == ["5 5 * * *"]  # schedule as a mapping
+    assert C.parse_workflow("on: [push]\n") == [] and C.parse_workflow("on:\n  - [broken\n") is None
     d = C.declaration_for("gh-workflow", ".github/workflows/x.yml", WORKFLOW_CRON)
     assert d and d["cadence"] == ["daily"]
 
@@ -313,7 +337,16 @@ def test_scan_repo_reads_carriers_states_runs_and_history(monkeypatch, tmp_path)
     assert events[(".github/workflows/hygiene.yml", "modified")]["crons_removed"] == ["0 13 * * *"]
     assert events[(".github/workflows/nightly.yml", "removed")]["crons_removed"] == ["0 2 * * *"]
     assert ("README.md", "modified") not in events  # only workflow files count as schedule history
-    assert row["verdict"] == "active"
+    assert row["verdict"] == "active" and row["partial"] is False
+    assert row["channels"] == {
+        "metadata": C.OK,
+        "tree": C.OK,
+        "actions-workflows": C.OK,
+        "contents": C.OK,
+        "scheduled-runs": C.OK,
+        "issues-prs": C.OK,
+        "history": "api",
+    }
     att = row["attempts"]
     assert att["readable"] and att["seen"] == 4 and att["truncated"] is False
     assert [(i["number"], i["kind"], i["merged"]) for i in att["items"]] == [
@@ -351,6 +384,7 @@ def test_verdict_matrix():
             "declarations": [],
             "fired": {"total_scheduled_runs": 0, "by_workflow": {}},
             "history": {"events": []},
+            "partial": False,
         }
         base.update(over)
         return base
@@ -361,7 +395,16 @@ def test_verdict_matrix():
     assert C.verdict_for_repo(row(reach=C.UNREACHABLE)) == "unreachable"
     assert C.verdict_for_repo(row(declarations=[wf("disabled_manually")])) == "manually-disabled"
     assert C.verdict_for_repo(row(declarations=[wf("disabled_inactivity")])) == "auto-disabled"
+    # GitHub auto-disables only scheduled workflows, so that state stands even when the cron lines are gone
+    assert C.verdict_for_repo(row(declarations=[wf("disabled_inactivity", crons=())])) == "auto-disabled"
+    # a manual disable can hit any workflow: without crons it is not a schedule verdict
+    assert C.verdict_for_repo(row(declarations=[wf("disabled_manually", crons=())])) == "none"
+    assert C.verdict_for_repo(row(declarations=[wf("disabled_fork")])) == "disabled-fork"
+    assert C.verdict_for_repo(row(declarations=[wf("unknown")])) == "declared-state-unknown"
     assert C.verdict_for_repo(row(declarations=[wf("active")])) == "declared-never-fired"
+    # an unread run listing is unmeasured, never "never fired"
+    assert C.verdict_for_repo(row(declarations=[wf("active")], fired=None)) == "fired-unmeasured"
+    assert "fired-unmeasured" not in C.FINDING_VERDICTS and "declared-never-fired" in C.FINDING_VERDICTS
     fired_bad = {"total_scheduled_runs": 5, "by_workflow": {"w": {"last_conclusion": "failure"}}}
     assert C.verdict_for_repo(row(declarations=[wf("active")], fired=fired_bad)) == "firing-but-failing"
     fired_ok = {
@@ -369,11 +412,21 @@ def test_verdict_matrix():
         "by_workflow": {"w": {"last_conclusion": "success"}, "v": {"last_conclusion": "failure"}},
     }
     assert C.verdict_for_repo(row(declarations=[wf("active")], fired=fired_ok)) == "active"
-    assert C.verdict_for_repo(row(history={"events": [{"change": "removed"}]})) == "abandoned-in-history"
+    # abandoned needs a cron actually removed — a deleted lint workflow is not a schedule attempt
+    assert C.verdict_for_repo(row(history={"events": [{"change": "removed", "crons_removed": ["0 2 * * *"]}]})) == (
+        "abandoned-in-history"
+    )
+    assert C.verdict_for_repo(row(history={"events": [{"change": "removed", "crons_removed": []}]})) == "none"
+    wrangler = {"kind": "wrangler", "path": "wrangler.toml", "crons": ["0 * * * *"]}
+    assert C.verdict_for_repo(row(declarations=[wrangler])) == "declared-outside-actions"
+    # a live schedule outside Actions outranks a cron removed long ago
     assert (
-        C.verdict_for_repo(row(declarations=[{"kind": "wrangler", "path": "wrangler.toml", "crons": ["0 * * * *"]}]))
+        C.verdict_for_repo(
+            row(declarations=[wrangler], history={"events": [{"change": "removed", "crons_removed": ["0 2 * * *"]}]})
+        )
         == "declared-outside-actions"
     )
+    assert C.verdict_for_repo(row(partial=True)) == "partial"
     assert C.verdict_for_repo(row()) == "none"
     # a disabled workflow beside an active one does not hide the active one
     assert C.verdict_for_repo(row(declarations=[wf("disabled_manually"), wf("active")], fired=fired_ok)) == "active"
@@ -442,20 +495,42 @@ def test_registry_gaps_name_active_schedules_outside_every_plane():
     ]
     gaps = C.registry_gaps(rows, covered)
     assert [g["repo"] for g in gaps] == ["4444J99/forgotten"] and gaps[0]["crons"] == ["5 4 * * *"]
+    assert gaps[0]["unverified"] == []
+    rows.append(
+        {
+            "repo": "4444J99/unlisted",
+            "reach": C.OK,
+            "declarations": [{"kind": "gh-workflow", "path": "d.yml", "state": "unknown", "crons": ["1 1 * * *"]}],
+        }
+    )
+    gaps = C.registry_gaps(rows, covered)
+    assert gaps[1]["repo"] == "4444J99/unlisted" and gaps[1]["unverified"] == ["d.yml"]  # declared, state unread
 
 
 def test_budget_cut_lists_the_unscanned_and_receipt_states_denominators(monkeypatch, tmp_path):
     monkeypatch.setattr(C, "gh_api", FakeGH(_table("4444J99/one")))
     universe = [{"repo": "4444J99/one"}, {"repo": "4444J99/two"}, {"repo": "4444J99/three", "archived": True}]
-    monotonic = iter([0.0, 0.0, 10.0, 10.0, 10.0, 10.0])
-    monkeypatch.setattr(C.time, "monotonic", lambda: next(monotonic, 10.0))
+    clock = {"t": 0.0}
+    monkeypatch.setattr(C.time, "monotonic", lambda: clock["t"])
+    real_scan = C.scan_repo
+
+    def scan_then_spend_the_budget(repo, **kw):
+        row = real_scan(repo, **kw)
+        clock["t"] = 10.0
+        return row
+
+    monkeypatch.setattr(C, "scan_repo", scan_then_spend_the_budget)
     report = C.run_census(universe, "explicit", budget_seconds=5, root=ROOT, skip_archived=True)
     d = report["denominators"]
     assert (
         d["universe_count"] == 3
         and d["scanned"] == 1
+        and d["scanned_partial"] == 0
         and d["unscanned_by_budget"] == 1
+        and d["skipped_archived"] == 1
+        and d["internal_errors"] == 0
         and report["unscanned_by_budget"] == ["4444J99/two"]
+        and report["skipped_archived"] == ["4444J99/three"]
     )
     assert report["schema"] == C.SCHEMA and set(report["channels_read"]) >= {"gh-workflow", "launchd", "wrangler"}
     assert "jules-native-scheduled-tasks" in report["channels_not_read"]
@@ -464,12 +539,21 @@ def test_budget_cut_lists_the_unscanned_and_receipt_states_denominators(monkeypa
     assert json.loads(receipt.read_text())["denominators"]["scanned"] == 1
     assert not list(receipt.parent.glob("*.tmp"))
     md = C.render_markdown(report)
-    assert (
-        md.startswith("# Schedule census")
-        and "universe 3 (explicit) · scanned 1 · unreachable 0 · unscanned by budget 1" in md
-    )
+    assert md.startswith("# Schedule census") and "universe 3 (explicit) · scanned 1 (partial 0) · unreachable 0" in md
+    assert "unscanned by budget 1 · skipped archived 1" in md
     assert "Left unscanned by the time budget" in md and "4444J99/two" in md
+    assert "Skipped (archived" in md and "4444J99/three" in md
+    assert "Historical attempts" in md and "nightly.yml -[0 2 * * *]" in md
+    # a receipt that left a third of its universe unread is incomplete: it earns the retry horizon, not the interval
+    assert not C.receipt_is_complete(report)
     assert C.receipt_is_fresh(receipt, 168) and not C.receipt_is_fresh(receipt, 0)
+    later = C.datetime.now(C.timezone.utc) + C.timedelta(hours=30)
+    assert not C.receipt_is_fresh(receipt, 168, now=later, retry_hours=24)
+    assert C.receipt_is_fresh(receipt, 168, now=later, retry_hours=48)
+    complete = {**report, "denominators": {**d, "unscanned_by_budget": 0, "skipped_archived": 0}}
+    assert C.receipt_is_complete(complete)
+    C.write_receipt(receipt, complete)
+    assert C.receipt_is_fresh(receipt, 168, now=later, retry_hours=24)
     assert not C.receipt_is_fresh(tmp_path / "missing.json", 168)
 
 
@@ -516,12 +600,153 @@ def test_main_writes_receipt_and_ledger_and_exits_on_findings(monkeypatch, tmp_p
     assert (
         report["totals"]["workflows_failing_last_scheduled_run"] == 1
         and report["totals"]["actions_registered_not_in_tree"] == 1
+        and report["totals"]["scheduled_runs_listed"] == 3
     )
     assert (tmp_path / "census.md").exists() and "failing: hygiene" in (tmp_path / "census.md").read_text()
     # fresh receipt → nothing to do without --force
     assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt), "--interval-hours", "168"]) == 0
+    # a pass that reads nothing never overwrites a receipt that read something: it lands beside it
     monkeypatch.setattr(C, "gh_api", lambda path: (C.UNREACHABLE, None))
     assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt), "--force"]) == 3  # read nothing ≠ found nothing
+    assert json.loads(receipt.read_text())["denominators"]["scanned"] == 1
+    sidecar = tmp_path / "census.last-attempt.json"
+    assert json.loads(sidecar.read_text())["denominators"]["scanned"] == 0
+    assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt), "--force", "--replace"]) == 3
+    assert json.loads(receipt.read_text())["denominators"]["scanned"] == 0
+
+
+def test_exit_codes_tell_engine_errors_from_read_nothing_from_findings_from_partial_coverage(monkeypatch):
+    clean = _table("4444J99/one")
+    clean["repos/4444J99/one/issues?state=all&per_page=100&page=1&sort=created&direction=desc"] = (C.OK, [])
+    monkeypatch.setattr(C, "gh_api", FakeGH(clean))
+    report = C.run_census([{"repo": "4444J99/one"}], "explicit", budget_seconds=60, root=ROOT)
+    assert report["totals"]["verdicts"] == {"active": 1} and C.exit_code_for(report) == 0
+    # one unreachable neighbour: no finding, but coverage is incomplete
+    report = C.run_census([{"repo": "4444J99/one"}, {"repo": "4444J99/dark"}], "explicit", budget_seconds=60, root=ROOT)
+    assert report["denominators"]["unreachable"] == 1 and C.exit_code_for(report) == 2
+    # a registry gap is a finding
+    report = C.run_census([{"repo": "4444J99/one"}], "explicit", budget_seconds=60, root=ROOT, check_registry=True)
+    assert C.exit_code_for(report) == 1
+    # everything skipped → read nothing, exit 3, whatever the reason
+    report = C.run_census([{"repo": "4444J99/one", "archived": True}], "explicit", root=ROOT, skip_archived=True)
+    assert report["denominators"]["scanned"] == 0 and report["denominators"]["skipped_archived"] == 1
+    assert C.exit_code_for(report) == 3
+
+    # the engine blowing up on one repository is an internal error, never a verdict about the repository
+    def explode(repo, **kw):
+        raise AttributeError("'list' object has no attribute 'get'")
+
+    monkeypatch.setattr(C, "scan_repo", explode)
+    report = C.run_census([{"repo": "4444J99/one"}, {"repo": "4444J99/two"}], "explicit", budget_seconds=60, root=ROOT)
+    d = report["denominators"]
+    assert d["internal_errors"] == 2 and d["scanned"] == 0 and d["unreachable"] == 0
+    assert report["totals"]["verdicts"] == {"error": 2}
+    assert report["internal_errors"][0]["notes"] == [
+        "internal error: AttributeError: 'list' object has no attribute 'get'"
+    ]
+    assert C.exit_code_for(report) == 4
+    assert "Internal errors (the engine" in C.render_markdown(report)
+
+
+def test_partial_reads_never_conclude_absence(monkeypatch):
+    repo = "4444J99/one"
+    # the tree could not be listed: nothing about carriers is known, so the verdict is partial, not none
+    table = _table(repo)
+    table[f"repos/{repo}/git/trees/main?recursive=1"] = (C.UNREACHABLE, {"message": "not enabled"})
+    for key in [k for k in table if "/contents/" in k]:
+        del table[key]
+    table[f"repos/{repo}/commits?path=.github/workflows&per_page=100"] = (C.OK, [])
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["partial"] is True and row["channels"]["tree"] == C.UNREACHABLE
+    assert row["actions_registered_not_in_tree"] == []  # an unread tree cannot say a workflow is gone from it
+    assert row["verdict"] == "auto-disabled"  # positive evidence (old-scale is disabled_inactivity) still stands
+    by_path = {d["path"]: d for d in row["declarations"]}
+    assert by_path[".github/workflows/old-scale.yml"]["note"].startswith("state from the Actions API")
+    assert ".github/workflows/tmp-diag.yml" not in by_path  # no "absent from tree" claim without a complete tree
+    table[f"repos/{repo}/actions/workflows?per_page=100&page=1"] = (C.OK, {"workflows": [], "total_count": 0})
+    row = C.scan_repo(repo)
+    assert row["verdict"] == "partial" and row["partial"] is True
+
+    # a truncated tree lists what it saw but never claims a registered workflow is absent from it
+    table = _table(repo)
+    tree = table[f"repos/{repo}/git/trees/main?recursive=1"][1]
+    table[f"repos/{repo}/git/trees/main?recursive=1"] = (C.OK, {**tree, "truncated": True})
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["partial"] is True and row["channels"]["tree"] == "truncated"
+    assert row["actions_registered_not_in_tree"] == [] and row["verdict"] == "active"
+
+    # a workflow whose contents could not be read is still in the tree — not "registered but absent"
+    table = _table(repo)
+    table[f"repos/{repo}/contents/.github/workflows/build.yml?ref=main"] = (C.ERROR, {"status": "500"})
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["actions_registered_not_in_tree"] == [".github/workflows/tmp-diag.yml"]
+    assert row["channels"]["contents"] == "partial:1 unread,0 skipped" and row["partial"] is True
+    assert any("build.yml: contents error" in n for n in row["notes"])
+
+    # the scheduled-run listing unreadable: an active cron is fired-unmeasured, which is not a finding
+    table = _table(repo)
+    table[f"repos/{repo}/actions/runs?event=schedule&per_page=100"] = (C.UNREACHABLE, None)
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert (
+        row["fired"] is None
+        and row["verdict"] == "fired-unmeasured"
+        and row["channels"]["scheduled-runs"] == (C.UNREACHABLE)
+    )
+    report = C.build_report(
+        [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
+    )
+    assert report["denominators"]["scanned_partial"] == 1 and C.exit_code_for(report) == 2
+    assert "Partially read" in C.render_markdown(report)
+
+    # the workflow listing unreadable: declared crons have unknown state, listed as gaps but flagged unverified
+    table = _table(repo)
+    table[f"repos/{repo}/actions/workflows?per_page=100&page=1"] = (C.ERROR, {"status": "500"})
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["verdict"] == "declared-state-unknown"
+    gaps = C.registry_gaps([row], set())
+    assert gaps[0]["unverified"] == [".github/workflows/hygiene.yml", ".github/workflows/old-scale.yml"]
+
+    # a repository with no commits has no tree: that is empty, not partial
+    table = _table(repo)
+    table[f"repos/{repo}"] = (C.OK, {**table[f"repos/{repo}"][1], "size": 0})
+    table[f"repos/{repo}/git/trees/main?recursive=1"] = (C.ABSENT, {"message": "Not Found", "status": "404"})
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["channels"]["tree"] == "empty" and row["partial"] is False
+
+    # past the deadline, the remaining channels are skipped and recorded, never silently read as empty
+    monkeypatch.setattr(C, "gh_api", FakeGH(_table(repo)))
+    row = C.scan_repo(repo, deadline=0.0)
+    assert row["channels"]["contents"].endswith("skipped") and row["channels"]["scheduled-runs"] == "skipped:budget"
+    assert row["channels"]["issues-prs"] == "skipped:budget" and row["channels"]["history"] == "skipped:budget"
+    assert row["partial"] is True and row["actions_registered_not_in_tree"] == [".github/workflows/tmp-diag.yml"]
+    by_path = {d["path"]: d for d in row["declarations"]}
+    assert (
+        by_path[".github/workflows/old-scale.yml"]["state"] == "disabled_inactivity"
+    )  # API evidence survives the skip
+    assert "not read" in by_path[".github/workflows/old-scale.yml"]["note"]
+
+
+def test_workflow_listing_is_paginated(monkeypatch):
+    repo = "4444J99/many"
+    table = _table(repo)
+    page1 = [{"path": f".github/workflows/w{i}.yml", "state": "active", "name": f"w{i}", "id": i} for i in range(100)]
+    page2 = [{"path": ".github/workflows/hygiene.yml", "state": "disabled_manually", "name": "hygiene", "id": 999}]
+    table[f"repos/{repo}/actions/workflows?per_page=100&page=1"] = (C.OK, {"workflows": page1, "total_count": 101})
+    table[f"repos/{repo}/actions/workflows?per_page=100&page=2"] = (C.OK, {"workflows": page2, "total_count": 101})
+    fake = FakeGH(table)
+    monkeypatch.setattr(C, "gh_api", fake)
+    row = C.scan_repo(repo)
+    by_path = {d["path"]: d for d in row["declarations"]}
+    assert by_path[".github/workflows/hygiene.yml"]["state"] == "disabled_manually"  # found on page 2
+    assert (
+        sum(1 for c in fake.calls if "/actions/workflows?" in c) == 2 and row["channels"]["actions-workflows"] == C.OK
+    )
 
 
 def test_rate_guard_waits_for_the_reset_inside_the_budget_and_stops_outside_it(monkeypatch):
@@ -550,9 +775,7 @@ def test_run_census_stops_on_exhausted_quota_and_lists_the_rest(monkeypatch):
         return table.get(path, (C.ABSENT, {"message": "Not Found", "status": "404"}))
 
     monkeypatch.setattr(C, "gh_api", fake)
-    report = C.run_census(
-        [{"repo": "4444J99/one"}, {"repo": "4444J99/two"}], "explicit", budget_seconds=5, root=ROOT, rate_check_every=1
-    )
+    report = C.run_census([{"repo": "4444J99/one"}, {"repo": "4444J99/two"}], "explicit", budget_seconds=5, root=ROOT)
     assert report["denominators"]["scanned"] == 0 and report["unscanned_by_budget"] == ["4444J99/one", "4444J99/two"]
     assert calls["n"] == 1  # once exhausted, nothing else is asked of GitHub
 

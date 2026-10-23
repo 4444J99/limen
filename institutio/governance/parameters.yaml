@@ -6695,6 +6695,12 @@ parameters:
     self_update: none
     owner: governance
     note: "Wall-clock hours between censuses; a younger logs/schedule-census.json makes the sensor a no-op (--force overrides)."
+  LIMEN_SCHEDULE_CENSUS_RETRY_HOURS:
+    default: 24
+    env: LIMEN_SCHEDULE_CENSUS_RETRY_HOURS
+    self_update: none
+    owner: governance
+    note: "Hours before an incomplete census receipt (read nothing, or more than a quarter of its universe unreachable/unscanned/errored) is retried; a complete receipt rests for LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS."
   LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS:
     default: 1500
     env: LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS

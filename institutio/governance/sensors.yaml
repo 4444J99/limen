@@ -2539,11 +2539,15 @@ sensors:
     # live in (Actions `on.schedule` with its live state, scheduled-run history, wrangler/vercel/launchd/
     # crontab/systemd/dependabot/renovate/cloud-routines, the ops Cloudflare manifest), and the history of each
     # (full clone git log, else the Commits API, capped and flagged). `--check-registry` lists every repository
-    # with an active Actions schedule that no plane declares — allotment burning outside the registry. The organ
-    # owns its own wall-clock interval (LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS, 168h): on every other metabolize
-    # pass it reads the receipt's age and exits 0, so the hourly cost is one stat. Reads only. Unreachable is
-    # never "nothing scheduled"; the receipt states universe / scanned / unreachable / unscanned before any total.
+    # with an active Actions schedule that no plane declares — allotment burning outside the registry. Archived
+    # repositories are scanned too: they hold the historical attempts this census exists to find. The organ
+    # owns its own wall-clock interval (LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS, 168h; an incomplete receipt earns
+    # only LIMEN_SCHEDULE_CENSUS_RETRY_HOURS): on every other metabolize pass it reads the receipt's age and
+    # exits 0, so the hourly cost is one stat. Reads only. Unreachable is never "nothing scheduled", a partial
+    # read never concludes absence; the receipt states universe / scanned (partial) / unreachable / unscanned /
+    # skipped / internal errors before any total, and a pass that read less than the standing receipt lands
+    # beside it as *.last-attempt.json, never over it.
     steps:
-      - command: "python3 scripts/schedule-census.py --check-registry --skip-archived --receipt logs/schedule-census.json"
+      - command: "python3 scripts/schedule-census.py --check-registry --receipt logs/schedule-census.json"
         severity: advisory
-        escalation: "the schedule census found allotment burning outside the registry (an active Actions schedule in a repository no schedules.yaml plane declares), schedules declared but never fired, auto-disabled schedules, or could read nothing (exit 3) — read logs/schedule-census.md; declare each gap as a plane or as declared_off, and re-enable or retire what GitHub switched off"
+        escalation: "exit 1: the schedule census found allotment burning outside the registry (an Actions cron in a repository no schedules.yaml plane declares), schedules declared but never fired, firing but failing, or auto-disabled — read logs/schedule-census.md; declare each gap as a plane or as declared_off, re-enable or retire what GitHub switched off. exit 2: no finding, but coverage was incomplete (unreachable, unscanned, partial rows listed in the receipt). exit 3: read nothing. exit 4: the engine itself failed on a repository (receipt → internal_errors) — fix the census, not the repository"
