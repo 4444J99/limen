@@ -1,0 +1,58 @@
+{
+  "session_id": "8d68de1c-f7e2-45d0-9ee6-d69c788901c0",
+  "summary": "Issue 3040: the prompt-lifecycle ledger and the agent-session full-stack review read only the frozen OpenCode session/message/part tables, so sessions that exist only in session_v2 were invisible. Implemented as draft PR 3161 on the publication branch. The session also merged limen PRs 3026, 3029, 3106, 3111 and 3113 and domus-genoma-private PRs 506, 507 and 509 earlier; those are on their default branches and are not owned here.",
+  "verified_heads": {
+    "owner": "91c8897e9916c34585d4a3ad1414f1ced2c14a82"
+  },
+  "tests_reused": {
+    "owner_limen": "At implementation head 91c8897e: the 20 cli test files that reference session_sources or the eight scripts importing it, plus the three files this change touches (test_session_sources, test_prompt_lifecycle_ledger, test_agent_session_full_stack_review) = 259 passed through scripts/run-pytest-hermetic.sh. The cheap wave of scripts/verify-scoped.sh passed on every run (diff-hygiene, python-typecheck, syntax-changed, direct-main-writer-contract, check-note-links, check-params, check-test-hygiene, check-board-consumers, check-effectors, universe-recovery-control-plane-test, ruff-lint and ruff-format under the pinned ruff). Two mutations were applied and reverted: forcing the legacy session table in the ledger fails 2 tests, and making opencode_v2_tail ignore the legacy cutoff fails 4. python3 scripts/credential-wall.py --check = all 32 secret atoms registered; this branch uses no new secret."
+  },
+  "parity_measurement": {
+    "population": "132 sessions present in both OpenCode generations and unchanged since the 2026-10-01 freeze, measured on the live store read-only",
+    "legacy_only_vs_this_change": "0 mismatches in the ledger (prompt_hashes, prompt_bytes, prompt_event_count, event bounds) and in the review (prompts, outcomes, changed_files)",
+    "newly_visible": "all 68 non-frozen sessions gain ledger prompts; the review gains 245 prompts and 7308 outcome records",
+    "why_not_v2_wins": "session_message is not a lossless superset: nothing exists only in v2 for the 132 sessions, while legacy rows carry 115 assistant text strings, 97 reasoning strings, 86 synthetic user strings and 1101 patch parts that v2 lacks"
+  },
+  "unadmitted_gates": [
+    {
+      "gate": "pytest-cli (the full cli suite, a heavy machine-serialized gate)",
+      "result": "scripts/verify-scoped.sh exited 75 once (heavy lease held by another session) and exited 1 twice: pytest-cli reached its 1500s gate deadline at 98 percent while another session's full suite shared the host, then at exactly 1500.07s at 99 percent on a quiet host (admission allowed, vitals ok, no competing pytest). A names-capturing run under the heavy lease with a 2700s cap of its own was also killed at about 99.5 percent. Roughly 9 to 12 failures showed as F in the progress output; pytest was killed before printing which tests they were.",
+      "substitution": "Every cli test that references the changed code or its dependents was run at the exact head (259 passed). The unrelated failures are not named and are NOT claimed pre-existing.",
+      "owner": "https://github.com/4444J99/limen/issues/3162",
+      "implication": "Do not read this receipt as a green full cli suite. The draft PR is held until the required remote checks print the failing names."
+    }
+  ],
+  "review_dispositions": [],
+  "process_candour": [
+    "The first design for issue 3040 mirrored the rule already merged in 3111's _read_opencode: v2 rows win once the store is v2. A parity probe on the live store refuted it, and this change uses the additive rule instead. The merged 3111 reader still has the old rule and is owned by https://github.com/4444J99/limen/issues/3163.",
+    "Earlier in the session a backlog count of 134 of 333 sessions was wrong; v2 is a strict superset, so the true figure is 134 of 199. It was corrected in place on the issue and the PR comment.",
+    "A merge commit message with a closing keyword auto-closed issue 3102; it was reopened with a note because only the operator closes atoms. This PR uses a non-closing reference for 3040.",
+    "The live limen and domus checkouts were hand fast-forwarded once earlier in the session, which sync-release.sh owns; that was disclosed when it happened."
+  ],
+  "undeclared_candidates_not_added": "Recovering changed_files for the v2 tail from edit-tool inputs was measured (198 of 267771 legacy patch files recovered) and rejected as a false equivalence.",
+  "observations": [
+    "scripts/run-pytest-hermetic.sh execs a bare python3, which on this host is now Homebrew's 3.15 with no pytest; verify-scoped.sh resolves its own interpreter, a manual wrapper run needs a pytest-bearing python3 first on PATH.",
+    "Throwaway probe scripts and request bodies were written in the worktree and deleted before commit; none is tracked."
+  ],
+  "custody": "All implementation is committed and pushed to the publication branch, whose remote tip equalled the local head at the time of writing. No private artifact, transcript or local-only payload belongs to this branch: the probe scripts and request bodies were deleted, and the only other residue is ephemeral gate output under the system temp directory, which the PR body summarizes. The earlier merged work is custodied by its merged PRs.",
+  "checkout_disposition": "The owner worktree is retained by contract as the native anchor and receipt root until the draft PR lands; it is clean and tracks its remote branch. The three spent worktrees of earlier merged work were reaped earlier in the session. Two other landed-ancestor branches that the reap tool reports were not created by this worktree; ownership of those refs was not established from commit metadata, so they were left to scripts/reap-branches.py, which already has both authorized on its acceptance ledger.",
+  "handoff": "https://github.com/4444J99/limen/pull/3161 owns landing: undraft and merge only when scripts/merge-policy.sh clears on the exact head, which needs the required remote checks to print the failing pytest-cli names. https://github.com/4444J99/limen/issues/3162 owns the gate budget problem. https://github.com/4444J99/limen/issues/3163 owns aligning the merged resume reader. https://github.com/4444J99/limen/issues/3040 stays open for the operator to close.",
+  "external_effect_readbacks": {
+    "github-pr-3161-open-draft": "draft PR 3161 exists against main from the publication branch; refs 3040 without a closing keyword",
+    "github-issue-3162-open": "issue 3162 exists and is open: pytest-cli gate cannot finish inside its 1500s budget on a quiet host",
+    "github-issue-3163-open": "issue 3163 exists and is open: _read_opencode prefers v2 rows",
+    "github-issue-3040-comment": "a consolidated scope-correction and finding comment was posted on issue 3040; the issue was not closed",
+    "conduct-session-registration": "scripts/bind-running-claude-session.py returned status bound, agent claude, human_protected true from this worktree"
+  },
+  "own_paths": {
+    "owner_limen": [
+      "cli/src/limen/session_sources.py",
+      "cli/tests/conftest.py",
+      "cli/tests/test_session_sources.py",
+      "cli/tests/test_prompt_lifecycle_ledger.py",
+      "cli/tests/test_agent_session_full_stack_review.py",
+      "scripts/prompt-lifecycle-ledger.py",
+      "scripts/agent-session-full-stack-review.py"
+    ]
+  }
+}

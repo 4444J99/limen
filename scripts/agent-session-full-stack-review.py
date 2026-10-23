@@ -21,7 +21,12 @@ from pathlib import Path
 from typing import Any, Iterable, Iterator
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
-from limen.session_sources import resolve_opencode_db  # noqa: E402
+from limen.session_sources import (  # noqa: E402
+    opencode_has_legacy_messages,
+    opencode_session_table,
+    opencode_v2_tail,
+    resolve_opencode_db,
+)
 
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -850,6 +855,33 @@ def extract_claude(agg: Aggregator, writer: Any) -> None:
                 )
 
 
+def opencode_legacy_turns(con: sqlite3.Connection, sid: str) -> list[tuple[Any, Any, list[dict[str, Any]]]]:
+    """One session's ``(role, time_created, part dicts)`` turns from the frozen message/part tables."""
+    msgs = con.execute(
+        "SELECT id, time_created, data FROM message WHERE session_id=? ORDER BY time_created, id",
+        (sid,),
+    ).fetchall()
+    pmap: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for p in con.execute(
+        "SELECT message_id, time_created, data FROM part WHERE session_id=? ORDER BY time_created, id",
+        (sid,),
+    ):
+        try:
+            pd = json.loads(p["data"]) if p["data"] else {}
+        except (TypeError, ValueError):
+            continue
+        if isinstance(pd, dict):
+            pmap[p["message_id"]].append(pd)
+    turns: list[tuple[Any, Any, list[dict[str, Any]]]] = []
+    for m in msgs:
+        try:
+            md = json.loads(m["data"]) if m["data"] else {}
+        except (TypeError, ValueError):
+            md = {}
+        turns.append((md.get("role"), m["time_created"], pmap.get(m["id"], [])))
+    return turns
+
+
 def extract_opencode(agg: Aggregator, writer: Any) -> None:
     if not OPENCODE_DB.exists():
         return
@@ -859,10 +891,11 @@ def extract_opencode(agg: Aggregator, writer: Any) -> None:
         return
     con.row_factory = sqlite3.Row
     try:
+        session_table = opencode_session_table(con)
         sessions = con.execute(
             "SELECT id, title, directory, time_created, time_updated, summary_files, summary_additions, "
             "summary_deletions, cost, tokens_input, tokens_output, tokens_reasoning, model "
-            "FROM session ORDER BY time_created, id"
+            f"FROM {session_table} ORDER BY time_created, id"
         ).fetchall()
     except sqlite3.Error:
         con.close()
@@ -895,34 +928,17 @@ def extract_opencode(agg: Aggregator, writer: Any) -> None:
             ts=iso_from_epoch_ms(s["time_updated"]),
         )
         try:
-            msgs = con.execute(
-                "SELECT id, time_created, data FROM message WHERE session_id=? ORDER BY time_created, id",
-                (sid,),
-            ).fetchall()
-            pmap: dict[str, list[sqlite3.Row]] = defaultdict(list)
-            for p in con.execute(
-                "SELECT message_id, time_created, data FROM part WHERE session_id=? ORDER BY time_created, id",
-                (sid,),
-            ):
-                pmap[p["message_id"]].append(p)
+            turns = opencode_legacy_turns(con, sid) if opencode_has_legacy_messages(con) else []
+            if session_table == "session_v2":
+                # Legacy rows are authoritative for what they hold; v2 adds only the turns they lack.
+                turns += [(t["role"], t["time_created"], t["parts"]) for t in opencode_v2_tail(con, sid)]
         except sqlite3.Error:
             continue
-        for idx, m in enumerate(msgs):
-            try:
-                md = json.loads(m["data"]) if m["data"] else {}
-            except (TypeError, ValueError):
-                md = {}
-            role = md.get("role")
-            ts = iso_from_epoch_ms(m["time_created"])
+        for idx, (role, created, part_datas) in enumerate(turns):
+            ts = iso_from_epoch_ms(created)
             parts: list[str] = []
             patches: list[str] = []
-            for p in pmap.get(m["id"], []):
-                try:
-                    pd = json.loads(p["data"]) if p["data"] else {}
-                except (TypeError, ValueError):
-                    continue
-                if not isinstance(pd, dict):
-                    continue
+            for pd in part_datas:
                 typ = pd.get("type")
                 if typ in ("text", "reasoning", "compaction"):
                     text = pd.get("text") or pd.get("summary")

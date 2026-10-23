@@ -239,3 +239,74 @@ def isolated_workstream_growth(tmp_path, monkeypatch):
         return original_popen(args, *positional, **kwargs)
 
     monkeypatch.setattr(subprocess, "Popen", isolated_popen)
+
+
+@pytest.fixture
+def opencode_migrated_store(tmp_path) -> Path:
+    """An OpenCode 2.x store shaped like the live one: legacy tables frozen, ``session_message`` lossy.
+
+    ``frozen`` is a migrated session. Legacy holds its user message (a real and a synthetic text part) and an
+    assistant answer with a ``patch`` part; v2 holds only the real user text, no answer, and one turn created
+    after the freeze. ``v2-only`` exists only in ``session_v2``.
+    """
+    import sqlite3
+
+    path = tmp_path / "opencode.db"
+    columns = (
+        "id TEXT PRIMARY KEY, title TEXT, directory TEXT, time_created INTEGER, time_updated INTEGER, "
+        "summary_additions INTEGER, summary_deletions INTEGER, summary_files INTEGER, summary_diffs TEXT, "
+        "cost REAL, tokens_input INTEGER, tokens_output INTEGER, tokens_reasoning INTEGER, "
+        "tokens_cache_read INTEGER, tokens_cache_write INTEGER, model TEXT"
+    )
+    with sqlite3.connect(path) as db:
+        db.executescript(
+            f"""
+            CREATE TABLE session ({columns});
+            CREATE TABLE session_v2 ({columns});
+            CREATE TABLE message (
+              id TEXT PRIMARY KEY, session_id TEXT, time_created INTEGER, time_updated INTEGER, data TEXT
+            );
+            CREATE TABLE part (
+              id TEXT PRIMARY KEY, message_id TEXT, session_id TEXT, time_created INTEGER, time_updated INTEGER,
+              data TEXT
+            );
+            CREATE TABLE session_message (
+              id TEXT PRIMARY KEY, session_id TEXT, type TEXT, seq INTEGER, time_created INTEGER,
+              time_updated INTEGER, data TEXT
+            );
+            """
+        )
+        metrics = (1, 0, 1, "[]", 0.0, 10, 5, 0, 0, 0, "m")
+
+        def session(table: str, sid: str, created: int, updated: int) -> None:
+            values = (sid, "T", f"/tmp/{sid}", created, updated, *metrics)
+            db.execute(f"INSERT INTO {table} VALUES ({','.join('?' * len(values))})", values)
+
+        session("session", "frozen", 100, 500)
+        session("session_v2", "frozen", 100, 700)
+        session("session_v2", "v2-only", 900, 902)
+        for mid, created, role in (("m1", 100, "user"), ("m2", 200, "assistant")):
+            db.execute(
+                "INSERT INTO message VALUES (?, 'frozen', ?, ?, ?)", (mid, created, created, json.dumps({"role": role}))
+            )
+        for pid, mid, created, data in (
+            ("p1", "m1", 100, {"type": "text", "text": "Frozen ask"}),
+            ("p2", "m1", 101, {"type": "text", "text": "Injected note", "synthetic": True}),
+            ("p3", "m2", 200, {"type": "text", "text": "Frozen answer"}),
+            ("p4", "m2", 201, {"type": "patch", "files": ["a.py"]}),
+        ):
+            db.execute(
+                "INSERT INTO part VALUES (?, ?, 'frozen', ?, ?, ?)", (pid, mid, created, created, json.dumps(data))
+            )
+        for rid, sid, kind, seq, created, data in (
+            ("x1", "frozen", "user", 1, 100, {"text": "Frozen ask"}),
+            ("x2", "frozen", "user", 2, 700, {"text": "Tail ask"}),
+            ("x3", "v2-only", "user", 1, 900, {"text": "V2 ask"}),
+            ("x4", "v2-only", "assistant", 2, 901, {"content": [{"type": "text", "text": "V2 answer"}]}),
+            ("x5", "v2-only", "idle", 3, 902, {}),
+        ):
+            db.execute(
+                "INSERT INTO session_message VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (rid, sid, kind, seq, created, created, json.dumps(data)),
+            )
+    return path

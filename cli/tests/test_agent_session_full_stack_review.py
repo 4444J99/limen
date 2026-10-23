@@ -84,3 +84,52 @@ def test_changed_files_from_agy_spans_extracts_mutating_target_files() -> None:
         "docs/implicit-edit.md",
         "docs/new.md",
     ]
+
+
+class _Recorder:
+    def __init__(self) -> None:
+        self.prompts: list[dict] = []
+        self.outcomes: list[dict] = []
+        self.sessions: list[dict] = []
+
+    def add_prompt(self, **kwargs):
+        self.prompts.append(kwargs)
+        return {}
+
+    def add_outcome_text(self, **kwargs) -> None:
+        self.outcomes.append(kwargs)
+
+    def add_session_metadata(self, **kwargs) -> None:
+        self.sessions.append(kwargs)
+
+
+class _Sink:
+    def write(self, _text: str) -> None:
+        pass
+
+
+def _extract(store: Path) -> _Recorder:
+    review = load_review_module()
+    review.OPENCODE_DB = store
+    recorder = _Recorder()
+    review.extract_opencode(recorder, _Sink())
+    return recorder
+
+
+def test_opencode_review_keeps_legacy_turns_and_adds_the_v2_tail(opencode_migrated_store: Path) -> None:
+    recorder = _extract(opencode_migrated_store)
+    frozen = [p for p in recorder.prompts if p["session_id"] == "frozen"]
+    answers = [o for o in recorder.outcomes if o["session_id"] == "frozen"]
+
+    assert [p["text"] for p in frozen] == ["Frozen ask\n\nInjected note", "Tail ask"]
+    assert [p["ordinal"] for p in frozen] == [0, 2], "tail turns continue the legacy numbering"
+    assert len(answers) == 1 and "Frozen answer" in answers[0]["text"], "legacy assistant text survives the v2 store"
+    assert answers[0]["changed_files"] == ["a.py"], "patch parts exist only in the legacy rows"
+
+
+def test_opencode_review_reads_a_session_that_exists_only_in_v2(opencode_migrated_store: Path) -> None:
+    recorder = _extract(opencode_migrated_store)
+
+    assert {s["session_id"] for s in recorder.sessions} == {"frozen", "v2-only"}
+    assert [p["text"] for p in recorder.prompts if p["session_id"] == "v2-only"] == ["V2 ask"]
+    assert [o["text"] for o in recorder.outcomes if o["session_id"] == "v2-only"] == ["V2 answer"]
