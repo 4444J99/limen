@@ -492,6 +492,11 @@ gates:
     paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh"]
     owner: verify
     note: "The retired synchronous-waiter path fails immediately with exit 64 and points stale callers to one exact-head merge-drain submission; no polling implementation remains."
+  verification-interpreters-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_verification_interpreters.py cli/tests/test_gate_python_resolver.py -q"
+    paths: ["scripts/verify-select.sh", "scripts/verify-whole.sh", "scripts/run-pytest-hermetic.sh", "scripts/lib/gate-python.sh", "cli/tests/test_verification_interpreters.py", "cli/tests/test_gate_python_resolver.py"]
+    owner: verify
+    note: "Fresh-shell selection, whole verification, and hermetic pytest resolve Python consistently; preserve argument/status forwarding and isolation."
   verify-resolver-test:
     command: "bash scripts/tests/verify-resolver.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-resolver.test.sh", "institutio/governance/gates.yaml"]

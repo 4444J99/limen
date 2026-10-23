@@ -35,4 +35,10 @@ export PYTHONPATH="$pytest_source_root${PYTHONPATH:+:$PYTHONPATH}"
 # LIMEN_NOTIFY. You cannot retro-patch old code; you can control the environment it runs in.
 export LIMEN_NOTIFY=0
 
-exec python3 -m pytest "$@"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/gate-python.sh"
+pytest_python="$(limen_gate_python)" || exit 1
+if ! "$pytest_python" -c 'import pytest' >/dev/null 2>&1; then
+  printf 'hermetic pytest: resolved interpreter lacks pytest; install cli[test]\n' >&2
+  exit 1
+fi
+exec "$pytest_python" -m pytest "$@"

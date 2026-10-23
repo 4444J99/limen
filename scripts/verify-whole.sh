@@ -2,6 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripts/lib/gate-python.sh"
+LIMEN_GATE_PYTHON="$(limen_gate_python)" || exit 1
+export LIMEN_GATE_PYTHON
 AMBIENT_PYTHONPATH="${PYTHONPATH:-}"
 PYTHONPATH_VALUE="$ROOT/cli/src${AMBIENT_PYTHONPATH:+:$AMBIENT_PYTHONPATH}"
 export PYTHONPATH="$PYTHONPATH_VALUE"
@@ -16,9 +19,9 @@ if [[ "${LIMEN_VERIFY_NO_LOCK:-0}" != "1" ]]; then
   exec 9>"$VERIFY_LOCK_FILE"
   # flock(2) on fd 9: the lock lives on the open file description this shell holds, so it
   # is held for the life of the script and released on any exit, crash included.
-  if ! python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)' 2>/dev/null; then
+  if ! "$LIMEN_GATE_PYTHON" -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)' 2>/dev/null; then
     printf 'Another verify-whole run holds %s — waiting for it to finish…\n' "$VERIFY_LOCK_FILE"
-    python3 -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX)'
+    "$LIMEN_GATE_PYTHON" -c 'import fcntl; fcntl.flock(9, fcntl.LOCK_EX)'
   fi
 fi
 
@@ -55,9 +58,9 @@ cd "$ROOT"
 # hand-maintained argv lists drifted three times in one day; check-gates.py ratchet
 # `verify_whole_derives` now fails any literal list reintroduced here.
 # shellcheck disable=SC2046
-python3 -m py_compile $(python3 scripts/verify.py --print-files py-syntax)
+"$LIMEN_GATE_PYTHON" -m py_compile $("$LIMEN_GATE_PYTHON" scripts/verify.py --print-files py-syntax)
 # shellcheck disable=SC2046
-bash -n $(python3 scripts/verify.py --print-files bash-syntax)
+bash -n $("$LIMEN_GATE_PYTHON" scripts/verify.py --print-files bash-syntax)
 if command -v plutil >/dev/null; then
   plutil -lint container/launchd/com.user.netmeter.plist
 fi
@@ -65,46 +68,46 @@ fi
 step "Validate Cvrsvs Honorvm seed contracts"
 CVRSV_SEED="${LIMEN_WORKSPACE_ROOT:-$HOME/Workspace}/organvm/cvrsvs-honorvm/seed.yaml"
 if [[ -f "$CVRSV_SEED" ]]; then
-  python3 organs/governance/validate-seed.py "$CVRSV_SEED" --strict-graph --quiet
+  "$LIMEN_GATE_PYTHON" organs/governance/validate-seed.py "$CVRSV_SEED" --strict-graph --quiet
 fi
 
 step "Validate Sovereign Systems consulting engagement records"
-python3 organs/consulting/validate-consulting.py --fleet --quiet
+"$LIMEN_GATE_PYTHON" organs/consulting/validate-consulting.py --fleet --quiet
 
 step "Validate A-MAVS-OLEVM artist chamber governance records"
-python3 organs/artist/validate-artist.py --fleet --quiet
+"$LIMEN_GATE_PYTHON" organs/artist/validate-artist.py --fleet --quiet
 
 step "Validate Koinonia social organ relationship-posture briefs"
-python3 organs/social/validate-social.py --fleet --quiet
+"$LIMEN_GATE_PYTHON" organs/social/validate-social.py --fleet --quiet
 
 step "Validate Representation Organ substrate records and opportunities"
-python3 organs/representation/validate-representation.py --fleet --quiet
+"$LIMEN_GATE_PYTHON" organs/representation/validate-representation.py --fleet --quiet
 
 step "Validate Observation Organ governance and telemetry feed schema"
-python3 organs/observation/validate-observation.py --fleet --quiet
+"$LIMEN_GATE_PYTHON" organs/observation/validate-observation.py --fleet --quiet
 
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 
 step "Verify the concurrent merge-queue workflow, ruleset, and integration contract"
-python3 scripts/tests/merge-queue-contract.test.py
+"$LIMEN_GATE_PYTHON" scripts/tests/merge-queue-contract.test.py
 
 step "Verify every default-branch writer seam is classified and fails closed"
-python3 scripts/direct-main-writer-audit.py
-PYTHONPATH="$PYTHONPATH_VALUE" python3 scripts/tests/worktree-pr-receipts.test.py
+"$LIMEN_GATE_PYTHON" scripts/direct-main-writer-audit.py
+PYTHONPATH="$PYTHONPATH_VALUE" "$LIMEN_GATE_PYTHON" scripts/tests/worktree-pr-receipts.test.py
 
 step "Verify the trusted-Bash hook decision matrix (permission-hang killer, hermetic)"
 bash scripts/tests/allow-trusted-cd-git.test.sh
 
 step "Verify the phase-tier law (Fable plans, cheaper tiers build — guard audit lanes, hermetic)"
-python3 scripts/tests/claude-workflow-guard-phase.test.py
+"$LIMEN_GATE_PYTHON" scripts/tests/claude-workflow-guard-phase.test.py
 
 step "Verify the resolver selection fixtures (verify.py implicates exactly the registered gates)"
 bash scripts/tests/verify-resolver.test.sh
 
 if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]; then
   step "Observe live positioning/profile parity outside exact-tree source admission"
-  python3 scripts/positioning-research-adjudication.py --verify-live
+  "$LIMEN_GATE_PYTHON" scripts/positioning-research-adjudication.py --verify-live
 else
   printf 'Skipping live positioning/profile parity; set LIMEN_VERIFY_LIVE=1 to require it.\n'
 fi
@@ -119,7 +122,7 @@ step "Verify the armed-valve predicate (parked levers vs silently-off valves)"
 bash scripts/tests/armed-valve-audit.test.sh
 # The registry-completeness rung is the code contract (repo-deterministic — no env or
 # network); the env/url liveness rungs run in the beat via metabolize.sh step 0e.
-python3 scripts/armed-valve-audit.py --check --contract --offline --stamp /dev/null
+"$LIMEN_GATE_PYTHON" scripts/armed-valve-audit.py --check --contract --offline --stamp /dev/null
 
 step "Verify the ship-gate predicate (product-facing done requires a reachable artifact)"
 bash scripts/tests/ship-gate.test.sh
@@ -137,13 +140,13 @@ bash scripts/tests/check-correspondence-drain-trend.test.sh
 # runs in the beat via metabolize.sh (sensors.yaml 0m4), one point per ledger rebuild.
 
 step "Verify the correspondence drain-trend PRODUCER (_append_trend: one point per beat, deduped + capped + fail-open)"
-python3 scripts/tests/correspondence-drain-trend-append.test.py
+"$LIMEN_GATE_PYTHON" scripts/tests/correspondence-drain-trend-append.test.py
 
 step "Verify the stale-awaiting-them nudge (INTERNALDATE parse + a reply older than the threshold flips awaiting-them → needs-human)"
-python3 scripts/tests/correspondence-await-stale.test.py
+"$LIMEN_GATE_PYTHON" scripts/tests/correspondence-await-stale.test.py
 
 step "Verify the daily brief SURFACES stale warm leads (stale_awaiting cue renders + counted + PII-clean; silent at 0)"
-python3 scripts/tests/opportunity-brief.test.py
+"$LIMEN_GATE_PYTHON" scripts/tests/opportunity-brief.test.py
 
 step "Verify the worktree-commit-guard hook (live-main commit deny matrix, hermetic fixture)"
 bash scripts/tests/worktree-commit-guard.test.sh
@@ -170,7 +173,7 @@ bash scripts/tests/ask-gate.test.sh
 # runs report-only in the beat via metabolize.sh step 0h.
 # The wiring rung is the code contract (CI-safe, deterministic); the liveness rung reads live-host
 # daemon state and is surfaced in the beat log by metabolize.sh, so it is not a hard gate here.
-python3 scripts/enactment-audit.py --check --wiring-only
+"$LIMEN_GATE_PYTHON" scripts/enactment-audit.py --check --wiring-only
 
 step "Verify the single-home reference-integrity predicate (a re-owned email is caught, never left to prose)"
 bash scripts/tests/identity-reconcile.test.sh
@@ -187,34 +190,34 @@ bash scripts/tests/omega.test.sh
 # network); the live fixed-point verdict runs offline in the beat via metabolize.sh step 0i.
 
 step "Verify local runtime probes own and reap their server processes (hermetic)"
-python3 scripts/tests/probe-process-ownership.test.py
+"$LIMEN_GATE_PYTHON" scripts/tests/probe-process-ownership.test.py
 
 step "Verify session orientation and lifecycle-pressure hooks"
 bash scripts/done-session-orient.sh
 
 step "Verify agent-instruction docs match the canonical task-state vocabulary"
-python3 scripts/check-agent-docs.py
+"$LIMEN_GATE_PYTHON" scripts/check-agent-docs.py
 
 step "Verify dispatch admission cannot be bypassed by overnight launch paths"
-python3 scripts/check-dispatch-admission.py
+"$LIMEN_GATE_PYTHON" scripts/check-dispatch-admission.py
 
 step "Verify the gate registry matches the workflows and consumers (GATES drift predicate)"
-python3 scripts/check-gates.py
+"$LIMEN_GATE_PYTHON" scripts/check-gates.py
 
 step "Verify local removal acceptance contracts require archive and redaction proof"
-python3 scripts/check-removal-acceptance.py
+"$LIMEN_GATE_PYTHON" scripts/check-removal-acceptance.py
 
 step "Verify the record-keeper covenant (sole-writer testament surfaces + lanes)"
-python3 scripts/check-covenant.py
+"$LIMEN_GATE_PYTHON" scripts/check-covenant.py
 
 step "Validate task-board statuses match the canonical vocabulary"
-python3 scripts/validate-task-board.py
+"$LIMEN_GATE_PYTHON" scripts/validate-task-board.py
 
 step "Report preserved worktree lifecycle debt"
-python3 scripts/worktree-debt.py
+"$LIMEN_GATE_PYTHON" scripts/worktree-debt.py
 
 step "Parse GitHub workflow YAML"
-python3 - <<'PY'
+"$LIMEN_GATE_PYTHON" - <<'PY'
 from pathlib import Path
 import yaml
 for path in sorted(Path(".github/workflows").glob("*.yml")) + sorted(Path(".github/workflows").glob("*.yaml")):
@@ -232,7 +235,7 @@ ensure_web_app_deps
 )
 
 step "Validate lifecycle adapter parity"
-scripts/validate-lifecycle-adapters.py
+"$LIMEN_GATE_PYTHON" scripts/validate-lifecycle-adapters.py
 
 step "Validate generated JSON against portable schemas"
 node scripts/validate-contract-schemas.mjs
@@ -266,17 +269,17 @@ step "Build static dashboard and validate exported surfaces"
   cd "$ROOT/web/app"
   npm run build
 )
-python3 "$ROOT/scripts/assemble-dashboard-data.py" \
+"$LIMEN_GATE_PYTHON" "$ROOT/scripts/assemble-dashboard-data.py" \
   --app "$ROOT/web/app" \
   --repo-root "$ROOT"
 node "$ROOT/web/app/scripts/validate-exported-pages.mjs"
 
 if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]; then
   step "Verify PSP-P13-W03 private-inclusive live technical readiness"
-  python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json
+  "$LIMEN_GATE_PYTHON" -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json
 
   step "Verify live Firebase static surfaces"
-  python3 - <<'PY'
+  "$LIMEN_GATE_PYTHON" - <<'PY'
 import json
 import re
 import urllib.request
@@ -319,7 +322,7 @@ PY
   LIVE_RUNTIME_URL="${LIMEN_WORKER_URL:-${NEXT_PUBLIC_API_URL:-}}"
   if [[ -n "$LIVE_RUNTIME_URL" && -n "${LIMEN_API_TOKEN:-}" && -n "${LIMEN_CLIENT_TOKEN:-}" ]]; then
     step "Verify live runtime adapter schemas"
-    scripts/probe-runtime-adapter.py \
+    "$LIMEN_GATE_PYTHON" scripts/probe-runtime-adapter.py \
       --api-url "$LIVE_RUNTIME_URL" \
       --owner-token "$LIMEN_API_TOKEN" \
       --client-token "$LIMEN_CLIENT_TOKEN" \
