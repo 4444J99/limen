@@ -51,6 +51,16 @@ Vendor limits read the same day: Claude cloud tasks min interval 1h, 100 schedul
 - ops: adopt `schedules.yaml`'s projected rows (or publish its own) and flip `upstream_state` to `synced`; extend the weekly witness to read the registry (ops-witness).
 - `cloud-routines.json`: `generated_at` is 2026-07-08; the contract should carry the trigger id and cron per routine.
 
+## Adversarial review residuals (four refuters over the synthesized design, 2026-10-23)
+
+What shipped already answers the two blockers, and the rest are recorded here as the owners' follow-ups rather than widened into the PR:
+
+- **"ops may host a new `schedules/registry.yaml`" — refuted** (`ops/AGENTS.md:37`, `OPERATIONS.md:53-62`: extend `manifest.ts`, no parallel registry). Shipped shape: no ops-side file; the Cloudflare and ops rows in limen are a *projection* (`authority.upstream_state: proposed`) held to the owner's source by check D whenever a sibling clone is on the host. Residual: the crons of projected rows are restated (so CI can build the slot map without a clone); the ratification path is either an ops carve-out for a cross-plane index or generating those rows from `manifest.ts`/the ops workflows, at which point `upstream_state` flips to `synced`.
+- **"claude fire-side evidence has no producer" — refuted** for the design's census marker. Shipped shape: the dated snapshot receipt is the producer, exported from an interactive session (the only surface that can call `list_triggers`), aged out after `LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS`. Residual: the producer is manual; a routine that exports the snapshot would make it unattended (it must run with routine access, so it is a human-created routine).
+- Measurability: planes a runner cannot read must say *why*. Shipped: every unmeasured row carries its reason in `detail`; `measured k/n` counts machine evidence only; a plane with no evidence path trips exit 3 after its readback budget.
+- Minimality cautions for later PRs: no new in-process sender for bookend markers (post via the Bash rail or a sanctioned publisher); do not suppress Jules supply minting while the vendor count is unmeasured; cross-plane same-minute sharing is informational, the per-repo rule is the one GitHub's congestion actually punishes.
+- Slot map: conversions and coverage held under both EDT and EST; the Cloudflare 12:00 tick has 5 targets due against 4 per tick (an ops#6 note, not a limen change).
+
 ## Done predicate
 
 `scripts/check-schedules.py` exit 0 and `bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py -q` green on the merged tree; on the host, `python3 scripts/schedule-utilization.py --receipt logs/schedule-utilization.json` writes a receipt whose `measured` numerator rises as the atoms above are pulled.
