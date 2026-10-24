@@ -192,6 +192,22 @@ def _table(repo: str = "4444J99/example", *, total_runs: int = 3, last_conclusio
     }
 
 
+def _clean_table(repo: str = "4444J99/example", **kw) -> dict:
+    """_table without the auto-disabled old-scale workflow: one healthy active schedule, nothing to find."""
+    table = _table(repo, **kw)
+    tree_key = f"repos/{repo}/git/trees/main?recursive=1"
+    tree = table[tree_key][1]
+    table[tree_key] = (C.OK, {**tree, "tree": [e for e in tree["tree"] if e.get("path") != OLD_SCALE]})
+    wf_key = f"repos/{repo}/actions/workflows?per_page=100&page=1"
+    wf = table[wf_key][1]
+    table[wf_key] = (C.OK, {**wf, "workflows": [w for w in wf["workflows"] if w["path"] != OLD_SCALE]})
+    del table[f"repos/{repo}/contents/{OLD_SCALE}?ref=main"]
+    return table
+
+
+OLD_SCALE = ".github/workflows/old-scale.yml"
+
+
 class FakeGH:
     def __init__(self, table: dict):
         self.table = table
@@ -514,21 +530,37 @@ def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_pat
     git("config", "user.email", "t@example.com")
     git("config", "user.name", "t")
     (wf / "nightly.yml").write_text("on:\n  schedule:\n    - cron: '0 2 * * *'\njobs: {}\n")
+    (wf / "lint.yml").write_text("# lint\non: push\njobs: {}\n")
+    (wf / "café.yml").write_text("on:\n  schedule:\n    - cron: '5 4 * * *'\njobs: {}\n")  # non-ASCII name
     git("add", "-A")
     git("commit", "-q", "-m", "add nightly")
     (wf / "nightly.yml").write_text("on:\n  schedule:\n    - cron: '15 2 * * *'\njobs: {}\n")
+    (wf / "lint.yml").write_text("# lint (a comment edit in the same commit as the cron move)\non: push\njobs: {}\n")
     git("commit", "-q", "-am", "move nightly")
     (wf / "nightly.yml").unlink()
     git("commit", "-q", "-am", "drop nightly")
     assert C.clone_is_full(repo) and not C.clone_is_full(tmp_path / "nope") and not C.clone_is_full(None)
     hist = C.history_from_git(repo)
     assert hist["source"] == "git" and hist["commits_seen"] == 3 and hist["truncated"] is False
-    changes = [(e["change"], e["crons_added"], e["crons_removed"]) for e in hist["events"]]  # newest first
-    assert changes == [
-        ("removed", [], ["15 2 * * *"]),
-        ("modified", ["15 2 * * *"], ["0 2 * * *"]),
-        ("added", ["0 2 * * *"], []),
+    changes = [
+        (e["path"].rsplit("/", 1)[-1], e["change"], e["crons_added"], e["crons_removed"]) for e in hist["events"]
+    ]  # newest first; files alphabetical within a commit
+    assert [c for c in changes if c[0] == "nightly.yml"] == [
+        ("nightly.yml", "removed", [], ["15 2 * * *"]),
+        ("nightly.yml", "modified", ["15 2 * * *"], ["0 2 * * *"]),
+        ("nightly.yml", "added", ["0 2 * * *"], []),
     ]
+    # the sibling edited in the same commits never had a cron: per-path keying hands it none
+    assert [c for c in changes if c[0] == "lint.yml"] == [
+        ("lint.yml", "modified", [], []),
+        ("lint.yml", "added", [], []),
+    ]
+    # a non-ASCII name keys its crons like any other: git prints it raw in both listings (core.quotePath=false)
+    assert [c for c in changes if c[0] == "café.yml"] == [("café.yml", "added", ["5 4 * * *"], [])]
+    assert C._diff_header_path('diff --git "a/w s.yml" "b/w s.yml"') == "w s.yml"
+    assert (
+        C._diff_header_path("diff --git a/old.yml b/new.yml") == "new.yml" and C._diff_header_path("index 1..2") is None
+    )
     row = {"reach": C.OK, "declarations": [], "fired": {"total_scheduled_runs": 0, "by_workflow": {}}, "history": hist}
     assert C.verdict_for_repo(row) == "abandoned-in-history"
 
@@ -618,17 +650,22 @@ def test_budget_cut_lists_the_unscanned_and_receipt_states_denominators(monkeypa
     assert C.receipt_is_fresh(receipt, 168, now=later, retry_hours=48)
     complete = {**report, "denominators": {**d, "unscanned_by_budget": 0, "skipped_archived": 0}}
     assert C.receipt_is_complete(complete)
+    # every row partially read is as incomplete as every row unread: the retry horizon, not the interval
+    all_partial = {**complete, "denominators": {**complete["denominators"], "universe_count": 1, "scanned_partial": 1}}
+    assert not C.receipt_is_complete(all_partial)
+    unlisted = {**complete, "denominators": {**complete["denominators"], "universe_unlisted_owners": 1}}
+    assert not C.receipt_is_complete(unlisted)
     C.write_receipt(receipt, complete)
     assert C.receipt_is_fresh(receipt, 168, now=later, retry_hours=24)
     assert not C.receipt_is_fresh(tmp_path / "missing.json", 168)
 
 
 def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_path):
-    assert C.resolve_universe(["a/b"], None, tmp_path / "none.json") == ([{"repo": "a/b"}], "explicit")
+    assert C.resolve_universe(["a/b"], None, tmp_path / "none.json") == ([{"repo": "a/b"}], "explicit", [])
     f = tmp_path / "repos.txt"
     f.write_text("# comment\na/b\n\nc/d\n")
-    rows, src = C.resolve_universe([], f, tmp_path / "none.json")
-    assert [r["repo"] for r in rows] == ["a/b", "c/d"] and src.startswith("repos-file:")
+    rows, src, unlisted = C.resolve_universe([], f, tmp_path / "none.json")
+    assert [r["repo"] for r in rows] == ["a/b", "c/d"] and src.startswith("repos-file:") and unlisted == []
     cache = tmp_path / "estate-repos.json"
     cache.write_text(
         json.dumps(
@@ -642,14 +679,49 @@ def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_pa
             }
         )
     )
-    rows, src = C.resolve_universe([], None, cache)
+    rows, src, unlisted = C.resolve_universe([], None, cache)
     assert (
         [r["repo"] for r in rows] == ["4444J99/a", "4444J99/z"]
         and rows[1]["archived"] is True
         and src.startswith("estate-cache:")
+        and unlisted == []
     )
     cache.write_text(json.dumps({"schema": "other"}))
     assert C.universe_from_estate_cache(cache) is None
+
+
+def test_an_owner_whose_listing_failed_is_named_not_dropped_from_the_universe(monkeypatch, tmp_path):
+    import types
+
+    monkeypatch.setattr(C, "gh_available", lambda: True)
+    listing = [{"nameWithOwner": "good/a", "isArchived": False, "isFork": False, "isPrivate": True, "pushedAt": None}]
+
+    def fake_run(argv, **kw):
+        owner = argv[3]
+        if owner == "good":
+            return types.SimpleNamespace(returncode=0, stdout=json.dumps(listing))
+        return types.SimpleNamespace(returncode=1, stdout="")  # gh failed for this owner
+
+    monkeypatch.setattr(C.subprocess, "run", fake_run)
+    rows, src, unlisted = C.universe_from_gh_repo_list(["good", "unreadable"])
+    assert [r["repo"] for r in rows] == ["good/a"] and src == "gh-repo-list:good" and unlisted == ["unreadable"]
+    # the resolver carries it through when no cache is on disk; a listing that failed for every owner is no universe
+    monkeypatch.setenv("LIMEN_OWNERS", "good,unreadable")
+    assert C.resolve_universe([], None, tmp_path / "none.json") == (rows, src, ["unreadable"])
+    monkeypatch.setenv("LIMEN_OWNERS", "unreadable")
+    assert C.universe_from_gh_repo_list(["unreadable"]) is None
+    # owner discovery: the organizations call failing is named too, one call earlier than the listings
+    monkeypatch.setattr(C, "gh_api", lambda p: (C.OK, {"login": "good"}) if p == "user" else (C.ERROR, None))
+    assert C.universe_from_gh_repo_list(None) == (rows, "gh-repo-list:good", ["orgs-of:good"])
+    assert C.resolve_universe([], None, tmp_path / "none.json") == ([], "none", [])
+    # the receipt names the owner, is incomplete (retry horizon) and exits 2 even on a clean scan
+    monkeypatch.setattr(C, "gh_api", FakeGH(_clean_table("good/a")))
+    report = C.run_census(rows, src, budget_seconds=60, root=ROOT, unlisted_owners=unlisted)
+    assert report["denominators"]["universe_unlisted_owners"] == 1 and report["unlisted_owners"] == ["unreadable"]
+    assert report["totals"]["verdicts"] == {"active": 1} and C.exit_code_for(report) == 2
+    assert not C.receipt_is_complete(report)
+    md = C.render_markdown(report)
+    assert "owners unlisted 1" in md and "Owners whose repository listing failed" in md and "- unreadable" in md
 
 
 def test_main_writes_receipt_and_ledger_and_exits_on_findings(monkeypatch, tmp_path):
@@ -684,11 +756,20 @@ def test_main_writes_receipt_and_ledger_and_exits_on_findings(monkeypatch, tmp_p
 def test_exit_codes_tell_engine_errors_from_read_nothing_from_findings_from_partial_coverage(
     monkeypatch, tmp_path_factory
 ):
-    clean = _table("4444J99/one")
+    clean = _clean_table("4444J99/one")
     clean["repos/4444J99/one/issues?state=all&per_page=100&page=1&sort=created&direction=desc"] = (C.OK, [])
     monkeypatch.setattr(C, "gh_api", FakeGH(clean))
     report = C.run_census([{"repo": "4444J99/one"}], "explicit", budget_seconds=60, root=ROOT)
     assert report["totals"]["verdicts"] == {"active": 1} and C.exit_code_for(report) == 0
+    # an auto-disabled schedule beside a healthy one: the repository verdict stays active, the finding does not vanish
+    monkeypatch.setattr(C, "gh_api", FakeGH(_table("4444J99/one")))
+    mixed = C.run_census([{"repo": "4444J99/one"}], "explicit", budget_seconds=60, root=ROOT)
+    assert mixed["totals"]["verdicts"] == {"active": 1} and mixed["totals"]["gh_workflows_disabled_inactivity"] == 1
+    assert C.exit_code_for(mixed) == 1
+    # a failing scheduled workflow beside a healthy one is a finding too
+    failing = {**report, "totals": {**report["totals"], "workflows_failing_last_scheduled_run": 1}}
+    assert C.exit_code_for(failing) == 1
+    monkeypatch.setattr(C, "gh_api", FakeGH(clean))
     # one unreachable neighbour: no finding, but coverage is incomplete
     report = C.run_census([{"repo": "4444J99/one"}, {"repo": "4444J99/dark"}], "explicit", budget_seconds=60, root=ROOT)
     assert report["denominators"]["unreachable"] == 1 and C.exit_code_for(report) == 2
@@ -780,6 +861,7 @@ def test_partial_reads_never_conclude_absence(monkeypatch):
         and row["verdict"] == "fired-unmeasured"
         and row["channels"]["scheduled-runs"] == (C.UNREACHABLE)
     )
+    row["declarations"] = [d for d in row["declarations"] if d["path"] != OLD_SCALE]  # that one is a finding of its own
     report = C.build_report(
         [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
     )
@@ -814,6 +896,43 @@ def test_partial_reads_never_conclude_absence(monkeypatch):
         by_path[".github/workflows/old-scale.yml"]["state"] == "disabled_inactivity"
     )  # API evidence survives the skip
     assert "not read" in by_path[".github/workflows/old-scale.yml"]["note"]
+
+
+def test_history_sampling_and_the_attempts_pager_stop_at_the_census_deadline(monkeypatch):
+    repo = "4444J99/one"
+    clock = {"t": 0.0}
+    monkeypatch.setattr(C.time, "monotonic", lambda: clock["t"])
+    fake = FakeGH(_table(repo))
+
+    def ticking(path):  # every GitHub call costs 10 s of budget
+        clock["t"] += 10.0
+        return fake(path)
+
+    monkeypatch.setattr(C, "gh_api", ticking)
+    hist = C.history_from_api(repo, 10, deadline=15.0)  # listing → 10 s; one detail → 20 s; the second is not asked
+    assert len([c for c in fake.calls if "/commits/" in c]) == 1
+    assert hist["status"] == "partial" and hist["truncated"] is True and hist["sampled"] == 2
+    assert hist["note"] == "1 of 2 sampled commits unread: census budget reached"
+    clock["t"] = 0.0
+    fake.calls.clear()
+    hist = C.history_from_api(repo, 10)  # no deadline: every sampled commit is read
+    assert len([c for c in fake.calls if "/commits/" in c]) == 2 and hist["status"] == C.OK and "note" not in hist
+    pages: list[str] = []
+
+    def call(path):
+        pages.append(path)
+        clock["t"] += 10.0
+        return C.OK, [{"number": len(pages), "title": "cron job", "state": "open", "labels": []}] * 100
+
+    clock["t"] = 0.0
+    att = C.read_attempts(repo, call, pages=3, deadline=5.0)  # page 1 is always read; page 2 is past the deadline
+    assert len(pages) == 1 and att["status"] == "partial" and att["truncated"] is True and len(att["items"]) == 100
+    assert att["note"] == "issues listing stopped after 1 page(s): census budget reached"
+    # through scan_repo the stopped history is recorded on the row, never read as a quiet history
+    clock["t"] = 0.0
+    fake.calls.clear()
+    row = C.scan_repo(repo, deadline=10_000.0)
+    assert row["channels"]["history"] == "api" and row["history"]["status"] == C.OK
 
 
 def test_workflow_listing_is_paginated(monkeypatch):

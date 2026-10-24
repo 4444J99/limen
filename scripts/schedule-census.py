@@ -25,8 +25,9 @@ nothing" (unreachable) is never rendered as "nothing is scheduled" (no declarati
 Reads only: every GitHub call is a `gh api` GET; nothing here can start, retry, disable or deploy a run.
 Receipt: logs/schedule-census.json (atomic) + optional Markdown ledger. The organ owns its own wall-clock
 interval (`--interval-hours`, default 168) so a metabolize-pass caller stays cheap between censuses; an
-incomplete receipt (read nothing, or more than a quarter of the universe unread) earns only the shorter
-`--retry-hours` horizon, and a pass that reads fewer repositories than the standing receipt is written beside
+incomplete receipt (read nothing; an owner whose repository listing failed; more than a quarter of the universe
+unreachable, unscanned, partially read or errored) earns only the shorter `--retry-hours` horizon, and a pass that
+reads fewer repositories than the standing receipt is written beside
 it as `*.last-attempt.json` instead of over it.
 
 Every repository row carries a per-channel read status; a row whose essential channels were not all read is
@@ -210,10 +211,13 @@ def universe_from_estate_cache(path: Path) -> tuple[list[dict], str] | None:
     return rows, f"estate-cache:{path}"
 
 
-def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[dict], str] | None:
-    """Host path: `gh repo list <owner>` per owner (the identity plus its orgs, unless LIMEN_OWNERS pins them)."""
+def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[dict], str, list[str]] | None:
+    """Host path: `gh repo list <owner>` per owner (the identity plus its orgs, unless LIMEN_OWNERS pins them).
+    Returns (rows, source, unlisted owners): an owner whose listing failed is NAMED, so the universe is never
+    silently smaller than the account set — a reduced denominator would read as complete coverage."""
     if not gh_available():
         return None
+    unlisted: list[str] = []
     if not owners:
         st, me = gh_api("user")
         if st != OK or not isinstance(me, dict):
@@ -222,6 +226,8 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
         st, orgs = gh_api("user/orgs?per_page=100")
         if st == OK and isinstance(orgs, list):
             owners += [str(o.get("login")) for o in orgs if isinstance(o, dict) and o.get("login")]
+        else:
+            unlisted.append(f"orgs-of:{owners[0]}")  # the organizations never listed: the universe is short of them
     rows: list[dict] = []
     for owner in owners:
         try:
@@ -241,9 +247,13 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
                 timeout=120,
                 check=False,
             )
-            items = json.loads(run.stdout) if run.returncode == 0 and run.stdout.strip() else []
+            if run.returncode != 0:
+                unlisted.append(owner)
+                continue
+            items = json.loads(run.stdout) if run.stdout.strip() else []
         except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
-            items = []
+            unlisted.append(owner)
+            continue
         for it in items:
             if isinstance(it, dict) and it.get("nameWithOwner"):
                 rows.append(
@@ -255,22 +265,32 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
                         "pushed_at": it.get("pushedAt"),
                     }
                 )
-    return (sorted(rows, key=lambda r: r["repo"]), f"gh-repo-list:{','.join(owners)}") if rows else None
+    if not rows:
+        return None
+    listed = [o for o in owners if o not in unlisted]
+    return sorted(rows, key=lambda r: r["repo"]), f"gh-repo-list:{','.join(listed)}", unlisted
 
 
-def resolve_universe(explicit: list[str], repos_file: Path | None, estate_cache: Path) -> tuple[list[dict], str]:
+def resolve_universe(
+    explicit: list[str], repos_file: Path | None, estate_cache: Path
+) -> tuple[list[dict], str, list[str]]:
+    """(universe rows, source, unlisted owners). The third element is non-empty only on the gh-repo-list path,
+    when one owner's listing failed: that universe is incomplete and the receipt must say so."""
     if explicit:
-        return [{"repo": r} for r in explicit], "explicit"
+        return [{"repo": r} for r in explicit], "explicit", []
     if repos_file is not None:
         names = [
             ln.strip()
             for ln in repos_file.read_text(encoding="utf-8").splitlines()
             if ln.strip() and not ln.startswith("#")
         ]
-        return [{"repo": r} for r in names], f"repos-file:{repos_file}"
-    found = universe_from_estate_cache(estate_cache) or universe_from_gh_repo_list(_owners_pin())
+        return [{"repo": r} for r in names], f"repos-file:{repos_file}", []
+    cached = universe_from_estate_cache(estate_cache)
+    if cached is not None:
+        return cached[0], cached[1], []
+    found = universe_from_gh_repo_list(_owners_pin())
     if found is None:
-        return [], "none"
+        return [], "none", []
     return found
 
 
@@ -599,14 +619,24 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
 # ── attempt discourse: issues and PRs that talk about scheduling ────────────────────────────
 
 
-def read_attempts(repo: str, call, pages: int = ATTEMPT_PAGES) -> dict:
+def read_attempts(repo: str, call, pages: int = ATTEMPT_PAGES, *, deadline: float | None = None) -> dict:
     """Issues and PRs (the /issues listing carries both) whose title or labels match ATTEMPT_RX. These are
-    speech acts — a plan, a proposal, a PR — not evidence anything ran; the receipt keeps them apart."""
+    speech acts — a plan, a proposal, a PR — not evidence anything ran; the receipt keeps them apart. `deadline`
+    (time.monotonic()) stops the pager between pages so a slow listing never outlives the census budget."""
     items: list[dict] = []
     seen = 0
     truncated = False
     repo_tokens = {tok for tok in re.split(r"[^a-z0-9]+", repo.lower()) if tok}
     for page in range(1, pages + 1):
+        if page > 1 and deadline is not None and time.monotonic() > deadline:
+            return {
+                "readable": True,
+                "status": "partial",
+                "items": items,
+                "seen": seen,
+                "truncated": True,
+                "note": f"issues listing stopped after {page - 1} page(s): census budget reached",
+            }
         st, rows = call(f"repos/{repo}/issues?state=all&per_page=100&page={page}&sort=created&direction=desc")
         if st != OK or not isinstance(rows, list):
             status = st if st != OK else ERROR
@@ -672,9 +702,7 @@ def clone_is_full(clone: Path | None) -> bool:
 
 def history_from_git(clone: Path) -> dict:
     """Full-clone history: every commit touching a carrier path, with the cron lines it added/removed."""
-    log = (
-        _git(clone, "log", "--all", "--date-order", "--format=commit %H %cI", "--name-status", "--", WORKFLOW_DIR) or ""
-    )
+    log = _git(clone, *GIT_LOG, "--format=commit %H %cI", "--name-status", "--", WORKFLOW_DIR) or ""
     events: list[dict] = []
     sha = at = None
     for line in log.splitlines():
@@ -687,26 +715,51 @@ def history_from_git(clone: Path) -> dict:
         status, path = parts[0][0], parts[-1]
         change = {"A": "added", "D": "removed", "M": "modified", "R": "renamed"}.get(status, status)
         events.append({"at": at, "sha": sha[:10], "path": path, "change": change})
-    patches = _git(clone, "log", "--all", "--date-order", "--format=commit %H", "-p", "--", WORKFLOW_DIR) or ""
-    added: dict[str, list[str]] = {}
-    removed: dict[str, list[str]] = {}
+    patches = _git(clone, *GIT_LOG, "--format=commit %H", "-p", "--", WORKFLOW_DIR) or ""
+    # keyed by (commit, path): a commit that moves a cron in a.yml and edits a comment in b.yml must not hand
+    # b.yml a scheduling attempt it never had
+    added: dict[tuple[str, str], list[str]] = {}
+    removed: dict[tuple[str, str], list[str]] = {}
     cur = None
+    cur_path = None
     for line in patches.splitlines():
         if line.startswith("commit "):
             cur = line.split(" ", 1)[1][:10]
+            cur_path = None
             continue
-        if cur is None or len(line) < 2 or line.startswith(("+++", "---")):
+        if line.startswith("diff --git "):
+            cur_path = _diff_header_path(line)
+            continue
+        if cur is None or cur_path is None or len(line) < 2 or line.startswith(("+++", "---")):
             continue
         m = CRON_LINE_RX.match(line[1:])
         if m and line[0] == "+":
-            added.setdefault(cur, []).append(m.group(1).strip())
+            added.setdefault((cur, cur_path), []).append(m.group(1).strip())
         elif m and line[0] == "-":
-            removed.setdefault(cur, []).append(m.group(1).strip())
+            removed.setdefault((cur, cur_path), []).append(m.group(1).strip())
     for ev in events:
-        ev["crons_added"] = added.get(ev["sha"], [])
-        ev["crons_removed"] = removed.get(ev["sha"], [])
+        ev["crons_added"] = added.get((ev["sha"], ev["path"]), [])
+        ev["crons_removed"] = removed.get((ev["sha"], ev["path"]), [])
     commits = {e["sha"] for e in events}
     return {"source": "git", "status": OK, "commits_seen": len(commits), "truncated": False, "events": events}
+
+
+DIFF_HEADER_RX = re.compile(r'^diff --git (?:"a/.*?"|a/.*?) (?:"b/(.*)"|b/(.*))$')
+# core.quotePath=false: --name-status and the diff headers print the same raw UTF-8 path, so a workflow named
+# café.yml keys its cron changes by (commit, path) like any other (git would otherwise octal-escape one and not
+# the other)
+GIT_LOG = ("-c", "core.quotePath=false", "log", "--all", "--date-order")
+
+
+def _diff_header_path(line: str) -> str | None:
+    """`diff --git a/<old> b/<new>` → <new>: the path --name-status reports for a rename, and the only path for an
+    add, edit or delete. A quoted path has its quotes stripped (git quotes only names with a double quote,
+    backslash or control character once core.quotePath is off — practically nonexistent for a workflow)."""
+    m = DIFF_HEADER_RX.match(line.rstrip())
+    if not m:
+        return None
+    path = m.group(1) if m.group(1) is not None else m.group(2)
+    return path or None
 
 
 def _patch_crons(patch: str, sign: str) -> list[str]:
@@ -717,7 +770,10 @@ def _patch_crons(patch: str, sign: str) -> list[str]:
     ]
 
 
-def history_from_api(repo: str, cap: int) -> dict:
+def history_from_api(repo: str, cap: int, *, deadline: float | None = None) -> dict:
+    """Commits API sample (newest + oldest, capped). `deadline` is a time.monotonic() bound: the per-commit detail
+    requests stop there and the remainder is recorded as unread, so a slow history never outlives the census
+    budget (the sensor's execution timeout would otherwise kill the pass before any receipt is written)."""
     st, commits = gh_api(f"repos/{repo}/commits?path={WORKFLOW_DIR}&per_page=100")
     if st != OK or not isinstance(commits, list):
         status = st if st != OK else ERROR
@@ -734,7 +790,11 @@ def history_from_api(repo: str, cap: int) -> dict:
     sample = shas if len(shas) <= cap else shas[: cap - cap // 2] + shas[-(cap // 2) :]
     events: list[dict] = []
     unread = 0
-    for sha in sample:
+    stopped = 0  # sampled commits left unread because the census budget ran out
+    for i, sha in enumerate(sample):
+        if deadline is not None and time.monotonic() > deadline:
+            stopped = len(sample) - i
+            break
         st, detail = gh_api(f"repos/{repo}/commits/{sha}")
         if st != OK or not isinstance(detail, dict):
             unread += 1
@@ -757,17 +817,22 @@ def history_from_api(repo: str, cap: int) -> dict:
                     "crons_removed": _patch_crons(patch, "-"),
                 }
             )
-    truncated = len(shas) > cap or len(commits) >= 100
+    truncated = len(shas) > cap or len(commits) >= 100 or stopped > 0
     out = {
         "source": "api",
-        "status": OK if not unread else "partial",
+        "status": OK if not (unread or stopped) else "partial",
         "commits_seen": len(shas),
         "truncated": truncated,
         "events": events,
         "sampled": len(sample),
     }
+    notes = []
     if unread:
-        out["note"] = f"{unread} of {len(sample)} sampled commits unreadable"
+        notes.append(f"{unread} of {len(sample)} sampled commits unreadable")
+    if stopped:
+        notes.append(f"{stopped} of {len(sample)} sampled commits unread: census budget reached")
+    if notes:
+        out["note"] = "; ".join(notes)
     return out
 
 
@@ -956,7 +1021,7 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
         channels["issues-prs"] = "skipped:budget"
         out["attempts"] = {"readable": False, "status": "skipped:budget", "items": [], "seen": 0, "truncated": True}
     else:
-        out["attempts"] = read_attempts(repo, call)
+        out["attempts"] = read_attempts(repo, call, deadline=deadline)
         channels["issues-prs"] = str(out["attempts"].get("status") or (OK if out["attempts"]["readable"] else ERROR))
 
     by = (out.get("fired") or {}).get("by_workflow") or {}
@@ -971,7 +1036,7 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
     else:
         if clone is not None:
             out["notes"].append("local clone is shallow — history read through the Commits API instead")
-        out["history"] = history_from_api(repo, history_cap)
+        out["history"] = history_from_api(repo, history_cap, deadline=deadline)
         channels["history"] = (
             "api"
             + ("" if out["history"].get("status") == OK else f":{out['history'].get('status')}")
@@ -1081,7 +1146,11 @@ def cloudflare_target_crons(registry: dict | None) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     if not registry:
         return out
-    cloudflare = {pid for pid, p in (registry.get("planes") or {}).items() if isinstance(p, dict) and p.get("provider") == "cloudflare"}
+    cloudflare = {
+        pid
+        for pid, p in (registry.get("planes") or {}).items()
+        if isinstance(p, dict) and p.get("provider") == "cloudflare"
+    }
     for job in S.declared_jobs(registry):
         if job.plane in cloudflare:
             for c in job.crons:
@@ -1119,6 +1188,7 @@ def build_report(
     skipped: list[str] | None = None,
     residual_planes: dict | None = None,
     shadows: list[dict] | None = None,
+    unlisted_owners: list[str] | None = None,
 ) -> dict:
     errors = [r for r in rows if r.get("verdict") == "error"]
     scanned = [r for r in rows if r.get("reach") == OK]
@@ -1140,8 +1210,9 @@ def build_report(
             "unreachable": len(unreachable),
             "unscanned_by_budget": len(unscanned),
             "skipped_archived": len(skipped or []),
+            "universe_unlisted_owners": len(unlisted_owners or []),
             "internal_errors": len(errors),
-            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not",
+            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not; an owner whose repository listing failed leaves the universe itself incomplete",
         },
         "channels_read": CHANNELS,
         "channels_not_read": NOT_READ,
@@ -1173,6 +1244,7 @@ def build_report(
         "unreachable": unreachable,
         "unscanned_by_budget": unscanned,
         "skipped_archived": list(skipped or []),
+        "unlisted_owners": list(unlisted_owners or []),
         "partial": partial,
         "internal_errors": [{"repo": r["repo"], "notes": r.get("notes") or []} for r in errors],
         "repos": rows,
@@ -1217,7 +1289,8 @@ def render_markdown(report: dict) -> str:
         "",
         f"Generated {report['generated_at']} · universe {d['universe_count']} ({d['universe_source']}) · scanned {d['scanned']} "
         f"(partial {d.get('scanned_partial', 0)}) · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']} "
-        f"· skipped archived {d.get('skipped_archived', 0)} · internal errors {d.get('internal_errors', 0)}",
+        f"· skipped archived {d.get('skipped_archived', 0)} · internal errors {d.get('internal_errors', 0)} "
+        f"· owners unlisted {d.get('universe_unlisted_owners', 0)}",
         "",
         f"Channels read: {', '.join(report['channels_read'])}. Not read here: {', '.join(report['channels_not_read'])}.",
         "",
@@ -1314,7 +1387,11 @@ def render_markdown(report: dict) -> str:
             "",
             f"## Actions crons outside every specific schedules.yaml plane ({len(report['registry_gaps'])} repositories; "
             f"{len(unowned)} owned by no plane at all"
-            + (f"; the rest derived by fact into {', '.join(sorted(set(str(g.get('owned_by')) for g in report['registry_gaps'] if g.get('owned_by'))))}" if len(unowned) < len(report["registry_gaps"]) else "")
+            + (
+                f"; the rest derived by fact into {', '.join(sorted(set(str(g.get('owned_by')) for g in report['registry_gaps'] if g.get('owned_by'))))}"
+                if len(unowned) < len(report["registry_gaps"])
+                else ""
+            )
             + ")",
             "",
         ]
@@ -1326,7 +1403,11 @@ def render_markdown(report: dict) -> str:
                 + (f" → {g['owned_by']}" if g.get("owned_by") else " → OWNED BY NO PLANE")
             )
     if report.get("wrangler_shadows"):
-        lines += ["", "## Cloudflare scheduler targets also declared in a repository's own wrangler triggers (two schedulers, one target — advisory)", ""]
+        lines += [
+            "",
+            "## Cloudflare scheduler targets also declared in a repository's own wrangler triggers (two schedulers, one target — advisory)",
+            "",
+        ]
         for sh in report["wrangler_shadows"]:
             lines.append(f"- {sh['repo']}:{sh['path']} {', '.join(sh['crons'])} shadows {', '.join(sh['shadows'])}")
     partial = [r for r in report["repos"] if r.get("partial")]
@@ -1354,12 +1435,18 @@ def render_markdown(report: dict) -> str:
         lines += ["", "## Skipped (archived; --skip-archived — their historical attempts were not read)", ""] + [
             f"- {u}" for u in report["skipped_archived"]
         ]
+    if report.get("unlisted_owners"):
+        lines += ["", "## Owners whose repository listing failed (the universe itself is incomplete)", ""] + [
+            f"- {o}" for o in report["unlisted_owners"]
+        ]
     return "\n".join(lines) + "\n"
 
 
 def receipt_is_complete(report: dict, *, max_incomplete_share: float = MAX_INCOMPLETE_SHARE) -> bool:
-    """A receipt that read nothing, or left more than `max_incomplete_share` of its universe unread, is not a
-    census to rest on for a whole interval — _schedules.census_receipt_is_complete, shared with the sensor."""
+    """A receipt that read nothing, whose universe is missing an owner, or that left more than
+    `max_incomplete_share` of its universe unread — unreachable, unscanned, partially read or errored — is not a
+    census to rest on for a whole interval (a transient outage must earn the retry horizon, not a week).
+    _schedules.census_receipt_is_complete holds the rule, shared with the sensor."""
     return S.census_receipt_is_complete(report, max_incomplete_share=max_incomplete_share)
 
 
@@ -1395,6 +1482,7 @@ def run_census(
     self_repo: str | None = None,
     skip_archived: bool = False,
     rate_check_every_calls: int = RATE_CHECK_EVERY_CALLS,
+    unlisted_owners: list[str] | None = None,
 ) -> dict:
     started = time.monotonic()
     deadline = started + budget_seconds
@@ -1431,7 +1519,11 @@ def run_census(
         rows.append(row)
     registry = load_registry_or_none(root) if check_registry else None
     residual = S.residual_planes(registry) if registry else {}
-    gaps = registry_gaps(rows, S.specific_plane_repos(registry, self_repo) if registry else set(), residual) if check_registry else None
+    gaps = (
+        registry_gaps(rows, S.specific_plane_repos(registry, self_repo) if registry else set(), residual)
+        if check_registry
+        else None
+    )
     return build_report(
         rows,
         universe=universe,
@@ -1442,23 +1534,31 @@ def run_census(
         skipped=skipped,
         residual_planes=residual if check_registry else None,
         shadows=wrangler_shadows(rows, cloudflare_target_crons(registry)) if check_registry else None,
+        unlisted_owners=unlisted_owners,
     )
 
 
 def exit_code_for(report: dict) -> int:
     """4 internal errors (fix the engine) · 3 read nothing · 1 findings on the scanned set · 2 no findings but
-    coverage incomplete (unreachable, unscanned, partial) · 0 clean and complete. A registry gap is a finding only
-    when no plane owns it: a gap a residual census plane derives by fact is declared, measured by the sensor, and
-    held to that plane's ceilings — not a floor to report twice."""
+    coverage incomplete (unreachable, unscanned, partial, an owner unlisted) · 0 clean and complete.
+
+    A registry gap is a finding only when no plane owns it: a gap a residual census plane derives by fact is
+    declared, measured by the sensor, and held to that plane's ceilings — not a floor to report twice.
+    Findings are read from the workflow-level totals as well as the repository verdicts: a verdict is one word per
+    repository and `active` outranks an auto-disabled or failing schedule beside a healthy one — the totals
+    do not, and the sensor's exit-1 escalation names exactly those."""
     d, t = report["denominators"], report["totals"]
     if d.get("internal_errors"):
         return 4
     if d["scanned"] == 0:
         return 3
     unowned = [g for g in report.get("registry_gaps") or [] if not g.get("owned_by")]
-    if unowned or any(v in FINDING_VERDICTS for v in t["verdicts"]):
+    workflow_findings = int(t.get("gh_workflows_disabled_inactivity") or 0) + int(
+        t.get("workflows_failing_last_scheduled_run") or 0
+    )
+    if unowned or workflow_findings or any(v in FINDING_VERDICTS for v in t["verdicts"]):
         return 1
-    if d["unreachable"] or d["unscanned_by_budget"] or d.get("scanned_partial"):
+    if d["unreachable"] or d["unscanned_by_budget"] or d.get("scanned_partial") or d.get("universe_unlisted_owners"):
         return 2
     return 0
 
@@ -1522,7 +1622,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{args.retry_hours:g}h incomplete) — nothing to do (use --force)"
         )
         return 0
-    universe, source = resolve_universe(args.repos, args.repos_file, args.estate_cache)
+    universe, source, unlisted = resolve_universe(args.repos, args.repos_file, args.estate_cache)
     if not universe:
         print(
             "schedule-census: no universe — pass --repos/--repos-file, refresh the estate cache (scripts/estate-repos-refresh.py), or run where gh is authenticated",
@@ -1543,6 +1643,7 @@ def main(argv: list[str] | None = None) -> int:
         check_registry=args.check_registry,
         self_repo=args.self_repo,
         skip_archived=args.skip_archived,
+        unlisted_owners=unlisted,
     )
     d, t = report["denominators"], report["totals"]
     previous = load_receipt(args.receipt)
@@ -1565,7 +1666,8 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"schedule-census: universe {d['universe_count']} ({d['universe_source']}), scanned {d['scanned']} (partial {d['scanned_partial']}), "
         f"unreachable {d['unreachable']}, unscanned {d['unscanned_by_budget']}, skipped archived {d['skipped_archived']}, "
-        f"internal errors {d['internal_errors']}; Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, "
+        f"internal errors {d['internal_errors']}, owners unlisted {d['universe_unlisted_owners']}; "
+        f"Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, "
         f"auto-off {t['gh_workflows_disabled_inactivity']}, manual-off {t['gh_workflows_disabled_manually']}, "
         f"state unknown {t['gh_workflows_state_unknown']}); verdicts {t['verdicts']}"
         + (

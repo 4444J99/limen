@@ -534,7 +534,11 @@ _REPO_LOCATOR_RX = re.compile(r"^([A-Za-z0-9-]+/[A-Za-z0-9][\w.-]*)(?:[:#]|$)")
 
 
 def is_census_plane(plane: object) -> bool:
-    return isinstance(plane, dict) and isinstance(plane.get("jobs_source"), dict) and plane["jobs_source"].get("kind") == "census"
+    return (
+        isinstance(plane, dict)
+        and isinstance(plane.get("jobs_source"), dict)
+        and plane["jobs_source"].get("kind") == "census"
+    )
 
 
 def repo_of_locator(locator: object) -> str | None:
@@ -568,7 +572,9 @@ def specific_plane_repos(registry: dict, self_repo: str | None = None) -> set[st
     for plane in planes.values():
         if not isinstance(plane, dict) or is_census_plane(plane):
             continue
-        owner_repo = (plane.get("authority") or {}).get("owner_repo") if isinstance(plane.get("authority"), dict) else None
+        owner_repo = (
+            (plane.get("authority") or {}).get("owner_repo") if isinstance(plane.get("authority"), dict) else None
+        )
         if owner_repo:
             covered.add(str(owner_repo))
         evidence = plane.get("evidence") if isinstance(plane.get("evidence"), dict) else {}
@@ -667,18 +673,23 @@ def cadence_label(cron: Cron) -> str:
 
 
 def census_receipt_is_complete(report: dict, *, max_incomplete_share: float = CENSUS_MAX_INCOMPLETE_SHARE) -> bool:
-    """A receipt that read nothing, or left more than `max_incomplete_share` of its universe unread, is not a
-    census to rest on — the sensor reads it as a stale readback, never as the fleet."""
+    """A receipt that read nothing, whose universe is missing an owner (`universe_unlisted_owners`), or that left
+    more than `max_incomplete_share` of its universe unread — unreachable, unscanned, partially read or errored —
+    is not a census to rest on: the sensor reads it as a stale readback, never as the fleet."""
     d = report.get("denominators") or {}
     try:
         scanned = int(d.get("scanned") or 0)
         universe = int(d.get("universe_count") or 0)
+        unlisted = int(d.get("universe_unlisted_owners") or 0)
         unread = (
-            int(d.get("unreachable") or 0) + int(d.get("unscanned_by_budget") or 0) + int(d.get("internal_errors") or 0)
+            int(d.get("unreachable") or 0)
+            + int(d.get("unscanned_by_budget") or 0)
+            + int(d.get("internal_errors") or 0)
+            + int(d.get("scanned_partial") or 0)
         )
     except (TypeError, ValueError):
         return False
-    if scanned == 0:
+    if scanned == 0 or unlisted:
         return False
     return universe == 0 or unread / universe <= max_incomplete_share
 
@@ -766,7 +777,9 @@ def census_floor_unmeasured(data: dict | None, jobs: list[Job]) -> dict[str, int
     lowering from an undercount makes the next complete census red on unchanged repositories)."""
     out = census_unread(data)
     partial = sum(1 for j in jobs if j.extra.get("partial"))
-    unverified = sum(1 for j in jobs if not j.enabled and str(j.extra.get("state")) == "unknown" and not j.extra.get("archived"))
+    unverified = sum(
+        1 for j in jobs if not j.enabled and str(j.extra.get("state")) == "unknown" and not j.extra.get("archived")
+    )
     if partial:
         out["partial_rows"] = partial
     if unverified:
@@ -775,10 +788,16 @@ def census_floor_unmeasured(data: dict | None, jobs: list[Job]) -> dict[str, int
 
 
 def _census_rows(data: dict) -> list[dict]:
-    return [r for r in data.get("repos") or [] if isinstance(r, dict) and r.get("reach") == "ok" and isinstance(r.get("repo"), str)]
+    return [
+        r
+        for r in data.get("repos") or []
+        if isinstance(r, dict) and r.get("reach") == "ok" and isinstance(r.get("repo"), str)
+    ]
 
 
-def derive_census_jobs(root: Path, plane_id: str, src: dict, registry: dict, *, receipt: dict | None = None) -> list[Job]:
+def derive_census_jobs(
+    root: Path, plane_id: str, src: dict, registry: dict, *, receipt: dict | None = None
+) -> list[Job]:
     """Rows for one census plane. gh-workflow: one job per cron-bearing Actions workflow the census read in a
     repository of the plane's visibility that no specific plane covers (scope residual) — enabled ⟺ live state
     `active` in a non-archived repository; the receipt's live state, archived flag, partial flag and the
@@ -804,7 +823,11 @@ def derive_census_jobs(root: Path, plane_id: str, src: dict, registry: dict, *, 
                 continue
             archived = bool(row.get("archived"))
             partial = bool(row.get("partial"))
-            decls = [d for d in row.get("declarations") or [] if isinstance(d, dict) and d.get("kind") == "gh-workflow" and d.get("crons")]
+            decls = [
+                d
+                for d in row.get("declarations") or []
+                if isinstance(d, dict) and d.get("kind") == "gh-workflow" and d.get("crons")
+            ]
             names = [d.get("name") for d in decls]
             fired_row = row.get("fired") if isinstance(row.get("fired"), dict) else {}
             by_workflow = fired_row.get("by_workflow") or {}
