@@ -20,21 +20,29 @@ was exec'd from, never by the bytes: the two paths are the SAME INODE, yet only
 the bundled one has an identity to resolve, so the unbundled one is named by its
 own filename.
 
-SCOPE -- what this organ does NOT fix (verified 2026-08-05 against a live process
-tree, after this keeper reported ``at-ideal``):
+THE HARDLINK IS NOT ENOUGH -- the session path must be a SYMLINK (2026-10-24).
+The daemon runs its pty host from the bundle but hands the *session* process its
+``versions/<version>`` path as literal argv, and that session is the one that
+disclaims into its own TCC identity::
 
     30699  ~/.local/bin/claude daemon run ...              (launchd-rooted)
       +- 30721  ClaudeCode.app/.../claude --bg-pty-host ... -- versions/2.1.222 ...
-           +- 30826  versions/2.1.222 --session-id ...     <- disclaims; becomes "2.1.222"
+           +- 30826  versions/2.1.222 --session-id ...     <- disclaims here
 
-The daemon runs its pty host FROM the bundle, then hands the session process its
-``versions/<version>`` path as literal argv -- and that session is the one that
-disclaims into its own TCC identity. So per-version consent prompts persist with
-a perfectly kept bundle. That argv is composed inside the vendor binary; nothing
-outside it can redirect the session onto the bundled path without patching a
-signed 271MB Mach-O, which would break both its signature and auto-update. This
-organ keeps the bundle correct -- a real precondition, and demonstrably not the
-whole cure. Do not let a green reading here be read as "prompts are fixed."
+While ``versions/<v>`` and the bundle binary are two hardlinks of ONE inode, the
+kernel's name for that text vnode is whichever path it last cached -- exec through
+either name and the process may be reported under the versioned one, so TCC mints
+a fresh bare-version client per update (2.1.301 -> 2.1.310 minted ten in eight
+days). A SYMLINK is resolved at ``execve``: the bundle binary is then the inode's
+only name, the session's text vnode is unambiguously inside ``ClaudeCode.app``, and
+TCC records ``com.anthropic.claude-code``. The vendor's own installer did exactly
+this for ``versions/2.1.233 -> .../ClaudeCode.app/Contents/MacOS/claude`` on
+2026-08-15; that afternoon's Documents grant landed on the bundle ID and no new
+versioned client appeared until the installer reverted to regular files with
+2.1.301. So ``repair()`` now finishes what the installer stopped doing: once the
+bundle holds the current inode, it atomically renames a symlink over the current
+``versions/<v>`` entry. The bundle link is created first, so the bytes always keep
+a name and the launcher never dangles.
 
 ``_jb()`` wraps ``mkdir`` + ``writeFile`` + ``stat`` + ``unlink`` + ``link`` in a
 single bare ``catch { return null }``, and it takes an EARLY RETURN when the
@@ -50,8 +58,9 @@ concurrent starts to race the unlink/link pair into an ``EEXIST`` that silently
 demotes one of them to a versioned identity.
 
 This organ is idempotent and never edits TCC, never signs anything, and never
-removes a version. It writes exactly what the vendor writes, so a live session
-that runs ``_jb()`` finds its own fast path already satisfied.
+removes a version's bytes. It writes exactly what the vendor writes -- the bundle,
+and the versions/<v> symlink shape the vendor's own installer has used -- so a
+live session that runs ``_jb()`` finds its own fast path already satisfied.
 
 SECOND SCOPE -- the Gatekeeper half (``IF-GATEKEEPER-INERT``, added 2026-08-05).
 The same bundle is *also* what macOS renders as "ClaudeCode.app is damaged and
@@ -172,6 +181,27 @@ def _current_binary(env: Mapping[str, str]) -> tuple[Path | None, str | None]:
     return resolved, None
 
 
+def _version_entry(env: Mapping[str, str]) -> Path | None:
+    """The `versions/<v>` entry the launcher names -- its first hop, unresolved.
+
+    `_current_binary` chases every hop, so after the symlink heal it lands on the
+    bundle binary and can no longer say WHICH versions entry the launcher (and the
+    daemon's session argv) goes through. This is that entry, or None when the
+    launcher's first hop is not a direct child of `versions/`.
+    """
+    launcher = _launcher(env)
+    try:
+        target = Path(os.readlink(launcher))
+    except OSError:
+        return None
+    if not target.is_absolute():
+        target = launcher.parent / target
+    versions = (_store(env) / "versions").resolve(strict=False)
+    if target.parent.resolve(strict=False) != versions:
+        return None
+    return versions / target.name
+
+
 def _installed_versions(env: Mapping[str, str]) -> list[dict[str, Any]]:
     """Every runnable version in the store.
 
@@ -197,6 +227,8 @@ def _installed_versions(env: Mapping[str, str]) -> list[dict[str, Any]]:
         found.append(
             {
                 "version": entry.name,
+                "inode": info.st_ino,
+                "symlink": entry.is_symlink(),
                 "size_bytes": info.st_size,
                 "runnable": bool(info.st_size) and os.access(entry, os.X_OK),
             }
@@ -329,7 +361,8 @@ def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     binary, error = _current_binary(values)
     payload["current_binary"] = str(binary) if binary else None
     payload["versions"] = _installed_versions(values)
-    runnable = [item for item in payload["versions"] if item["runnable"]]
+    # Symlinked versions share the bundle's inode, so only DISTINCT inodes can race.
+    runnable = {item["inode"] for item in payload["versions"] if item["runnable"]}
     payload["concurrent_version_race_risk"] = len(runnable) > 1
     payload["instances"] = _instances(values, binary)
     payload["class_findings"] = _class_findings(payload["instances"])
@@ -362,6 +395,16 @@ def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         payload["hardlink_inode_matches"] = False
     if not payload["hardlink_inode_matches"]:
         findings.append("hardlink_absent_or_stale")
+
+    # The session disclaims from `versions/<v>`; only a symlink there gives its text vnode
+    # the bundle as its sole name (see the module docstring).
+    entry = _version_entry(values)
+    payload["version_entry"] = str(entry) if entry else None
+    payload["version_entry_symlinked"] = bool(
+        entry is not None and entry.is_symlink() and entry.resolve(strict=False) == link.resolve(strict=False)
+    )
+    if entry is not None and not payload["version_entry_symlinked"]:
+        findings.append("version_entry_not_symlinked")
 
     payload["findings"] = findings
     payload["ok"] = not findings
@@ -407,6 +450,21 @@ def repair(env: Mapping[str, str] | None = None) -> dict[str, Any]:
             pass
         os.link(binary, link)
         actions.append("linked_current_binary")
+
+    # Only once the bundle holds the entry's exact inode: the bytes then keep a name, and the
+    # atomic rename means the launcher never resolves to nothing mid-heal.
+    entry = _version_entry(values)
+    if entry is not None and not entry.is_symlink():
+        try:
+            same_inode = entry.stat().st_ino == link.stat().st_ino
+        except OSError:
+            same_inode = False
+        if same_inode:
+            staged = entry.with_name(f".{entry.name}.bundle-symlink.{os.getpid()}")
+            staged.unlink(missing_ok=True)
+            staged.symlink_to(link)
+            os.replace(staged, entry)
+            actions.append("symlinked_version_entry")
 
     after = inspect(values)
     after["actions"] = actions

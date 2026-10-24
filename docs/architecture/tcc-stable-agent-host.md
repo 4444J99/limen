@@ -183,11 +183,31 @@ keeper reporting `at-ideal` and the bundle inode-correct:
 
 The daemon runs its pty host **from the bundle**, then passes the session process
 its `versions/<version>` path as literal argv; that session is the one that
-disclaims, so it becomes its own privacy client regardless of the bundle's state.
-Four of five live processes ran from the versioned path. The argv is composed
-inside the vendor binary, so nothing outside it redirects the session onto the
-bundled path — this is an upstream defect, and the keeper below is a precondition
-for the stable identity, not a cure for per-version prompts.
+disclaims. The argv is vendor-internal, but the *path it names* is not.
+
+**Resolved (2026-10-24): the hardlink is the defect, the symlink is the cure.**
+While `versions/<v>` and `ClaudeCode.app/Contents/MacOS/claude` are two hardlinks
+of one inode, the kernel reports the text vnode under whichever name it last
+cached — a signed test binary exec'd *through a symlink to the bundle* was still
+reported by `lsof` as `versions/hard` while the hardlink existed, and as the bundle
+path once it was gone. So the session became a bare-version client on every
+update: 2.1.301 → 2.1.310 minted ten such clients across Documents, Desktop,
+Downloads, Removable Volumes, Microphone, Media, File Provider and App Data in
+eight days. The vendor installer briefly shipped the cure itself:
+`versions/2.1.233 -> …/ClaudeCode.app/Contents/MacOS/claude` (2026-08-15), after
+which that day's Documents grant landed on `com.anthropic.claude-code` and no new
+versioned client appeared until the installer reverted to regular files at 2.1.301.
+A symlink is resolved at `execve`, so with the bundle as the inode's only name the
+session's identity is the stable bundle regardless of the argv.
+
+`scripts/claude-identity-bundle.py --repair` therefore finishes the installer's
+job: after the bundle holds the current inode it stages a symlink beside the
+launcher's `versions/<v>` entry and renames it over the entry atomically (finding
+`version_entry_not_symlinked`, action `symlinked_version_entry`). The bundle link
+is made first, so the bytes always keep a name and `~/.local/bin/claude` never
+dangles. A session started between a vendor update and the keeper's next run still
+lands on the new regular file and can mint one versioned client; how soon the
+keeper runs after an update is the residual window.
 
 `_jb()` returns early when the hardlink already carries the running binary's
 inode, skipping the `unlink`/`link` pair that concurrent session starts can
@@ -195,8 +215,9 @@ interleave into an `EEXIST`. `scripts/claude-identity-bundle.py` keeps the bundl
 present and inode-correct so every start takes that early return; sensor `0g8d`
 (`LIMEN_CLAUDE_IDENTITY_BUNDLE`) runs it each beat. The keeper writes exactly the
 vendor's own bytes, is idempotent, and never signs, never edits TCC, and never
-deletes a version — so more than one runnable version in the store stays a
-**reported** race risk rather than a repaired one.
+deletes a version's bytes — so more than one runnable version (counted by
+distinct inode; symlinked entries share the bundle's) stays a **reported** race
+risk rather than a repaired one.
 
 ## One supported App Management transaction
 

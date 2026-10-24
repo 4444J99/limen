@@ -1049,10 +1049,12 @@ sensors:
     # stable across versions); it returns null on ANY exception inside one bare catch, and the
     # fallback identity is the versioned binary — the same inode, but with no enclosing bundle
     # for TCC to resolve, so it is named by its own filename.
-    # SCOPE (verified 2026-08-05 with this sensor already at-ideal): keeping the bundle does NOT
-    # stop per-version consent dialogs. The daemon runs its pty host from the bundle but hands
-    # the session process its versions/<version> path as argv, and that session is what disclaims
-    # into its own TCC identity. Vendor-internal; a green reading here is not "prompts fixed".
+    # The daemon hands the session process its versions/<version> path as argv, and that session
+    # is what disclaims. While that entry is a HARDLINK of the bundle binary the kernel may name
+    # the inode by either path, so each update minted a bare-version TCC client (2026-08-05 →
+    # 2026-10-24). --repair now renames a SYMLINK into the bundle over the current versions/<v>
+    # entry (what the vendor installer itself did for 2.1.233), leaving the bundle as the inode's
+    # only name. Residual: sessions started between an update and this keeper's next run.
     # _jb() takes an early return when the hardlink already carries the running binary's inode,
     # skipping the unlink/link pair that concurrent session starts can race into EEXIST. Keeping
     # the bundle inode-correct keeps every start on that early return. Idempotent; writes exactly
@@ -1067,7 +1069,7 @@ sensors:
     steps:
       - command: "python3 scripts/claude-identity-bundle.py --repair"
         severity: advisory
-        escalation: "Claude Code identity bundle could not be kept — the stable com.anthropic.claude-code identity is unavailable to anything that does exec through it; check that ~/.local/bin/claude still resolves under the store's versions/ tree. Does not by itself govern per-version consent prompts (see the scope note above)."
+        escalation: "Claude Code identity bundle could not be kept — sessions disclaim under a bare versions/<v> TCC client and every update re-prompts; check that ~/.local/bin/claude still resolves under the store's versions/ tree and that versions/<v> is a symlink into ClaudeCode.app."
     omega_eligible:
       - label: "Claude Code stable identity bundle"
         rung_id: sensor.claude.identity-bundle
