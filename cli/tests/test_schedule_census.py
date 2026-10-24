@@ -570,6 +570,7 @@ def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_pat
     monkeypatch.setattr(C, "_diff_header_path", lambda line: None)
     loud = C.history_from_git(repo)
     assert loud["status"] == "partial" and loud["truncated"] is True and "diff header(s) unparsed" in loud["note"]
+    monkeypatch.undo()  # the parser stub above must not reach the unit checks below
     assert C._diff_header_path('diff --git "a/w s.yml" "b/w s.yml"') == "w s.yml"
     assert (
         C._diff_header_path("diff --git a/old.yml b/new.yml") == "new.yml" and C._diff_header_path("index 1..2") is None
