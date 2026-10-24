@@ -1503,19 +1503,19 @@ def test_census_rows_derive_by_fact_and_partition_by_visibility(tmp_path):
     public = [j for j in jobs if j.plane == "github-actions-fleet-public"]
     launchd = [j for j in jobs if j.plane == "launchd-host"]
     assert sorted(j.id for j in private) == [
-        "fleet/o/archived-priv/z",
-        f"fleet/{SECRET}/a",
-        f"fleet/{SECRET}/b",
-        f"fleet/{SECRET}/c",
-        f"fleet/{SECRET}/off",
+        "fleet/o/archived-priv/z.yml",
+        f"fleet/{SECRET}/a.yml",
+        f"fleet/{SECRET}/b.yml",
+        f"fleet/{SECRET}/c.yml",
+        f"fleet/{SECRET}/off.yml",
     ]
-    assert [j.id for j in public] == ["fleet/o/public-thing/p"]  # o/limen is covered, never residual
+    assert [j.id for j in public] == ["fleet/o/public-thing/p.yml"]  # o/limen is covered, never residual
     assert {j.id: j.enabled for j in private} == {
-        f"fleet/{SECRET}/a": True,
-        f"fleet/{SECRET}/b": True,
-        f"fleet/{SECRET}/c": True,
-        f"fleet/{SECRET}/off": False,
-        "fleet/o/archived-priv/z": False,
+        f"fleet/{SECRET}/a.yml": True,
+        f"fleet/{SECRET}/b.yml": True,
+        f"fleet/{SECRET}/c.yml": True,
+        f"fleet/{SECRET}/off.yml": False,
+        "fleet/o/archived-priv/z.yml": False,
     }
     assert S.census_plane_counts(private) == {
         "active": 3,
@@ -1860,7 +1860,7 @@ def test_scope_all_and_a_lone_residual_plane_and_a_str_state(tmp_path):
     write_fleet_root(tmp_path, planes, receipt=FLEET_RECEIPT)
     registry = S.load_registry(tmp_path)
     jobs = [j for j in S.derived_jobs(tmp_path, registry) if j.plane == "fleet-all"]
-    assert "fleet/o/limen/own" in {j.id for j in jobs}  # scope all: the covered repository is in too
+    assert "fleet/o/limen/own.yml" in {j.id for j in jobs}  # scope all: the covered repository is in too
     assert S.census_plane_counts(jobs)["active"] == 5
     per_rule, undeclared, _ = S.census_off_counts(planes["fleet-all"], jobs)
     assert per_rule[0] == {"disabled_manually": 1} and undeclared == []
@@ -1870,7 +1870,7 @@ def test_scope_all_and_a_lone_residual_plane_and_a_str_state(tmp_path):
     write_registry(tmp_path, planes, [])
     registry = S.load_registry(tmp_path)
     ids = {j.id for j in S.derived_jobs(tmp_path, registry) if j.plane == "fleet-all"}
-    assert "fleet/o/limen/own" not in ids and "fleet/o/public-thing/p" in ids and f"fleet/{SECRET}/a" in ids
+    assert "fleet/o/limen/own.yml" not in ids and "fleet/o/public-thing/p.yml" in ids and f"fleet/{SECRET}/a.yml" in ids
     assert S.residual_planes(registry) == {None: "fleet-all"}
     planes["fleet-all"]["ceilings"] = {"active": 4}
     write_registry(tmp_path, planes, [])
@@ -1945,6 +1945,66 @@ def test_census_floor_is_unmeasured_from_a_targeted_census_or_a_universe_short_o
     _, by = _fleet_eval(tmp_path)
     priv = by["github-actions-fleet-private"]
     assert priv["readback_overdue"] is False and "explicit_scope 1" in priv["detail"]
+
+
+def test_fleet_job_ids_keep_the_file_name_so_ci_yml_and_ci_yaml_stay_two_workflows(tmp_path):
+    receipt = _receipt(
+        [
+            _repo("o/limen", private=False, workflows=[_wf(".github/workflows/own.yml", ["0 9 * * *"])]),
+            _repo(
+                SECRET,
+                private=True,
+                workflows=[
+                    _wf(".github/workflows/ci.yml", ["17 9 * * *"]),
+                    _wf(".github/workflows/ci.yaml", ["17 9 * * *"]),
+                ],
+            ),
+        ]
+    )
+    write_registry(tmp_path, FLEET_PLANES, [])
+    write_receipt(tmp_path, receipt)
+    jobs = [j for j in S.derived_jobs(tmp_path, S.load_registry(tmp_path)) if j.plane == "github-actions-fleet-private"]
+    assert sorted(j.id for j in jobs) == [f"fleet/{SECRET}/ci.yaml", f"fleet/{SECRET}/ci.yml"]
+    # a stem-keyed id collapsed these into one and the shared-minute ceiling saw 0; two files are two workflows
+    assert S.census_plane_counts(jobs) == {"active": 2, "on-the-hour": 0, "shared-minute": 2}
+
+
+def test_each_census_plane_is_checked_against_its_own_receipt(tmp_path):
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    pub = planes["github-actions-fleet-public"]
+    pub["jobs_source"]["locator"] = pub["evidence"]["locator"] = "logs/public-census.json"
+    pub["ceilings"]["active"] = 0
+    write_fleet_root(tmp_path, planes)  # the private plane's receipt — the first plane's — is absent on this host
+    public = _receipt(
+        [_repo("o/public-thing", private=False, workflows=[_wf(".github/workflows/p.yml", ["36 5 * * *"])])]
+    )
+    write_receipt(tmp_path, public)  # writes logs/.gitignore (R1) …
+    (tmp_path / "logs" / "schedule-census.json").unlink()  # … and the default receipt, which this host lacks
+    (tmp_path / "logs" / "public-census.json").write_text(json.dumps(public))
+    run = run_check(tmp_path)
+    assert run.returncode == 1
+    assert "[A] plane github-actions-fleet-public: active is 1, above its ceiling 0" in run.stdout
+    assert "census receipt public-census.json is present" in run.stdout
+
+
+def test_a_pending_newest_run_does_not_hide_the_last_success(tmp_path):
+    receipt = json.loads(json.dumps(FLEET_RECEIPT))
+    a = receipt["repos"][1]["fired"]["by_workflow"]["a"]
+    a.update({"last_at": "2026-10-23T09:17:00Z", "last_conclusion": None})  # queued or running at collection time
+    write_registry(tmp_path, FLEET_PLANES, [])
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (3, 1)  # an older receipt carries only the newest run: a is dark
+    a["last_success_at"] = "2026-10-22T09:17:00Z"  # from #3196 on the census records the page's newest success
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (3, 2)
+    a["last_success_at"] = "2026-10-01T09:17:00Z"  # a success outside the window is still not alive
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    assert by["github-actions-fleet-private"]["observed"] == 1
 
 
 def test_fleet_rows_join_their_runs_by_path_first_then_by_name(tmp_path):
@@ -2052,6 +2112,12 @@ def test_ratchet_direction_fails_a_rising_ceiling_against_the_merge_base(tmp_pat
     write_registry(tmp_path, planes, [])
     run = run_check(tmp_path)
     assert run.returncode == 1 and "declared_off ceiling disabled_manually was 1 at" in run.stdout
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    del planes["github-actions-fleet-private"]["declared_off"][1]["ceiling"]["disabled_inactivity"]  # was 0
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)  # 0 is the floor a ceiling rests at, not a licence to delete it (0 → unlimited)
+    assert run.returncode == 1 and "declared_off ceiling disabled_inactivity was 0 at" in run.stdout
+    assert "a ceiling key leaves only with its rule" in run.stdout
     planes = json.loads(json.dumps(FLEET_PLANES))
     planes["github-actions-fleet-private"]["declared_off"] = planes["github-actions-fleet-private"]["declared_off"][:1]
     write_registry(tmp_path, planes, [])

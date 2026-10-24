@@ -595,13 +595,23 @@ def check_declared_off_rot(root: Path, registry: dict) -> None:
                 fail("A", f"plane {pid}: declared_off names {row['file']} but {src.get('locator')}/{row['file']} no longer exists — delete the row (the declaration rotted)")
 
 
-def _census_receipt(root: Path, registry: dict) -> tuple[dict | None, str, Path | None]:
-    """The one receipt every census plane in this registry reads (they share a locator by construction)."""
-    for plane in (registry.get("planes") or {}).values():
-        if S.is_census_plane(plane):
-            path, data, state = S.load_census_receipt(root, plane["jobs_source"].get("locator"), max_age_days=_census_max_age_days())
-            return data, state, path
-    return None, "no-census-planes", None
+def _census_receipts(root: Path, registry: dict) -> dict[str, tuple[dict | None, str, Path]]:
+    """Every census plane's OWN receipt, keyed by plane id. The schema permits distinct locators and
+    derive_census_jobs reads each plane's own, so no plane is judged — or skipped — by another plane's receipt
+    (an absent first receipt used to switch ceiling enforcement off for every plane). A locator is read once
+    however many planes share it."""
+    out: dict[str, tuple[dict | None, str, Path]] = {}
+    by_path: dict[Path, tuple[dict | None, str, Path]] = {}
+    for pid, plane in (registry.get("planes") or {}).items():
+        if not S.is_census_plane(plane):
+            continue
+        locator = plane["jobs_source"].get("locator")
+        path = S.census_receipt_path(root, locator)
+        if path not in by_path:
+            _path, data, state = S.load_census_receipt(root, locator, max_age_days=_census_max_age_days())
+            by_path[path] = (data, state, path)
+        out[pid] = by_path[path]
+    return out
 
 
 def _is_cap(value: object) -> bool:
@@ -614,15 +624,19 @@ def check_census(root: Path, registry: dict, jobs: list[S.Job], now: datetime) -
     the overshoot is real. "Lower to N" is advised only from a complete receipt with no partial or unverified
     rows in the plane: the ratchet only falls, and lowering from an undercount makes the next complete census
     red on unchanged repositories."""
-    data, state, path = _census_receipt(root, registry)
-    if data is None:
-        return
-    generated = S.census_generated_at(data)
-    age = f"{(now - generated).days}d old" if generated else "undated"
-    advise("A", f"census receipt {path.name if path else ''} is {state} ({age}); ceilings compared against it (counts only)")
+    receipts = _census_receipts(root, registry)
+    announced: set[Path] = set()
     for pid, plane in (registry.get("planes") or {}).items():
         if not S.is_census_plane(plane):
             continue
+        data, state, path = receipts[pid]
+        if data is None:
+            continue  # absent: not this host (B names an unreadable or wrong-schema receipt); nothing to compare
+        if path not in announced:
+            announced.add(path)
+            generated = S.census_generated_at(data)
+            age = f"{(now - generated).days}d old" if generated else "undated"
+            advise("A", f"census receipt {path.name} is {state} ({age}); ceilings compared against it (counts only)")
         rows = [j for j in jobs if j.plane == pid]
         counts = S.census_plane_counts(rows)
         unmeasured = S.census_floor_unmeasured(data, rows)
@@ -660,13 +674,21 @@ _PRIVATE_SKIP_BARE = re.compile(r"^[A-Za-z0-9]+$")  # single-word names are Engl
 
 def check_redaction(root: Path, registry: dict) -> None:
     """H: no committed registry line names a private repository the census lists (R1)."""
-    data, _state, _path = _census_receipt(root, registry)
-    if data is None:
-        if _state != "no-census-planes":
+    receipts = _census_receipts(root, registry)
+    readable = {path: data for data, _state, path in receipts.values() if data is not None}
+    if not readable:
+        if receipts:
             advise("I", "no census receipt on this host — redaction unverifiable here, not drift")
         return
     disclosed = S.disclosed_repo_tokens(registry)
-    private = sorted({r["repo"] for r in (data.get("repos") or []) if isinstance(r, dict) and r.get("private") and isinstance(r.get("repo"), str)})
+    private = sorted(
+        {
+            r["repo"]
+            for data in readable.values()
+            for r in (data.get("repos") or [])
+            if isinstance(r, dict) and r.get("private") and isinstance(r.get("repo"), str)
+        }
+    )
     patterns: list[re.Pattern[str]] = []
     skipped_bare = 0
     # A token ends where a word character, `-`, or `.<word>` would continue it: `name.` at a sentence end and
@@ -773,8 +795,7 @@ def check_ratchet_direction(root: Path, registry: dict) -> None:
             for state_key, old_v in old_caps.items():
                 new_v = new_caps.get(state_key)
                 if new_v is None:
-                    if old_v > 0:
-                        fail("J", f"plane {pid}: declared_off ceiling {state_key} was {old_v} at {base[:9]} and is gone now — lower it to 0 before dropping it")
+                    fail("J", f"plane {pid}: declared_off ceiling {state_key} was {old_v} at {base[:9]} and is gone now — a ceiling key leaves only with its rule (0 is the floor it rests at, never a licence to delete it: without the key the count is unlimited)")
                 elif new_v > old_v:
                     fail("J", f"plane {pid}: declared_off ceiling {state_key} rose {old_v} → {new_v} against {base[:9]} — an off-switch count only falls (reap or re-enable), it is never re-declared upward")
 

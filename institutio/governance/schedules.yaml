@@ -89,7 +89,7 @@
 #   R1  No committed line names a repository that is not already a disclosed projection token (a plane's
 #       authority.owner_repo, or a declared job id on a plane that carries `authority`). Fleet membership is
 #       a FACT SELECTOR (carrier, scope, visibility, archived, live state) resolved at read time against the
-#       git-ignored receipt; derived ids fleet/<owner>/<repo>/<stem> exist only in memory and in the
+#       git-ignored receipt; derived ids fleet/<owner>/<repo>/<file.yml> exist only in memory and in the
 #       git-ignored ledgers under logs/.
 #   R2  Sensor and gate output for census planes is counts-only (per plane, per cron slot) — never ids.
 #   R3  If a committed line ever MUST point at one private repository (none today), it uses

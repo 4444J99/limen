@@ -881,7 +881,7 @@ def derive_census_jobs(
                         unparseable.append(c)
                 jobs.append(
                     Job(
-                        id=f"fleet/{repo}/{Path(path).stem}",
+                        id=f"fleet/{repo}/{Path(path).name}",  # the file name, not its stem: ci.yml and ci.yaml are two
                         plane=plane_id,
                         crons=crons,
                         tz="UTC",
