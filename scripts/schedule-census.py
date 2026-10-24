@@ -1346,12 +1346,13 @@ def build_report(
             "universe_count": len(universe),
             "scanned": len(scanned),
             "scanned_partial": len(partial),
+            "runs_unmeasured_rows": sum(1 for r in scanned if r.get("runs_unmeasured") and not r.get("partial")),
             "unreachable": len(unreachable),
             "unscanned_by_budget": len(unscanned),
             "skipped_archived": len(skipped or []),
             "universe_unlisted_owners": len(unlisted_owners or []),
             "internal_errors": len(errors),
-            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not; an owner whose repository listing failed leaves the universe itself incomplete",
+            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not; a fully read repository whose active workflow's latest run lies beyond the summarized page (runs_unmeasured_rows) is read but not fully measured; an owner whose repository listing failed leaves the universe itself incomplete",
         },
         "channels_read": CHANNELS,
         "channels_not_read": NOT_READ,
@@ -1435,7 +1436,7 @@ def render_markdown(report: dict) -> str:
         "# Schedule census",
         "",
         f"Generated {report['generated_at']} · universe {d['universe_count']} ({d['universe_source']}) · scanned {d['scanned']} "
-        f"(partial {d.get('scanned_partial', 0)}) · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']} "
+        f"(partial {d.get('scanned_partial', 0)}, latest runs unmeasured in {d.get('runs_unmeasured_rows', 0)}) · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']} "
         f"· skipped archived {d.get('skipped_archived', 0)} · internal errors {d.get('internal_errors', 0)} "
         f"· owners unlisted {d.get('universe_unlisted_owners', 0)}",
         "",
@@ -1642,12 +1643,17 @@ def sidecar_path(receipt: Path) -> Path:
 
 
 def coverage_share(report: dict) -> float:
-    """Completely read repositories as a share of the universe — the measure a pass must not fall below to
-    replace the standing receipt (metadata reach alone is not coverage)."""
+    """Completely read AND fully measured repositories as a share of the universe — the measure a pass must not
+    fall below to replace the standing receipt (metadata reach alone is not coverage, and a repository whose
+    active workflow's latest run lies beyond the summarized page is read but not measured). Completeness
+    (`receipt_is_complete`) is about what was READ and stays untouched: a crowded run page recurs on every pass
+    until the engine pages deeper (#3193 q), so it must not drive a busy fleet onto the retry horizon."""
     d = report.get("denominators") or {}
     try:
         universe = int(d.get("universe_count") or 0)
-        complete = int(d.get("scanned") or 0) - int(d.get("scanned_partial") or 0)
+        complete = (
+            int(d.get("scanned") or 0) - int(d.get("scanned_partial") or 0) - int(d.get("runs_unmeasured_rows") or 0)
+        )
     except (TypeError, ValueError):
         return 0.0
     return complete / universe if universe > 0 else 0.0

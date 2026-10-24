@@ -694,7 +694,7 @@ def test_budget_cut_lists_the_unscanned_and_receipt_states_denominators(monkeypa
     assert json.loads(receipt.read_text())["denominators"]["scanned"] == 1
     assert not list(receipt.parent.glob("*.tmp"))
     md = C.render_markdown(report)
-    assert md.startswith("# Schedule census") and "universe 3 (explicit) · scanned 1 (partial 0) · unreachable 0" in md
+    assert md.startswith("# Schedule census") and "universe 3 (explicit) · scanned 1 (partial 0, latest runs unmeasured in 0) · unreachable 0" in md
     assert "unscanned by budget 1 · skipped archived 1" in md
     assert "Left unscanned by the time budget" in md and "4444J99/two" in md
     assert "Skipped (archived" in md and "4444J99/three" in md
@@ -1065,6 +1065,11 @@ def test_an_active_workflow_beyond_the_summarized_page_is_unmeasured_and_the_led
     )
     assert report["totals"]["workflows_runs_unmeasured"] == 1
     assert C.exit_code_for(report) == 2  # an unmeasured latest run is incomplete coverage, never a clean 0
+    # … and it is counted apart from partial rows: read but not measured, so the coverage share does not credit it,
+    # while completeness (what was READ) is untouched — a crowded page recurs every pass until the engine pages deeper
+    assert report["denominators"]["runs_unmeasured_rows"] == 1 and report["denominators"]["scanned_partial"] == 0
+    assert C.coverage_share(report) == 0.0 and C.receipt_is_complete(report)
+    assert "latest runs unmeasured in 1" in C.render_markdown(report)
     md = C.render_markdown(report)
     assert "latest run beyond the summarized page (unmeasured): hygiene" in md
     # when the page holds every retained run, a silent workflow simply never fired: nothing is unmeasured
@@ -1270,6 +1275,15 @@ def test_the_standing_receipt_is_kept_or_replaced_by_rule_and_the_ledger_is_writ
     ab_cd = ("explicit", frozenset({"a/b", "c/d"}))
     parked = C.keeps_standing_receipt(half, none_whole, ab_cd, interval_hours=168, now=at)
     assert parked is not None and "complete coverage 0% is below the standing receipt's 50%" in parked
+    # a pass whose workflows went unmeasured (crowded off the summarized page) does not outrank one that measured
+    # them: the share subtracts such rows, so it is parked; the measured pass replaces it; neither is incomplete
+    unmeasured = narrow("explicit", ["a/b"], runs_unmeasured_rows=1)
+    parked = C.keeps_standing_receipt(ab, unmeasured, ("explicit", frozenset({"a/b"})), interval_hours=168, now=at)
+    assert parked is not None and "complete coverage 0% is below the standing receipt's 100%" in parked
+    assert (
+        C.keeps_standing_receipt(unmeasured, ab, ("explicit", frozenset({"a/b"})), interval_hours=168, now=at) is None
+    )
+    assert C.receipt_is_complete(unmeasured) and C.coverage_share(unmeasured) == 0.0
     # an incomplete standing receipt stands only for the retry horizon, and one without a date is history
     later = at + C.timedelta(hours=25)
     assert C.keeps_standing_receipt(half, none_whole, ab_cd, interval_hours=168, retry_hours=24, now=later) is None
