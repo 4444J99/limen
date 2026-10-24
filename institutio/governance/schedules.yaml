@@ -301,7 +301,7 @@ planes:
     surface: launchd
     owner: tabularius
     effector: "scripts/heartbeat-loop.sh (launchd com.limen.heartbeat); a never-stamped cadence sensor is beat-sensors.py --canary's finding"
-    allotment: {runs: null, window: per-beat, concurrency: 1, source: "institutio/governance/sensors.yaml cadence blocks (BEATS between due-checks; worst-case wall-clock = cadence × LIMEN_LOOP_MAX, 1,800s default, so cadence 48 = daily); per-lane dispatch caps derive from cli/src/limen/capacity.py, never pinned here", entitlement: verified}
+    allotment: {runs: null, window: per-beat, concurrency: 1, source: "institutio/governance/sensors.yaml cadence blocks (BEATS between due-checks; worst-case wall-clock = cadence × LIMEN_LOOP_MAX, 1,800s default, so cadence 48 = daily; a `source: [fast-wave]` sensor runs on the fast wave instead, cadence × LIMEN_VITALS_SAMPLE_SECONDS, 300s default); per-lane dispatch caps derive from cli/src/limen/capacity.py, never pinned here", entitlement: verified}
     fill_policy: declared
     floor: null
     jobs_source: {kind: sensors, locator: institutio/governance/sensors.yaml}

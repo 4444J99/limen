@@ -2266,6 +2266,7 @@ def test_fast_wave_sensors_resolve_the_fast_wave_period_not_the_heartbeat_ceilin
     )
     monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
     monkeypatch.delenv("LIMEN_BEAT_DIURNAL", raising=False)
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(tmp_path / "absent.env"))  # never the host's deployed file
     jobs = {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}
     diurnal, audit = jobs["beat/diurnal"], jobs["beat/audit"]
     # heartbeat-loop.sh runs fast-wave sensors with --loop-max $FAST_WAVE_SECONDS (300 s); the canary scores them so
@@ -2286,6 +2287,29 @@ def test_fast_wave_sensors_resolve_the_fast_wave_period_not_the_heartbeat_ceilin
     assert UTIL._stamp_bound_seconds(jobs["beat/diurnal"]) == 240 and S.fast_wave_seconds() == 120
     monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "junk")
     assert S.fast_wave_seconds() == 300
+    monkeypatch.setenv(
+        "LIMEN_VITALS_SAMPLE_SECONDS", "²"
+    )  # str.isdigit() true, int() raises: the default, never a crash
+    assert S.fast_wave_seconds() == 300
+    # a direct run outside the beat reads the deployed env file, as beat-sensors.py does: the canary and the check agree
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+    deployed = tmp_path / "limen.env"
+    deployed.write_text("# deployed\nexport LIMEN_VITALS_SAMPLE_SECONDS='120'  # vitals\nLIMEN_LOOP_MAX=900\n")
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(deployed))
+    assert S.fast_wave_seconds() == 120 and S.env_file_value("LIMEN_LOOP_MAX", deployed) == "900"
+    assert S.fast_wave_seconds({"LIMEN_VITALS_SAMPLE_SECONDS": "90", "LIMEN_ENV_FILE": str(deployed)}) == 90
+    assert S.env_file_value("LIMEN_VITALS_SAMPLE_SECONDS", tmp_path / "absent.env") is None
+    assert (
+        UTIL._stamp_bound_seconds(
+            next(
+                iter(
+                    {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}["beat/diurnal"]
+                    for _ in [0]
+                )
+            )
+        )
+        == 240
+    )
 
 
 def test_sibling_clone_without_the_evidence_folder_is_unreadable_not_absent(tmp_path, monkeypatch):
