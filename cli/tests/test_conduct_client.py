@@ -55,6 +55,34 @@ def test_http_client_sends_stable_user_agent(monkeypatch):
     assert captured["timeout"] == 17
 
 
+def test_policy_custody_read_sends_the_exact_recover_value(monkeypatch):
+    # The keeper answers any other custody value with 403 policy_custody_forbidden.
+    captured = {}
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return b'{"policy":{"mode":"recovery"}}'
+
+    def fake_urlopen(request, *, timeout):
+        captured["request"] = request
+        return Response()
+
+    monkeypatch.setattr("limen.conduct.client.urllib.request.urlopen", fake_urlopen)
+    client = HttpConductClient("https://limen-runtime.example", "fixture-token")
+
+    assert client.execution_policy_custody()["policy"] == {"mode": "recovery"}
+    assert captured["request"].get_method() == "GET"
+    assert captured["request"].full_url.endswith("/api/conduct/execution/policy")
+    assert captured["request"].get_header("X-limen-policy-custody") == "recover"
+    assert captured["request"].get_header("Authorization") == "Bearer fixture-token"
+
+
 # --------------------------------------------------------------------------------------------
 # A spent keeper storage plan is its own condition — not a bug, not a transient fault.
 #

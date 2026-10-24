@@ -31,9 +31,17 @@ class AssessmentHttpClient(HttpConductClient):
             raise ValueError("invalid assessment transport configuration")
         super().__init__(endpoint, token)
 
-    def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         try:
-            if method not in {"GET", "POST"} or not path.startswith("/api/conduct/"):
+            # The bounded helper forwards no caller headers; refuse rather than drop one silently.
+            if headers or method not in {"GET", "POST"} or not path.startswith("/api/conduct/"):
                 raise ValueError
             request = json.dumps(
                 {"url": self.endpoint + path, "method": method, "credential": self.token, "payload": payload}

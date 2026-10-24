@@ -78,7 +78,14 @@ class HttpConductClient:
         self.token = token
         self.timeout = timeout
 
-    def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         body = json.dumps(payload).encode("utf-8") if payload is not None else None
         request = urllib.request.Request(
             f"{self.endpoint}{path}",
@@ -89,6 +96,7 @@ class HttpConductClient:
                 "accept": "application/json",
                 "user-agent": "limen-conduct-client/1",
                 **({"content-type": "application/json"} if body is not None else {}),
+                **(headers or {}),
             },
         )
         try:
@@ -122,6 +130,14 @@ class HttpConductClient:
     def principal_registry(self) -> dict[str, Any]:
         """Read redacted identities and the complete binding fingerprint as a conductor."""
         return self._request("GET", "/api/conduct/principal-registry")
+
+    def execution_policy_custody(self) -> dict[str, Any]:
+        """Read the live execution policy body with a conductor credential.
+
+        The keeper returns the body only for the exact ``recover`` custody value and answers any other
+        value with 403 ``policy_custody_forbidden``, so the header is fixed here rather than caller-supplied.
+        """
+        return self._request("GET", "/api/conduct/execution/policy", headers={"x-limen-policy-custody": "recover"})
 
     def inventory_authority(self) -> dict[str, Any]:
         """Read the administrator-installed contract using a collector principal."""
