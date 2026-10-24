@@ -694,7 +694,10 @@ def test_budget_cut_lists_the_unscanned_and_receipt_states_denominators(monkeypa
     assert json.loads(receipt.read_text())["denominators"]["scanned"] == 1
     assert not list(receipt.parent.glob("*.tmp"))
     md = C.render_markdown(report)
-    assert md.startswith("# Schedule census") and "universe 3 (explicit) · scanned 1 (partial 0, latest runs unmeasured in 0) · unreachable 0" in md
+    assert (
+        md.startswith("# Schedule census")
+        and "universe 3 (explicit) · scanned 1 (partial 0, latest runs unmeasured in 0) · unreachable 0" in md
+    )
     assert "unscanned by budget 1 · skipped archived 1" in md
     assert "Left unscanned by the time budget" in md and "4444J99/two" in md
     assert "Skipped (archived" in md and "4444J99/three" in md
