@@ -665,7 +665,9 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
 
 def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None) -> dict:
     """Newest page (and the deepest page when it could be read). total_count at RUN_LISTING_CAP is a floor;
-    oldest_seen without the deepest page is page one's edge, never the first run."""
+    oldest_seen without the deepest page is page one's edge, never the first run. Per workflow the newest run
+    (`last_at`/`last_conclusion`) AND the newest success (`last_success_at`): a newest run still queued or
+    running at collection time has no conclusion, and must not hide yesterday's success from the reader."""
     runs = (page1 or {}).get("workflow_runs")
     runs = [r for r in runs if isinstance(r, dict)] if isinstance(runs, list) else []
     try:
@@ -683,6 +685,7 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
                 "runs_on_page": 0,
                 "last_at": None,
                 "last_conclusion": None,
+                "last_success_at": None,
                 "failed_on_page": 0,
             },
         )
@@ -690,6 +693,8 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
         if row["last_at"] is None:  # page is newest-first
             row["last_at"] = r.get("created_at")
             row["last_conclusion"] = r.get("conclusion")
+        if row["last_success_at"] is None and r.get("conclusion") == "success":
+            row["last_success_at"] = r.get("created_at")
         if r.get("conclusion") in BAD_CONCLUSIONS:
             row["failed_on_page"] += 1
     newest = runs[0].get("created_at") if runs else None

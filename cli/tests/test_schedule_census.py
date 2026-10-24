@@ -406,6 +406,23 @@ def test_scan_repo_reads_carriers_states_runs_and_history(monkeypatch, tmp_path)
         and deep["oldest_page_read"] is True
         and deep["oldest_seen"] == "2026-01-01T00:00:00Z"
     )
+    # the newest run can be queued or running (conclusion null): the page's newest SUCCESS is recorded beside it,
+    # so the utilization reader never mistakes a run in flight for a workflow gone dark
+    w_path = ".github/workflows/w.yml"
+    pending = C.summarize_scheduled_runs(
+        {
+            "total_count": 3,
+            "workflow_runs": [
+                {"path": w_path, "name": "w", "created_at": "2026-10-23T09:00:00Z", "conclusion": None},
+                {"path": w_path, "name": "w", "created_at": "2026-10-22T09:00:00Z", "conclusion": "failure"},
+                {"path": w_path, "name": "w", "created_at": "2026-10-21T09:00:00Z", "conclusion": "success"},
+            ],
+        }
+    )["by_workflow"][w_path]
+    assert (pending["last_at"], pending["last_conclusion"]) == ("2026-10-23T09:00:00Z", None)
+    assert pending["last_success_at"] == "2026-10-21T09:00:00Z"
+    assert (pending["runs_on_page"], pending["failed_on_page"]) == (3, 1)
+    assert capped["by_workflow"]["w"]["last_success_at"] is None  # no success on the page: nothing invented
     assert row["failing_workflows"] == [] and row["actions_registered_not_in_tree"] == [
         ".github/workflows/tmp-diag.yml"
     ]
