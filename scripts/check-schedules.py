@@ -434,7 +434,9 @@ def check_consumers(root: Path) -> None:
         fail("F", "gates.yaml does not register check-schedules — this predicate would run nowhere in CI")
 
 
-REGISTRY_READERS = frozenset({"scripts/check-schedules.py", "scripts/schedule-utilization.py"})
+REGISTRY_READERS = frozenset(
+    {"scripts/check-schedules.py", "scripts/schedule-utilization.py", "scripts/schedule-census.py"}
+)
 
 
 def check_readers(root: Path) -> None:
