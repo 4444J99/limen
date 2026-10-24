@@ -26,9 +26,12 @@ Reads only: every GitHub call is a `gh api` GET; nothing here can start, retry, 
 Receipt: logs/schedule-census.json (atomic) + optional Markdown ledger. The organ owns its own wall-clock
 interval (`--interval-hours`, default 168) so a metabolize-pass caller stays cheap between censuses; an
 incomplete receipt (read nothing; an owner whose repository listing failed; more than a quarter of the universe
-unreachable, unscanned, partially read or errored) earns only the shorter `--retry-hours` horizon, and a pass that
-reads fewer repositories than the standing receipt is written beside
-it as `*.last-attempt.json` instead of over it.
+unreachable, unscanned, partially read or errored) earns only the shorter `--retry-hours` horizon. A pass is written
+beside the standing receipt as `*.last-attempt.json` instead of over it when it is narrower than a universe census
+(at any age) or, while the standing receipt is within its horizon, of another narrow scope, incomplete where the
+standing one is complete, or lower in complete coverage share; past that horizon the newer pass is the census, and a
+complete pass always replaces an incomplete receipt. A fresh receipt (or last attempt) answers only a request for
+the same scope.
 
 Every repository row carries a per-channel read status; a row whose essential channels were not all read is
 `partial` and may confirm what it saw but never concludes absence. Exit codes: 0 clean and complete · 1 findings
@@ -74,6 +77,12 @@ RATE_FLOOR = 200  # core-quota calls kept in hand before a repository scan (the 
 RATE_CHECK_EVERY_CALLS = 50
 WORKFLOW_LIST_PAGES = 10
 ESSENTIAL_CHANNELS = ("tree", "actions-workflows", "contents", "scheduled-runs")
+# history channel states that count as READ: a repository with no live schedule may be concluded `none` only when
+# its history was read (an API sample, even truncated or partially read, was read; an empty repository has none to
+# read). A 404 on the Commits API is NOT an observation — the endpoint answers 200 [] for no commits, so a 404 means
+# the repository or the token's view of it is gone
+HISTORY_READ = frozenset({"git", "git:partial", "api", "api:partial", "api:truncated", "empty"})
+REPO_LIST_LIMIT = 1000  # `gh repo list --limit`: a listing this long may be capped, and a capped roster is named
 FINDING_VERDICTS = frozenset({"declared-never-fired", "firing-but-failing", "auto-disabled"})
 HYGIENE_KINDS = frozenset({"dependabot", "renovate"})  # dependency-update schedules: hygiene, not an operator scheduler
 RUN_LISTING_CAP = 2500  # the Actions run listing stops counting here; a total at the cap is a floor, not a count
@@ -83,7 +92,7 @@ MAX_INCOMPLETE_SHARE = S.CENSUS_MAX_INCOMPLETE_SHARE
 CHANNELS = {
     "gh-workflow": "Actions workflow files with on.schedule; state from the Actions API",
     "gh-scheduled-runs": "actions/runs?event=schedule (fired; bounded by Actions run retention)",
-    "gh-workflow-history": "git history of .github/workflows (full clone) or the Commits API (capped)",
+    "gh-workflow-history": "git history of .github/workflows (full clone) or the Commits API (capped) — workflow files only; the other carriers are read live from the tree, never historically",
     "wrangler": "wrangler.toml/.json(c) [triggers] crons",
     "cloudflare-manifest": "ops-style cloudflare/src/manifest.ts targets (name, schedule, maxInvocationsPerDay)",
     "vercel": "vercel.json crons",
@@ -156,6 +165,14 @@ def gh_api(path: str) -> tuple[str, object | None]:
     return ERROR, payload
 
 
+def _says_empty_repository(payload: object) -> bool:
+    """GitHub's own word for a repository with no commits: 409 "Git Repository is empty." A 5xx, a timeout or a
+    connection cut is an ERROR too, and size 0 alone (computed lazily, 0 for a tiny fresh repository) proves nothing."""
+    if not isinstance(payload, dict):
+        return False
+    return str(payload.get("status")) == "409" or "repository is empty" in str(payload.get("message", "")).lower()
+
+
 def _decode_contents(payload: object) -> str | None:
     if isinstance(payload, dict) and payload.get("encoding") == "base64":
         try:
@@ -197,7 +214,20 @@ def rate_guard(*, floor: int = RATE_FLOOR, deadline: float | None = None, sleep=
 # ── universe ────────────────────────────────────────────────────────────────────────────────
 
 
-def universe_from_estate_cache(path: Path) -> tuple[list[dict], str] | None:
+def _estate_ttl_hours() -> float:
+    """The estate cache's own TTL (LIMEN_ESTATE_CACHE_TTL_HOURS, the value estate-repos-refresh.py refreshes on)."""
+    try:
+        return float(os.environ.get("LIMEN_ESTATE_CACHE_TTL_HOURS", "24") or 24)
+    except ValueError:
+        return 24.0
+
+
+def universe_from_estate_cache(
+    path: Path, *, ttl_hours: float | None = None, now: datetime | None = None
+) -> tuple[list[dict], str, list[str]] | None:
+    """(rows, source, caveats). A cache older than the estate TTL is still a roster, but a roster that may be short
+    of every repository created since: the caveat `stale-cache:<fetched_at>` rides into the receipt's unlisted list
+    so such a universe is never rested on as complete (resolve_universe prefers a live listing over it)."""
     if not path.exists():
         return None
     try:
@@ -208,7 +238,17 @@ def universe_from_estate_cache(path: Path) -> tuple[list[dict], str] | None:
         return None
     repos = data.get("repos") or {}
     rows = [{"repo": name, **(meta if isinstance(meta, dict) else {})} for name, meta in sorted(repos.items())]
-    return rows, f"estate-cache:{path}"
+    caveats: list[str] = []
+    try:
+        fetched_at = datetime.fromisoformat(str(data.get("fetched_at")))
+        if fetched_at.tzinfo is None:
+            fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+        ttl = ttl_hours if ttl_hours is not None else _estate_ttl_hours()
+        if (now or datetime.now(timezone.utc)) - fetched_at > timedelta(hours=ttl):
+            caveats.append(f"stale-cache:{fetched_at.isoformat(timespec='seconds')}")
+    except (TypeError, ValueError):
+        caveats.append("stale-cache:unknown-age")
+    return rows, f"estate-cache:{path}", caveats
 
 
 def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[dict], str, list[str]] | None:
@@ -254,6 +294,8 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
         except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
             unlisted.append(owner)
             continue
+        if isinstance(items, list) and len(items) >= REPO_LIST_LIMIT:
+            unlisted.append(f"capped:{owner}")  # the listing may be longer than its cap: named, never trusted whole
         for it in items:
             if isinstance(it, dict) and it.get("nameWithOwner"):
                 rows.append(
@@ -274,24 +316,42 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
 def resolve_universe(
     explicit: list[str], repos_file: Path | None, estate_cache: Path
 ) -> tuple[list[dict], str, list[str]]:
-    """(universe rows, source, unlisted owners). The third element is non-empty only on the gh-repo-list path,
-    when one owner's listing failed: that universe is incomplete and the receipt must say so."""
+    """(universe rows, source, caveats). The third element names everything that makes the universe itself
+    incomplete — an owner whose listing failed, a listing at its cap, the organizations never listed, a roster older
+    than the estate TTL — so the receipt says so instead of resting on a short denominator. A fresh estate cache is
+    preferred (no API spend); a stale one yields to a live listing and is used, caveated, only when that fails.
+    Repeated names (an explicit list, a repos file) are scanned once."""
     if explicit:
-        return [{"repo": r} for r in explicit], "explicit", []
+        return _dedupe([{"repo": r} for r in explicit]), "explicit", []
     if repos_file is not None:
         names = [
             ln.strip()
             for ln in repos_file.read_text(encoding="utf-8").splitlines()
             if ln.strip() and not ln.startswith("#")
         ]
-        return [{"repo": r} for r in names], f"repos-file:{repos_file}", []
+        return _dedupe([{"repo": r} for r in names]), f"repos-file:{repos_file}", []
     cached = universe_from_estate_cache(estate_cache)
-    if cached is not None:
-        return cached[0], cached[1], []
+    if cached is not None and not cached[2]:
+        return _dedupe(cached[0]), cached[1], []
     found = universe_from_gh_repo_list(_owners_pin())
-    if found is None:
-        return [], "none", []
-    return found
+    if found is not None:
+        return _dedupe(found[0]), found[1], found[2]
+    if cached is not None:  # a stale roster beats no roster — and the receipt says it is stale
+        return _dedupe(cached[0]), cached[1], cached[2]
+    return [], "none", []
+
+
+def _dedupe(rows: list[dict]) -> list[dict]:
+    """First occurrence wins, order kept: a name listed twice (GitHub names are case-insensitive) is one repository,
+    scanned and counted once."""
+    seen: set[str] = set()
+    out: list[dict] = []
+    for r in rows:
+        if str(r["repo"]).lower() in seen:
+            continue
+        seen.add(str(r["repo"]).lower())
+        out.append(r)
+    return out
 
 
 def _owners_pin() -> list[str] | None:
@@ -479,8 +539,14 @@ def parse_renovate(text: str) -> list[str] | None:
         data = json.loads(_strip_json_comments(text))
     except json.JSONDecodeError:
         return None
-    sched = data.get("schedule") if isinstance(data, dict) else None
-    return _str_list(sched)
+    if not isinstance(data, dict):
+        return []
+    out = _str_list(data.get("schedule"))
+    rules = data.get("packageRules")
+    for rule in rules if isinstance(rules, list) else []:  # a schedule may live on a package rule, not the root
+        if isinstance(rule, dict) and rule.get("schedule"):
+            out += [s for s in _str_list(rule.get("schedule")) if s not in out]
+    return out
 
 
 def parse_cloud_routines(text: str) -> int | None:
@@ -582,7 +648,9 @@ def declaration_for(kind: str, path: str, text: str) -> dict | None:
 
 def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None) -> dict:
     """Newest page (and the deepest page when it could be read). total_count at RUN_LISTING_CAP is a floor;
-    oldest_seen without the deepest page is page one's edge, never the first run."""
+    oldest_seen without the deepest page is page one's edge, never the first run. Per workflow the newest run
+    (`last_at`/`last_conclusion`) AND the newest success (`last_success_at`): a newest run still queued or
+    running at collection time has no conclusion, and must not hide yesterday's success from the reader."""
     runs = (page1 or {}).get("workflow_runs")
     runs = [r for r in runs if isinstance(r, dict)] if isinstance(runs, list) else []
     try:
@@ -591,14 +659,25 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
         total = len(runs)
     by_workflow: dict[str, dict] = {}
     for r in runs:
-        name = str(r.get("name") or r.get("path") or "?")
+        # keyed by the workflow file (two files may share a display name); the name rides along for the ledger
+        key = str(r.get("path") or r.get("name") or "?")
         row = by_workflow.setdefault(
-            name, {"runs_on_page": 0, "last_at": None, "last_conclusion": None, "failed_on_page": 0}
+            key,
+            {
+                "name": str(r.get("name") or key),
+                "runs_on_page": 0,
+                "last_at": None,
+                "last_conclusion": None,
+                "last_success_at": None,
+                "failed_on_page": 0,
+            },
         )
         row["runs_on_page"] += 1
         if row["last_at"] is None:  # page is newest-first
             row["last_at"] = r.get("created_at")
             row["last_conclusion"] = r.get("conclusion")
+        if row["last_success_at"] is None and r.get("conclusion") == "success":
+            row["last_success_at"] = r.get("created_at")
         if r.get("conclusion") in BAD_CONCLUSIONS:
             row["failed_on_page"] += 1
     newest = runs[0].get("created_at") if runs else None
@@ -611,6 +690,8 @@ def summarize_scheduled_runs(page1: dict | None, oldest_page: dict | None = None
         "oldest_page_read": bool(old_runs),
         "newest": newest,
         "oldest_seen": oldest,
+        "page_oldest_seen": runs[-1].get("created_at") if runs else None,  # the summarized page's own edge
+        "page_runs": len(runs),
         "by_workflow": by_workflow,
         "retention_note": "GitHub keeps Actions run records for the repository's retention window (90 days by default); older attempts are visible only in git history",
     }
@@ -701,8 +782,19 @@ def clone_is_full(clone: Path | None) -> bool:
 
 
 def history_from_git(clone: Path) -> dict:
-    """Full-clone history: every commit touching a carrier path, with the cron lines it added/removed."""
-    log = _git(clone, *GIT_LOG, "--format=commit %H %cI", "--name-status", "--", WORKFLOW_DIR) or ""
+    """Full-clone history: every commit touching a workflow path, with the cron lines it added/removed. A git
+    read that fails or times out is `unreadable` — an unread history is never reported as an empty one."""
+    log = _git(clone, *GIT_LOG, "--format=commit %H %cI", "--name-status", "--", WORKFLOW_DIR)
+    patches = _git(clone, *GIT_LOG, "--format=commit %H", "-p", *GIT_PATCH, "--", WORKFLOW_DIR)
+    if log is None or patches is None:
+        return {
+            "source": "git",
+            "status": ERROR,
+            "commits_seen": 0,
+            "truncated": True,
+            "events": [],
+            "note": "git log failed or timed out — history unread, not empty",
+        }
     events: list[dict] = []
     sha = at = None
     for line in log.splitlines():
@@ -715,7 +807,6 @@ def history_from_git(clone: Path) -> dict:
         status, path = parts[0][0], parts[-1]
         change = {"A": "added", "D": "removed", "M": "modified", "R": "renamed"}.get(status, status)
         events.append({"at": at, "sha": sha[:10], "path": path, "change": change})
-    patches = _git(clone, *GIT_LOG, "--format=commit %H", "-p", *GIT_PATCH, "--", WORKFLOW_DIR) or ""
     # keyed by (commit, path): a commit that moves a cron in a.yml and edits a comment in b.yml must not hand
     # b.yml a scheduling attempt it never had
     added: dict[tuple[str, str], list[str]] = {}
@@ -780,11 +871,12 @@ def _patch_crons(patch: str, sign: str) -> list[str]:
     ]
 
 
-def history_from_api(repo: str, cap: int, *, deadline: float | None = None) -> dict:
+def history_from_api(repo: str, cap: int, *, deadline: float | None = None, call=None) -> dict:
     """Commits API sample (newest + oldest, capped). `deadline` is a time.monotonic() bound: the per-commit detail
     requests stop there and the remainder is recorded as unread, so a slow history never outlives the census
     budget (the sensor's execution timeout would otherwise kill the pass before any receipt is written)."""
-    st, commits = gh_api(f"repos/{repo}/commits?path={WORKFLOW_DIR}&per_page=100")
+    call = call or gh_api  # scan_repo hands in its counting wrapper so these requests reach the rate check
+    st, commits = call(f"repos/{repo}/commits?path={WORKFLOW_DIR}&per_page=100")
     if st != OK or not isinstance(commits, list):
         status = st if st != OK else ERROR
         return {
@@ -805,7 +897,7 @@ def history_from_api(repo: str, cap: int, *, deadline: float | None = None) -> d
         if deadline is not None and time.monotonic() > deadline:
             stopped = len(sample) - i
             break
-        st, detail = gh_api(f"repos/{repo}/commits/{sha}")
+        st, detail = call(f"repos/{repo}/commits/{sha}")
         if st != OK or not isinstance(detail, dict):
             unread += 1
             continue
@@ -860,6 +952,8 @@ def _blank_row(repo: str) -> dict:
         "notes": [],
         "api_calls": 0,
         "failing_workflows": [],
+        "failing_not_firing": [],
+        "runs_unmeasured": [],
         "actions_registered_not_in_tree": [],
         "channels": {},
         "partial": False,
@@ -912,8 +1006,8 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
         else:
             channels["tree"] = OK
             tree_complete = True
-    elif st == ABSENT and meta.get("size") == 0:
-        channels["tree"] = "empty"  # a repository with no commits has no tree to list
+    elif meta.get("size") == 0 and (st == ABSENT or _says_empty_repository(tree)):
+        channels["tree"] = "empty"  # no commits, no tree: GitHub answers 409 "Git Repository is empty" (or a 404)
         tree_complete = True
     else:
         channels["tree"] = st if st != OK else ERROR
@@ -1035,32 +1129,52 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
         channels["issues-prs"] = str(out["attempts"].get("status") or (OK if out["attempts"]["readable"] else ERROR))
 
     by = (out.get("fired") or {}).get("by_workflow") or {}
-    firing = {
-        d.get("name")
+    timed_active = [
+        d
         for d in out["declarations"]
         if d.get("kind") == "gh-workflow" and d.get("state") == "active" and d.get("crons")
-    }
-    bad = {n for n, v in by.items() if v.get("last_conclusion") in BAD_CONCLUSIONS}
-    out["failing_workflows"] = sorted(bad & firing)  # still scheduled and failing: a finding
-    out["failing_not_firing"] = sorted(bad - firing)  # disabled, retired or deleted since: history, never a finding
+    ]
+    # runs are keyed by workflow path (a fixture or an old listing may carry only the name): join on either
+    firing = {d.get("path") for d in timed_active} | {d.get("name") for d in timed_active if d.get("name")}
+    bad = {k for k, v in by.items() if v.get("last_conclusion") in BAD_CONCLUSIONS}
+    out["failing_workflows"] = sorted(str(by[k].get("name") or k) for k in bad & firing)  # scheduled and failing
+    out["failing_not_firing"] = sorted(str(by[k].get("name") or k) for k in bad - firing)  # off since: history only
+    # an active schedule with no run on the summarized page, on a listing longer than that page: its latest run sits
+    # on an unread page — unmeasured, never healthy and never failing
+    fired_total = (
+        int((out.get("fired") or {}).get("total_scheduled_runs") or 0) if isinstance(out.get("fired"), dict) else 0
+    )
+    page_runs = int((out.get("fired") or {}).get("page_runs") or 0) if isinstance(out.get("fired"), dict) else 0
+    seen_keys = set(by)  # a run keys by path, by name only when it carried none: a twin's display name hides nothing
+    out["runs_unmeasured"] = sorted(
+        str(d.get("name") or d.get("path"))
+        for d in timed_active
+        if fired_total > page_runs and d.get("path") not in seen_keys and d.get("name") not in seen_keys
+    )
     out["actions_registered_not_in_tree"] = sorted(d["path"] for d in out["declarations"] if d.get("absent_from_tree"))
 
-    if clone_is_full(clone):
+    if channels.get("tree") == "empty":
+        channels["history"] = "empty"  # no commits: nothing to read, and the Commits API would answer 409 too
+        out["history"] = {"source": "none", "status": OK, "commits_seen": 0, "truncated": False, "events": []}
+    elif clone_is_full(clone):
         out["history"] = history_from_git(clone)  # type: ignore[arg-type]
-        channels["history"] = "git"
+        git_status = out["history"].get("status")
+        channels["history"] = "git" + ("" if git_status == OK else f":{git_status}")
     elif over():
         channels["history"] = "skipped:budget"
     else:
         if clone is not None:
             out["notes"].append("local clone is shallow — history read through the Commits API instead")
-        out["history"] = history_from_api(repo, history_cap, deadline=deadline)
+        out["history"] = history_from_api(repo, history_cap, deadline=deadline, call=call)
         channels["history"] = (
             "api"
             + ("" if out["history"].get("status") == OK else f":{out['history'].get('status')}")
             + (":truncated" if out["history"].get("truncated") and out["history"].get("status") == OK else "")
         )
 
-    out["partial"] = any(channels.get(name) not in {OK, "empty"} for name in ESSENTIAL_CHANNELS)
+    out["partial"] = any(channels.get(name) not in {OK, "empty"} for name in ESSENTIAL_CHANNELS) or (
+        channels.get("history") not in HISTORY_READ  # an unread history cannot conclude `none`
+    )
     out["verdict"] = verdict_for_repo(out)
     return out
 
@@ -1068,8 +1182,9 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
 def verdict_for_repo(row: dict) -> str:
     """One word per repository, from evidence only. unreachable ≠ none, and a partial read ≠ none.
 
-    Positive evidence wins in this order: an active Actions schedule (then: fired-unmeasured when the run listing
-    could not be read, declared-never-fired, firing-but-failing, active) → a disabled one (auto-disabled is a
+    Positive evidence wins in this order: an active Actions schedule (then: fired-unmeasured when the run listing,
+    or every live workflow's latest run, could not be read; declared-never-fired when no live workflow has a run in
+    the whole retained listing; firing-but-failing; active) → a disabled one (auto-disabled is a
     state GitHub passes only on scheduled workflows, so it stands without the cron lines; a manual disable or a
     fork disable needs them) → a declared cron whose state could not be verified → a schedule outside Actions →
     a cron removed in history → partial (something essential was not read) → none. A row whose only non-Actions
@@ -1088,7 +1203,14 @@ def verdict_for_repo(row: dict) -> str:
         if int(fired.get("total_scheduled_runs") or 0) == 0:
             return "declared-never-fired"
         by = fired.get("by_workflow") or {}
-        if by and all(v.get("last_conclusion") in BAD_CONCLUSIONS for v in by.values()):
+        firing = {d.get("path") for d in active} | {d.get("name") for d in active if d.get("name")}
+        live = {k: v for k, v in by.items() if k in firing}  # a retired workflow's failures are history, not this
+        if not live:
+            # no live schedule has a run on the summarized page: never fired (within retention) when that page is the
+            # whole listing; unmeasured when its latest run may sit on an unread page
+            whole = int(fired.get("page_runs") or 0) >= int(fired.get("total_scheduled_runs") or 0)
+            return "declared-never-fired" if whole else "fired-unmeasured"
+        if all(v.get("last_conclusion") in BAD_CONCLUSIONS for v in live.values()):
             return "firing-but-failing"
         return "active"
     if any(d.get("state") == "disabled_inactivity" for d in gh):
@@ -1224,12 +1346,13 @@ def build_report(
             "universe_count": len(universe),
             "scanned": len(scanned),
             "scanned_partial": len(partial),
+            "runs_unmeasured_rows": sum(1 for r in scanned if r.get("runs_unmeasured") and not r.get("partial")),
             "unreachable": len(unreachable),
             "unscanned_by_budget": len(unscanned),
             "skipped_archived": len(skipped or []),
             "universe_unlisted_owners": len(unlisted_owners or []),
             "internal_errors": len(errors),
-            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not; an owner whose repository listing failed leaves the universe itself incomplete",
+            "note": "conclusions below are about the scanned set only; unreachable, unscanned (time budget or API quota), skipped and errored repositories are listed, never counted as unscheduled; a partial scan confirms what it read and concludes nothing about what it did not; a fully read repository whose active workflow's latest run lies beyond the summarized page (runs_unmeasured_rows) is read but not fully measured; an owner whose repository listing failed leaves the universe itself incomplete",
         },
         "channels_read": CHANNELS,
         "channels_not_read": NOT_READ,
@@ -1244,6 +1367,7 @@ def build_report(
             "gh_workflows_state_unknown": sum(1 for d in gh_decl if d.get("crons") and d.get("state") == "unknown"),
             "workflows_disabled_any_trigger": sum(1 for d in gh_decl if str(d.get("state", "")).startswith("disabled")),
             "workflows_failing_last_scheduled_run": sum(len(r.get("failing_workflows") or []) for r in scanned),
+            "workflows_runs_unmeasured": sum(len(r.get("runs_unmeasured") or []) for r in scanned),
             "actions_registered_not_in_tree": sum(len(r.get("actions_registered_not_in_tree") or []) for r in scanned),
             "attempt_discourse_items": sum(len((r.get("attempts") or {}).get("items") or []) for r in scanned),
             "repos_with_attempt_discourse": sum(1 for r in scanned if (r.get("attempts") or {}).get("items")),
@@ -1293,7 +1417,14 @@ def _timed_declarations(decls: list[dict]) -> tuple[list[dict], list[dict]]:
     timed = [
         x
         for x in decls
-        if x.get("crons") or x.get("targets") or x.get("interval_seconds") or x.get("calendar") or x.get("on_calendar")
+        if x.get("crons")
+        or x.get("targets")
+        or x.get("interval_seconds")
+        or x.get("calendar")
+        or x.get("on_calendar")
+        or x.get("intervals")
+        or x.get("schedule")
+        or x.get("routines")
     ]
     return timed, [x for x in decls if x not in timed]
 
@@ -1305,7 +1436,7 @@ def render_markdown(report: dict) -> str:
         "# Schedule census",
         "",
         f"Generated {report['generated_at']} · universe {d['universe_count']} ({d['universe_source']}) · scanned {d['scanned']} "
-        f"(partial {d.get('scanned_partial', 0)}) · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']} "
+        f"(partial {d.get('scanned_partial', 0)}, latest runs unmeasured in {d.get('runs_unmeasured_rows', 0)}) · unreachable {d['unreachable']} · unscanned by budget {d['unscanned_by_budget']} "
         f"· skipped archived {d.get('skipped_archived', 0)} · internal errors {d.get('internal_errors', 0)} "
         f"· owners unlisted {d.get('universe_unlisted_owners', 0)}",
         "",
@@ -1326,6 +1457,13 @@ def render_markdown(report: dict) -> str:
             + (" " + ",".join(x.get("crons") or []) if x.get("crons") else "")
             + (f" {len(x['targets'])} targets" if x.get("targets") else "")
             + (f" every {x['interval_seconds']}s" if x.get("interval_seconds") else "")
+            + (" " + ",".join(x.get("intervals") or []) if x.get("intervals") else "")
+            + (
+                " " + ",".join(x.get("schedule") or [])
+                if isinstance(x.get("schedule"), list) and x.get("schedule")
+                else ""
+            )
+            + (f" {x['routines']} routines" if x.get("routines") else "")
             for x in timed[:8]
         ]
         if len(timed) > 8:
@@ -1338,6 +1476,8 @@ def render_markdown(report: dict) -> str:
         decl = "; ".join(parts) or "—"
         if r.get("failing_workflows"):
             decl += f" · failing: {', '.join(r['failing_workflows'])}"
+        if r.get("runs_unmeasured"):
+            decl += f" · latest run beyond the summarized page (unmeasured): {', '.join(r['runs_unmeasured'])}"
         fired = r.get("fired") or {}
         fired_s = (
             f"{fired.get('total_scheduled_runs', 0)} (newest {str(fired.get('newest') or '-')[:10]})" if fired else "—"
@@ -1453,9 +1593,11 @@ def render_markdown(report: dict) -> str:
             f"- {u}" for u in report["skipped_archived"]
         ]
     if report.get("unlisted_owners"):
-        lines += ["", "## Owners whose repository listing failed (the universe itself is incomplete)", ""] + [
-            f"- {o}" for o in report["unlisted_owners"]
-        ]
+        lines += [
+            "",
+            "## Universe incomplete (an owner listing failed or was capped, or the estate roster is stale)",
+            "",
+        ] + [f"- {o}" for o in report["unlisted_owners"]]
     return "\n".join(lines) + "\n"
 
 
@@ -1467,21 +1609,122 @@ def receipt_is_complete(report: dict, *, max_incomplete_share: float = MAX_INCOM
     return S.census_receipt_is_complete(report, max_incomplete_share=max_incomplete_share)
 
 
-def receipt_is_fresh(
-    path: Path, interval_hours: float, now: datetime | None = None, *, retry_hours: float = DEFAULT_RETRY_HOURS
-) -> bool:
-    """Younger than the interval — but an incomplete receipt only earns the shorter retry horizon."""
-    data = load_receipt(path)
-    if data is None:
-        return False
+def _generated_at(data: dict | None) -> datetime | None:
     try:
-        generated = datetime.fromisoformat(str(data.get("generated_at")))
+        generated = datetime.fromisoformat(str((data or {}).get("generated_at")))
     except (ValueError, TypeError):
+        return None
+    return generated.replace(tzinfo=timezone.utc) if generated.tzinfo is None else generated
+
+
+def receipt_scope(data: dict) -> tuple[str, object]:
+    """What a receipt is a census OF: an explicit repository set, a repos file, or the whole universe. A fresh
+    receipt answers only a request for the same scope."""
+    source = str(((data.get("denominators") or {}).get("universe_source")) or "")
+    if source.startswith("explicit"):
+        names = [str(r.get("repo")) for r in data.get("repos") or [] if isinstance(r, dict)]
+        names += [str(x) for key in ("unscanned_by_budget", "skipped_archived") for x in data.get(key) or []]
+        return "explicit", frozenset(n.lower() for n in names)  # every name the pass was asked for, scanned or not
+    if source.startswith("repos-file:"):
+        return "repos-file", source.removeprefix("repos-file:")
+    return "universe", None
+
+
+def requested_scope(explicit: list[str], repos_file: Path | None) -> tuple[str, object]:
+    if explicit:
+        return "explicit", frozenset(r.lower() for r in explicit)
+    if repos_file is not None:
+        return "repos-file", str(repos_file)
+    return "universe", None
+
+
+def sidecar_path(receipt: Path) -> Path:
+    return receipt.with_name(receipt.stem + ".last-attempt" + receipt.suffix)
+
+
+def coverage_share(report: dict) -> float:
+    """Completely read AND fully measured repositories as a share of the universe — the measure a pass must not
+    fall below to replace the standing receipt (metadata reach alone is not coverage, and a repository whose
+    active workflow's latest run lies beyond the summarized page is read but not measured). Completeness
+    (`receipt_is_complete`) is about what was READ and stays untouched: a crowded run page recurs on every pass
+    until the engine pages deeper (#3193 q), so it must not drive a busy fleet onto the retry horizon."""
+    d = report.get("denominators") or {}
+    try:
+        universe = int(d.get("universe_count") or 0)
+        complete = (
+            int(d.get("scanned") or 0) - int(d.get("scanned_partial") or 0) - int(d.get("runs_unmeasured_rows") or 0)
+        )
+    except (TypeError, ValueError):
+        return 0.0
+    return complete / universe if universe > 0 else 0.0
+
+
+def keeps_standing_receipt(
+    previous: dict | None,
+    report: dict,
+    scope: tuple[str, object],
+    *,
+    interval_hours: float,
+    retry_hours: float = DEFAULT_RETRY_HOURS,
+    now: datetime | None = None,
+) -> str | None:
+    """Why this pass is parked beside the standing receipt (`*.last-attempt.json`) instead of replacing it — or None
+    when it replaces it. In order: a narrower pass (explicit set, repos file) never overwrites a universe receipt, at
+    any age, and a universe pass always displaces a narrower one; a standing receipt past its own horizon is no
+    longer standing; within that horizon a sibling narrow scope is parked, an incomplete pass never replaces a
+    complete receipt, a complete pass always replaces an incomplete one, and within one scope the complete coverage
+    share (scanned minus partial, over the universe) must not fall."""
+    if previous is None:
+        return None
+    prev_scope = receipt_scope(previous)
+    if prev_scope != scope:
+        if scope[0] == "universe":
+            return None  # a universe pass always displaces a narrower receipt
+        if prev_scope[0] == "universe":
+            return f"the standing receipt is a universe census and this pass a narrower {scope[0]} one"
+    moment = now or datetime.now(timezone.utc)
+    generated = _generated_at(previous)
+    horizon = interval_hours if receipt_is_complete(previous) else min(interval_hours, retry_hours)
+    if generated is None or moment - generated >= timedelta(hours=horizon):
+        return None  # past its horizon the standing receipt is history; this pass is the census now
+    if prev_scope != scope:
+        return f"the standing receipt is another {prev_scope[0]} scope, still within its horizon"
+    if receipt_is_complete(previous) and not receipt_is_complete(report):
+        return "this pass is incomplete and the standing receipt (still within its horizon) is complete"
+    if receipt_is_complete(report) and not receipt_is_complete(previous):
+        return None  # a complete census outranks an incomplete one whatever the two universes' sizes
+    share, previous_share = coverage_share(report), coverage_share(previous)
+    if share < previous_share:
+        return f"complete coverage {share:.0%} is below the standing receipt's {previous_share:.0%}"
+    return None
+
+
+def receipt_is_fresh(
+    path: Path,
+    interval_hours: float,
+    now: datetime | None = None,
+    *,
+    retry_hours: float = DEFAULT_RETRY_HOURS,
+    scope: tuple[str, object] | None = None,
+    sidecar: Path | None = None,
+) -> bool:
+    """Younger than the interval — but an incomplete receipt only earns the shorter retry horizon, a receipt for
+    another scope answers nothing, and a degraded pass parked beside the receipt (`*.last-attempt.json`) is still
+    the last attempt: it earns the retry horizon too, so a shrunk universe or an outage never turns the census
+    into an every-beat scan."""
+    moment = now or datetime.now(timezone.utc)
+    data = load_receipt(path)
+    if data is not None and (scope is None or receipt_scope(data) == scope):
+        generated = _generated_at(data)
+        if generated is not None:
+            horizon = interval_hours if receipt_is_complete(data) else min(interval_hours, retry_hours)
+            if moment - generated < timedelta(hours=horizon):
+                return True
+    side = load_receipt(sidecar) if sidecar is not None else None
+    if side is None or (scope is not None and receipt_scope(side) != scope):
         return False
-    if generated.tzinfo is None:
-        generated = generated.replace(tzinfo=timezone.utc)
-    horizon = interval_hours if receipt_is_complete(data) else min(interval_hours, retry_hours)
-    return (now or datetime.now(timezone.utc)) - generated < timedelta(hours=horizon)
+    attempted = _generated_at(side)
+    return attempted is not None and moment - attempted < timedelta(hours=min(interval_hours, retry_hours))
 
 
 # ── main ────────────────────────────────────────────────────────────────────────────────────
@@ -1557,7 +1800,8 @@ def run_census(
 
 def exit_code_for(report: dict) -> int:
     """4 internal errors (fix the engine) · 3 read nothing · 1 findings on the scanned set · 2 no findings but
-    coverage incomplete (unreachable, unscanned, partial, an owner unlisted) · 0 clean and complete.
+    coverage incomplete (unreachable, unscanned, partial, an owner unlisted, or a scheduled workflow whose latest
+    run lies beyond the summarized page) · 0 clean and complete.
 
     A registry gap is a finding only when no plane owns it: a gap a residual census plane derives by fact is
     declared, measured by the sensor, and held to that plane's ceilings — not a floor to report twice.
@@ -1575,7 +1819,13 @@ def exit_code_for(report: dict) -> int:
     )
     if unowned or workflow_findings or any(v in FINDING_VERDICTS for v in t["verdicts"]):
         return 1
-    if d["unreachable"] or d["unscanned_by_budget"] or d.get("scanned_partial") or d.get("universe_unlisted_owners"):
+    if (
+        d["unreachable"]
+        or d["unscanned_by_budget"]
+        or d.get("scanned_partial")
+        or d.get("universe_unlisted_owners")
+        or int(t.get("workflows_runs_unmeasured") or 0)
+    ):
         return 2
     return 0
 
@@ -1624,19 +1874,28 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--replace",
         action="store_true",
-        help="overwrite the receipt even when this pass read fewer repositories than the standing one",
+        help="overwrite the standing receipt even when this pass would be parked beside it (narrower scope, incomplete "
+        "where it is complete, or lower complete coverage while it is within its horizon)",
     )
     ap.add_argument("--json", action="store_true", help="print the report JSON")
     args = ap.parse_args(argv)
 
+    scope = requested_scope(args.repos, args.repos_file)
     if (
         not args.force
         and args.receipt.exists()
-        and receipt_is_fresh(args.receipt, args.interval_hours, retry_hours=args.retry_hours)
+        and receipt_is_fresh(
+            args.receipt,
+            args.interval_hours,
+            retry_hours=args.retry_hours,
+            scope=scope,
+            sidecar=sidecar_path(args.receipt),
+        )
     ):
         print(
-            f"schedule-census: receipt {args.receipt} is younger than its horizon ({args.interval_hours:g}h complete, "
-            f"{args.retry_hours:g}h incomplete) — nothing to do (use --force)"
+            f"schedule-census: receipt {args.receipt} (or its last attempt) is younger than its horizon "
+            f"({args.interval_hours:g}h complete, {args.retry_hours:g}h incomplete or attempted) for this scope — "
+            "nothing to do (use --force)"
         )
         return 0
     universe, source, unlisted = resolve_universe(args.repos, args.repos_file, args.estate_cache)
@@ -1664,20 +1923,25 @@ def main(argv: list[str] | None = None) -> int:
     )
     d, t = report["denominators"], report["totals"]
     previous = load_receipt(args.receipt)
-    previous_scanned = int(((previous or {}).get("denominators") or {}).get("scanned") or 0)
-    if previous is not None and not args.replace and d["scanned"] < previous_scanned:
-        sidecar = args.receipt.with_name(args.receipt.stem + ".last-attempt" + args.receipt.suffix)
-        write_receipt(sidecar, report)
-        print(
-            f"schedule-census: this pass read {d['scanned']} repositories, the standing receipt holds {previous_scanned} — "
-            f"kept {args.receipt}, wrote {sidecar} (--replace overrides)"
+    kept = (
+        None
+        if args.replace
+        else keeps_standing_receipt(
+            previous, report, scope, interval_hours=args.interval_hours, retry_hours=args.retry_hours
         )
+    )
+    if kept is not None:
+        sidecar = sidecar_path(args.receipt)
+        write_receipt(sidecar, report)
+        print(f"schedule-census: {kept} — kept {args.receipt}, wrote {sidecar} (--replace overrides)")
     else:
-        write_receipt(args.receipt, report)
+        # the ledger first: a failure between the two writes leaves an old receipt the next pass regenerates,
+        # never a fresh receipt beside a stale ledger
         ledger = args.ledger if args.ledger is not None else args.receipt.with_suffix(".md")
         if str(ledger) != "-":
             ledger.parent.mkdir(parents=True, exist_ok=True)
             ledger.write_text(render_markdown(report), encoding="utf-8")
+        write_receipt(args.receipt, report)
     if args.json:
         print(json.dumps(report, indent=1))
     print(

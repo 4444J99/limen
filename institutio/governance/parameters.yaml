@@ -6694,13 +6694,13 @@ parameters:
     env: LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS
     self_update: none
     owner: governance
-    note: "Wall-clock hours between censuses; a younger logs/schedule-census.json makes the sensor a no-op (--force overrides)."
+    note: "Wall-clock hours between censuses; a younger same-scope logs/schedule-census.json (or a same-scope *.last-attempt.json within LIMEN_SCHEDULE_CENSUS_RETRY_HOURS) makes the sensor a no-op (--force overrides)."
   LIMEN_SCHEDULE_CENSUS_RETRY_HOURS:
     default: 24
     env: LIMEN_SCHEDULE_CENSUS_RETRY_HOURS
     self_update: none
     owner: governance
-    note: "Hours before an incomplete census receipt (read nothing, an owner whose repository listing failed, or more than a quarter of its universe unreachable/unscanned/partially read/errored) is retried; a complete receipt rests for LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS."
+    note: "Hours before an incomplete census receipt (read nothing; a universe short of an owner — a listing that failed or sat at its cap, the organizations never listed, a roster older than LIMEN_ESTATE_CACHE_TTL_HOURS; or more than a quarter of its universe unreachable/unscanned/partially read/errored) is retried, and the horizon a parked last attempt (*.last-attempt.json) earns; a complete receipt rests for LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS."
   LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS:
     default: 8
     env: LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS
