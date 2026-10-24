@@ -1,0 +1,58 @@
+{
+  "schema": "limen.native_prefix_lineage.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "observed_date": "2026-10-19",
+  "method": {
+    "scope": "Only the first metadata record and the first non-derived retained candidate user prompt in each existing compressed native file.",
+    "native_files_read_in_place": true,
+    "source_snapshot": "Existing native-session-header-index.json; paths and full fingerprints stay private.",
+    "derived_frame_prefixes_preserved": "The existing decoder's eight derived-prefix rules were used to skip wrappers before selecting the first candidate.",
+    "metadata_compressed_byte_bound": 262144,
+    "prompt_prefix_compressed_byte_bound": 1048576,
+    "prompt_prefix_decompressed_byte_bound": 2097152,
+    "record_byte_bound": 4194304,
+    "prefix_record_count_bound": 256,
+    "per_read_deadline_seconds": 5,
+    "source_stability": "Inode, size and modification time unchanged across each read.",
+    "source_eof_read": false,
+    "original_bulk_capture_bounds_raised": false,
+    "transcripts_copied": false
+  },
+  "rows": [
+    {
+      "source_alias": "L22",
+      "first_candidate_source_line": 9,
+      "text_characters": 11036,
+      "full_text_matches_native_reader": true,
+      "native_turn_matches": true,
+      "first_metadata_record_matches_stored_fingerprint": true,
+      "native_metadata_source": "cli",
+      "native_metadata_history_mode": "paginated",
+      "retention_marker_present": false,
+      "compressed_prefix_bytes_read": 81920,
+      "decompressed_prefix_bytes_emitted": 81920
+    },
+    {
+      "source_alias": "L08",
+      "first_candidate_source_line": 9,
+      "text_characters": 6992,
+      "full_text_matches_native_reader": true,
+      "native_turn_matches": true,
+      "first_metadata_record_matches_stored_fingerprint": true,
+      "native_metadata_source": "cli",
+      "native_metadata_history_mode": "paginated",
+      "retention_marker_present": false,
+      "compressed_prefix_bytes_read": 98304,
+      "decompressed_prefix_bytes_emitted": 180224
+    }
+  ],
+  "conclusion": "The native reader's visible opener matches the first retained candidate prompt in each bound native file. This narrows the opener-binding gap; it does not establish original pre-retention content, per-item human authorship or complete logical lineage.",
+  "claims_not_made": [
+    "Whole native file read or restored",
+    "Absence of forks or prior history",
+    "Original pre-retention opener proven",
+    "Every retained prompt or assistant response byte matched",
+    "Independent substitution validation"
+  ]
+}

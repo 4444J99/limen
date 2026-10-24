@@ -1,0 +1,254 @@
+{
+  "schema": "limen.recovered_control_sequence_review.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "vocabulary": "vocabulary-v4.json",
+  "source_alias": "R01",
+  "native_reader_view_inputs": 33,
+  "visible_context_before_candidate_segment": 7,
+  "candidate_segment_inputs": 26,
+  "post_candidate_first_positions_assessed": 25,
+  "candidate_segment_boundary": "Matches thread preview and the prior 26-item own projection; not promoted to a proven original logical opener.",
+  "scope": "All 26 inputs in the terminal segment plus visible prior context; one earlier 400209-character context input was not semantically classified in full. Original logical-session completeness remains unproven.",
+  "method": "Single-coder contextual reconstruction; comments, final replies, native status and voice payloads inspected. Not independent or runtime substitution validation.",
+  "category_counts": {
+    "explain": 2,
+    "process_correction": 1,
+    "explain_with_payload": 1,
+    "targeted_continue": 2,
+    "composite": 1,
+    "next": 6,
+    "continue": 2,
+    "approve_and_continue": 6,
+    "correction": 1,
+    "scope_correction": 1,
+    "process_correction_with_voice_payload": 1,
+    "continue_with_voice_binding": 1
+  },
+  "cases": [
+    {
+      "case": "R01.2",
+      "position": 2,
+      "category": "explain",
+      "candidate": "/explain --why <slow-progress>",
+      "must_survive": "Explain the delay within the active objective; a diagnosis does not replace delivery with another plan.",
+      "recorded_response": "Explains process inflation and low substantive throughput.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.3",
+      "position": 3,
+      "category": "process_correction",
+      "candidate": "/fix --process <existing-plan-not-enforced> --preserve-objective",
+      "must_survive": "Keep the already approved plan and require changed execution; do not answer the correction by redrafting the same remedy.",
+      "recorded_response": "Acknowledges deviation and the need for actual source-review work.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.4",
+      "position": 4,
+      "category": "explain_with_payload",
+      "candidate": "/explain <inventory-denominator> --context <six-source-list>",
+      "must_survive": "Retain the specified source list and distinguish repository inventory from substantive requirements.",
+      "recorded_response": "Provides source/file breakdown and retracts the workload interpretation.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.5",
+      "position": 5,
+      "category": "explain",
+      "candidate": "/explain <possible-workload-reduction>",
+      "must_survive": "Ask about the implication; no deletion, exclusion or unmeasured percentage is authorized.",
+      "recorded_response": "Explains classification opportunities and says the reduced count is still unknown.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.6",
+      "position": 6,
+      "category": "targeted_continue",
+      "candidate": "/continue --target <selected-source> --operation <agreed-scope-classification>",
+      "must_survive": "The selected source changes; preserve existing receipts, attachments and unresolved media.",
+      "recorded_response": "Reports a source-specific routing split, not semantic completion.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.7",
+      "position": 7,
+      "category": "composite",
+      "candidate": "/ship merge <pending-pr> + /continue --targets <four-source-payload>",
+      "must_survive": "Keep merge authority target-bound and retain all new source identities and their classification scope.",
+      "recorded_response": "Reports the approved merge and a new four-source routing delivery.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.8",
+      "position": 8,
+      "category": "targeted_continue",
+      "candidate": "/continue --target <docs-source> --operation <same-scope-classification>",
+      "must_survive": "Retain the new target; documentation dependencies remain substantive where needed.",
+      "recorded_response": "Reports the Docs routing split and explicitly adds no semantic credit.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.9",
+      "position": 9,
+      "category": "next",
+      "candidate": "/next",
+      "must_survive": "Resolve the next bounded action from the current queue and pending integrations; asking does not execute it.",
+      "recorded_response": "Proposes a first branch-protection review batch and pending integration.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.10",
+      "position": 10,
+      "category": "continue",
+      "candidate": "/continue --proposal <first-branch-protection-batch-and-existing-integration>",
+      "must_survive": "Inherit that concrete batch and existing merge authority; preserve source conflicts and acceptance limits.",
+      "recorded_response": "Reports integrations and five actual source reviews.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.11",
+      "position": 11,
+      "category": "next",
+      "candidate": "/next",
+      "must_survive": "Resolve current state again; the same words do not select the previous completed batch.",
+      "recorded_response": "Proposes a second branch-protection/ruleset batch.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.12",
+      "position": 12,
+      "category": "continue",
+      "candidate": "/continue --proposal <second-branch-protection-batch>",
+      "must_survive": "Prepare the specific native pilot plan, but do not infer approval of a future unpublished plan.",
+      "recorded_response": "Reports publication and then asks for approval of that now-specific pilot.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.13",
+      "position": 13,
+      "category": "approve_and_continue",
+      "candidate": "/approve <specific-private-pilot-plan> + /continue --plan <same-plan>",
+      "must_survive": "Bind the preceding prepared plan, target and prerequisites; keep billing changes outside its authority.",
+      "recorded_response": "Reports source integration, a provisioned pilot and unexecuted native acceptance.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.14",
+      "position": 14,
+      "category": "next",
+      "candidate": "/next",
+      "must_survive": "Separate engineering follow-through from genuine external or account gates.",
+      "recorded_response": "Proposes capture hardening, source review and later native-pilot acceptance.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.15",
+      "position": 15,
+      "category": "approve_and_continue",
+      "candidate": "/approve <bounded-engineering-follow-through> + /continue --plan <same-scope>",
+      "must_survive": "Preserve explicit plan/account limits; generic approval does not grant billing or runner changes.",
+      "recorded_response": "Reports integrated hardening/review while native acceptance remains blocked.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.16",
+      "position": 16,
+      "category": "correction",
+      "candidate": "/correct <current-blocker-interpretation> --evidence <operator-update>",
+      "must_survive": "Treat the operator update as attributed input; distinguish provider refusal from a proven billing cause.",
+      "recorded_response": "Interrupted turn ends in diagnostic commentary, not a completed result.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.17",
+      "position": 17,
+      "category": "scope_correction",
+      "candidate": "/correct --scope <repository-work-only> --stop <out-of-scope-diagnostics>",
+      "must_survive": "Stop the unwanted deviation while retaining the original standards objective and existing authority.",
+      "recorded_response": "Acknowledges the boundary and stops billing diagnostics.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.18",
+      "position": 18,
+      "category": "next",
+      "candidate": "/next --scope <corrected-repository-boundary>",
+      "must_survive": "The intervening correction constrains the next proposal.",
+      "recorded_response": "Proposes repository-local Actions implementation review.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.19",
+      "position": 19,
+      "category": "approve_and_continue",
+      "candidate": "/approve <repository-local-five-article-proposal> + /continue --plan <same-proposal>",
+      "must_survive": "Bind the new proposal and corrected boundary; no cloud or account mutation.",
+      "recorded_response": "Reports review, checker corrections and integration.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.20",
+      "position": 20,
+      "category": "approve_and_continue",
+      "candidate": "/approve <existing-bounded-continuation> + /continue --plan <approved-workstream>",
+      "must_survive": "Resolve from the durable workstream and current evidence, not only the immediately preceding final reply.",
+      "recorded_response": "Commentary selects a provider-specific OIDC batch; final reports its integration.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.21",
+      "position": 21,
+      "category": "process_correction_with_voice_payload",
+      "candidate": "/fix --process <throughput-and-denominator-finding> --context <voice-payload>",
+      "must_survive": "Retain the utterance and wrapper provenance. Transcript echoes are not extra operator turns; grouping earns no review credit.",
+      "recorded_response": "Proposes a full denominator audit and source-bound families.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.22",
+      "position": 22,
+      "category": "continue_with_voice_binding",
+      "candidate": "/continue --proposal <denominator-audit-bound-in-voice-context>",
+      "must_survive": "Bind the proposal in the voice context; copied assistant speech is context, not independent human authority.",
+      "recorded_response": "Reports the denominator audit and a new execution shape, with reconciliation credit unchanged.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.23",
+      "position": 23,
+      "category": "next",
+      "candidate": "/next",
+      "must_survive": "Use the new workload structure without treating it as completed semantic review.",
+      "recorded_response": "Proposes provider and CodeQL matrix verification with governing context.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.24",
+      "position": 24,
+      "category": "approve_and_continue",
+      "candidate": "/approve <matrix-verification-proposal> + /continue --plan <same-proposal>",
+      "must_survive": "Keep source-cell verification, governing review and policy adoption separate.",
+      "recorded_response": "Reports table verification and governing review, not adopted controls.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.25",
+      "position": 25,
+      "category": "next",
+      "candidate": "/next",
+      "must_survive": "Resolve the remaining semantic work after table verification.",
+      "recorded_response": "Proposes source-context reconciliation for unresolved narrative claims.",
+      "historical_result_independently_verified": false
+    },
+    {
+      "case": "R01.26",
+      "position": 26,
+      "category": "approve_and_continue",
+      "candidate": "/approve <source-context-reconciliation-proposal> + /continue --plan <same-proposal>",
+      "must_survive": "Preserve the reviewed packet, prior decisions, exact publication stage and unmerged acceptance.",
+      "recorded_response": "Reports publication and deferred merge; no merged-result claim.",
+      "historical_result_independently_verified": false
+    }
+  ]
+}

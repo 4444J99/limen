@@ -1,0 +1,133 @@
+{
+  "schema": "limen.prompt_study_original_request_audit.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "observed_date": "2026-10-19",
+  "request_evidence": {
+    "sources": 2,
+    "retained_input_references": 4,
+    "all_references_marked_retained_complete": true,
+    "private_binding": "original-study-request-bindings-v1.json",
+    "raw_prompt_bodies_copied": false,
+    "current_fork_goal_input_references": 1,
+    "ancestor_clarifications_before_fork": 2,
+    "related_parent_reference_instruction_after_fork": true,
+    "parent_fork_cutoff_exclusive": 165,
+    "related_parent_instruction_ordinal": 175,
+    "current_fork_goal_input_ordinal": 175,
+    "ordinal_rule": "Ordinals are source-qualified; the two ordinal-175 inputs are different native events."
+  },
+  "current_measured_artifact": {
+    "file_columns": 382,
+    "codex_file_columns": 381,
+    "claude_example_columns": 1,
+    "captured_prompt_rows": 3500,
+    "codex_columns_all_retained_bodies_marked_complete": 70,
+    "logical_completeness_implied_by_retention": false,
+    "lineage_panel_rows": 37,
+    "captured_declared_parent_columns": 7,
+    "proposed_operations": 21,
+    "vocabulary": "vocabulary-v5.json"
+  },
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Use whole native session sequences with their opener, ordering and relevant context intact.",
+      "completion_proven": false,
+      "evidence": [
+        "Native file comparison and reader-source recovery census.",
+        "Current fork metadata, first-retained-body bindings and R01 parent/local boundary.",
+        "The current fork's own goal input is distinct from later parent-chat reference instructions."
+      ],
+      "remaining": "Logical lineage, retention gaps, unresolved side histories and input provenance prevent a complete original-session claim across the corpus."
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Place each full sequence in a column for direct comparison.",
+      "completion_proven": false,
+      "scope": "A reviewable retained-file comparison exists, but the full native-session requirement is not proved for every column or reader-only segment.",
+      "evidence": [
+        "382 file columns and 3,500 unchanged captured prompt rows.",
+        "Full selection/default selection and actual markup checked; 37-view lineage panel and parent-alias search checked."
+      ],
+      "remaining": "Browser visual inspection and full source-renderer validation remain unverified; native reader-only payloads are not copied into the file columns.",
+      "artifact_exists": true
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Study post-opener prompts in context and distinguish equivalent intentions and outcomes.",
+      "completion_proven": false,
+      "evidence": [
+        "Original contextual review, frozen substitution review, longer-sequence review and native provenance correction.",
+        "R01's 25 contextual dispositions and the 25 L08/L22 dispositions."
+      ],
+      "remaining": "Most captured follow-ups remain uncoded. Cohorts stay separate pending broader origin overlap; historical response claims are not current result verification. No universal equivalence or replacement percentage is proved."
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Produce an evidence-backed slash-command vocabulary for the recurring operations.",
+      "completion_proven": false,
+      "scope": "A source-backed provisional vocabulary exists; full post-opener reduction across the requested corpus is not proved.",
+      "evidence": [
+        "V5 contains 21 operation contracts with target, payload, authority, constraints and completion evidence.",
+        "Counterexamples preserve new content, mixed authority, rhetorical corrections, viewer choice and explicit goal persistence."
+      ],
+      "remaining": "Independent semantic review was not admitted; universal coverage and runtime substitution are unproven. Provider collision and installation work is separate.",
+      "proposal_exists": true
+    }
+  ],
+  "reference_findings": [
+    {
+      "claim": "Repeated or normalized atom text establishes equivalent session intent and outcome.",
+      "disposition": "not established",
+      "reason": "An atom/backlog report lacks complete sequence ordering, target and authority transitions, and paired outcome proof."
+    },
+    {
+      "claim": "A written governance rule makes a repeated requested deliverable complete.",
+      "disposition": "rejected as a general inference",
+      "reason": "The native contextual cases include substantive new payloads, process repairs and scope changes; rule existence does not prove that a concrete result was produced."
+    },
+    {
+      "claim": "The peer's recurrence families are useful hypotheses for candidate controls.",
+      "disposition": "accepted within scope",
+      "reason": "V5 reconciles those contracts with source-bound native counterexamples while preserving data-bearing arguments."
+    },
+    {
+      "claim": "The existing installed command set or a plan's agent-authored operator-decision statement supplies new user approval.",
+      "disposition": "not authority",
+      "reason": "The current explicit request and its verified source lineage govern. Historical prose does not add approval or cancel other owned obligations."
+    },
+    {
+      "claim": "A later parent-chat instruction automatically changes this already-forked chat's authority.",
+      "disposition": "not authority",
+      "reason": "The parent reference input is ordinal 175 after this fork's exclusive cutoff 165. The current chat's different goal input also uses ordinal 175; source-qualified lineage distinguishes them."
+    }
+  ],
+  "overall_completion_proven": false,
+  "goal_disposition": "Keep the full goal active. This audit does not close or remove the separately owned source-repair, verification, publication or session-release obligations.",
+  "supplementary_reference_checks": [
+    {
+      "id": "REF-1",
+      "check": "Review the named registry archive as a comparison input.",
+      "authority_role": "Comparison evidence, not a new instruction inherited by this fork.",
+      "completion_proven": false,
+      "evidence": [
+        "Authenticated live tree: four files, atom JSON size 73,828,750 bytes.",
+        "README, discovery note and legacy backlog report read; atom-file commit date confirmed as 2026-05-24."
+      ],
+      "remaining": "The full atom JSON was not downloaded or recounted. Archive report figures remain attributed historical claims; the inspected material does not establish native-session or paired-response reconstruction."
+    },
+    {
+      "id": "REF-2",
+      "check": "Compare against the named Claude study and plan.",
+      "authority_role": "Comparison evidence, not a new instruction inherited by this fork.",
+      "completion_proven": true,
+      "scope": "Published contracts and source limitations are compared; the peer study's claims are not adopted as independent proof.",
+      "evidence": [
+        "PR 3067 freshly observed open/draft at its previously compared head 4656b15e.",
+        "The source study and plan distinguish verbatim registry recurrence from semantic intent families; the registry-confirmation section is still an unfilled placeholder."
+      ],
+      "remaining": "The peer's file extraction and selected-turn analysis do not establish whole-corpus semantic equivalence. Its ingestion and policy operations remain separately owned."
+    }
+  ]
+}

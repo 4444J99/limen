@@ -1,0 +1,41 @@
+--- a/.chezmoidata/config-ownership.json
++++ b/.chezmoidata/config-ownership.json
+@@ -3660,6 +3660,38 @@
+               "unix://",
+               "--managed-daemon"
+             ]
++          },
++          {
++            "client": "codex",
++            "argv": [
++              "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
++              "-c",
++              "features.code_mode_host=true",
++              "app-server",
++              "--analytics-default-enabled",
++              "-c",
++              "plugins.codex-app-tools@openai-bundled.mcp_servers.codex_app.enabled=true",
++              "-c",
++              "plugins.code-review@openai-bundled.mcp_servers.code-review.enabled=true"
++            ]
++          },
++          {
++            "client": "codex",
++            "runtime_relative": "packages/app-server-daemon/current/bin/codex",
++            "helpers": [
++              {
++                "service_id": "codex/code-mode-host",
++                "executable_relative": "codex-code-mode-host",
++                "args": []
++              }
++            ],
++            "args": [
++              "app-server",
++              "--listen",
++              "unix://",
++              "--analytics-default-enabled",
++              "--managed-daemon"
++            ]
+           }
+         ],
+         "unknown": "fail-closed",

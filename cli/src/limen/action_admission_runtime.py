@@ -8,6 +8,7 @@ from typing import Any
 from limen.action_admission import (
     AdmissionInputError,
     classify_action,
+    codex_artifact_write,
     harness_session_write,
     mutation_build_allowed,
     path_within,
@@ -87,6 +88,10 @@ def admit_pre_tool_action(
             harness_targets = target_paths(payload, resolve_effective_cwd(payload))
         except (AdmissionInputError, ValueError):
             harness_targets = []
+        if surface == "codex-worktree-write" and codex_artifact_write(
+            harness_targets, str(payload.get("session_id") or "")
+        ):
+            return ToolAdmission(True)
         if harness_session_write(harness_targets):
             return ToolAdmission(True)
     allowed, reason = mutation_build_allowed(payload)
