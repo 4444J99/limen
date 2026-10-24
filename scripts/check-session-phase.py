@@ -39,6 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import _gh_rest  # REST twin of the GraphQL-backed `gh issue view` (Claude Code cloud sessions)
 from importlib import util as _import_util
 
 _spec = _import_util.spec_from_file_location("_session_plan", Path(__file__).resolve().parent / "session-plan.py")
@@ -102,7 +103,11 @@ def evaluate(*, live: bool = False) -> tuple[list[dict], list[dict]]:
 
 
 def _issue_state(number: int) -> str | None:
-    """Issue state via gh; None on any failure (fail-open — the offline half is the ratchet)."""
+    """Issue state via gh; None on any failure (fail-open — the offline half is the ratchet).
+
+    ``gh issue view`` is GraphQL, which Claude Code cloud sessions cannot reach (HTTP 403), so the live
+    cross-check silently never ran there. A failed GraphQL read falls back to the REST issue endpoint.
+    """
     try:
         proc = subprocess.run(  # noqa: S603 - fixed argv, no shell
             ["gh", "issue", "view", str(number), "--json", "state", "-q", ".state"],
@@ -112,8 +117,18 @@ def _issue_state(number: int) -> str | None:
             timeout=15,
         )
     except (OSError, subprocess.SubprocessError):
+        proc = None
+    if proc is not None and proc.returncode == 0 and proc.stdout.strip():
+        return proc.stdout.strip().upper()
+    try:
+        return _gh_rest.issue_state(None, number, gh=_rest_gh)
+    except _gh_rest.ReadError:
         return None
-    return proc.stdout.strip().upper() or None if proc.returncode == 0 else None
+
+
+def _rest_gh(args: list[str], timeout: int = 15):
+    """Run read-only ``gh api`` from the repo root so gh resolves ``{owner}/{repo}`` from its remote."""
+    return subprocess.run(["gh", *args], cwd=str(ROOT), capture_output=True, text=True, timeout=timeout, check=False)
 
 
 def write_baseline() -> int:

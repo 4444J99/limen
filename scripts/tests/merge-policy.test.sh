@@ -24,6 +24,29 @@ trap 'rm -rf "$stubdir"' EXIT
 cat > "$stubdir/gh" <<STUB
 #!/usr/bin/env bash
 # fake gh: emit the current fixture for any 'pr view ... --json ...' call.
+# GraphQL-unavailable mode (Claude Code cloud sessions): the session proxy answers every GraphQL-backed
+# gh command with one 403 (the text is the test's GRAPHQL_403) while REST (api repos/...) keeps working.
+if [ -n "\${GH_GRAPHQL_BLOCKED:-}" ]; then
+  case "\$*" in
+    *"api graphql"*|*"pr view"*|*"pr checks"*|*"issue view"*) printf '%s\n' "\$GH_GRAPHQL_BLOCKED" >&2; exit 1 ;;
+  esac
+fi
+# Opt-in REST twin of the GraphQL fixture (GH_REST=1): serves what GitHub's REST API would report for the
+# same PR, so one fixture drives both transports. Off by default: the cases above pin the GraphQL-only world.
+if [ -n "\${GH_REST:-}" ]; then
+  case "\$*" in
+    *"api"*"repos/o/r/pulls"*|*"api"*"repos/o/r/commits/"*) exec bash "$stubdir/restgh" "\$@" ;;
+  esac
+fi
+# A branch whose protection names required contexts (REST policy read behind --contexts).
+if [ -n "\${GH_REQUIRED_CONTEXTS:-}" ]; then
+  case "\$*" in
+    *"api repos/o/r/rules/branches/main"*) printf '%s\n' '[]'; exit 0 ;;
+    *"api repos/o/r/branches/main"*)
+      printf '{"name":"main","protected":true,"protection":{"required_status_checks":{"contexts":%s,"checks":[]}}}\n' "\$GH_REQUIRED_CONTEXTS"
+      exit 0 ;;
+  esac
+fi
 if [[ "\$*" == *"pr view"* ]] && [ -n "\${GH_PR_VIEW_ERROR:-}" ]; then
   printf '%s\n' "\$GH_PR_VIEW_ERROR" >&2
   exit 1
@@ -58,6 +81,48 @@ case "\$*" in
 esac
 STUB
 chmod +x "$stubdir/gh"
+
+# REST routes for the same fixture. The fixture is in `gh pr view --json` (GraphQL) shape; this maps it
+# to the REST shapes (lower-case enums, snake_case timestamps) so the verdict logic is exercised through
+# scripts/_gh_rest.py rather than through a second hand-written fixture.
+cat > "$stubdir/restgh" <<'RESTSTUB'
+#!/usr/bin/env bash
+fx="$GH_FIXTURE"
+endpoint="${*: -1}"
+case "$endpoint" in
+  repos/o/r/pulls/1/files*)
+    jq '[.files[] | {filename: .path, status: "modified"}]' "$fx" ;;
+  repos/o/r/pulls/1/ccr/review_threads)
+    if [ -n "${GH_CCR_THREADS:-}" ]; then printf '%s\n' "$GH_CCR_THREADS"; else echo "gh: Not Found (HTTP 404)" >&2; exit 1; fi ;;
+  repos/o/r/pulls/1)
+    if [ -n "${GH_REST_PULL_ERROR:-}" ]; then printf '%s\n' "$GH_REST_PULL_ERROR" >&2; exit 1; fi
+    n=$(( $(cat "$fx.calls" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$fx.calls"
+    sha_override=""
+    if [ "$n" -ge 2 ] && [ -n "${GH_RECHECK_HEAD:-}" ]; then sha_override="$GH_RECHECK_HEAD"; fi
+    jq --arg sha "$sha_override" '{
+      number, title, html_url: .url,
+      state: (if .state == "OPEN" then "open" else "closed" end),
+      merged: (.state == "MERGED"), draft: .isDraft,
+      mergeable: (if .mergeStateStatus == "UNKNOWN" then null elif .mergeStateStatus == "DIRTY" then false else true end),
+      mergeable_state: (.mergeStateStatus | ascii_downcase),
+      changed_files: (.files | length),
+      base: {ref: .baseRefName},
+      head: {ref: .headRefName, sha: (if $sha != "" then $sha else .headRefOid end)}
+    }' "$fx" ;;
+  repos/o/r/pulls\?head=*)
+    if [ -n "${GH_NO_OPEN_PR:-}" ]; then echo '[]'; else echo '[{"number":1}]'; fi ;;
+  repos/o/r/commits/*/check-runs*)
+    jq '{check_runs: [.statusCheckRollup[]? | select(.name) | {
+      name, status: (.status | ascii_downcase),
+      conclusion: (if .conclusion == null then null else (.conclusion | ascii_downcase) end),
+      started_at: .startedAt, completed_at: .completedAt}]}' "$fx" ;;
+  repos/o/r/commits/*/status*)
+    jq '{state: "success", statuses: [.statusCheckRollup[]? | select(.context) | {context, state: (.state | ascii_downcase)}]}' "$fx" ;;
+  *) echo "restgh: unrouted endpoint $endpoint" >&2; exit 1 ;;
+esac
+RESTSTUB
+chmod +x "$stubdir/restgh"
+export GH_FIXTURE="$fixture"
 
 GREEN='[{"name":"python","status":"COMPLETED","conclusion":"SUCCESS"},{"name":"web","status":"COMPLETED","conclusion":"SUCCESS"}]'
 FAILING='[{"name":"python","status":"COMPLETED","conclusion":"FAILURE"}]'
@@ -362,6 +427,175 @@ jq '.headRefOid = ""' "$fixture" > "$fixture.tmp" && mv "$fixture.tmp" "$fixture
 check "head identity unavailable" 2
 mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
 check "expected head mismatch" 2 --expected-head bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+# ── GraphQL unavailable (Claude Code cloud sessions) — gap G4 ─────────────────────────────────────────
+# The cloud-session proxy answers EVERY GraphQL-backed gh command with one HTTP 403, so `gh pr view` could
+# not read any PR and the predicate said "cannot read PR" for PRs that were perfectly readable over REST
+# (2026-10-24, 4444J99/limen#3171: non-draft, mergeable, pr-gate green — BLOCKED anyway). The facts now fall
+# back to the REST API in the same shape and are judged by the SAME rules, so every verdict below must equal
+# what the GraphQL transport reports for the same PR.
+GRAPHQL_403='HTTP 403: GitHub GraphQL is not available from Claude Code sessions; use the REST API (gh api repos/{owner}/{repo}/...). For review threads, auto-merge, and draft/ready-for-review use the CCR routes on api.github.com: GET /repos/{owner}/{repo}/pulls/{n}/ccr/review_threads, POST /repos/{owner}/{repo}/pulls/{n}/ccr/ready_for_review, POST /repos/{owner}/{repo}/pulls/{n}/ccr/convert_to_draft. (https://api.github.com/graphql)'
+
+run_rest() { # [policy args...] — GraphQL blocked, REST serving the fixture; honors exported GH_* knobs
+  rm -f "$fixture.calls"
+  GH_GRAPHQL_BLOCKED="$GRAPHQL_403" GH_REST=1 LIMEN_GH_REST_MERGEABLE_DELAY=0 \
+    PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r "$@" 2>&1
+}
+check_rest() { # name expected_exit required_substring [forbidden_substring]
+  local name="$1" want="$2" required="$3" forbidden="${4:-}" got out
+  set +e
+  out=$(run_rest)
+  got=$?
+  set -e
+  if [ "$got" = "$want" ] && [[ "$out" == *"$required"* ]] \
+      && { [ -z "$forbidden" ] || [[ "$out" != *"$forbidden"* ]]; }; then
+    printf '  ok   %-34s exit=%s\n' "$name" "$got"; pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=%s got=%s required=%q forbidden=%q\n' \
+      "$name" "$want" "$got" "$required" "$forbidden"
+    printf '%s\n' "$out" | sed 's/^/       /'
+    fail=$((fail+1))
+  fi
+}
+parity() { # name expected_exit — GraphQL and REST transports must agree, and both must equal expected
+  local name="$1" want="$2" g r
+  set +e
+  PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1; g=$?
+  run_rest >/dev/null; r=$?
+  set -e
+  if [ "$g" = "$want" ] && [ "$r" = "$want" ]; then
+    printf '  ok   %-34s graphql=%s rest=%s\n' "$name" "$g" "$r"; pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=%s graphql=%s rest=%s\n' "$name" "$want" "$g" "$r"; fail=$((fail+1))
+  fi
+}
+
+# The reported case: GraphQL 403, REST says clean + non-draft + green on a non-deploy path.
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check_rest "REST: clean green non-deploy CLEARED" 0 "VERDICT: CLEARED" "BLOCKED"
+check_rest "REST: binds the exact MERGE-HEAD" 0 \
+  "MERGE-HEAD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (use gh pr merge --match-head-commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+check_rest "REST: direct mode, non-deploy" 0 "MERGE-MODE: direct" "MERGE-MODE: queue"
+check_rest "REST: states the read path" 0 "read-path=rest"
+check_output "GraphQL path: no rest marker" 0 "VERDICT: CLEARED" "read-path=rest"
+
+# Verdict parity: one fixture, two transports, one answer.
+for mss in CLEAN UNSTABLE; do
+  mkjson OPEN false "$mss" "$DOC_FILES" "$GREEN"; parity "parity $mss + green" 0
+done
+mkjson OPEN false BEHIND  "$DOC_FILES" "$GREEN";   parity "parity BEHIND (no queue)" 3
+mkjson OPEN false DIRTY   "$DOC_FILES" "$GREEN";   parity "parity DIRTY" 3
+mkjson OPEN false BLOCKED "$DOC_FILES" "$GREEN";   parity "parity BLOCKED, nothing pending" 3
+mkjson OPEN false UNKNOWN "$DOC_FILES" "$GREEN";   parity "parity UNKNOWN (still computing)" 2
+mkjson OPEN true  CLEAN   "$DOC_FILES" "$GREEN";   parity "parity DRAFT" 2
+mkjson MERGED false CLEAN "$DOC_FILES" "$GREEN";   parity "parity MERGED guard" 3
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"; parity "parity failing check" 2
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$DUP_LATEST_FAIL"; parity "parity dup, latest FAILURE" 2
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$SUPERSEDED_OK"; parity "parity superseded run is ignored" 0
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"; parity "parity non-deploy + pending" 2
+mkjson OPEN false CLEAN   "$DOC_FILES" "$NONE";    parity "parity non-deploy + 0 checks" 0
+mkjson OPEN false CLEAN   "$WEB_FILES" "$GREEN";   parity "parity deploy path + green" 0
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$PENDING"; parity "parity deploy path + pending" 2
+mkjson OPEN false CLEAN   "$WEB_FILES" "$NONE";    parity "parity deploy path + 0 checks" 2
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$FAILING"; parity "parity deploy path + failing" 2
+
+# Failure modes: when neither transport can read the PR the verdict stays BLOCKED (fail toward caution)
+# and BOTH scrubbed diagnostics surface; transport trouble on either path is a HOLD, never BLOCKED.
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+export GH_REST_PULL_ERROR="gh: Not Found (HTTP 404) token ghp_abcdefghijklmnopqrstuvwxyz0123456789"  # allow-secret: synthetic fixture
+check_rest "both paths fail: BLOCKED" 3 "VERDICT: BLOCKED — cannot read PR" "ghp_abcdef"
+check_rest "both paths fail: graphql diagnostic" 3 "merge-policy: gh diagnostic (scrubbed"
+check_rest "both paths fail: rest diagnostic" 3 "REST fallback diagnostic (scrubbed, last 300B): _gh_rest: gh: Not Found (HTTP 404)" "ghp_abcdef"
+export GH_REST_PULL_ERROR="gh: Bad Gateway (HTTP 502)"
+check_rest "graphql 403 + rest 502: HOLD" 2 "transient transport error" "BLOCKED"
+unset GH_REST_PULL_ERROR
+# Quota/transport trouble on the GraphQL side HOLDs BEFORE the fallback is tried. REST would have cleared
+# this PR (GH_REST=1 and a green fixture), so exit 2 proves it was never consulted.
+for message in "rate limit exceeded" "HTTP 502 Bad Gateway"; do
+  set +e
+  out=$(GH_PR_VIEW_ERROR="$message" GH_REST=1 PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r 2>&1)
+  got=$?
+  set -e
+  if [ "$got" = 2 ] && [[ "$out" != *"read-path=rest"* ]]; then
+    printf '  ok   %-34s exit=%s\n' "graphql '$message' holds first" "$got"; pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=2 got=%s\n' "graphql '$message' holds first" "$got"; fail=$((fail+1))
+  fi
+done
+# A non-quota GraphQL failure that is not the 403 (here a plain read error) also reaches the REST reader.
+set +e
+out=$(GH_PR_VIEW_ERROR="repository not found" GH_REST=1 PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r 2>&1)
+got=$?
+set -e
+if [ "$got" = 0 ] && [[ "$out" == *"read-path=rest"* ]]; then
+  printf '  ok   %-34s exit=%s\n' "other graphql failure -> rest" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=0 got=%s\n' "other graphql failure -> rest" "$got"; fail=$((fail+1))
+fi
+
+# The head must stay bound across the read: REST re-reads it after the rollup, like the GraphQL path.
+export GH_RECHECK_HEAD=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+check_rest "REST: head changed during predicate" 2 "PR head changed while checks were inspected"
+unset GH_RECHECK_HEAD
+
+# Required-vs-advisory over REST: `gh pr checks --required` is GraphQL too, so the required set is read from
+# branch protection + rulesets and the same rollup rules are applied to just those names. An unreadable or
+# unknown policy keeps the conservative all-checks counts.
+REQ_OK_ADV_RED='[{"name":"pr-gate","status":"COMPLETED","conclusion":"SUCCESS"},{"name":"nightly","status":"COMPLETED","conclusion":"FAILURE"}]'
+REQ_RED='[{"name":"pr-gate","status":"COMPLETED","conclusion":"FAILURE"},{"name":"nightly","status":"COMPLETED","conclusion":"SUCCESS"}]'
+REQ_PENDING='[{"name":"pr-gate","status":"IN_PROGRESS","conclusion":null},{"name":"nightly","status":"COMPLETED","conclusion":"SUCCESS"}]'
+ADV_PENDING='[{"name":"pr-gate","status":"COMPLETED","conclusion":"SUCCESS"},{"name":"nightly","status":"IN_PROGRESS","conclusion":null}]'
+export GH_REQUIRED_CONTEXTS='["pr-gate"]'
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$REQ_OK_ADV_RED"
+check_rest "REST required set: advisory red passes" 0 "required checks: scope=required failing=0 pending=0"
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$REQ_RED"
+check_rest "REST required set: required red holds" 2 "1 required check(s) failing (required scope)"
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$REQ_PENDING"
+check_rest "REST required set: required pending" 2 "required check(s) still running"
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$ADV_PENDING"
+check_rest "REST required set: advisory pending ok" 0 "advisory (non-required) check(s) still running"
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$ADV_PENDING"
+check_rest "REST required set: deploy needs all" 2 "website-sensitive"
+# Same branch when only `gh pr checks` is unavailable (GraphQL transport otherwise fine).
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$REQ_OK_ADV_RED"
+check_output "gh pr checks down: contexts used" 0 "required checks: scope=required failing=0"
+unset GH_REQUIRED_CONTEXTS
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$REQ_OK_ADV_RED"
+check_rest "REST unmeasured policy: all checks" 2 "scope=all"
+
+# LIMEN_REVIEW_GATE=1 reads review threads over the CCR route when GraphQL is unavailable, and stays fail-open.
+FIXTURE_URL=https://github.com/o/r/pull/1 mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+export LIMEN_REVIEW_GATE=1
+export GH_CCR_THREADS='[{"resolved":true},{"resolved":false,"outdated":true}]'
+check_rest "REST review gate: unresolved holds" 2 "1 unresolved review thread(s)"
+export GH_CCR_THREADS='[{"resolved":true}]'
+check_rest "REST review gate: all resolved clears" 0 "VERDICT: CLEARED"
+unset GH_CCR_THREADS
+check_rest "REST review gate: unreadable fails open" 0 "VERDICT: CLEARED"
+unset LIMEN_REVIEW_GATE
+
+# No PR number: the open PR for the checked-out branch is found over REST too.
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+mkdir -p "$stubdir/work" && git init -q "$stubdir/work" && git -C "$stubdir/work" symbolic-ref HEAD refs/heads/feature
+set +e
+out=$(cd "$stubdir/work" && rm -f "$fixture.calls" && GH_GRAPHQL_BLOCKED="$GRAPHQL_403" GH_REST=1 LIMEN_GH_REST_MERGEABLE_DELAY=0 \
+  PATH="$stubdir:$PATH" bash "$policy" --repo o/r 2>&1)
+got=$?
+set -e
+if [ "$got" = 0 ] && [[ "$out" == *"PR #1"* ]] && [[ "$out" == *"VERDICT: CLEARED"* ]]; then
+  printf '  ok   %-34s exit=%s\n' "REST: PR found from branch" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=0 got=%s\n' "REST: PR found from branch" "$got"; printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+set +e
+out=$(cd "$stubdir/work" && GH_NO_OPEN_PR=1 GH_GRAPHQL_BLOCKED="$GRAPHQL_403" GH_REST=1 PATH="$stubdir:$PATH" bash "$policy" --repo o/r 2>&1)
+got=$?
+set -e
+if [ "$got" = 3 ] && [[ "$out" == *"no open PR for current branch"* ]]; then
+  printf '  ok   %-34s exit=%s\n' "REST: no open PR for branch" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=3 got=%s\n' "REST: no open PR for branch" "$got"; printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
 
 # Resolver unavailable ⇒ website-sensitive (fail toward caution). With a broken python3 the
 # deploy regex cannot derive from the GATES registry, so a docs-only PR with zero checks —

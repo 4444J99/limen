@@ -54,6 +54,11 @@ _NON_CHECK_RULES = frozenset(
     }
 )
 
+# Rule types that never name a status context but may sit beside required_status_checks without
+# changing which contexts are required. Any OTHER type (workflows, code_scanning, ...) can gate a merge
+# on checks this module cannot enumerate, so required_contexts() reports it as unmeasured.
+_CONTEXT_FREE_RULES = _NON_CHECK_RULES | {"merge_queue"}
+
 # Verdicts returned by classify_required_failure().
 CI_RED = "CI-RED"
 UNMEASURED = "REQUIRED-CHECKS-UNMEASURED"
@@ -87,6 +92,62 @@ def no_required_policy(gh, repo: str, branch: str | None) -> bool:
         return isinstance(required, dict) and required.get("contexts") == [] and required.get("checks") == []
     except (OSError, ValueError, TypeError):
         return False
+
+
+def required_contexts(gh, repo: str, branch: str | None) -> tuple | None:
+    """Status contexts required on ``branch`` by branch protection AND rulesets, over REST.
+
+    ``gh pr checks --required`` is GraphQL, which Claude Code cloud sessions cannot reach. This is the REST
+    twin: the union of the classic protection contexts/checks and every ruleset ``required_status_checks``
+    rule. ``()`` means measured-and-none; ``None`` means UNMEASURED (any read error, malformed payload, or
+    a rule type that could require checks this module cannot enumerate) and the caller must keep its
+    conservative all-checks policy rather than infer that nothing is required.
+    """
+    if not isinstance(branch, str) or not branch.strip():
+        return None
+    encoded = quote(branch, safe="")
+    try:
+        metadata = gh(["api", f"repos/{repo}/branches/{encoded}"], timeout=20)
+        rules = gh(["api", f"repos/{repo}/rules/branches/{encoded}"], timeout=20)
+        if metadata.returncode or rules.returncode:
+            return None
+        info = json.loads(metadata.stdout)
+        effective = json.loads(rules.stdout)
+        if not isinstance(info, dict) or info.get("name") != branch or type(info.get("protected")) is not bool:
+            return None
+        if not isinstance(effective, list):
+            return None
+        names: set[str] = set()
+        if info["protected"]:
+            protection = info.get("protection")
+            required = protection.get("required_status_checks") if isinstance(protection, dict) else None
+            if not isinstance(required, dict):
+                return None
+            contexts, checks = required.get("contexts"), required.get("checks")
+            if not isinstance(contexts, list) or not isinstance(checks, list):
+                return None
+            for entry in [*contexts, *(c.get("context") if isinstance(c, dict) else None for c in checks)]:
+                if not isinstance(entry, str) or not entry:
+                    return None
+                names.add(entry)
+        for rule in effective:
+            if not isinstance(rule, dict):
+                return None
+            if rule.get("type") == "required_status_checks":
+                parameters = rule.get("parameters")
+                entries = parameters.get("required_status_checks") if isinstance(parameters, dict) else None
+                if not isinstance(entries, list):
+                    return None
+                for entry in entries:
+                    context = entry.get("context") if isinstance(entry, dict) else None
+                    if not isinstance(context, str) or not context:
+                        return None
+                    names.add(context)
+            elif rule.get("type") not in _CONTEXT_FREE_RULES:
+                return None
+        return tuple(sorted(names))
+    except (OSError, ValueError, TypeError):
+        return None
 
 
 def required_checks_in_states(gh, repo: str, num: int, branch: str | None, states) -> tuple | None:
@@ -165,7 +226,13 @@ if __name__ == "__main__":
     import subprocess
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--prove-no-required", required=True, metavar="OWNER/REPO")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--prove-no-required", metavar="OWNER/REPO")
+    mode.add_argument(
+        "--contexts",
+        metavar="OWNER/REPO",
+        help="print the required status-context names as a JSON array (REST; exit 2 when unmeasured)",
+    )
     parser.add_argument("--branch", required=True)
     arguments = parser.parse_args()
 
@@ -174,6 +241,13 @@ if __name__ == "__main__":
             ["gh", *arguments], capture_output=True, text=True, timeout=timeout, check=False
         )
 
+    if arguments.contexts:
+        contexts = required_contexts(gh, arguments.contexts, arguments.branch)
+        if contexts is None:
+            print(UNMEASURED)
+            raise SystemExit(2)
+        print(json.dumps(list(contexts)))
+        raise SystemExit(0)
     if no_required_policy(gh, arguments.prove_no_required, arguments.branch):
         print("NO-REQUIRED-CHECKS")
         raise SystemExit(0)
