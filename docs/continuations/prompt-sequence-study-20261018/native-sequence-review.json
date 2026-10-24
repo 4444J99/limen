@@ -1,0 +1,443 @@
+{
+  "schema": "limen.prompt_sequence_review.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "scope": "Bounded native Codex archive tranche; not the whole corpus and not held-out validation",
+  "classification": "Manual semantic candidates after contextual review; not installed commands or demonstrated substitutions",
+  "source_bounds": {
+    "uncompressed_archive_files_discovered": 180,
+    "files_read": 43,
+    "bytes_read": 66480895,
+    "max_file_bytes": 8388608,
+    "max_batch_bytes": 67108864,
+    "newest_first": true,
+    "skipped": {
+      "fewer_than_3_candidate_prompts": 14,
+      "fork_or_subagent": 21
+    },
+    "current_native_file_inventory": {
+      "active_jsonl_files": 29,
+      "archive_jsonl_files": 180,
+      "archive_zstd_files": 1308
+    },
+    "logical_session_population": "Not established: resumed copies, subagents and compressed units require reconciliation."
+  },
+  "sequences": [
+    {
+      "sequence": "S1",
+      "captured_prompts": 6,
+      "all_prompt_bodies_marked_complete": true,
+      "compactions": 1,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/approve <bounded-repair> + /execute <repair>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 5,
+          "candidate": "/context <terminal-output>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 6,
+          "candidate": "/review <peer-report> + /revise <superseded-plan>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S2",
+      "captured_prompts": 4,
+      "all_prompt_bodies_marked_complete": false,
+      "compactions": 1,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/review <peer-report> [provisional: incomplete body]",
+          "body_complete": false,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S3",
+      "captured_prompts": 4,
+      "all_prompt_bodies_marked_complete": true,
+      "compactions": 0,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/context <terminal-error>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/closeout",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S4",
+      "captured_prompts": 4,
+      "all_prompt_bodies_marked_complete": false,
+      "compactions": 0,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/execute <plan> [provisional: incomplete body]",
+          "body_complete": false,
+          "observed_reply_count": 3
+        },
+        {
+          "position": 3,
+          "candidate": "/status --blockers",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/closeout",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S5",
+      "captured_prompts": 8,
+      "all_prompt_bodies_marked_complete": false,
+      "compactions": 1,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/review <plan>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/watch <session> --until <predicate>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/revise <authority-claim>",
+          "body_complete": true,
+          "observed_reply_count": 0
+        },
+        {
+          "position": 5,
+          "candidate": "/status",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 6,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 7,
+          "candidate": "/handoff <checkpoint> [provisional: incomplete body]",
+          "body_complete": false,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 8,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S6",
+      "captured_prompts": 7,
+      "all_prompt_bodies_marked_complete": false,
+      "compactions": 1,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/review <prior-report>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/watch <session> --until <predicate>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/review <correction> [provisional: incomplete body]",
+          "body_complete": false,
+          "observed_reply_count": 0
+        },
+        {
+          "position": 5,
+          "candidate": "/approve <prepared-direction>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 6,
+          "candidate": "/retry <attempt> --changed <evidence>",
+          "body_complete": true,
+          "observed_reply_count": 0
+        },
+        {
+          "position": 7,
+          "candidate": "/review <session>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S7",
+      "captured_prompts": 6,
+      "all_prompt_bodies_marked_complete": false,
+      "compactions": 0,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/context <diagnostic-output> [provisional: incomplete body]",
+          "body_complete": false,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/next --owner human",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/review <peer-report> [provisional: incomplete body]",
+          "body_complete": false,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 5,
+          "candidate": "/verify <reported-fixes>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 6,
+          "candidate": "/archive-check",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    },
+    {
+      "sequence": "S8",
+      "captured_prompts": 4,
+      "all_prompt_bodies_marked_complete": true,
+      "compactions": 0,
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/context <listener-output>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 3,
+          "candidate": "/context <service-output>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        },
+        {
+          "position": 4,
+          "candidate": "/record-result <operator-report>",
+          "body_complete": true,
+          "observed_reply_count": 1
+        }
+      ]
+    }
+  ],
+  "new_candidates": [
+    {
+      "name": "/watch <session> --until <predicate>",
+      "contract": "Observe the exact assigned native session within existing deadlines; distinguish terminal non-green from completion; no restart or takeover is implied."
+    },
+    {
+      "name": "/retry <attempt> --changed <evidence>",
+      "contract": "Reassess the original attempt only after relevant evidence changes; retain guard stop limits, scope and authority."
+    },
+    {
+      "name": "/record-result <operator-report>",
+      "contract": "Preserve the operator's acceptance or factual report as attributed evidence. It does not prove software acceptance or session release."
+    }
+  ],
+  "findings": [
+    {
+      "id": "same-words-changing-output",
+      "evidence": [
+        "S1.2",
+        "S1.4",
+        "S2.3",
+        "S2.4"
+      ],
+      "claim": "The same next-action question yields materially different operator actions as context changes, including a retraction. Preserve dynamic target resolution; do not encode a fixed action."
+    },
+    {
+      "id": "payload-cannot-disappear",
+      "evidence": [
+        "S1.5",
+        "S3.3",
+        "S8.2",
+        "S8.3"
+      ],
+      "claim": "A context command must retain the actual terminal output or immutable payload reference; the verb alone is not an equivalent prompt."
+    },
+    {
+      "id": "bounded-approval",
+      "evidence": [
+        "S1.3"
+      ],
+      "claim": "Approval includes a specific repair, destination boundary and preserved broker conditions. An unqualified approve command would lose authority constraints."
+    },
+    {
+      "id": "closure-is-not-success",
+      "evidence": [
+        "S3.4",
+        "S4.4",
+        "S7.6"
+      ],
+      "claim": "Closeout and archive questions produced handoff or unverified closure reports. These historical replies do not prove successful release or landing."
+    }
+  ],
+  "remaining": [
+    "Read compressed native archive units through a bounded adapter and reconcile resumed/forked sessions.",
+    "Recover incomplete retained prompt bodies before asserting whole-session completeness.",
+    "Reconcile Claude and other native-provider coverage and the existing 12/17-command candidate sets.",
+    "Validate substitutions on held-out complete sessions, including target, payload, authority, constraints and stopping condition.",
+    "Complete the existing process-ownership, full-gate, merge, deployment and closeout requirements without using a sibling checkout."
+  ],
+  "cross_provider_cases": [
+    {
+      "sequence": "D1",
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/plan <healing-objective>"
+        },
+        {
+          "position": 3,
+          "candidate": "/continue --plan <prepared-plan> --until complete"
+        },
+        {
+          "position": 4,
+          "candidate": "/closeout"
+        }
+      ],
+      "review": "Contextual reconstruction; not blind held-out validation."
+    },
+    {
+      "sequence": "D2",
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/explain <change> --format tree --before-after"
+        },
+        {
+          "position": 3,
+          "candidate": "/review <change> --criteria python-engineering"
+        },
+        {
+          "position": 4,
+          "candidate": "/fix <import-and-test-findings> --acceptance <clean-verification>"
+        }
+      ],
+      "review": "Contextual reconstruction; not blind held-out validation."
+    },
+    {
+      "sequence": "C1",
+      "followup_candidates": [
+        {
+          "position": 2,
+          "candidate": "/verify --grounding <config>"
+        },
+        {
+          "position": 3,
+          "candidate": "/next --scope <config>"
+        },
+        {
+          "position": 4,
+          "candidate": "/continue --proposal <selected-config-changes>"
+        },
+        {
+          "position": 5,
+          "candidate": "/ship merge <current-pr>"
+        },
+        {
+          "position": 6,
+          "candidate": "/apply <merged-config>"
+        },
+        {
+          "position": 7,
+          "candidate": "/explain <tab-action>"
+        },
+        {
+          "position": 8,
+          "candidate": "/choose <switch-option>"
+        },
+        {
+          "position": 9,
+          "candidate": "/ship merge <current-pr> + /apply <merged-config>"
+        },
+        {
+          "position": 10,
+          "candidate": "/explain <super-modifier>"
+        },
+        {
+          "position": 11,
+          "candidate": "/verify --archive-eligibility <session>"
+        }
+      ],
+      "review": "Contextual reconstruction; not blind held-out validation."
+    }
+  ]
+}

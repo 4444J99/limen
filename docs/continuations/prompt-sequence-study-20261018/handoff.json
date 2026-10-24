@@ -1,0 +1,229 @@
+{
+  "schema": "limen.prompt_sequence_study_handoff.v1",
+  "session_id": "01a14e66-dd33-79d2-8b81-fccbda7c8c2d",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "related_comparison": "https://github.com/4444J99/limen/pull/3067",
+  "task_completed": false,
+  "commands": [
+    {
+      "key": "continue",
+      "name": "/continue",
+      "intent": "Advance the existing authorized work",
+      "result": "The next permitted step runs with the same objective, scope and constraints.",
+      "needs": "Unambiguous current objective and next step.",
+      "examples": [
+        "continue",
+        "proceed",
+        "keep going"
+      ]
+    },
+    {
+      "key": "run",
+      "name": "/execute <plan>",
+      "intent": "Execute a selected plan or tranche",
+      "result": "The referenced plan is carried through its stated acceptance checks.",
+      "needs": "Plan version, selected items, bounds and existing approvals.",
+      "examples": [
+        "Implement the plan.",
+        "proceed w all",
+        "proceed with the next tranche"
+      ],
+      "namingNote": "The current session-phases schema uses /run for app launching; /execute is a candidate pending per-provider collision checks."
+    },
+    {
+      "key": "finish",
+      "name": "/finish",
+      "intent": "Carry the current objective to completion",
+      "result": "Remaining authorized work is advanced to an evidence-backed terminal disposition.",
+      "needs": "Acceptance predicate and finite runway; no implicit new authority.",
+      "examples": [
+        "complete it",
+        "walk this all the way home",
+        "finish outstanding work"
+      ]
+    },
+    {
+      "key": "status",
+      "name": "/status",
+      "intent": "Report the current evidenced state",
+      "result": "Completed, remaining, blocked and unverified work are distinguished.",
+      "needs": "Current receipts; a denominator for percentages.",
+      "examples": [
+        "percentage complete and status report",
+        "what are you working on?",
+        "full status report"
+      ]
+    },
+    {
+      "key": "next",
+      "name": "/next [--owner human]",
+      "intent": "Determine the next action",
+      "result": "Names the next workstream step or the specific action only the operator can take.",
+      "needs": "Current dependencies and recorded authority.",
+      "examples": [
+        "what's next?",
+        "what do i have to do now",
+        "what is outstanding?"
+      ]
+    },
+    {
+      "key": "explain",
+      "name": "/explain [--brief|--why]",
+      "intent": "Clarify the current result or decision",
+      "result": "A direct explanation at the requested level, without starting a new task.",
+      "needs": "A resolvable subject.",
+      "examples": [
+        "tldr and eli5",
+        "huh?",
+        "explain why"
+      ]
+    },
+    {
+      "key": "review",
+      "name": "/review <target>",
+      "intent": "Evaluate an artifact, plan or other session's claims",
+      "result": "Findings and a reasoned disposition grounded in current evidence.",
+      "needs": "Target and criteria; imported claims are not proof.",
+      "examples": [
+        "review",
+        "anything you would change or add?",
+        "critique"
+      ]
+    },
+    {
+      "key": "verify",
+      "name": "/verify <claim>",
+      "intent": "Check whether the intended result is true",
+      "result": "A passing or failing predicate with evidence and scope.",
+      "needs": "The claim and its owning predicate.",
+      "examples": [
+        "verify",
+        "were all of the findings healed and addressed?",
+        "all is complete?"
+      ]
+    },
+    {
+      "key": "repair",
+      "name": "/repair <finding>",
+      "intent": "Resolve an identified failure",
+      "result": "Cause addressed and the implicated check rerun.",
+      "needs": "A named failure, authority, and changed-input rule for retries.",
+      "examples": [
+        "fix",
+        "heal",
+        "address all findings"
+      ]
+    },
+    {
+      "key": "revise",
+      "name": "/revise <delta>",
+      "intent": "Change the objective, constraint or interpretation",
+      "result": "The working contract is updated with the explicit new content.",
+      "needs": "The correction itself cannot be inferred or erased.",
+      "examples": [
+        "the nine phases was me miss counting",
+        "do you understand that this is victoroff only right?"
+      ]
+    },
+    {
+      "key": "approve",
+      "name": "/approve <proposal-id>",
+      "intent": "Grant bounded authority",
+      "result": "An exact prepared proposal receives approval while exclusions remain intact.",
+      "needs": "Proposal identity/version, target, scope, conditions, expiration if relevant.",
+      "examples": [
+        "Approve both prepared changes",
+        "yes to 1 and 2, wait on copilot"
+      ]
+    },
+    {
+      "key": "ship",
+      "name": "/ship <stage> <target>",
+      "intent": "Advance a named publication stage",
+      "result": "Push, PR, merge or deploy succeeds with stage-specific evidence.",
+      "needs": "Explicit stage and target. Merge, deployment and cleanup stay separate.",
+      "examples": [
+        "merge",
+        "merge the receipt PR",
+        "Approve deploying d8703e0 to limen-runtime"
+      ]
+    },
+    {
+      "key": "closeout",
+      "name": "/closeout",
+      "intent": "Resolve the session's obligations",
+      "result": "Work has durable owners, required receipts and the session-release predicate.",
+      "needs": "Current obligations and source-owned closeout implementation.",
+      "examples": [
+        "closeout",
+        "complete the closeout",
+        "get it to closeout then"
+      ]
+    },
+    {
+      "key": "archive",
+      "name": "/archive-check",
+      "intent": "Check whether a session can be archived",
+      "result": "A reasoned eligible/ineligible verdict; no archive mutation.",
+      "needs": "Custody, outstanding ownership and session identity.",
+      "examples": [
+        "safe to archive?",
+        "safe to archive this work session?"
+      ]
+    },
+    {
+      "key": "context",
+      "name": "/context <payload>",
+      "intent": "Add evidence or transferred context",
+      "result": "Payload is retained with its source and interpreted against the active objective.",
+      "needs": "The actual output, transcript, attachment or document.",
+      "examples": [
+        "[Pasted text #1 +73 lines]",
+        "Last login: …",
+        "[Image #1]"
+      ]
+    },
+    {
+      "key": "handoff",
+      "name": "/handoff <scope> <target>",
+      "intent": "Prepare or send a bounded continuation",
+      "result": "Scope, authority, evidence and next action travel together.",
+      "needs": "Recipient and explicit send instruction; preparation alone sends nothing.",
+      "examples": [
+        "provide a handoff prompt for each",
+        "pickup this sessions work"
+      ]
+    },
+    {
+      "key": "reorient",
+      "name": "/reorient",
+      "intent": "Correct a stalled or drifting approach",
+      "result": "Compare work against the original objective, identify the loop or mismatch, and choose a materially different authorized next action.",
+      "needs": "Evidence of no progress or scope drift; preserve the objective and hard limits.",
+      "examples": [
+        "you are spiralling on the same things over and over",
+        "you should be following a plan"
+      ],
+      "status": "Candidate requiring review"
+    }
+  ],
+  "corrections": [
+    "History-only extraction cannot establish the original opener or complete native session order. Ghostty history has 10 entries while its native transcript has 11 prompts.",
+    "The original artifact denial and the later internal-worktree storage latch are distinct failures.",
+    "Recorded assistant outcomes are historical claims, not current runtime proof."
+  ],
+  "exploratory_counts": {
+    "history_sessions": 562,
+    "history_entries": 3863,
+    "entries_after_first_retained": 3301,
+    "contextual_examples": 18
+  },
+  "acceptance_remaining": [
+    "Reanchor history sequences to native transcripts with authorship, echo, retention and resume checks.",
+    "Complete the provider-bounded ledger ingestion and recurring-form analysis owned by #3056.",
+    "Reconcile the 17 candidates here with the 12 candidates in #3067; validate held-out whole sessions.",
+    "Preserve target, actual payload, authority, constraints and stopping condition in each substitution."
+  ],
+  "custody_scope": "This handoff contains redacted analytical work only. Original private transcripts were read in place and remain native-owned. No copied private dataset or reconstructed raw corpus is represented as preserved by this handoff.",
+  "operational_handoff": "https://github.com/4444J99/limen/issues/3056#issuecomment-6249616277"
+}
