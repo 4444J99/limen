@@ -138,6 +138,14 @@ def test_wall_timeout_is_redacted_without_retry(monkeypatch):
     assert calls == [1]
 
 
+def test_caller_headers_are_refused_not_dropped(server):
+    endpoint, calls = server
+    client = AssessmentHttpClient(endpoint, "fixture-read-only")
+    with pytest.raises(BrokerUnavailable):
+        client.execution_policy_custody()
+    assert calls == []
+
+
 def test_real_post_preserves_claim_binding(server):
     endpoint, calls = server
     assert AssessmentHttpClient(endpoint, "fixture-read-only").claim("lease-1", 7) == {"generation": 7}

@@ -19,6 +19,7 @@ def main():
     source_group = parser.add_mutually_exclusive_group(required=True)
     source_group.add_argument("--source", type=Path)
     source_group.add_argument("--native-record", type=Path)
+    source_group.add_argument("--live-custody", action="store_true", help="recover the live policy body from the keeper")
     parser.add_argument("--record-line", type=int, default=257)
     parser.add_argument("--outcome", required=True)
     parser.add_argument("--work-key", required=True)
@@ -37,11 +38,12 @@ def main():
     try:
         client = client_from_env()
         live = client._request("GET", "/api/conduct/execution/policy")
-        source = (
-            native_policy_record(args.native_record, args.record_line)
-            if args.native_record
-            else json.loads(args.source.read_text())
-        )
+        if args.live_custody:
+            source = client.execution_policy_custody()["policy"]
+        elif args.native_record:
+            source = native_policy_record(args.native_record, args.record_line)
+        else:
+            source = json.loads(args.source.read_text())
         candidate = reconcile_policy(source, live, outcome=args.outcome, work_key=args.work_key, owner=args.owner)
         receipt.update(
             prior_fingerprint=canonical_hash(source),
