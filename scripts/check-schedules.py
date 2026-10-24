@@ -724,22 +724,31 @@ def _rule_ceilings(row: dict) -> dict[str, int]:
 
 
 def check_ratchet_direction(root: Path, registry: dict) -> None:
-    """J: on-the-hour / shared-minute ceilings and declared_off per-state ceilings never rise against the merge-base."""
+    """J: on-the-hour / shared-minute ceilings and declared_off per-state ceilings never rise against the merge-base.
+    Continuity is by FACT: a plane renamed but deriving the same carrier/scope/visibility inherits the old ratchet,
+    and a plane may leave the registry only once every ratchet ceiling it carried is 0."""
     census_planes = {pid: p for pid, p in (registry.get("planes") or {}).items() if S.is_census_plane(p)}
-    if not census_planes:
-        return
     rc, base = _git(root, "merge-base", "HEAD", "origin/main")
     base = base.strip()
     if rc != 0 or not base:
-        advise("J", "no merge-base with origin/main here — ceiling ratchet direction unverifiable here, not drift")
+        if census_planes:
+            advise("J", "no merge-base with origin/main here — ceiling ratchet direction unverifiable here, not drift")
         return
     old = _registry_at(root, base)
     if old is None:
         return  # the registry did not exist at the base: every ceiling is new
-    for pid, plane in census_planes.items():
-        before = (old.get("planes") or {}).get(pid)
-        if not isinstance(before, dict):
+    old_census = {pid: p for pid, p in (old.get("planes") or {}).items() if isinstance(p, dict) and S.is_census_plane(p)}
+    by_fact = {_census_fact(p): pid for pid, p in census_planes.items()}
+    for old_pid, before in old_census.items():
+        pid = old_pid if old_pid in census_planes else by_fact.get(_census_fact(before))
+        if pid is None:
+            live = _live_ratchets(before)
+            if live:
+                fail("J", f"plane {old_pid} at {base[:9]} is gone with live ceilings {live} — a census plane leaves only once its ratchet ceilings reach 0; a rename keeps its id or derives the same fact (carrier/scope/visibility) so the ratchet carries over")
             continue
+        plane = census_planes[pid]
+        if pid != old_pid:
+            pid = f"{pid} (was {old_pid})"
         old_ceilings = before.get("ceilings") if isinstance(before.get("ceilings"), dict) else {}
         new_ceilings = plane.get("ceilings") if isinstance(plane.get("ceilings"), dict) else {}
         for key in S.RATCHET_CEILING_KEYS:
@@ -768,6 +777,22 @@ def check_ratchet_direction(root: Path, registry: dict) -> None:
                         fail("J", f"plane {pid}: declared_off ceiling {state_key} was {old_v} at {base[:9]} and is gone now — lower it to 0 before dropping it")
                 elif new_v > old_v:
                     fail("J", f"plane {pid}: declared_off ceiling {state_key} rose {old_v} → {new_v} against {base[:9]} — an off-switch count only falls (reap or re-enable), it is never re-declared upward")
+
+def _census_fact(plane: dict) -> tuple[str, str, str | None]:
+    """The fact a census plane derives: (carrier, scope, visibility) — its identity across renames."""
+    src = plane.get("jobs_source") if isinstance(plane.get("jobs_source"), dict) else {}
+    return (str(src.get("carrier", "gh-workflow")), str(src.get("scope", "residual")), src.get("visibility"))
+
+
+def _live_ratchets(plane: dict) -> dict[str, int]:
+    """Every ratchet ceiling above 0 a plane carries: on-the-hour / shared-minute and each declared_off state ceiling."""
+    ceilings = plane.get("ceilings") if isinstance(plane.get("ceilings"), dict) else {}
+    live = {k: v for k, v in ceilings.items() if k in S.RATCHET_CEILING_KEYS and _is_cap(v) and v > 0}
+    for r in plane.get("declared_off") or []:
+        if isinstance(r, dict) and isinstance(r.get("match"), dict):
+            live.update({f"declared_off[{_match_key(r)}].{k}": v for k, v in _rule_ceilings(r).items() if v > 0})
+    return live
+
 
 def check_launch_authority(registry: dict) -> None:
     """Logical launch authority is independent of the GitHub minute-offset house policy."""

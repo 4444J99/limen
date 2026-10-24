@@ -1907,6 +1907,44 @@ def test_a_workflow_crowded_off_the_run_listing_is_unmeasurable_not_failed(tmp_p
     _, by = _fleet_eval(tmp_path)
     priv = by["github-actions-fleet-private"]
     assert (priv["declared"], priv["observed"]) == (4, 2) and "0 crowded" in priv["detail"]
+    # a receipt that read the deepest page too holds the repository's FIRST run in oldest_seen: that says nothing
+    # about the summarized page, so without the page's own edge the silent workflow is unmeasurable, not scored
+    repo["fired"]["oldest_page_read"] = True
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (3, 2) and "1 crowded" in priv["detail"]
+    repo["fired"]["page_oldest_seen"] = "2026-10-22T20:00:00Z"  # the page spans 4h: still crowded off
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    assert "1 crowded" in by["github-actions-fleet-private"]["detail"]
+    repo["fired"]["page_oldest_seen"] = "2026-09-01T00:00:00Z"  # the page itself reaches back: measurable
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (4, 2) and "0 crowded" in priv["detail"]
+
+
+def test_census_floor_is_unmeasured_from_a_targeted_census_or_a_universe_short_of_an_owner(tmp_path):
+    assert S.census_floor_unmeasured({"denominators": {"universe_source": "repos-file:/u.txt", "scanned": 3}}, []) == {}
+    assert S.census_floor_unmeasured({"denominators": {"universe_source": "explicit", "scanned": 1}}, []) == {
+        "explicit_scope": 1
+    }
+    assert S.census_floor_unmeasured(
+        {"denominators": {"universe_source": "gh-repo-list:o", "universe_unlisted_owners": 2}}, []
+    ) == {"universe_unlisted_owners": 2}
+    # through the gate: a complete one-repository census written to the default receipt never advises lowering
+    receipt = json.loads(json.dumps(FLEET_RECEIPT))
+    receipt["denominators"]["universe_source"] = "explicit"
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["ceilings"]["active"] = 4
+    write_fleet_root(tmp_path, planes, receipt=receipt)
+    run = run_check(tmp_path)
+    assert run.returncode == 0 and "floor unmeasured (explicit_scope 1) — do not lower" in run.stdout
+    assert "lower ceilings.active" not in run.stdout
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert priv["readback_overdue"] is False and "explicit_scope 1" in priv["detail"]
 
 
 def test_launchctl_reader_honours_the_receipt_state(tmp_path, monkeypatch):
@@ -1999,6 +2037,27 @@ def test_ratchet_direction_fails_a_rising_ceiling_against_the_merge_base(tmp_pat
         and "with ceilings {'disabled_manually': 1} at" in run.stdout
         and "is gone — a rule leaves only once its ceilings reach 0" in run.stdout
     )
+    # continuity is by fact: a renamed plane deriving the same carrier/scope/visibility inherits the ratchet …
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private-v2"] = planes.pop("github-actions-fleet-private")
+    planes["github-actions-fleet-private-v2"]["ceilings"]["on-the-hour"] = 2
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and (
+        "[J] plane github-actions-fleet-private-v2 (was github-actions-fleet-private): ceilings.on-the-hour rose 1 → 2"
+        in run.stdout
+    )
+    # … and a plane may leave only once every ratchet ceiling it carried is 0
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    del planes["github-actions-fleet-private"]
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert "[J] plane github-actions-fleet-private at" in run.stdout and "is gone with live ceilings {" in run.stdout
+    assert "'on-the-hour': 1" in run.stdout and "disabled_manually" in run.stdout
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    del planes["launchd-host"]  # ceilings {active: N} only: active is not a ratchet, so the plane may leave
+    write_registry(tmp_path, planes, [])
+    assert "[J]" not in run_check(tmp_path).stdout
     # a plane the base never had is not ratcheted against anything
     _git(tmp_path, "rm", "-rq", "--cached", "institutio")
     write_registry(tmp_path, {"github-actions-limen": FLEET_PLANES["github-actions-limen"]}, [])
