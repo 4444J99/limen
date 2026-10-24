@@ -57,6 +57,39 @@ corroborated against the latest run's step conclusions, which is what catches th
 while the registry still says dormant. Absent an `arming` block a trigger is armed: the default
 over-protects.
 
+## The predicate reads over REST when GraphQL is unavailable
+
+Claude Code cloud sessions reach GitHub through a proxy that answers every GraphQL call (`gh pr view`,
+`gh pr checks`, `gh issue view`, `gh api graphql`) with `HTTP 403: GitHub GraphQL is not available`.
+Until 2026-10-24 that read as `BLOCKED — cannot read PR` for PRs that were readable (gap G4, observed
+on `4444J99/limen#3171`), so the standing merge grant could not be exercised where most merging
+happens. `scripts/merge-policy.sh` still tries GraphQL first. A GraphQL failure that is not a quota or
+transport HOLD falls back to `scripts/_gh_rest.py`, which derives the same facts over REST — the pull
+object (draft, mergeable state, head SHA, base), `pulls/{n}/files`, and the head commit's check runs and
+combined status — in `gh pr view --json` shape, so one set of rules judges the PR on either transport.
+Required-versus-advisory comes from branch protection and rulesets via
+`_required_checks.py --contexts`; review threads, when `LIMEN_REVIEW_GATE=1`, from the CCR route. A
+verdict derived this way prints `read-path=rest`. `scripts/tests/merge-policy.test.sh` runs each verdict
+through both transports and requires the same exit code from each.
+
+What stays fail-toward-caution, on purpose:
+
+- Neither path can read the PR → `BLOCKED` with both scrubbed diagnostics. Quota or transport trouble on
+  either path → `HOLD`.
+- REST mergeability still being computed → `UNKNOWN` → `HOLD` (the reader retries briefly first).
+- A changed-file list GitHub truncated is unreadable, never "no deploy-trigger paths".
+- A ruleset rule type that could require checks the reader cannot enumerate leaves the required set
+  unmeasured, so the all-checks counts stay in force.
+- Merge-queue capability is a GraphQL-only field and stays `unknown` there: `MERGE-MODE` is `direct` and
+  a `BEHIND` branch stays `BLOCKED`. `limen` is queue-free by contract, so nothing is lost.
+
+**Effects get no REST twin.** `scripts/merge-drain.py` has the same GraphQL dependency in its
+submission path (`gh pr merge`, `gh pr edit`, the queue-state query) and fails closed in a cloud session.
+That is deliberate: a REST merge path inside it would be the merge-method fallback the queue-free merge
+contract forbids, and a new in-process effector against a shrink-only baseline. The predicate is the part
+a cloud session needs; once it returns 0, the merge call itself is the session's own REST merge, bound to
+`MERGE-HEAD`.
+
 ## Waiting on a gate
 
 Agent/provider sessions never wait on PR state: no hand-rolled loop, no sleep/recheck sequence, and

@@ -24,6 +24,13 @@
 #
 # Usage:  scripts/merge-policy.sh [PR_NUMBER] [--repo OWNER/NAME] [--expected-head SHA]
 #         (no PR number → resolves the PR open for the current branch)
+#
+# Transport: GraphQL (`gh pr view`) first. Claude Code cloud sessions answer every GraphQL call with
+# HTTP 403, so a GraphQL failure that is not a quota/transport HOLD falls back to scripts/_gh_rest.py,
+# which derives the same facts over REST in the same shape (verdict lines then print `read-path=rest`).
+# Neither path readable → BLOCKED with both scrubbed diagnostics. Merge-queue capability is a GraphQL-only
+# field and stays `unknown` there, which keeps the stale-base guard. Detail:
+# docs/architecture/merge-and-branch-protocol-detail.md › "The predicate reads over REST…".
 set -euo pipefail
 
 PR=""; REPO=""; EXPECTED_HEAD=""
@@ -99,40 +106,71 @@ if [ -z "$DEPLOY_RE" ]; then
   DEPLOY_RE='^$'
 fi
 
-# Both lookup modes classify the same captured GitHub diagnostic.
-j="$(mktemp)"; err="$(mktemp)"; trap 'rm -f "$j" "$err"' EXIT
-lookup_failure() {
-  if grep -Eqi 'rate limit|api quota|429|fetch exhausted' "$err"; then
+# Both lookup modes classify the same captured GitHub diagnostics.
+#
+# GraphQL (`gh pr view`) is tried first. Claude Code cloud sessions answer EVERY GraphQL call with
+# `HTTP 403: GitHub GraphQL is not available from Claude Code sessions; use the REST API`, which used
+# to read as "cannot read PR" (gap G4) even though the PR was readable. A GraphQL failure that is not a
+# quota/transport HOLD therefore falls back to scripts/_gh_rest.py, which derives the SAME facts over
+# REST in the SAME shape, so one set of rules below judges the PR whichever transport carried it.
+# $err holds the GraphQL diagnostic and $err_rest the REST one; if neither path can read the PR the
+# verdict is still BLOCKED with both scrubbed diagnostics.
+j="$(mktemp)"; err="$(mktemp)"; err_rest="$(mktemp)"
+trap 'rm -f "$j" "$err" "$err_rest"' EXIT
+read_path="graphql"
+
+# Quota exhaustion and transient transport failure are "I could not look", never a merge verdict.
+# Arguments name the captured diagnostic file(s) to classify.
+hold_on_unreadable() {
+  if grep -Eqi 'rate limit|api quota|429|fetch exhausted' "$@"; then
     echo "VERDICT: HOLD — GitHub API quota is exhausted." >&2
     exit 2
   fi
   # #2147 residual: a transient transport failure is not a merge verdict either.
   # "I could not look" (502/503/504, timeout, DNS, reset) must HOLD, never BLOCKED —
   # only auth/permission errors and genuinely unreadable PRs (404, wrong repo) do.
-  if grep -Eqi 'HTTP 5[0-9]{2}|timed? ?out|connection (reset|refused)|could not resolve|no such host|network (is )?unreachable|tls handshake|unexpected eof|broken pipe|bad gateway|service unavailable|gateway timeout' "$err"; then
+  if grep -Eqi 'HTTP 5[0-9]{2}|timed? ?out|connection (reset|refused)|could not resolve|no such host|network (is )?unreachable|tls handshake|unexpected eof|broken pipe|bad gateway|service unavailable|gateway timeout' "$@"; then
     echo "VERDICT: HOLD — GitHub API lookup failed with a transient transport error; re-run." >&2
     exit 2
   fi
-  # Surface the captured diagnostic so an unclassified failure is verifiable (2026-10-17: PR #2904
-  # returned BLOCKED twice while `gh pr view` succeeded, and nothing recorded why). Bounded to the
-  # last 300 bytes, control characters stripped, credential shapes redacted; stderr only.
-  diag="$(tail -c 300 "$err" | LC_ALL=C tr -d '\000-\010\013-\037' | sed -E \
+}
+# Bounded to the last 300 bytes, control characters stripped, credential shapes redacted; stderr only.
+scrub_diag() {
+  tail -c 300 "$1" | LC_ALL=C tr -d '\000-\010\013-\037' | sed -E \
     -e 's/gh[pousr]_[A-Za-z0-9]{20,}/[REDACTED]/g' \
     -e 's/github_pat_[A-Za-z0-9_]{20,}/[REDACTED]/g' \
-    -e 's/([Bb]earer|[Tt]oken|TOKEN|[Aa]uthorization)([[:space:]:=]+)[^[:space:]]+/\1\2[REDACTED]/g')"
+    -e 's/([Bb]earer|[Tt]oken|TOKEN|[Aa]uthorization)([[:space:]:=]+)[^[:space:]]+/\1\2[REDACTED]/g'
+}
+lookup_failure() {
+  hold_on_unreadable "$err" "$err_rest"
+  # Surface the captured diagnostics so an unclassified failure is verifiable (2026-10-17: PR #2904
+  # returned BLOCKED twice while `gh pr view` succeeded, and nothing recorded why).
+  diag="$(scrub_diag "$err")"
   if [ -n "$diag" ]; then
     printf 'merge-policy: gh diagnostic (scrubbed, last 300B): %s\n' "$diag" >&2
+  fi
+  diag_rest="$(scrub_diag "$err_rest")"
+  if [ -n "$diag_rest" ]; then
+    printf 'merge-policy: REST fallback diagnostic (scrubbed, last 300B): %s\n' "$diag_rest" >&2
   fi
   echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2
   exit 3
 }
 if [ -z "$PR" ]; then
-  PR="$(gh pr view "${repo_args[@]+"${repo_args[@]}"}" --json number -q .number 2>"$err")" || lookup_failure
+  if ! PR="$(gh pr view "${repo_args[@]+"${repo_args[@]}"}" --json number -q .number 2>"$err")"; then
+    hold_on_unreadable "$err"
+    PR="$("$_py" "$_root/scripts/_gh_rest.py" current-pr "${repo_args[@]+"${repo_args[@]}"}" 2>"$err_rest")" || lookup_failure
+  fi
   [ -n "$PR" ] || { echo "merge-policy: no open PR for current branch." >&2; exit 3; }
 fi
-gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
-  --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,headRefOid,files,statusCheckRollup \
-  > "$j" 2>"$err" || lookup_failure
+if ! gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
+    --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,headRefOid,files,statusCheckRollup \
+    > "$j" 2>"$err"; then
+  hold_on_unreadable "$err"
+  read_path="rest"
+  "$_py" "$_root/scripts/_gh_rest.py" snapshot --pr "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
+    > "$j" 2>"$err_rest" || lookup_failure
+fi
 
 title=$(jq -r '.title' "$j")
 url=$(jq -r '.url' "$j")
@@ -203,7 +241,11 @@ if [ -n "$EXPECTED_HEAD" ] && [ "$head" != "$EXPECTED_HEAD" ]; then
   echo "VERDICT: HOLD — expected PR head $EXPECTED_HEAD but GitHub reports $head; re-run on the new head."
   exit 2
 fi
-head_now=$(gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" --json headRefOid -q .headRefOid 2>/dev/null || true)
+if [ "$read_path" = "rest" ]; then
+  head_now=$("$_py" "$_root/scripts/_gh_rest.py" head --pr "$PR" "${repo_args[@]+"${repo_args[@]}"}" 2>/dev/null || true)
+else
+  head_now=$(gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" --json headRefOid -q .headRefOid 2>/dev/null || true)
+fi
 if [ -z "$head_now" ] || [ "$head_now" != "$head" ]; then
   echo "VERDICT: HOLD — PR head changed while checks were inspected; re-run on the new exact head."
   exit 2
@@ -244,13 +286,15 @@ sensitive=0
 # Key on .name (CheckRun) or .context (StatusContext); recency by .completedAt then .startedAt.
 LATEST='[.statusCheckRollup[]? | . + {_k:(.name // .context // ""), _t:(.completedAt // .startedAt // "")}]
         | group_by(._k) | map(max_by(._t))'
-failing=$(jq "$LATEST"' | [.[] | (.conclusion // .state // "" | ascii_upcase)
-             | select(.=="FAILURE" or . =="CANCELLED" or . =="TIMED_OUT" or . =="ERROR"
-                      or . =="ACTION_REQUIRED" or . =="STARTUP_FAILURE")] | length' "$j")
-pending=$(jq "$LATEST"' | [.[]
-             | ((.status // "" | ascii_upcase) as $s | (.state // "" | ascii_upcase) as $st
-                | select($s=="QUEUED" or $s=="IN_PROGRESS" or $s=="PENDING" or $st=="PENDING" or $st=="EXPECTED"))]
-             | length' "$j")
+# The failing/pending classification is defined once so the all-checks counts and the required-set
+# counts (REST path below) cannot drift apart.
+ROLLUP_DEFS='def is_failed: (.conclusion // .state // "" | ascii_upcase) as $c
+               | ($c=="FAILURE" or $c=="CANCELLED" or $c=="TIMED_OUT" or $c=="ERROR"
+                  or $c=="ACTION_REQUIRED" or $c=="STARTUP_FAILURE");
+             def is_pending: (.status // "" | ascii_upcase) as $s | (.state // "" | ascii_upcase) as $st
+               | ($s=="QUEUED" or $s=="IN_PROGRESS" or $s=="PENDING" or $st=="PENDING" or $st=="EXPECTED");'
+failing=$(jq "$ROLLUP_DEFS $LATEST"' | [.[] | select(is_failed)] | length' "$j")
+pending=$(jq "$ROLLUP_DEFS $LATEST"' | [.[] | select(is_pending)] | length' "$j")
 total_checks=$(jq "$LATEST"' | length' "$j")
 
 # Required-vs-advisory discrimination (2026-07-24 insights lineage: deliverables held
@@ -277,12 +321,29 @@ elif [ -n "$queue_repo" ] && "$_py" "$_root/scripts/_required_checks.py" \
   # proof on $REPO alone made a bare run HOLD on an advisory-red PR that the --repo run CLEARED
   # (2026-10-18: #3043 read HOLD on witness-contract, a non-required check, until --repo was added).
   req_scope="required"; req_failing=0; req_pending=0
+elif [ -n "$queue_repo" ] && req_names="$("$_py" "$_root/scripts/_required_checks.py" \
+    --contexts "$queue_repo" --branch "$base" 2>/dev/null)" \
+    && printf '%s' "$req_names" | jq -e 'type == "array"' >/dev/null 2>&1; then
+  # `gh pr checks --required` is GraphQL (unavailable in Claude Code cloud sessions). The REST twin names
+  # the required contexts from branch protection AND rulesets; the same rollup classification is then
+  # applied to just those names. A required context that has not reported is not counted here — exactly
+  # as `gh pr checks --required` omits it — GitHub's mergeStateStatus=BLOCKED covers that case below.
+  # Unmeasured policy (any read error, unknown rule type) never reaches this branch: the all-checks
+  # counts above stay in force.
+  req_scope="required"
+  req_failing=$(jq --argjson names "$req_names" "$ROLLUP_DEFS $LATEST"' | [.[]
+      | select(._k as $k | $names | any(.[]; . == $k)) | select(is_failed)] | length' "$j")
+  req_pending=$(jq --argjson names "$req_names" "$ROLLUP_DEFS $LATEST"' | [.[]
+      | select(._k as $k | $names | any(.[]; . == $k)) | select(is_pending)] | length' "$j")
 fi
 
 echo "PR #$PR — $title"
 echo "  $url"
 echo "  base=$base  head=${head:0:12}  mergeState=$mss  draft=$draft"
 echo "  merge-queue=$queue_capability"
+if [ "$read_path" = "rest" ]; then
+  echo "  read-path=rest (GitHub GraphQL unavailable here; PR facts derived over the REST API)"
+fi
 if [ "$fast_lane" = 1 ]; then
   echo "  single-owner fast lane ($lane_repo) — not a limen deploy rail; merging will NOT trigger a live website/API deploy"
 elif [ "$sensitive" = 1 ]; then
@@ -341,6 +402,10 @@ if [ "${LIMEN_REVIEW_GATE:-0}" = "1" ]; then
       -f query='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){reviewThreads(first:100){nodes{isResolved}}}}}' \
       -F o="${nwo%%/*}" -F r="${nwo##*/}" -F n="$PR" \
       --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved|not)] | length' 2>/dev/null || true)
+    if [ -z "$unresolved" ]; then
+      # GraphQL unreadable (e.g. Claude Code cloud sessions): the CCR route is the REST twin. Still fail-OPEN.
+      unresolved=$("$_py" "$_root/scripts/_gh_rest.py" unresolved-threads --pr "$PR" --repo "$nwo" 2>/dev/null || true)
+    fi
     if [ -n "$unresolved" ] && [ "$unresolved" -gt 0 ] 2>/dev/null; then
       echo "VERDICT: HOLD — $unresolved unresolved review thread(s) (LIMEN_REVIEW_GATE=1). Address + resolve them (self-heal's REVIEW-FEEDBACK tasks own the loop), then re-run."; exit 2
     fi

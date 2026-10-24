@@ -319,10 +319,11 @@ gates:
 
   # ── predicate regression tests (scoped where verify-scoped.sh runs them today) ──
   merge-policy-test:
-    command: "bash scripts/tests/merge-policy.test.sh"
-    paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "institutio/governance/gates.yaml"]
+    command: "bash scripts/tests/merge-policy.test.sh && bash scripts/run-pytest-hermetic.sh cli/tests/test_gh_rest.py cli/tests/test_required_checks.py cli/tests/test_check_session_phase_issue_state.py -q"
+    paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "scripts/_gh_rest.py", "scripts/_required_checks.py", "scripts/check-session-phase.py", "cli/tests/test_gh_rest.py", "cli/tests/test_required_checks.py", "cli/tests/test_check_session_phase_issue_state.py", "institutio/governance/gates.yaml"]
+    timeout_seconds: 600
     owner: merge-policy
-    note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
+    note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3). The matrix runs every verdict through BOTH transports — GraphQL and the REST fallback Claude Code cloud sessions need (they answer every GraphQL call with HTTP 403, gap G4) — and requires the same exit code from each; the pytest half pins the REST reader, the REST required-context derivation, and the live issue-state cross-check. The budget is declared because each case spawns the full predicate (about a second of fixed interpreter and registry cost) and the default 300 s no longer leaves headroom."
   relay-merge-test:
     command: "python3 scripts/tests/relay-merge.test.py"
     note: "Personal relay governor transaction rejects spoofed producers, stale base/head tuples, weakened controls, and generic merge fallback; fixtures do not substitute for protected live canaries."
@@ -907,7 +908,7 @@ gates:
     note: "Hermetic. Covers A–E, the shrink-only baseline ratchet, and the regression that an unreachable .agent-runtime store surfaces as UNEVALUATED rather than a silent pass (the first cut resolved the store against the git worktree, fail-opened, and reported 7 ghost escalations as live sessions)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
-    paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
+    paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "scripts/_gh_rest.py", "institutio/governance/session-plan-baseline.txt"]
     owner: docs
     note: "The plan→issue→PR chain holds: every non-baselined dated plan declares `Issue: #N` and a `PR:` state (#M, (pending), or a reasoned Status:). Binds the entry joint of session-phases.yaml, which shipped advisory-only in Phase 1 and left this as its named Phase-2 gate. Chain organ: scripts/session-plan.py."
   engagement-guard:

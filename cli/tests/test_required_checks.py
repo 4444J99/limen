@@ -198,3 +198,138 @@ def test_rollup_constants_match_the_organ_literals():
         "EXPECTED",
         "",
     }
+
+
+# ── required_contexts(): the REST twin of `gh pr checks --required` ─────────────────────────────
+# `gh pr checks --required` is GraphQL, which Claude Code cloud sessions cannot reach. required_contexts
+# names the required contexts from branch protection AND rulesets; None means UNMEASURED and the caller
+# must keep its conservative all-checks policy.
+
+
+def _policy_gh(branch_meta, rules, *, meta_rc=0, rules_rc=0):
+    def fake_gh(args, timeout=60):
+        if args[0] == "api" and "/rules/branches/" in args[1]:
+            return _R(json.dumps(rules), returncode=rules_rc)
+        if args[0] == "api" and "/branches/" in args[1]:
+            return _R(json.dumps(branch_meta), returncode=meta_rc)
+        raise AssertionError(f"unexpected gh call: {args!r}")
+
+    return fake_gh
+
+
+def _protected(contexts=(), checks=()):
+    return {
+        "name": "main",
+        "protected": True,
+        "protection": {
+            "enabled": True,
+            "required_status_checks": {
+                "contexts": list(contexts),
+                "checks": list(checks),
+                "enforcement_level": "everyone",
+            },
+        },
+    }
+
+
+def test_required_contexts_is_empty_when_nothing_is_required():
+    m = _load()
+    assert m.required_contexts(_policy_gh({"name": "main", "protected": False}, []), "o/r", "main") == ()
+    assert m.required_contexts(_policy_gh(_protected(), []), "o/r", "main") == ()
+
+
+def test_required_contexts_unions_classic_contexts_checks_and_rulesets():
+    m = _load()
+    meta = _protected(contexts=["pr-gate"], checks=[{"context": "python", "app_id": 15368}])
+    rules = [
+        {"type": "pull_request"},
+        {
+            "type": "required_status_checks",
+            "parameters": {"required_status_checks": [{"context": "web", "integration_id": 1}, {"context": "pr-gate"}]},
+        },
+    ]
+    assert m.required_contexts(_policy_gh(meta, rules), "o/r", "main") == ("pr-gate", "python", "web")
+
+
+def test_required_contexts_ruleset_only_with_unprotected_branch():
+    m = _load()
+    rules = [{"type": "required_status_checks", "parameters": {"required_status_checks": [{"context": "ci"}]}}]
+    assert m.required_contexts(_policy_gh({"name": "main", "protected": False}, rules), "o/r", "main") == ("ci",)
+
+
+def test_required_contexts_merge_queue_rule_does_not_make_policy_unmeasured():
+    m = _load()
+    assert m.required_contexts(_policy_gh(_protected(contexts=["ci"]), [{"type": "merge_queue"}]), "o/r", "main") == (
+        "ci",
+    )
+
+
+def test_required_contexts_unknown_rule_type_is_unmeasured():
+    # A `workflows` rule can require checks this module cannot enumerate: never infer "nothing else required".
+    m = _load()
+    assert m.required_contexts(_policy_gh(_protected(contexts=["ci"]), [{"type": "workflows"}]), "o/r", "main") is None
+
+
+def test_required_contexts_malformed_or_unreadable_policy_is_unmeasured():
+    m = _load()
+    ok_meta = _protected(contexts=["ci"])
+    assert m.required_contexts(_policy_gh(ok_meta, [], meta_rc=1), "o/r", "main") is None
+    assert m.required_contexts(_policy_gh(ok_meta, [], rules_rc=1), "o/r", "main") is None
+    assert m.required_contexts(_policy_gh(ok_meta, {"not": "a list"}), "o/r", "main") is None
+    # required_status_checks rule with no parameters
+    assert m.required_contexts(_policy_gh(ok_meta, [{"type": "required_status_checks"}]), "o/r", "main") is None
+    # protected branch with no protection object
+    assert m.required_contexts(_policy_gh({"name": "main", "protected": True}, []), "o/r", "main") is None
+    # wrong branch echoed back
+    assert m.required_contexts(_policy_gh({"name": "other", "protected": False}, []), "o/r", "main") is None
+    # non-string context
+    assert m.required_contexts(_policy_gh(_protected(contexts=[7]), []), "o/r", "main") is None
+    assert m.required_contexts(_policy_gh(ok_meta, []), "o/r", "") is None
+
+
+def test_required_contexts_cli_prints_json_and_keeps_prove_no_required_mode(tmp_path):
+    """Both CLI modes parse, and the unmeasured path exits 2 (the shell adapter's fail-toward-caution signal)."""
+    import os
+    import subprocess
+    import sys
+
+    stub = tmp_path / "gh"
+    stub.write_text(
+        "#!/usr/bin/env bash\n"
+        'case "$*" in\n'
+        '  *"rules/branches/main"*) echo \'[{"type":"required_status_checks","parameters":'
+        '{"required_status_checks":[{"context":"pr-gate"}]}}]\' ;;\n'
+        '  *"branches/main"*) echo \'{"name":"main","protected":false}\' ;;\n'
+        "  *) exit 1 ;;\n"
+        "esac\n"
+    )
+    stub.chmod(0o755)
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}"}
+
+    got = subprocess.run(
+        [sys.executable, "-I", str(SCRIPT), "--contexts", "o/r", "--branch", "main"],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert (got.returncode, json.loads(got.stdout)) == (0, ["pr-gate"])
+
+    # a required context exists, so absence cannot be proven: exit 2 / UNMEASURED
+    got = subprocess.run(
+        [sys.executable, "-I", str(SCRIPT), "--prove-no-required", "o/r", "--branch", "main"],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert (got.returncode, got.stdout.strip()) == (2, "REQUIRED-CHECKS-UNMEASURED")
+
+    broken = subprocess.run(
+        [sys.executable, "-I", str(SCRIPT), "--contexts", "o/r", "--branch", "nope"],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert (broken.returncode, broken.stdout.strip()) == (2, "REQUIRED-CHECKS-UNMEASURED")

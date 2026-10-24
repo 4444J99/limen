@@ -4583,6 +4583,18 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Merge half of the multi-agent review engine: 1 makes merge-policy.sh HOLD on unresolved review threads (fail-open on GraphQL errors). Ships DARK — flip conductor-first only after self-heal's REVIEW-FEEDBACK heal tasks demonstrably drain threads; estate-wide bot threads nobody resolves would otherwise jam every merge."
+  LIMEN_GH_REST_MERGEABLE_TRIES:
+    default: 3
+    env: LIMEN_GH_REST_MERGEABLE_TRIES
+    self_update: none
+    owner: merge-policy
+    note: "Reads of a pull request scripts/_gh_rest.py makes while GitHub reports mergeable=null (still computing) before it settles on UNKNOWN, which merge-policy.sh treats as a transient HOLD. Only the REST fallback used when GraphQL is unavailable (Claude Code cloud sessions) reads it; GraphQL reports the same state directly. 1 disables the retry."
+  LIMEN_GH_REST_MERGEABLE_DELAY:
+    default: 2
+    env: LIMEN_GH_REST_MERGEABLE_DELAY
+    self_update: none
+    owner: merge-policy
+    note: "Seconds scripts/_gh_rest.py waits between those reads. The wait happens at most tries-1 times and never after the last read; 0 removes it (the merge-policy test matrix sets 0 so a fixture in the computing state does not sleep)."
   LIMEN_OBSERVATORY:
     default: 0
     env: LIMEN_OBSERVATORY
