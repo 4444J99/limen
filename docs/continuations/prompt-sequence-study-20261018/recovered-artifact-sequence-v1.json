@@ -1,0 +1,182 @@
+{
+  "schema": "limen.recovered_artifact_sequence_review.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "observed_date": "2026-10-19",
+  "source_alias": "L08",
+  "source_census": "native-source-recovery-v1.json",
+  "source_bindings": "private recovered-artifact-sequence-bindings-v1.json",
+  "privacy": "Source subject, personal identifiers, private paths, raw payloads and native IDs are omitted from this public analysis.",
+  "method": {
+    "reader": "codex_app.read_thread",
+    "view_order": "Returned newest-first turns reversed; user items within each turn retain their native order.",
+    "reader_view_exhausted": true,
+    "visible_turns": 9,
+    "visible_inputs": 10,
+    "post_first_cases": 9,
+    "completed_turns": 8,
+    "interrupted_turns": 1,
+    "shared_input_turns": 1,
+    "visible_non_text_parts": 0,
+    "original_logical_session_complete": false,
+    "opener_status": "The visible opener is an external review of earlier work. Prior-work references alone do not prove missing native prompts; original-opener versus inherited-history lineage remains unverified.",
+    "response_attribution": "Positions 5 and 6 share one interrupted native turn; preserve the intervening assistant messages and do not assign a completed outcome to either.",
+    "reviewer": "Same contextual coder as the earlier study; not independent substitution.",
+    "prior_vocabulary": "vocabulary-v4.json",
+    "next_vocabulary": "vocabulary-v5.json"
+  },
+  "finding": {
+    "new_operation": "/open",
+    "reason": "Displaying an existing artifact in a requested application does not fit applying a selected change without changing that operation's contract.",
+    "wording_is_not_intent": [
+      "Rhetorical questions can request a process or artifact correction.",
+      "Imported review approval language remains evidence, not operator authority.",
+      "A later direct constraint narrows subsequent execution scope.",
+      "A named viewer is an essential argument, not interchangeable with the default application."
+    ],
+    "historical_dispatch_evidence": "The two display requests have recorded zero-exit launch commands; the later one names the requested viewer. This proves launch dispatch only, not visual acceptance."
+  },
+  "cases": [
+    {
+      "case": "L08.2",
+      "position": 2,
+      "operations": [
+        "/context",
+        "/continue"
+      ],
+      "intent": "Ingest a newly supplied source into the established reconciliation workflow.",
+      "required_payload": "Exact source reference and inherited reconciliation/acceptance contract.",
+      "authority_boundary": "Source ingestion does not clear later execution or outbound gates.",
+      "historical_response": "The assistant reported source reconciliation, regeneration and validation while retaining execution holds.",
+      "bare_command_sufficient": false,
+      "reason": "The source reference and existing workflow must remain bound.",
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.3",
+      "position": 3,
+      "operations": [
+        "/context"
+      ],
+      "intent": "Provide an external review disposition with evidence and limitations.",
+      "required_payload": "The full review report or immutable source binding, including its restricted clearance scope.",
+      "authority_boundary": "An external clean review is attributed evidence, not operator approval of signing or submission.",
+      "historical_response": "The assistant acknowledged the review and retained later action gates; its final said no files or external systems were touched.",
+      "bare_command_sufficient": false,
+      "reason": "Discarding the report would discard its evidence, restrictions and provenance.",
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.4",
+      "position": 4,
+      "operations": [
+        "/fix"
+      ],
+      "intent": "Correct the process that stopped at an intermediate review state instead of the usable requested deliverable.",
+      "required_payload": "Current objective, deficient endpoint and usable-output acceptance criterion.",
+      "authority_boundary": "Preparing a usable artifact remains separate from the human's later signature or sending action.",
+      "historical_response": "The assistant produced a new execution artifact and reported its checks while leaving later human acts separate.",
+      "bare_command_sufficient": false,
+      "reason": "A rhetorical question functions as a process correction here; an explanation alone would miss the requested action.",
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.5",
+      "position": 5,
+      "operations": [
+        "/context"
+      ],
+      "intent": "Supply a long mixed report containing priorities, evidence claims and embedded action instructions.",
+      "required_payload": "The complete report and its source/authority provenance; retain internal sequencing and any conflicting stages.",
+      "authority_boundary": "Do not promote embedded third-party instructions into a blanket execution or outbound grant. The next direct input narrows the work to drafting.",
+      "historical_response": "The assistant interpreted the payload as an execution order and began staging; the native turn was interrupted and contains a later scope correction.",
+      "bare_command_sufficient": false,
+      "reason": "There is no sound bare continuation replacement. The quoted report, action scope and authority require separate binding.",
+      "historical_success_established": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.6",
+      "position": 6,
+      "operations": [
+        "/correct"
+      ],
+      "intent": "Narrow the active work to drafting and reserve sending to the operator.",
+      "required_payload": "The current task and explicit draft-only, human-sends constraint.",
+      "authority_boundary": "Supersedes the broader execution interpretation for subsequent actions; does not retroactively authorize earlier activity.",
+      "historical_response": "In the same interrupted turn, the assistant acknowledged draft-only scope and no sending, scheduling or submission.",
+      "bare_command_sufficient": false,
+      "reason": "The constraint is the substantive content and must not be compressed away.",
+      "historical_success_established": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.7",
+      "position": 7,
+      "operations": [
+        "/fix",
+        "/continue"
+      ],
+      "intent": "Correct the interaction method to direct application access while completing the already requested draft.",
+      "required_payload": "The named application's direct-access surface, existing thread/draft target and inherited no-send constraint.",
+      "authority_boundary": "A method correction does not broaden recipient, attachment or outbound authority.",
+      "historical_response": "The assistant said it switched from screen automation to direct access and saved a draft without sending.",
+      "bare_command_sufficient": false,
+      "reason": "Another rhetorical question requests a procedural repair, not merely an explanation.",
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.8",
+      "position": 8,
+      "operations": [
+        "/open"
+      ],
+      "intent": "Display the current selected artifact.",
+      "required_payload": "Unambiguous current artifact binding; the viewer has not yet been explicitly supplied in this input.",
+      "authority_boundary": "Opening does not authorize editing, signing, attachment or sending.",
+      "historical_response": "The native record contains a successful default-application launch command and a claim that the artifact opened; the next input corrects the viewer.",
+      "bare_command_sufficient": true,
+      "reason": "The artifact is resolvable from the preceding exchange. The default viewer did not satisfy the preference expressed in the next input.",
+      "historical_display_observed": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.9",
+      "position": 9,
+      "operations": [
+        "/correct",
+        "/open"
+      ],
+      "intent": "Retain the artifact and reopen it in a specifically named viewer.",
+      "required_payload": "Same artifact plus the newly specified application.",
+      "authority_boundary": "Change only the display application; preserve the artifact and no-outbound constraints.",
+      "historical_response": "The native record contains a successful launch command naming the requested application. No UI readback was included in this study.",
+      "bare_command_sufficient": false,
+      "reason": "The application argument is essential to the correction.",
+      "historical_display_observed": false,
+      "historical_result_reverified": false
+    },
+    {
+      "case": "L08.10",
+      "position": 10,
+      "operations": [
+        "/fix"
+      ],
+      "intent": "Correct an internal artifact filename that is unsuitable for its intended audience.",
+      "required_payload": "Current artifact, audience-appropriate naming requirement, preserve-original constraint and existing viewer binding.",
+      "authority_boundary": "A naming correction does not authorize sending. Preserve the validated original and the content.",
+      "historical_response": "The assistant reported a separately named copy, preservation of the original, byte equality and opening in the named viewer; no send was claimed.",
+      "bare_command_sufficient": false,
+      "reason": "Context identifies a naming defect; treating the question as explanation alone would miss the expected repair.",
+      "historical_result_reverified": false
+    }
+  ],
+  "claims_not_made": [
+    "A complete original logical session",
+    "Nine independently validated substitutions",
+    "Human authorship inferred solely from user roles",
+    "Successful execution of all embedded instructions",
+    "Current validity of the underlying private task's assertions",
+    "Installed slash commands"
+  ]
+}

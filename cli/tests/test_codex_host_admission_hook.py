@@ -1205,3 +1205,129 @@ def test_hook_runner_does_not_block_session_start_when_immutable_runtime_is_miss
 
     assert result.stdout == ""
     assert result.stderr == ""
+
+
+ARTIFACT_SESSION = "01a14e66-dd33-79d2-8b81-fccbda7c8c2d"
+
+
+@pytest.mark.parametrize("permission_mode", ["plan", "default"])
+def test_codex_thread_visualization_needs_no_workspace_writer(
+    tmp_path: Path, monkeypatch, permission_mode: str
+) -> None:
+    hook = load_hook()
+    main, _first, _second = linked_worktrees(tmp_path)
+    codex_home = tmp_path / "codex"
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    target = codex_home / "visualizations/2026/10/18" / ARTIFACT_SESSION / "comparison.html"
+    service = controller(tmp_path / "admission")
+    output = hook.handle(
+        payload(
+            "PreToolUse",
+            session=ARTIFACT_SESSION,
+            cwd=str(main),
+            permission_mode=permission_mode,
+            tool_name="Write",
+            tool_input={"file_path": str(target)},
+        ),
+        controller=service,
+        owner_pid=101,
+    )
+    assert output is None
+    assert service.status(probe=False)["leases"] == []
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "visualizations/2026/10/18/00000000-0000-0000-0000-000000000000/result.html",
+        "visualizations/2026/02/30/01a14e66-dd33-79d2-8b81-fccbda7c8c2d/result.html",
+        "visualizations/2026/10/18/01a14e66-dd33-79d2-8b81-fccbda7c8c2d",
+        "config.toml",
+        "auth.json",
+        "memories/MEMORY.md",
+    ],
+)
+def test_codex_artifact_rule_does_not_exempt_other_runtime_files(tmp_path: Path, monkeypatch, relative: str) -> None:
+    hook = load_hook()
+    main, _first, _second = linked_worktrees(tmp_path)
+    codex_home = tmp_path / "codex"
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    output = hook.handle(
+        payload(
+            "PreToolUse",
+            session=ARTIFACT_SESSION,
+            cwd=str(main),
+            tool_name="Write",
+            tool_input={"file_path": str(codex_home / relative)},
+        ),
+        controller=controller(tmp_path / "admission"),
+        owner_pid=101,
+    )
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "shared-checkout-write"
+
+
+def test_codex_artifact_symlink_escape_stays_denied(tmp_path: Path, monkeypatch) -> None:
+    hook = load_hook()
+    main, _first, _second = linked_worktrees(tmp_path)
+    codex_home = tmp_path / "codex"
+    thread = codex_home / "visualizations/2026/10/18" / ARTIFACT_SESSION
+    thread.mkdir(parents=True)
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    (thread / "escape").symlink_to(main, target_is_directory=True)
+    output = hook.handle(
+        payload(
+            "PreToolUse",
+            session=ARTIFACT_SESSION,
+            cwd=str(main),
+            tool_name="Write",
+            tool_input={"file_path": str(thread / "escape/tracked.txt")},
+        ),
+        controller=controller(tmp_path / "admission"),
+        owner_pid=101,
+    )
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "shared-checkout-write"
+
+
+def test_mixed_artifact_and_repository_patch_stays_denied(tmp_path: Path, monkeypatch) -> None:
+    hook = load_hook()
+    main, _first, _second = linked_worktrees(tmp_path)
+    codex_home = tmp_path / "codex"
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    target = codex_home / "visualizations/2026/10/18" / ARTIFACT_SESSION / "comparison.html"
+    patch = f"*** Add File: {target}\n+view\n*** Update File: {main / 'tracked.txt'}\n@@\n-old\n+new\n"
+    output = hook.handle(
+        payload(
+            "PreToolUse",
+            session=ARTIFACT_SESSION,
+            cwd=str(main),
+            tool_name="functions.apply_patch",
+            tool_input={"command": patch},
+        ),
+        controller=controller(tmp_path / "admission"),
+        owner_pid=101,
+    )
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "shared-checkout-write"
+
+
+def test_claude_does_not_inherit_codex_artifact_permission(tmp_path: Path, monkeypatch) -> None:
+    hook = load_hook(CLAUDE_HOOK_PATH)
+    main, _first, _second = linked_worktrees(tmp_path)
+    codex_home = tmp_path / "codex"
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    target = codex_home / "visualizations/2026/10/18" / ARTIFACT_SESSION / "comparison.html"
+    output = hook.handle(
+        payload(
+            "PreToolUse",
+            session=ARTIFACT_SESSION,
+            cwd=str(main),
+            tool_name="Write",
+            tool_input={"file_path": str(target)},
+        ),
+        controller=controller(tmp_path / "admission"),
+        owner_pid=101,
+    )
+    assert output["hookSpecificOutput"]["permissionDecisionReason"] == "shared-checkout-write"

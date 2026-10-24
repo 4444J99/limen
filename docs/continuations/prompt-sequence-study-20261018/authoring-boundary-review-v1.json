@@ -1,0 +1,1874 @@
+{
+  "schema": "limen.authoring_boundary_review.v1",
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "publication": "https://github.com/4444J99/limen/pull/3087",
+  "status": "source_bound_research_not_operator_origin_or_independent_substitution_proof",
+  "column_key_rule": "First 12 SHA256 hex characters of native header ID plus newline plus full decoded-source SHA256, matching native-storage-views-v1.json.",
+  "legacy_key_crosswalk": "source-key-namespace-v1.json",
+  "counts": {
+    "captured_file_views": 9,
+    "retained_source_positions": 36,
+    "structured_preface_positions_in_review": 4,
+    "first_task_bearing_inputs_in_review": 9,
+    "post_first_task_bearing_positions_in_review": 23,
+    "primary_new_operation_support_positions": 2,
+    "initial_task_authoring_controls": 3,
+    "new_operation_runtime_substitutions": 0
+  },
+  "primary_compose_support": [
+    {
+      "reference": "N07.2",
+      "artifact": "unknown-retention-review-v1.json",
+      "role": "Previously reviewed post-first naming-matrix authoring and display request. It remains partial under unchanged V5; V6 adds a proposed authoring contract."
+    },
+    {
+      "reference": "A06.3",
+      "role": "New post-first editorial-options brief. At least five options across thirty days is the requested minimum; fifteen arcs and 450 future options are the assistant's proposal, not a new human-selected fixed requirement."
+    }
+  ],
+  "initial_task_controls": [
+    "A01.2",
+    "A02.2",
+    "A03.2"
+  ],
+  "method": "Read all retained prompts and captured replies across the nine files, compare every input/reply body with its unchanged original native snapshot, preserve original completeness metadata, and classify task-bearing boundaries separately from record positions. Initial-task controls are not counted as post-first evidence. Existing case rechecks are not summed into a new independent-human denominator.",
+  "source_verification": {
+    "decoded_bytes": 59043316,
+    "snapshot_hashes_matched": 9,
+    "stable_before_after_reads": 9,
+    "maximum_source_bytes": 33554432,
+    "all_selected_reply_refs_follow_inputs": true,
+    "native_database_or_rollout_writes": false
+  },
+  "sessions": [
+    {
+      "alias": "A01",
+      "column": "dabafb660aa1",
+      "legacy_path_key": "b34149af2f8f",
+      "first_task_bearing_position": 2,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 4885684,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 6,
+          "native_ordinal": 5,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "structured_preface_only",
+            "blocks": [
+              {
+                "kind": "plugin_recommendations",
+                "characters": 2938
+              },
+              {
+                "kind": "agent_instructions",
+                "characters": 283
+              },
+              {
+                "kind": "environment_context",
+                "characters": 2271
+              }
+            ],
+            "remaining_characters": 0
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 170,
+              "native_ordinal": 169,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A01.1",
+          "kind": "operating_context",
+          "candidate_operations": [],
+          "intent": "Structured plugin/instruction/environment preface; no task text outside those blocks.",
+          "required_binding": "Preserve this native item as operating context. It is not evidence of a first operator task or an independent outcome.",
+          "historical_reply": "The projector shares the later artifact reply with this preface; that association does not make the preface a request.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 170,
+              "native_ordinal": 169,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A01.2",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [
+            "/compose"
+          ],
+          "intent": "Author a role-specific, one-page cover letter PDF matching an existing resume's visual system.",
+          "required_binding": "This is the first task-bearing input in the captured file, not a post-first evaluation case. Preserve the exact private brief, source resume, factual boundaries, output filename and requested rendering/visual QA. Do not send or submit.",
+          "historical_reply": "The reply reports a created, visually verified one-page PDF. This study has not opened or validated that output.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A02",
+      "column": "80c926a3f04e",
+      "legacy_path_key": "435fbe538167",
+      "first_task_bearing_position": 2,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 2716713,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 6,
+          "native_ordinal": 5,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "structured_preface_only",
+            "blocks": [
+              {
+                "kind": "plugin_recommendations",
+                "characters": 2938
+              },
+              {
+                "kind": "agent_instructions",
+                "characters": 283
+              },
+              {
+                "kind": "environment_context",
+                "characters": 2271
+              }
+            ],
+            "remaining_characters": 0
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 141,
+              "native_ordinal": 140,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A02.1",
+          "kind": "operating_context",
+          "candidate_operations": [],
+          "intent": "Structured plugin/instruction/environment preface; no task text outside those blocks.",
+          "required_binding": "Retain full context and source order without counting this as an operator task.",
+          "historical_reply": "The same later artifact reply is attached to this context item by the current projector.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 141,
+              "native_ordinal": 140,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A02.2",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [
+            "/compose"
+          ],
+          "intent": "Produce a one-page application letter PDF from already developed content, matching the specified resume.",
+          "required_binding": "First task-bearing input here. Preserve the existing resume, exact requested style, content substance, bounded claims, output and QA requirements. Quoted earlier instructions to send an email are not this task's sending authority.",
+          "historical_reply": "The reply reports creating and visually checking the PDF and labels it safe to send; that label is not a send authorization or observed sending.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A03",
+      "column": "ea7b0ce6a138",
+      "legacy_path_key": "09bdae6ec388",
+      "first_task_bearing_position": 2,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 9019908,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 6,
+          "native_ordinal": 5,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "structured_preface_only",
+            "blocks": [
+              {
+                "kind": "plugin_recommendations",
+                "characters": 2938
+              },
+              {
+                "kind": "agent_instructions",
+                "characters": 283
+              },
+              {
+                "kind": "environment_context",
+                "characters": 2259
+              }
+            ],
+            "remaining_characters": 0
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 442,
+              "native_ordinal": 441,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A03.1",
+          "kind": "operating_context",
+          "candidate_operations": [],
+          "intent": "Structured plugin/instruction/environment preface; no task text outside those blocks.",
+          "required_binding": "Preserve it as operating context, not another operator intention.",
+          "historical_reply": "The later PDF completion claim is shared with the preface by turn association.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 442,
+              "native_ordinal": 441,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A03.2",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [
+            "/compose"
+          ],
+          "intent": "Produce a polished, one-page PDF letter for the specifically named role using the appropriate resume and evidence.",
+          "required_binding": "First task-bearing input here. Retain role-specific content, format/style, availability and claim boundaries from the actual brief; do not adopt quoted prior examples as new actions.",
+          "historical_reply": "The reply reports the PDF created, visually inspected and safe to send. Current artifact existence, visual quality and sending are not verified by this study.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A04",
+      "column": "bb56707fb1ec",
+      "legacy_path_key": "1d1991f08aaa",
+      "first_task_bearing_position": 1,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 3879663,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 224,
+              "native_ordinal": 223,
+              "phase": "commentary",
+              "phase_inferred": true,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A04.1",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [],
+          "intent": "Resume a source-reconciliation and recovery implementation plan.",
+          "required_binding": "Preserve original source coverage, protected peers and acceptance; a pushed handoff is not the full campaign's finish.",
+          "historical_reply": "Only inferred commentary is captured for the opener, reporting some tests passed and further failures still under investigation.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 310,
+          "native_ordinal": 309,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 335,
+              "native_ordinal": 334,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A04.2",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/status",
+            "/handoff"
+          ],
+          "intent": "Report completed work and prepare a bounded continuation prompt.",
+          "required_binding": "Retain exact publication state, failing tests, original full objective and protected ownership. Preparing a relay does not launch or message another agent.",
+          "historical_reply": "The reply reports published partial changes, four focused-test failures and an authenticated-broker isolation defect, then supplies a durable handoff and prompt. Nothing is claimed merged or deployed.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A05",
+      "column": "6da886379d27",
+      "legacy_path_key": "35f23ad2bddd",
+      "first_task_bearing_position": 1,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 7381933,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 946,
+              "native_ordinal": 945,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A05.1",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [],
+          "intent": "Resume the existing MCP implementation, deployment and native-acceptance campaign.",
+          "required_binding": "Preserve source owners, original denominators and credential/launch authority; intermediate receipts remain partial.",
+          "historical_reply": "The reply reports three published workstreams with required native coverage and heavy checks unfinished.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 1449,
+          "native_ordinal": 1448,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 1495,
+              "native_ordinal": 1494,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A05.2",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/status",
+            "/handoff"
+          ],
+          "intent": "Relay achieved work and prepare the next session's bounded prompt.",
+          "required_binding": "Carry implementation, deployment and estate-acceptance requirements forward separately; the generated prompt is not a launched executor.",
+          "historical_reply": "The reply reports published changes and a released execution lease with a partial handoff. It supplies a continuation while explicitly leaving merge, deployment and full acceptance incomplete.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A06",
+      "column": "0035e7b24072",
+      "legacy_path_key": "95566e90ff56",
+      "first_task_bearing_position": 1,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 2061230,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 8,
+          "native_ordinal": 7,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [],
+          "media_parts": 0,
+          "ref": "A06.1",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [],
+          "intent": "Request a repository-specific contributor guide only if the target does not already exist.",
+          "required_binding": "The template-like wording and native user role do not prove human authorship. Preserve the no-overwrite condition, scope, length and evidence requirements.",
+          "historical_reply": "No reply is captured for this first request.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 22,
+          "native_ordinal": 21,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 42,
+              "native_ordinal": 41,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A06.2",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/continue"
+          ],
+          "intent": "Repeat the exact contributor-guide request with the same no-overwrite condition.",
+          "required_binding": "Both retained bodies match exactly. Repetition does not waive the existing-file guard or prove a changed retry predicate.",
+          "historical_reply": "The reply reports the guide already exists and no repository files changed; no new guide is claimed.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 3,
+          "source_line": 51,
+          "native_ordinal": 50,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 274,
+              "native_ordinal": 273,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A06.3",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/compose"
+          ],
+          "intent": "Develop a coherent 30-day editorial options set, with at least five alternatives each day and linked narratives.",
+          "required_binding": "This is a new content brief after the guide exchange. Preserve the minimum five options, thirty days, neighboring-day coherence and existing-source direction. The assistant's fifteen-arc proposal is not an operator-selected new minimum.",
+          "historical_reply": "The reply supplies a proposed plan describing fifteen arcs and a future 450-option map. It does not deliver the full day-by-day options artifact. V5's execution-plan operation alone does not establish completion of this authoring brief.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A07",
+      "column": "acd5feea6fc8",
+      "legacy_path_key": "26902db72375",
+      "first_task_bearing_position": 2,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 2859325,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 6,
+          "native_ordinal": 5,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "structured_preface_only",
+            "blocks": [
+              {
+                "kind": "plugin_recommendations",
+                "characters": 2938
+              },
+              {
+                "kind": "agent_instructions",
+                "characters": 283
+              },
+              {
+                "kind": "environment_context",
+                "characters": 2259
+              }
+            ],
+            "remaining_characters": 0
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 481,
+              "native_ordinal": 480,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A07.1",
+          "kind": "operating_context",
+          "candidate_operations": [],
+          "intent": "Structured plugin/instruction/environment preface; no separate task text.",
+          "required_binding": "Do not count the preface as an operator audit request or its shared reply as another audit outcome.",
+          "historical_reply": "The later audit reply is attached to both this context and the actual request.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 481,
+              "native_ordinal": 480,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A07.2",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [
+            "/review",
+            "/verify"
+          ],
+          "intent": "Audit an exact published revision and its completion claims while preserving no-merge and no-live-mail-write boundaries.",
+          "required_binding": "This is the first task-bearing input in this captured file. Quoted history about implementation, sending and approval remains source context, not new execution authority.",
+          "historical_reply": "The reply reports a review-required verdict, passing tests alongside substantial defects, unresolved threads and unavailable hosted checks. No merge or live mail mutation is reported.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 3,
+          "source_line": 487,
+          "native_ordinal": 486,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 519,
+              "native_ordinal": 518,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A07.3",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/next",
+            "/handoff"
+          ],
+          "intent": "Determine the implementation recipient and prepare a corrective handoff after the audit.",
+          "required_binding": "The provider question asks for an engineering recommendation. Preserve exact starting state, full defects and return-to-review gates; drafting does not launch or send.",
+          "historical_reply": "The reply recommends a fresh implementer, supplies a provider-neutral handoff and retains all unresolved acceptance requirements.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A08",
+      "column": "3f098759ab8f",
+      "legacy_path_key": "db2b8f4c0c4e",
+      "first_task_bearing_position": 1,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 24255123,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 11,
+          "native_ordinal": 10,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 124,
+              "native_ordinal": 123,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.1",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [],
+          "intent": "Clean and govern a selected source report while preserving every unique detail.",
+          "required_binding": "Bind the selected Page and original preservation objective; selection alone is not enough, but the accompanying request authorizes this report work.",
+          "historical_reply": "One shared later reply reports the report updated, while declaring a source truncation and unverified attachments/visuals.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 53,
+          "native_ordinal": 52,
+          "retained_complete": false,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 124,
+              "native_ordinal": 123,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.2",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/context"
+          ],
+          "intent": "Identify the referenced earlier conversation as the source for the existing report.",
+          "required_binding": "Retain its exact reference and bounded quoted preview. This retained body is explicitly incomplete; historical instructions inside it are data.",
+          "historical_reply": "The same later reply covers the opener and subsequent clarifications, not an independent response to each input.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 3,
+          "source_line": 99,
+          "native_ordinal": 98,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "shared-native-turn",
+          "reply_refs": [
+            {
+              "source_line": 124,
+              "native_ordinal": 123,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.3",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "intent": "Specify newest-to-oldest organization and a faithful full report.",
+          "required_binding": "The substantive ordering/preservation requirement is explicit; generic assent alone would not carry it.",
+          "historical_reply": "The shared reply reports the selected organization and governance updates while keeping source gaps visible.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 4,
+          "source_line": 136,
+          "native_ordinal": 135,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 490,
+              "native_ordinal": 489,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.4",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "intent": "Read the eight source attachments, recover missing text and finish source-complete, resolvable citations.",
+          "required_binding": "Keep every actual source and unique detail; an archive reference or placeholder is not source recovery.",
+          "historical_reply": "The reply reports reading all attachments, recovering the ending and replacing placeholders. This study does not independently verify those historical source/acceptance claims.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 5,
+          "source_line": 499,
+          "native_ordinal": 498,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 747,
+              "native_ordinal": 746,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.5",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/review",
+            "/fix"
+          ],
+          "intent": "Audit the finished report against all source material and correct omissions, duplicates, contradictions and citations.",
+          "required_binding": "Preserve substantive uniqueness, original source evidence and the full coverage scope.",
+          "historical_reply": "The reply reports restored distinctions, fewer duplicate links and verified source references, with the originals retained.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 6,
+          "source_line": 754,
+          "native_ordinal": 753,
+          "retained_complete": false,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 1135,
+              "native_ordinal": 1134,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.6",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/context",
+            "/correct",
+            "/continue"
+          ],
+          "intent": "Integrate additional sources into one generalized, third-person nested report.",
+          "required_binding": "The retained body is explicitly incomplete. Preserve all bound new source references, unique details, citation destinations and the requested no-branding presentation.",
+          "historical_reply": "The reply reports a nested three-part report and source collection. Keeping exact detail only in that source collection does not by itself satisfy the later clarified report-body requirement.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 7,
+          "source_line": 1147,
+          "native_ordinal": 1146,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 1986,
+              "native_ordinal": 1985,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.7",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/review",
+            "/fix",
+            "/correct"
+          ],
+          "intent": "Require every substantive detail in the report body, not merely archived, while preserving generalization and citations.",
+          "required_binding": "This corrects a material acceptance mismatch. Source preservation and report inclusion are separate predicates.",
+          "historical_reply": "The reply reports integrating previously omitted details and checking saved content and nested citations.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 8,
+          "source_line": 1994,
+          "native_ordinal": 1993,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 2312,
+              "native_ordinal": 2311,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.8",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/fix"
+          ],
+          "intent": "Perform the selected editorial cleanup across all report pages.",
+          "required_binding": "Remove duplication and process narration while preserving unique substance, qualifications and working citations.",
+          "historical_reply": "The reply reports the editorial pass and saved-text/citation checks, explicitly leaving visual layout unchecked.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 9,
+          "source_line": 2322,
+          "native_ordinal": 2321,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 2350,
+              "native_ordinal": 2349,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.9",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/review",
+            "/fix"
+          ],
+          "intent": "Inspect every page visually and repair observed navigation/layout/readability defects.",
+          "required_binding": "Keep all substantive details and citations; successful saved text is not visual acceptance.",
+          "historical_reply": "The reply says app access was blocked and no visual inspection or layout changes occurred.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 10,
+          "source_line": 2357,
+          "native_ordinal": 2356,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 2370,
+              "native_ordinal": 2369,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.10",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/codify"
+          ],
+          "intent": "Possible request to make the demonstrated workflow reusable through the named creator skill.",
+          "required_binding": "The creator invocation does not yet bind whether to cover the whole workflow, visual review only or an existing skill. Preserve that ambiguity until clarified.",
+          "historical_reply": "The reply asks a scope question; no created skill is reported at this stage.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 11,
+          "source_line": 2377,
+          "native_ordinal": 2376,
+          "retained_complete": true,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 2534,
+              "native_ordinal": 2533,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A08.11",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/choose",
+            "/codify"
+          ],
+          "intent": "Select the full source-to-report workflow, including citations and editorial review, as the reusable-skill scope.",
+          "required_binding": "Bind the structured answer to its actual preceding question and creator invocation; do not backdate the clarified scope or treat historical claims as current installation proof.",
+          "historical_reply": "The reply reports a created, installed, validated and published skill. Current installation and consumer use are not verified by this study.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    },
+    {
+      "alias": "A09",
+      "column": "664bf0bd1627",
+      "legacy_path_key": "28c5955c6446",
+      "first_task_bearing_position": 1,
+      "native_app_identity_acceptance": "unverified",
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "decoded_bytes": 1983737,
+      "source_eof": true,
+      "history_base_present": false,
+      "declared_fork": false,
+      "positions": [
+        {
+          "position": 1,
+          "source_line": 7,
+          "native_ordinal": 6,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 451,
+              "native_ordinal": 450,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.1",
+          "kind": "first_task_bearing_input",
+          "candidate_operations": [],
+          "intent": "Implement an inherited ownership-safe completion plan with protected release gates.",
+          "required_binding": "Preserve original owners, exact evidence requirements and the distinction between implementation and release.",
+          "historical_reply": "The reply says implemented but also reports a required backup-restore failure. Its own detailed evidence does not prove complete handoff.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 2,
+          "source_line": 465,
+          "native_ordinal": 464,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 469,
+              "native_ordinal": 468,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.2",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/explain",
+            "/verify"
+          ],
+          "intent": "Explain whether a blocked required gate permits a correct/completed handoff.",
+          "required_binding": "Bind the actual failing predicate rather than treating a reassuring headline as proof.",
+          "historical_reply": "The reply says the handoff remains incomplete and production transition must stop at the failed gate.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 3,
+          "source_line": 475,
+          "native_ordinal": 474,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 668,
+              "native_ordinal": 667,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.3",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/fix",
+            "/continue"
+          ],
+          "intent": "Resolve the remaining defect and finish the existing engineering work.",
+          "required_binding": "Retain the original technical and human authority boundaries; urgency does not supply a signature or waive release conditions.",
+          "historical_reply": "The reply reports a fixed transport and passing technical stack, while still listing human prerequisites.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 4,
+          "source_line": 682,
+          "native_ordinal": 681,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 686,
+              "native_ordinal": 685,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.4",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/explain"
+          ],
+          "intent": "Explain the remaining claimed manual prerequisites and their rationale.",
+          "required_binding": "The request demands attribution and understanding, not permission to fabricate the human review.",
+          "historical_reply": "The reply describes the claimed governance gates; their external authority is not newly validated here.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 5,
+          "source_line": 692,
+          "native_ordinal": 691,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 822,
+              "native_ordinal": 821,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.5",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "intent": "Complete the decision-preparation work and derive an evidence-backed recommendation.",
+          "required_binding": "Automated checks and logical certainty do not constitute a human signature or an actual human visual review.",
+          "historical_reply": "The reply reports technical pre-clearance and byte-stable evidence, but changes approval-like checklist labels while still requiring human initials. Those are not equivalent release states.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 6,
+          "source_line": 828,
+          "native_ordinal": 827,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 832,
+              "native_ordinal": 831,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.6",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/approve",
+            "/open"
+          ],
+          "intent": "Possibly accept a prepared artifact update and request visibility into the built content.",
+          "required_binding": "The assent lacks the offered initials and exact release binding. Preserve it as unresolved for approval while retaining the separate display request; do not infer a signed release.",
+          "historical_reply": "The reply supplies checklist content with checked human-approval wording and blank initials, not an independently proven human release.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 7,
+          "source_line": 838,
+          "native_ordinal": 837,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 848,
+              "native_ordinal": 847,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.7",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/open"
+          ],
+          "intent": "Open the relevant UI for immediate editing.",
+          "required_binding": "The requested target is not yet unambiguous among the checklist and content interfaces. Do not equate a launched wrong document with accepted display.",
+          "historical_reply": "The reply points to the checklist and signature fields; the next input corrects that target.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 8,
+          "source_line": 854,
+          "native_ordinal": 853,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [
+            {
+              "source_line": 926,
+              "native_ordinal": 925,
+              "phase": "final_answer",
+              "phase_inferred": false,
+              "text_matches": true
+            }
+          ],
+          "media_parts": 0,
+          "ref": "A09.8",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/correct",
+            "/open"
+          ],
+          "intent": "Correct the target to the content/options interface rather than the checklist.",
+          "required_binding": "Retain the actual content artifact and the target correction instead of blindly continuing the prior display.",
+          "historical_reply": "The reply reports opening the planner and several source/content files. Actual requested display acceptance is not observed here.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        },
+        {
+          "position": 9,
+          "source_line": 932,
+          "native_ordinal": 931,
+          "retained_complete": null,
+          "input_text_matches": true,
+          "structural_preface": {
+            "kind": "not_plugin_preface"
+          },
+          "response_attribution": "native-turn",
+          "reply_refs": [],
+          "media_parts": 0,
+          "ref": "A09.9",
+          "kind": "post_first_task_bearing_input",
+          "candidate_operations": [
+            "/correct",
+            "/open"
+          ],
+          "intent": "Narrow the display to the plain-text content in the specifically named editor.",
+          "required_binding": "Preserve both artifact identity and application; a web UI or default viewer would not satisfy this correction.",
+          "historical_reply": "No reply is captured for this final display request.",
+          "validation_status": "same_coder_interpretation_not_runtime_substitution"
+        }
+      ]
+    }
+  ],
+  "structural_preface_census": {
+    "scope": "Existing retained primary-input text in the 382-column comparison; structural analysis, not fresh native source revalidation of all 24 records or independent emitter proof.",
+    "exact_three_block_prefaces": 24,
+    "selected_native_verified_prefaces": 4,
+    "parser_rule": "Only plugin-recommendation block, AGENTS heading/instruction block and environment block in that order, with no remaining non-whitespace text, qualify. A matching prefix with additional text remains mixed; an occurrence inside quoted user text is not discarded.",
+    "analysis_sanity_checks": {
+      "actual_selected_preface": "context_only",
+      "same_preface_plus_task": "additional_text_preserved",
+      "quoted_preface_inside_request": "not_context_only"
+    },
+    "positions": [
+      {
+        "column": "4d71e4a71bc9",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 34410
+          },
+          {
+            "kind": "environment_context",
+            "characters": 656
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "544cf7b904bd",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2271
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "544cf7b904bd",
+        "position": 5,
+        "source_line": 892,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2389
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "7254574490f7",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2259
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "acd5feea6fc8",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2259
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "13284dc5319c",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2271
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "ea7b0ce6a138",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2259
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "dabafb660aa1",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2271
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "80c926a3f04e",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2271
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "220836f3bfc9",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2259
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "0c40e372dbc9",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2259
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "0dadb9e49cdb",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 2938
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 283
+          },
+          {
+            "kind": "environment_context",
+            "characters": 651
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "a799830cd29d",
+        "position": 1,
+        "source_line": 4,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 1490
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 32932
+          },
+          {
+            "kind": "environment_context",
+            "characters": 505
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "8d63b4fbf6e6",
+        "position": 1,
+        "source_line": 4,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 1490
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 32932
+          },
+          {
+            "kind": "environment_context",
+            "characters": 505
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "de976ff30ae2",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 33011
+          },
+          {
+            "kind": "environment_context",
+            "characters": 1004
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "e5ba076589af",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 33005
+          },
+          {
+            "kind": "environment_context",
+            "characters": 1004
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "e5ba076589af",
+        "position": 14,
+        "source_line": 5384,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 33005
+          },
+          {
+            "kind": "environment_context",
+            "characters": 1603
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "e9378f4b8a13",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2301
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "16959053b3ee",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2055
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "6855a1b9f535",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2025
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "c6e12a838b5e",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2241
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "d4aa414a6042",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2259
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "8489ae9283fd",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2247
+          }
+        ],
+        "remaining_characters": 0
+      },
+      {
+        "column": "e4f00d7b7cd0",
+        "position": 1,
+        "source_line": 6,
+        "kind": "structured_preface_only",
+        "block_characters": [
+          {
+            "kind": "plugin_recommendations",
+            "characters": 399
+          },
+          {
+            "kind": "agent_instructions",
+            "characters": 11324
+          },
+          {
+            "kind": "environment_context",
+            "characters": 2247
+          }
+        ],
+        "remaining_characters": 0
+      }
+    ]
+  },
+  "alternatives": [
+    {
+      "candidate": "Broaden /continue to cover every new authoring brief",
+      "assessment": "Retaining the full brief would be possible, but the verb would conceal the difference between advancing selected work and requesting a new content deliverable."
+    },
+    {
+      "candidate": "/draft",
+      "assessment": "Signals review-stage work but can incorrectly narrow an explicitly requested final PDF or other specified output maturity."
+    },
+    {
+      "candidate": "/compose",
+      "assessment": "Recommended research name for authoring a requested content artifact while retaining exact maturity, format, sources, output and authority. It is not a claim that the proposed substitute has been executed."
+    }
+  ],
+  "native_question_binding": {
+    "column": "3f098759ab8f",
+    "question_call_source_line": 2364,
+    "answer_source_line": 2377,
+    "exact_native_call_id_match": true,
+    "question_index": 0,
+    "question_title_exact_match": true,
+    "answer_matches_offered_option": true,
+    "offered_options": 3,
+    "scope_payload_preserved": true
+  },
+  "context_extraction_owner": {
+    "owner": "https://github.com/4444J99/limen/issues/3056",
+    "source": "capture-native-projection.py",
+    "implementation_proven": false,
+    "required_cases": [
+      "Pure plugin/instruction/environment preface remains separately retained context.",
+      "Mixed preface plus task preserves the task text and complete source record.",
+      "A quoted prefix inside a real request is not broadly discarded.",
+      "Original role, order, completeness and response-attribution limits remain visible."
+    ],
+    "predicate": "Admitted hermetic projector regression file, followed by source-bound re-capture and catalog reconciliation; no production fix or test success is claimed here."
+  },
+  "remaining": [
+    "Original pre-retention bodies and complete logical-session ancestry remain unproved; two report inputs are explicitly incomplete.",
+    "Only two actual post-first positions support the new contract; three PDF tasks are initial-task controls, not three additional post-first validations.",
+    "The structured scope answer's native question identity is now verified; historical skill installation and consumer use are not newly validated.",
+    "Twenty other preface-only retained texts were structurally classified without a fresh original-file read in this tranche.",
+    "The active projector/captured catalog is unchanged; neither the prior reply-order repair nor a new context-extraction repair is claimed complete.",
+    "V2 and V5 remain unchanged. Native consumer behavior, independent substitutions and full corpus acceptance remain open."
+  ],
+  "verification": {
+    "source_positions_and_reply_refs": "passed_all_36_in_native_snapshot_comparison",
+    "operation_names_and_counts": "passed_22_operations_21_unchanged_v5_contracts",
+    "independent_substitution_validation": false,
+    "original_goal_complete": false
+  }
+}

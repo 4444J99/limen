@@ -1,0 +1,296 @@
+{
+  "schema": "limen.prompt_substitution_review.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "design": "Nine complete-retained-input file sequences selected before reading their contents using a fixed seed, stratified three each from home, Limen and other directories; previously previewed and coded examples excluded.",
+  "vocabulary": "Frozen vocabulary-v2.json; no contract changes during this pass.",
+  "method": "Single-coder contextual reconstruction on a held-out source set; not blind independent validation and not runtime replay.",
+  "selected_file_sequences": 9,
+  "retained_prompts": 36,
+  "followups_assessed": 27,
+  "categories": {
+    "direct": 15,
+    "payload": 6,
+    "authority": 4,
+    "composite": 2
+  },
+  "findings": [
+    "A bare control often inherits a unique target, but not a fixed observed outcome.",
+    "Payload-bearing turns cannot become argument-free controls without losing evidence.",
+    "Some requests are operation lists with several targets and acceptance stages.",
+    "Budget changes and policy exceptions require explicit authority binding; generic approval or continuation loses meaning.",
+    "Two reports in one native turn share one reply; per-prompt outcome equivalence is not independently identifiable."
+  ],
+  "cases": [
+    {
+      "case": "H1.2",
+      "category": "direct",
+      "candidate": "/verify --archive-eligibility <this-session>",
+      "intended_operation": "Ask whether this conversation can be archived",
+      "must_survive": "Session eligibility only; preserve the child checkout with unknown ownership",
+      "recorded_response": "Historical reply gives an archive verdict and retains the child checkout",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H2.2",
+      "category": "payload",
+      "candidate": "/context --kind peer-report <H2.2-payload>",
+      "intended_operation": "Supply new evidence for the existing account/session audit",
+      "must_survive": "The report and its limits remain attributed; no embedded permission request becomes authority",
+      "recorded_response": "One response is shared with H2.3; it cannot establish an independent per-prompt outcome",
+      "response_attribution": "shared-native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H2.3",
+      "category": "payload",
+      "candidate": "/context --kind peer-report <H2.3-payload>",
+      "intended_operation": "Supply the peer's inventory and transport report",
+      "must_survive": "Preserve its actual data, claimed limits and request for input; apply existing human authority separately",
+      "recorded_response": "Shared native-turn response reports download and verification; source claims are not fresh proof",
+      "response_attribution": "shared-native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H3.2",
+      "category": "direct",
+      "candidate": "/explain <the-current-automation-denial>",
+      "intended_operation": "Explain why the requested interface operation stopped",
+      "must_survive": "Answer the question; do not change permissions or finalize cleanup",
+      "recorded_response": "Reply explains the tool policy and the unmet finalization conditions",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H3.3",
+      "category": "direct",
+      "candidate": "/next --owner human --subject <the-current-automation-denial>",
+      "intended_operation": "Ask how to address the restriction",
+      "must_survive": "Procedure/advice only; existing policy boundaries remain in force",
+      "recorded_response": "Reply explains that ordinary permission toggles do not remove the restriction and gives manual steps",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H3.4",
+      "category": "payload",
+      "candidate": "/context --kind operator-result+terminal <H3.4-payload>",
+      "intended_operation": "Report that the manual step was done and provide diagnostics",
+      "must_survive": "Retain both the operator's claim and the warning-bearing report; do not erase the earlier conditions",
+      "recorded_response": "Reply distinguishes successful initialization from the remaining MCP warning",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H3.5",
+      "category": "payload",
+      "candidate": "/context --kind terminal <H3.5-payload>",
+      "intended_operation": "Provide the next diagnostic result",
+      "must_survive": "Finalization remains conditional on the original predicates; a summary green is not a new blanket approval",
+      "recorded_response": "Reply reports finalization; this study does not independently certify its historical preconditions",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H3.6",
+      "category": "direct",
+      "candidate": "/verify --archive-eligibility <this-session>",
+      "intended_operation": "Ask for session archive eligibility",
+      "must_survive": "Chat eligibility remains separate from current configuration drift and custody retirement",
+      "recorded_response": "Reply grants a chat verdict while identifying renewed drift",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H4.2",
+      "category": "direct",
+      "candidate": "/approve <the-prepared-single-30-minute-amendment>",
+      "intended_operation": "Approve the specific bounded continuation just presented",
+      "must_survive": "Keep cumulative accounting, the single-attempt limit and all other recovery gates",
+      "recorded_response": "Reply records admission but also records that host pressure still prevents execution",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H4.3",
+      "category": "authority",
+      "candidate": "RETAIN REQUEST: bind the exact policy exception before execution",
+      "intended_operation": "Request an exception to the newly reported pressure denial",
+      "must_survive": "Do not turn one word into a blanket override of custody, ownership or budget rules",
+      "recorded_response": "Reply treats pressure as overridden while retaining a distinct restoration gate",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H5.2",
+      "category": "authority",
+      "candidate": "/approve <the-current-allowance-request> --value <original-answer> [binding review required]",
+      "intended_operation": "Change the allowance for the named serial workflow",
+      "must_survive": "Preserve the newly supplied unlimited-until-task-complete value, serial order and prior exhausted accounting",
+      "recorded_response": "Reply advances the serial workflow but still reports incomplete acceptance",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H5.3",
+      "category": "composite",
+      "candidate": "/correct <the-continuation-obligation> + /fix <five-findings> --publish-exact-heads --rerun-acceptance",
+      "intended_operation": "Correct an early stop and require repair plus acceptance",
+      "must_survive": "Retain the five findings, the exact-head requirement and the distinction between reversible work and real external gates",
+      "recorded_response": "Reply publishes repair candidates but leaves actual browser acceptance unverified",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H5.4",
+      "category": "authority",
+      "candidate": "RETAIN REQUEST: bind the pressure-only exception and its duration",
+      "intended_operation": "Answer the current pressure-blocker question with an exception request",
+      "must_survive": "The target and process-local bounds cannot be replaced by generic continuation or extra budget approval",
+      "recorded_response": "Reply reports a process-local override and browser acceptance results",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H5.5",
+      "category": "composite",
+      "candidate": "/ship merge <three-specified-prs> + /continue --until <reversible-work-finished> + /next --owner human",
+      "intended_operation": "Merge the named deliveries and finish agent-owned follow-through",
+      "must_survive": "Preserve all three publication targets; only genuine physical/source actions may be left to the operator",
+      "recorded_response": "Reply reports three merges and additional engineering, then names remaining physical inputs",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H5.6",
+      "category": "direct",
+      "candidate": "/verify --archive-eligibility <this-session>",
+      "intended_operation": "Ask whether this session can be archived",
+      "must_survive": "Full product acceptance remains separate from a durable handoff; retain originals and custody copies",
+      "recorded_response": "Reply distinguishes the handoff from full audiovisual acceptance",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H6.2",
+      "category": "direct",
+      "candidate": "/next --owner human",
+      "intended_operation": "Ask what the operator must do next",
+      "must_survive": "Agent investigation must not be handed back; an unprepared approval is not an executable operator action",
+      "recorded_response": "Reply says there is nothing to run yet and identifies preparation as agent work",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H7.2",
+      "category": "direct",
+      "candidate": "/plan <the-current-recovery-bottleneck>",
+      "intended_operation": "Request a concrete way to fix the bottleneck",
+      "must_survive": "Keep distinct quota, volume, ownership and custody constraints",
+      "recorded_response": "Reply produces a scoped plan with separate delivery and recovery predicates",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H7.3",
+      "category": "payload",
+      "candidate": "/context --kind peer-report <H7.3-payload>",
+      "intended_operation": "Add evidence of a new broker-admission obstruction",
+      "must_survive": "Preserve the exact failure claim and scope; do not assume that a human must act before checking the documented owner route",
+      "recorded_response": "Reply revises the plan and identifies an unattempted administrative route",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H8.2",
+      "category": "direct",
+      "candidate": "/continue --plan <the-prepared-parity-and-retirement-plan>",
+      "intended_operation": "Execute the previously presented plan",
+      "must_survive": "Retain the assigned-directory boundary, no-subagent rule and every retirement predicate",
+      "recorded_response": "Reply performs bounded synchronization and reports retained work rather than full retirement",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H8.3",
+      "category": "payload",
+      "candidate": "/plan <complete-workstream> --context <H8.3-payload>",
+      "intended_operation": "Plan completion of the entire outstanding workstream",
+      "must_survive": "Keep the full checkpoint, the stronger terminal criterion and all custody/dependency gates",
+      "recorded_response": "Reply creates a detailed plan whose terminal criterion excludes mere blocker filing",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H8.4",
+      "category": "direct",
+      "candidate": "/continue --plan <the-current-whole-workstream-plan> --until complete",
+      "intended_operation": "Execute the full selected plan",
+      "must_survive": "Proceed does not silently grant ownership release, new budgets or unsafe retirement",
+      "recorded_response": "Reply reports admission and ownership blockers with no retirement claimed",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H8.5",
+      "category": "direct",
+      "candidate": "/closeout",
+      "intended_operation": "Attempt the session's formal closeout",
+      "must_survive": "Keep the exact native anchor, custody and executable predicate requirements",
+      "recorded_response": "Reply reports exit 2 and does not certify closure",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H9.2",
+      "category": "direct",
+      "candidate": "/continue --until complete",
+      "intended_operation": "Finish the assigned workstream",
+      "must_survive": "Inherit the original stream and preservation conditions",
+      "recorded_response": "Reply advances synchronization and reports independent-custody constraints",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H9.3",
+      "category": "direct",
+      "candidate": "/continue --until complete",
+      "intended_operation": "Finish the same outstanding workstream",
+      "must_survive": "Do not redefine complete as preserved or filed; keep the original acceptance predicate",
+      "recorded_response": "Reply advances custody but still lists incomplete integration and retirement",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H9.4",
+      "category": "direct",
+      "candidate": "/continue --scope <the-existing-stream> --until complete",
+      "intended_operation": "Reassert the existing full-stream completion obligation",
+      "must_survive": "Emphasis is not a new goal or permission to cross the allowlist",
+      "recorded_response": "Reply advances two deliveries and still reports the allowlist dependency",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H9.5",
+      "category": "authority",
+      "candidate": "/correct <explicit-stream-allowlist-delta> + /continue --until complete [authority binding required]",
+      "intended_operation": "Change the stream's allowlist to remove an execution obstacle",
+      "must_survive": "Keep the exception tied to this stream; do not infer permission over unrelated data or protected clients",
+      "recorded_response": "Reply reports an adapter change and partial retirement, while retaining protected consumers",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    },
+    {
+      "case": "H9.6",
+      "category": "direct",
+      "candidate": "/closeout",
+      "intended_operation": "Attempt formal closure of the current session",
+      "must_survive": "Custody and ownership stay distinct from a merge or published handoff",
+      "recorded_response": "Reply reports exit 1 and incomplete closure",
+      "response_attribution": "native-turn",
+      "independently_verified_outcome": false
+    }
+  ],
+  "completion_status": "Whole-corpus semantic equivalence remains unproven. Four authority-sensitive cases require contract/binding work; no universal compression percentage is claimed."
+}

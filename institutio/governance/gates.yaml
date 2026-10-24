@@ -565,6 +565,13 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Hand-rolled PR poll-loop deny matrix (G6, 2026-08-06): the charter's `for … gh pr … sleep … done` ban made mechanical — deny requires loop+gh-probe+sleep co-occurring in ONE command string; the sanctioned waiter, bounded retries, build sleeps, and multi-PR iteration all pass (the negative cases are the deliverable). Wired into .claude/settings.json AND .codex/hooks.json — covenant, not Claude rule. Escape hatch LIMEN_ALLOW_PR_POLL."
+  native-prompt-projection-test:
+    command: "bash scripts/run-pytest-hermetic.sh docs/continuations/prompt-sequence-study-20261018/test_native_projection.py -q"
+    paths: ["docs/continuations/prompt-sequence-study-20261018/capture-native-projection.py", "docs/continuations/prompt-sequence-study-20261018/capture-native-stream.py", "docs/continuations/prompt-sequence-study-20261018/test_native_projection.py"]
+    scoped: true
+    tier: cheap
+    owner: continuity
+    note: "Isolated SQLite fixtures prove exact text and structured-part retention, native-turn response attribution, explicit source gaps and read-only target-bound capture. Fixture success does not prove a live capture or logical-session completeness."
   codex-host-admission-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_hook_admission_boundary.py cli/tests/test_codex_host_admission_hook.py cli/tests/test_closeout_action_admission.py cli/tests/test_closeout_runtime_python.py cli/tests/test_action_admission_text.py -q"
     paths: ["scripts/hooks/codex-host-admission.py", "scripts/hooks/codex-hook-runner.sh", "scripts/no-tasks-on-me.sh", ".codex/hooks.json", "cli/tests/test_hook_admission_boundary.py", "cli/tests/test_codex_host_admission_hook.py", "cli/tests/test_closeout_action_admission.py", "cli/tests/test_closeout_runtime_python.py", "cli/tests/test_action_admission_text.py", "cli/src/limen/action_admission.py", "cli/src/limen/action_admission_runtime.py", "cli/src/limen/bounded_subprocess.py"]

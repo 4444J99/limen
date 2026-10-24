@@ -1,0 +1,59 @@
+{
+  "schema": "limen.independent_review_admission.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "observed_date": "2026-10-19",
+  "frozen_vocabulary": "vocabulary-v5.json",
+  "frozen_revision": "c99e9fb14",
+  "requested_review": {
+    "work_key": "prompt-sequence-independent-review-v5-20261019",
+    "source_alias": "L05",
+    "source_previously_semantically_coded_in_this_study": false,
+    "kind": "Independent semantic preservation review, not runtime equivalence.",
+    "effect": "read",
+    "max_children": 1,
+    "max_depth": 1,
+    "max_runs": 2,
+    "output_ceiling_bytes": 32768,
+    "deadline_utc": "2026-10-19T18:00:00Z",
+    "historical_actions_allowed": false
+  },
+  "bootstrap": {
+    "capability_snapshot_utc": "2026-10-19T17:44:55.930Z",
+    "healthy_session_count": 0,
+    "authenticated_roles": [
+      "conductor",
+      "observer"
+    ],
+    "own_session_refreshed": true,
+    "human_protected_preserved": true,
+    "own_worktree_registration_corrected": true,
+    "other_sessions_changed": false
+  },
+  "submission": {
+    "attempts": 1,
+    "result": "conduct_rejected",
+    "http_status": 409,
+    "run_id_returned": false,
+    "lease_returned": false,
+    "reason_exposed_by_mcp": false,
+    "root_reserved": false,
+    "child_reserved": false,
+    "native_agent_launched": false
+  },
+  "disposition": {
+    "state": "Independent review remains unperformed.",
+    "owner": "TABVLARIVS admission owner under the study's existing issue.",
+    "next_command": "limen conduct capabilities",
+    "required_change": "Identify and resolve the authoritative 409 admission predicate, then admit one bounded review and child through the broker. A healthy eligible executor is also required.",
+    "retry_rule": "Do not retry the unchanged rejected request or bypass its admission. Preserve it as evidence. Any later admitted attempt must have a valid finite deadline and governing approval.",
+    "source_rule": "Keep L05 uncoded by the vocabulary author while it is reserved as the prospective holdout."
+  },
+  "nonclaims": [
+    "No independent reviewer result",
+    "No successful substitution",
+    "No new executor credential or role",
+    "No raw transcript copied or published",
+    "No task-state mutation outside the broker"
+  ]
+}
