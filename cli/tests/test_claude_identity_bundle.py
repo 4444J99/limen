@@ -1,14 +1,17 @@
 """Executable contracts for the `<store>/ClaudeCode.app` identity bundle.
 
-TCC names a client by the bundle enclosing the path its process was exec'd from --
-never by the bytes. Claude Code's daemon hands each *session* its `versions/<version>`
-path as argv, and the session disclaims into its own TCC identity there. While that
-entry is a hardlink of the bundle binary, one inode has two names and the kernel may
-report either, so every update mints a fresh bare-version consent client. A SYMLINK is
-resolved at exec, leaving the bundle as the inode's only name -- the stable
-`com.anthropic.claude-code` identity (what the vendor installer itself did for 2.1.233).
-These contracts hold both halves: bundle present and inode-correct, then the current
-`versions/<v>` entry atomically replaced by a symlink into it.
+TCC names a client by the bundle enclosing the path it was exec'd from -- never by
+the bytes. `<store>/ClaudeCode.app/Contents/MacOS/claude` and
+`<store>/versions/<version>` are the *same inode*, yet the first resolves to
+`com.anthropic.claude-code` (stable across every update) and the second, having no
+enclosing bundle, is named by its own filename -- a fresh consent client per version.
+
+Scope, stated honestly (verified 2026-08-05 against a live process tree): keeping this
+bundle present and inode-correct does NOT by itself stop per-version consent prompts.
+Claude Code's daemon runs its pty host from the bundle but hands the *session* process
+its `versions/<version>` path as literal argv, and that session is what disclaims into
+its own TCC identity. That argv is vendor-internal. What these contracts hold is the
+bundle's own correctness -- the precondition, not the whole cure.
 """
 
 from __future__ import annotations
@@ -79,7 +82,6 @@ def test_absent_bundle_is_distance_not_silence(tmp_path: Path):
         "bundle_absent",
         "info_plist_missing_or_divergent",
         "hardlink_absent_or_stale",
-        "version_entry_not_symlinked",
     }
 
 
@@ -129,56 +131,12 @@ def test_hardlink_to_a_superseded_version_is_stale_not_ok(tmp_path: Path):
 
     stale = KEEPER.inspect(env)
     assert stale["ok"] is False
-    assert stale["findings"] == ["hardlink_absent_or_stale", "version_entry_not_symlinked"]
+    assert stale["findings"] == ["hardlink_absent_or_stale"]
 
     healed = KEEPER.repair(env)
     assert healed["ok"] is True
     assert "removed_stale_hardlink" in healed["actions"]
     assert "linked_current_binary" in healed["actions"]
-    assert "symlinked_version_entry" in healed["actions"]
-    # The superseded entry is still a symlink into the bundle: it resolves, it never dangles.
-    assert (versions / "2.1.222").is_symlink()
-    assert (versions / "2.1.222").resolve().is_file()
-
-
-def test_repair_replaces_the_version_entry_with_a_symlink_into_the_bundle(tmp_path: Path):
-    """The hardlink alone left the session's text vnode with two names; the symlink leaves one."""
-    env = _store(tmp_path)
-    store = Path(env["LIMEN_CLAUDE_STORE"])
-    entry = store / "versions/2.1.222"
-    bundle_binary = store / "ClaudeCode.app/Contents/MacOS/claude"
-    original = entry.read_bytes()
-
-    outcome = KEEPER.repair(env)
-
-    assert "symlinked_version_entry" in outcome["actions"]
-    assert outcome["version_entry_symlinked"] is True
-    assert entry.is_symlink()
-    assert entry.resolve() == bundle_binary.resolve()
-    assert bundle_binary.stat().st_nlink == 1, "the bundle must be the inode's ONLY name"
-    assert bundle_binary.read_bytes() == original
-    assert Path(env["LIMEN_CLAUDE_LAUNCHER"]).resolve() == bundle_binary.resolve()
-    assert not [p for p in entry.parent.iterdir() if p.name.startswith(".")], "no staged symlink left behind"
-
-
-def test_vendor_symlinked_install_is_already_at_ideal(tmp_path: Path):
-    """The 2.1.233 shape -- versions/<v> already a symlink into the bundle -- needs no action."""
-    env = _store(tmp_path)
-    KEEPER.repair(env)
-
-    again = KEEPER.repair(env)
-    assert again["actions"] == []
-    assert again["status"] == "at-ideal"
-
-
-def test_symlinked_versions_are_not_a_race_risk(tmp_path: Path):
-    """Two version entries that are both symlinks into the bundle share one inode; nothing can race."""
-    env = _store(tmp_path)
-    KEEPER.repair(env)
-    store = Path(env["LIMEN_CLAUDE_STORE"])
-    (store / "versions/2.1.221").symlink_to(store / "ClaudeCode.app/Contents/MacOS/claude")
-
-    assert KEEPER.inspect(env)["concurrent_version_race_risk"] is False
 
 
 def test_divergent_info_plist_is_rewritten_to_the_vendor_bytes(tmp_path: Path):
@@ -237,6 +195,23 @@ def test_two_runnable_versions_are_reported_as_a_standing_race_risk(tmp_path: Pa
     empty.write_bytes(b"")
     runnable = [item["version"] for item in KEEPER.inspect(env)["versions"] if item["runnable"]]
     assert "2.1.221" not in runnable, "a zero-byte install artifact is not a runnable version"
+
+
+def test_versions_symlinked_into_the_bundle_are_not_a_race_risk(tmp_path: Path):
+    """claude-bundle-identity-heal.py turns versions/<v> into a symlink into the bundle; entries that
+    share the bundle's inode cannot race each other, so they must not raise the advisory."""
+    env = _store(tmp_path)
+    KEEPER.repair(env)
+    store = Path(env["LIMEN_CLAUDE_STORE"])
+    (store / "versions/2.1.221").symlink_to(store / "ClaudeCode.app/Contents/MacOS/claude")
+
+    assert KEEPER.inspect(env)["concurrent_version_race_risk"] is False
+
+
+def test_info_plist_tracks_the_current_vendor_bytes():
+    """2.1.310's _jb() writes a DOCTYPE line; a keeper constant without it would rewrite the vendor's
+    file on every run while the vendor rewrote it back on every start."""
+    assert '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"' in KEEPER.INFO_PLIST
 
 
 def test_non_darwin_is_not_applicable_rather_than_a_failure(tmp_path: Path, monkeypatch):
