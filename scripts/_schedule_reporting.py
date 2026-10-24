@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import tempfile
 from urllib.parse import urlsplit
@@ -84,12 +85,19 @@ def capacity_report(plane, now):
     }
 
 
-def read_native_snapshot(plane_id, plane, jobs, today, root):
+def read_native_snapshot(plane_id, plane, jobs, today, root, *, now=None):
     """Validate through the canonical store in a private temporary directory, then aggregate.
 
     Poll timestamps establish collection history only. Execution requires native completion
     time in the requested UTC day. Account/window coverage cannot be inferred from this cache.
     """
+    now = now or datetime.now(timezone.utc)
+    try:
+        max_age_days = int(os.environ.get("LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS", "") or 7)
+    except ValueError:
+        max_age_days = 7
+    if max_age_days <= 0:
+        max_age_days = 7
     evidence = plane.get("evidence") or {}
     path = Path(evidence.get("locator") or "")
     path = path if path.is_absolute() else root / path
@@ -130,6 +138,19 @@ def read_native_snapshot(plane_id, plane, jobs, today, root):
         if key not in current or order > current[key][0]:
             current[key] = (order, row)
     latest = [value[1] for value in current.values()]
+    # Task readbacks describe current state; taskless immutable events describe source history.
+    # New mail can refresh that account's event source without refreshing old tasks/other accounts.
+    readbacks = {}
+    for row in latest:
+        key = (row["provider"], row["surface"], row["account_ref"],
+               "task" if row["native_task_id"] else "events", row["native_task_id"])
+        stamp = utc(row["last_observed_at"])
+        if key not in readbacks or stamp is None or (readbacks[key] is not None and stamp > readbacks[key]):
+            readbacks[key] = stamp
+    ages = [(now - stamp).total_seconds() if stamp else None for stamp in readbacks.values()]
+    max_age_seconds = max_age_days * 86400
+    readback_fresh = bool(ages) and all(age is not None and 0 <= age <= max_age_seconds for age in ages)
+    readback_overdue = any(age is not None and age > max_age_seconds for age in ages)
     executions = [
         r
         for r in latest
@@ -172,7 +193,9 @@ def read_native_snapshot(plane_id, plane, jobs, today, root):
             }
         )
     return (
-        len(executions),
-        "bounded native evidence; account and history coverage incomplete",
-        {"measurement_kind": "native-evidence", "coverage": "partial", "native_counts": counts},
+        len(executions) if readback_fresh else None,
+        f"bounded native evidence; account and history coverage incomplete; source readback {'within' if readback_fresh else 'not within'} {max_age_days}d cache-age bound; counts retain latest known history",
+        {"measurement_kind": "native-evidence", "coverage": "partial", "native_counts": counts,
+         "readback_fresh": readback_fresh, "readback_overdue": readback_overdue,
+         "readback_max_age_days": max_age_days},
     )
