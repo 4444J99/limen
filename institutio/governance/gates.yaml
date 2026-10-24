@@ -1448,6 +1448,7 @@ gates:
   # ── SCHEDULES registry drift net (every scheduler plane's allotment and jobs) ────────────
   check-schedules:
     command: "python3 scripts/check-schedules.py"
+    timeout_seconds: 60
     paths: ["institutio/governance/schedules.yaml", "institutio/governance/schedule-stagger-baseline.txt", "scripts/check-schedules.py", "scripts/_schedules.py", "cloud-routines.json", "docs/receipts/claude-triggers-snapshot-*.json", ".github/workflows/**", "institutio/governance/sensors.yaml", "scripts/schedule-census.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
@@ -1460,8 +1461,9 @@ gates:
     note: "The schedule-census organ's own contract: every carrier kind parses (Actions on.schedule incl. PyYAML's `on:`→True, wrangler toml/jsonc, vercel, launchd, crontab, systemd timers, dependabot, renovate, cloud-routines, the ops manifest); gh reads are classified ok/absent/unreachable/error and an unreachable repository is never 'nothing scheduled'; one repository scans end to end (carriers from one tree listing, Actions states incl. registrations absent from the tree, scheduled-run summary, Commits-API history with cron diffs); full-clone history records cron changes and removals; registry gaps name active schedules outside every plane (state-unknown ones flagged unverified); every row carries per-channel read status and a partial read never concludes absence (an unread run listing is fired-unmeasured, an unread tree never claims a workflow absent, a truncated tree the same); a budget cut lists the unscanned and skipped archived; one repository's internal error is a row and exit 4, never an aborted census; an incomplete receipt earns only the retry horizon and a lesser pass lands beside the receipt; the receipt states denominators and is written atomically; main exits 0 clean, 1 on findings, 2 on incomplete coverage, 3 when nothing could be read, 4 on an internal error."
 
   schedules-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py -q"
-    paths: ["scripts/_schedules.py", "scripts/check-schedules.py", "scripts/schedule-utilization.py", "cli/tests/test_schedules_registry.py", "institutio/governance/schedules.yaml", "institutio/governance/schedule-stagger-baseline.txt"]
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py cli/tests/test_schedule_collection_integration.py scripts/tests/test_schedule_evidence.py -q"
+    timeout_seconds: 180
+    paths: ["scripts/_schedules.py", "scripts/_schedule_evidence.py", "scripts/_schedule_reporting.py", "scripts/check-schedules.py", "scripts/schedule-utilization.py", "scripts/schedule-collect.py", "cli/tests/test_schedule_collection_integration.py", "scripts/tests/test_schedule_evidence.py", "cli/tests/test_schedules_registry.py", "docs/operations/schedule-collection.md", "institutio/governance/schedules.yaml", "institutio/governance/schedule-stagger-baseline.txt"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "The schedules predicates' own contract, which nothing scoped would otherwise run (pytest-cli's paths are cli/** plus root registries, so editing scripts/schedule-utilization.py implicates no test at all — the declared-but-unwired class check-runner-coverage exists to catch). Pins: cron parsing incl. vixie dom/dow OR semantics; America/New_York fires converted to UTC; derived workflow jobs survive PyYAML reading `on:` as the boolean True; the stagger ratchet fails on a NEW violation AND on a baseline line that no longer holds; sibling parity reports unverifiable (not drift) with no clone and verifies crons + manifest allowances with one; and the sensor's verdict matrix — unmeasured is never red, dark/underfilled/unscheduled-headroom are, a half-elapsed day is pro-rated, the receipt is written atomically."
