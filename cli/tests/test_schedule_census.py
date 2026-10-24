@@ -13,6 +13,8 @@ import importlib.util
 import json
 import subprocess
 import sys
+
+import pytest
 from pathlib import Path
 
 
@@ -671,7 +673,7 @@ def test_budget_cut_lists_the_unscanned_and_receipt_states_denominators(monkeypa
     assert not C.receipt_is_fresh(tmp_path / "missing.json", 168)
 
 
-def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_path):
+def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_path, monkeypatch):
     assert C.resolve_universe(["a/b"], None, tmp_path / "none.json") == ([{"repo": "a/b"}], "explicit", [])
     f = tmp_path / "repos.txt"
     f.write_text("# comment\na/b\n\nc/d\n")
@@ -682,6 +684,7 @@ def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_pa
         json.dumps(
             {
                 "schema": C.ESTATE_CACHE_SCHEMA,
+                "fetched_at": C.datetime.now(C.timezone.utc).isoformat(timespec="seconds"),
                 "owners": ["4444J99"],
                 "repos": {
                     "4444J99/z": {"archived": True, "fork": False},
@@ -697,6 +700,25 @@ def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_pa
         and src.startswith("estate-cache:")
         and unlisted == []
     )
+    # a name listed twice is one repository, scanned and counted once
+    assert C.resolve_universe(["a/b", "a/b", "c/d"], None, tmp_path / "none.json")[0] == [
+        {"repo": "a/b"},
+        {"repo": "c/d"},
+    ]
+    # a roster older than the estate TTL yields to a live listing, and is used — caveated — only when that fails
+    monkeypatch.setattr(C, "gh_available", lambda: False)
+    old = json.loads(cache.read_text())
+    old["fetched_at"] = "2026-01-01T00:00:00+00:00"
+    cache.write_text(json.dumps(old))
+    rows, src, caveats = C.resolve_universe([], None, cache)
+    assert [r["repo"] for r in rows] == ["4444J99/a", "4444J99/z"] and src.startswith("estate-cache:")
+    assert caveats == ["stale-cache:2026-01-01T00:00:00+00:00"]
+    del old["fetched_at"]
+    cache.write_text(json.dumps(old))
+    assert C.resolve_universe([], None, cache)[2] == ["stale-cache:unknown-age"]
+    live = ([{"repo": "live/x"}], "gh-repo-list:live", [])
+    monkeypatch.setattr(C, "universe_from_gh_repo_list", lambda owners=None: live)
+    assert C.resolve_universe([], None, cache) == live
     cache.write_text(json.dumps({"schema": "other"}))
     assert C.universe_from_estate_cache(cache) is None
 
@@ -732,7 +754,17 @@ def test_an_owner_whose_listing_failed_is_named_not_dropped_from_the_universe(mo
     assert report["totals"]["verdicts"] == {"active": 1} and C.exit_code_for(report) == 2
     assert not C.receipt_is_complete(report)
     md = C.render_markdown(report)
-    assert "owners unlisted 1" in md and "Owners whose repository listing failed" in md and "- unreadable" in md
+    assert "owners unlisted 1" in md and "Universe incomplete" in md and "- unreadable" in md
+    # a listing exactly at `gh repo list --limit` may be longer than it says: named, never trusted whole
+    big = [
+        {"nameWithOwner": f"good/r{i}", "isArchived": False, "isFork": False, "isPrivate": True, "pushedAt": None}
+        for i in range(C.REPO_LIST_LIMIT)
+    ]
+    monkeypatch.setattr(
+        C.subprocess, "run", lambda argv, **kw: types.SimpleNamespace(returncode=0, stdout=json.dumps(big))
+    )
+    rows, src, caveats = C.universe_from_gh_repo_list(["good"])
+    assert len(rows) == C.REPO_LIST_LIMIT and src == "gh-repo-list:good" and caveats == ["capped:good"]
 
 
 def test_main_writes_receipt_and_ledger_and_exits_on_findings(monkeypatch, tmp_path):
@@ -853,7 +885,164 @@ def test_failing_runs_of_workflows_no_longer_firing_are_history_not_findings(mon
     assert report["totals"]["workflows_failing_last_scheduled_run"] == 1 and C.exit_code_for(report) == 1
 
 
-def test_partial_reads_never_conclude_absence(monkeypatch):
+def test_history_requests_are_counted_and_an_unread_git_history_is_not_an_empty_one(monkeypatch, tmp_path):
+    repo = "4444J99/example"
+    fake = FakeGH(_table(repo))
+    monkeypatch.setattr(C, "gh_api", fake)
+    row = C.scan_repo(repo, clone=tmp_path, history_cap=10)
+    assert len([c for c in fake.calls if "/commits" in c]) == 3  # the listing and two sampled details
+    assert row["api_calls"] == len(fake.calls)  # every request, history included, reaches the rate check
+    # a git read that fails or times out is unread, never empty
+    monkeypatch.setattr(C, "_git", lambda *a: None)
+    hist = C.history_from_git(tmp_path)
+    assert hist["status"] == C.ERROR and hist["truncated"] is True and hist["events"] == [] and "unread" in hist["note"]
+    monkeypatch.setattr(C, "clone_is_full", lambda clone: True)
+    row = C.scan_repo(repo, clone=tmp_path)
+    assert row["channels"]["history"] == "git:error" and row["partial"] is True
+
+
+def test_an_unread_history_is_coverage_incomplete_but_a_read_one_is_not(monkeypatch):
+    repo = "4444J99/one"
+    table = _clean_table(repo)
+    listing = f"repos/{repo}/commits?path=.github/workflows&per_page=100"
+    table[listing] = (C.UNREACHABLE, None)
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["channels"]["history"] == "api:unreachable" and row["partial"] is True
+    report = C.build_report(
+        [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
+    )
+    assert report["denominators"]["scanned_partial"] == 1 and C.exit_code_for(report) == 2
+    # a listing that answers 404 is an observation (no commits touched the workflow dir): read, not partial
+    del table[listing]
+    row = C.scan_repo(repo)
+    assert row["channels"]["history"] == "api:absent" and row["partial"] is False
+
+
+def test_runs_are_grouped_by_workflow_path_and_failing_joins_on_it(monkeypatch):
+    repo = "4444J99/one"
+    table = _clean_table(repo)
+    a, b = ".github/workflows/a.yml", ".github/workflows/b.yml"
+    wf_key = f"repos/{repo}/actions/workflows?per_page=100&page=1"
+    wf = table[wf_key][1]
+    twins = [
+        {"path": a, "state": "active", "name": "Nightly", "id": 11},
+        {"path": b, "state": "active", "name": "Nightly", "id": 12},
+    ]
+    table[wf_key] = (C.OK, {**wf, "workflows": wf["workflows"] + twins})
+    tree_key = f"repos/{repo}/git/trees/main?recursive=1"
+    tree = table[tree_key][1]
+    table[tree_key] = (
+        C.OK,
+        {**tree, "tree": tree["tree"] + [{"type": "blob", "path": a}, {"type": "blob", "path": b}]},
+    )
+    for path in (a, b):
+        table[f"repos/{repo}/contents/{path}?ref=main"] = (C.OK, _b64(WORKFLOW_CRON))
+    runs = [
+        {"name": "Nightly", "path": a, "created_at": "2026-10-24T02:00:00Z", "conclusion": "success"},
+        {"name": "Nightly", "path": b, "created_at": "2026-10-24T01:00:00Z", "conclusion": "failure"},
+        {"name": "hygiene", "created_at": "2026-10-23T13:36:00Z", "conclusion": "success"},
+    ]
+    table[f"repos/{repo}/actions/runs?event=schedule&per_page=100"] = (C.OK, {"total_count": 3, "workflow_runs": runs})
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    by = row["fired"]["by_workflow"]
+    assert set(by) == {a, b, "hygiene"} and by[a]["name"] == "Nightly" and by[b]["last_conclusion"] == "failure"
+    assert (
+        row["failing_workflows"] == ["Nightly"] and row["failing_not_firing"] == []
+    )  # b.yml, by path, not hidden by a.yml
+
+
+def test_an_empty_repository_answering_409_is_empty_not_partial(monkeypatch):
+    repo = "4444J99/one"
+    table = _table(repo)
+    table[f"repos/{repo}"] = (C.OK, {**table[f"repos/{repo}"][1], "size": 0})
+    table[f"repos/{repo}/git/trees/main?recursive=1"] = (
+        C.ERROR,
+        {"message": "Git Repository is empty.", "status": "409"},
+    )
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["channels"]["tree"] == "empty" and row["partial"] is False
+
+
+def _receipt_file(path, *, generated_at, source, repos, partial=0):
+    C.write_receipt(
+        path,
+        {
+            "schema": C.SCHEMA,
+            "generated_at": generated_at.isoformat(timespec="seconds"),
+            "denominators": {
+                "universe_source": source,
+                "universe_count": len(repos),
+                "scanned": len(repos),
+                "scanned_partial": partial,
+                "unreachable": 0,
+                "unscanned_by_budget": 0,
+                "internal_errors": 0,
+            },
+            "repos": [{"repo": r} for r in repos],
+        },
+    )
+
+
+def test_receipt_freshness_respects_scope_and_counts_the_last_attempt(tmp_path):
+    now = C.datetime.now(C.timezone.utc)
+    receipt, sidecar = tmp_path / "census.json", C.sidecar_path(tmp_path / "census.json")
+    assert sidecar.name == "census.last-attempt.json"
+    one = ("explicit", frozenset({"a/b"}))
+    _receipt_file(receipt, generated_at=now - C.timedelta(hours=1), source="explicit", repos=["a/b"])
+    assert C.receipt_is_fresh(receipt, 168, now=now, scope=one)
+    assert not C.receipt_is_fresh(receipt, 168, now=now, scope=("explicit", frozenset({"a/b", "c/d"})))
+    assert not C.receipt_is_fresh(receipt, 168, now=now, scope=("universe", None))
+    # the universe-wide receipt is one scope whichever roster produced it
+    _receipt_file(receipt, generated_at=now - C.timedelta(hours=1), source="estate-cache:/x", repos=["a/b"])
+    assert C.receipt_is_fresh(receipt, 168, now=now, scope=("universe", None))
+    assert C.receipt_scope({"denominators": {"universe_source": "gh-repo-list:o"}}) == ("universe", None)
+    assert C.receipt_scope({"denominators": {"universe_source": "repos-file:/r.txt"}}) == ("repos-file", "/r.txt")
+    assert C.requested_scope([], C.Path("/r.txt")) == ("repos-file", "/r.txt") and C.requested_scope([], None) == (
+        "universe",
+        None,
+    )
+    # an old standing receipt plus a degraded attempt parked beside it: the attempt earns the retry horizon
+    _receipt_file(receipt, generated_at=now - C.timedelta(days=10), source="explicit", repos=["a/b"])
+    assert not C.receipt_is_fresh(receipt, 168, now=now, scope=one, sidecar=sidecar)
+    _receipt_file(sidecar, generated_at=now - C.timedelta(hours=2), source="explicit", repos=["a/b"], partial=1)
+    assert C.receipt_is_fresh(receipt, 168, now=now, scope=one, sidecar=sidecar, retry_hours=24)
+    assert not C.receipt_is_fresh(receipt, 168, now=now, scope=one, sidecar=sidecar, retry_hours=1)
+    _receipt_file(sidecar, generated_at=now - C.timedelta(hours=2), source="explicit", repos=["z/z"], partial=1)
+    assert not C.receipt_is_fresh(receipt, 168, now=now, scope=one, sidecar=sidecar)  # another scope's attempt
+
+
+def test_coverage_share_decides_replacement_and_the_ledger_is_written_first(monkeypatch, tmp_path):
+    monkeypatch.setattr(C, "gh_api", FakeGH(_clean_table("4444J99/one")))
+    receipt = tmp_path / "census.json"
+    both = ["--repos", "4444J99/one", "4444J99/two", "--receipt", str(receipt)]
+    assert C.main(both + ["--force"]) == 2  # two is unreachable: half the universe read completely
+    d = json.loads(receipt.read_text())["denominators"]
+    assert (d["universe_count"], d["scanned"], d["unreachable"]) == (2, 1, 1)
+    # a smaller universe read whole is better coverage, not a lesser pass: it replaces the receipt
+    assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt), "--force"]) == 0
+    assert json.loads(receipt.read_text())["denominators"]["universe_count"] == 1
+    # the degraded pass lands beside it ...
+    assert C.main(both + ["--force"]) == 2
+    assert json.loads(receipt.read_text())["denominators"]["universe_count"] == 1
+    side = json.loads(C.sidecar_path(receipt).read_text())["denominators"]
+    assert (side["universe_count"], side["unreachable"]) == (2, 1)
+    # ... and counts as the last attempt for its scope: no every-beat rescan while the retry horizon holds
+    assert C.main(both) == 0
+    # another scope is not answered by this receipt or its attempt: it scans (two alone is unreachable: read nothing)
+    assert C.main(["--repos", "4444J99/two", "--receipt", str(receipt)]) == 3
+    # the ledger is written before the receipt: a failure between the two never pairs a fresh receipt with a stale ledger
+    fresh = tmp_path / "fresh" / "census.json"
+
+    def boom(path, report):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(C, "write_receipt", boom)
+    with pytest.raises(OSError):
+        C.main(["--repos", "4444J99/one", "--receipt", str(fresh), "--force"])
+    assert fresh.with_suffix(".md").exists() and not fresh.exists()
     repo = "4444J99/one"
     # the tree could not be listed: nothing about carriers is known, so the verdict is partial, not none
     table = _table(repo)

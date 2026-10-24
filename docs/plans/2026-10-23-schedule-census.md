@@ -49,6 +49,10 @@ Folded should-fixes: trailing-comma jsonc; rate guard keyed by API calls (every 
 4. A failed `gh repo list <owner>` became an empty list and the reduced universe read as complete coverage for 168 h → `resolve_universe` returns the unlisted owners; they land in `denominators.universe_unlisted_owners`, the ledger and the receipt, make the receipt incomplete (retry horizon) and exit 2.
 5. `receipt_is_complete` ignored `scanned_partial`, so a transient outage that left every row partially read rested a week → partial rows count toward the unread share.
 
+## Review round 3 and after (Sourcery, Codex, CodeRabbit on 23a60de–b5ccd13) → #3193, stacked PR
+
+Past the two-round bound (`PREC-2026-08-12`) the PR head stops moving for reviewer findings; the verified ones land stacked on `feat/schedule-census`: a listing at `gh repo list --limit` is named `capped:<owner>` and a roster older than `LIMEN_ESTATE_CACHE_TTL_HOURS` yields to a live listing (used caveated as `stale-cache:<fetched_at>` only when that fails); repeated names are scanned once; history requests go through the counting `call`; a failed `git log` is `error`, never an empty history; an unread history makes the row partial (`HISTORY_READ`); runs are keyed by workflow path with the name kept; an empty repository's 409 is `empty`; the ledger is written before the receipt; the sidecar rule compares complete coverage share, and a fresh `*.last-attempt.json` of the same scope counts as the last attempt (no every-beat rescan after a shrunk universe); a fresh receipt answers only a request for the same scope (explicit set, repos file, or the universe).
+
 ## Done predicate
 
 `bash scripts/run-pytest-hermetic.sh cli/tests/test_schedule_census.py -q` green; `python3 scripts/check-schedules.py`, `check-sensors.py`, `check-params.py`, `check-gates.py`, `check-runner-coverage.py` exit 0; on the host, `logs/schedule-census.json` exists with `denominators.scanned` equal to the universe, `scanned_partial`, `unscanned_by_budget` and `internal_errors` all 0.
