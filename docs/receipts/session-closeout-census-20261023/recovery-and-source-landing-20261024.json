@@ -1,0 +1,129 @@
+{
+  "observed_at": "2026-10-24T03:09:02Z",
+  "owner_url": "https://github.com/4444J99/limen/issues/3173",
+  "original_scope": "Complete, merge, reap and close out all 25 screenshot sessions and owner-linked suggested work.",
+  "overall_task_completed": false,
+  "session_released": false,
+  "deletion_authorized": false,
+  "source_integration": {
+    "pr": 3189,
+    "verified_head": "c0e370e5a224ceeb516350638568a4cd1473a366",
+    "merge_commit": "0e35ac433595dd4e5a82d411cc1217df120eedaf",
+    "merged_at": "2026-10-24T02:55:10Z",
+    "fetched_main_ancestry_exit": 0,
+    "old_pr_3087": {
+      "state": "closed_source_superseded",
+      "itself_merged": false,
+      "old_head_is_ancestor_of_verified_head": true,
+      "owned_bundle_identical_between_verified_and_landed_heads": true
+    }
+  },
+  "verification": {
+    "job": "https://github.com/4444J99/limen/actions/runs/40054696774/job/120755031282",
+    "composition": "Merge c0e370e5 into 0ebf8d69 (8d01c572)",
+    "cli_passed": 9407,
+    "cli_skipped": 75,
+    "cli_subtests_passed": 10,
+    "api_passed": 52,
+    "projection_fixtures_passed": 15,
+    "python_ci_mypy": "both steps pass",
+    "earlier_local_batch": {
+      "exit_code": 1,
+      "passed_gates": 36,
+      "failed_gates": [
+        "python-typecheck: interpreter missing mypy"
+      ],
+      "heavy_started": false
+    },
+    "unchanged_green_suites_replayed": false
+  },
+  "adoption": {
+    "observed_at": "2026-10-24T03:01:26Z",
+    "live_checkout": "coherent",
+    "live_head": "0e35ac433595dd4e5a82d411cc1217df120eedaf",
+    "installed_runtime": "0e35ac433595dd4e5a82d411cc1217df120eedaf",
+    "measured_lag": 0,
+    "sync_warning": "Session-contention probe unavailable; existing sync rail proceeded fail-open. This predicate remains unverified, not green."
+  },
+  "skill_recovery": {
+    "owner": "https://github.com/4444J99/domus-genoma-private/issues/535",
+    "pr": "https://github.com/4444J99/domus-genoma-private/pull/556",
+    "merge_commit": "d1dc8bbd49770266b6b41da9235b5fa666a0f578",
+    "fetched_main_ancestry_exit": 0,
+    "reconstructed_content_files": 13,
+    "source_hashes_matched": 3,
+    "draft_hashes_matched": 3,
+    "owner_patch_byte_exact": true,
+    "remote_payload_commit": "1139ee3112d580bef95f815374c91c40b3f4c9fc",
+    "authenticated_remote_files_matched": 15,
+    "authenticated_remote_bytes_matched": 70662,
+    "python_asts_parsed": 2,
+    "json_records_parsed": 3,
+    "frontmatter_records_valid": 9,
+    "gitleaks": {
+      "version": "8.30.1",
+      "exit_code": 0,
+      "repository_ci_pin_unchanged": "8.30.0"
+    },
+    "credential_wall_registered": 32,
+    "source_or_installed_skills_changed": false,
+    "limits": [
+      "Former quick_validate.py copy unrecovered",
+      "Original filesystem metadata and independent restoration custody unproven",
+      "Private CI jobs did not start because of billing; not reported as passing. Merge predicate CLEARED under the registry-declared single-owner fast lane."
+    ]
+  },
+  "prompt_recovery": {
+    "owner": "https://github.com/4444J99/limen/issues/3056",
+    "source_columns_replayed": 19,
+    "original_snapshot": {
+      "bytes": 39678123,
+      "sha256": "7d394f1f5ffd0b820c9cf7dc8553f05ae3d9eed64f174e9810a5a917e89d2fcc",
+      "historical_hash_match": true
+    },
+    "html_candidate": {
+      "bytes": 37834833,
+      "sha256": "32ef5d06840c543c5003dfb4155ab960e672a205972c455c392a80a2c2e99a0d",
+      "historical_hash_match": false,
+      "identity": "candidate only"
+    },
+    "corrected_derivatives_retained": true,
+    "backward_associations": {
+      "before": 29,
+      "after": 0
+    },
+    "changed_input_positions": 28,
+    "catalog_columns": 382,
+    "catalog_prompt_rows": 3500,
+    "browser_visual": "blocked by browser URL policy; no workaround used",
+    "independent_restoration_custody": "unproven"
+  },
+  "native_census": {
+    "observed_at": "2026-10-24T02:45:23Z",
+    "screenshot_ids_requested": 25,
+    "found_in_read_only_database": 25,
+    "archived": 20,
+    "coordinator_archived": 4,
+    "additional_archival_observed": 16,
+    "additional_archival_at": "2026-10-24T02:21:58Z to 02:22:00Z",
+    "additional_archival_actor": "not established; not attributed to this coordinator",
+    "native_rollouts_present": 22,
+    "historical_rollouts_absent": 3
+  },
+  "missing_roots": {
+    "coordinator_and_prompt_roots": "absent; cause unestablished",
+    "matching_reclaimer_receipts": 0,
+    "reclaimer_receipts_searched": 1784,
+    "searched_receipt_roots": 3,
+    "original_native_roots_recreated": false,
+    "retirement_proof_available": false
+  },
+  "cleanup": {
+    "coordinator_native_archives": 4,
+    "coordinator_branch_reaps": 6,
+    "additional_coordinator_archives": 0,
+    "additional_coordinator_reaps": 0,
+    "private_payload_deleted_by_coordinator": false
+  },
+  "remaining_acceptance": "Original research, native/process ownership, source-owned configuration application, admitted production, device/artistic acceptance and full original-root custody retain the existing per-session owners. Content reconstruction and source landing do not release these sessions."
+}
