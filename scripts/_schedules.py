@@ -253,6 +253,11 @@ def beat_loop_max(env: dict[str, str] | None = None) -> int:
     return value if value > 0 else BEAT_LOOP_MAX_SECONDS
 
 
+def sensor_period_seconds(sources: list[str] | set[str], loop_max: int, fast_wave: int) -> int:
+    """beat-sensors.py: `period = fast_wave_seconds if "fast-wave" in sources else loop_max`."""
+    return fast_wave if "fast-wave" in set(sources or []) else loop_max
+
+
 def beats_to_hours(cadence_beats: int, loop_max: int) -> int:
     """Worst-case wall-clock hours one cadence window can span: ceil(beats × loop_max / 3600), at least 1."""
     return max(1, -(-(cadence_beats * max(1, loop_max)) // SECONDS_PER_HOUR))
@@ -302,7 +307,12 @@ def _positive_int(spec, *, fallback: int | None = None) -> int | None:
 
 
 def derive_sensor_jobs(
-    root: Path, plane: str, locator: str | Path = SENSORS_REL, *, loop_max: int | None = None
+    root: Path,
+    plane: str,
+    locator: str | Path = SENSORS_REL,
+    *,
+    loop_max: int | None = None,
+    fast_wave: int | None = None,
 ) -> list[Job]:
     path = root / locator
     if not path.exists():
@@ -310,6 +320,7 @@ def derive_sensor_jobs(
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     sensors = data.get("sensors") if isinstance(data, dict) else None
     ceiling = loop_max if loop_max is not None else beat_loop_max()
+    fast = fast_wave if fast_wave is not None else fast_wave_seconds()
     jobs: list[Job] = []
     for sid, sensor in (sensors or {}).items():
         if not isinstance(sensor, dict):
@@ -321,7 +332,9 @@ def derive_sensor_jobs(
         default_beats = _positive_int(cadence.get("default") if isinstance(cadence, dict) else cadence)
         cadence_env = str(cadence.get("env") or "") if isinstance(cadence, dict) else ""
         sources = list(sensor.get("source") or [])
-        period = fast_wave_seconds() if "fast-wave" in sources else ceiling
+        # a fast-wave sensor's cadence window is cadence × FAST_WAVE_SECONDS, not cadence × LIMEN_LOOP_MAX:
+        # that is the period the heartbeat runs it on and the canary scores it against (#3188 item 1)
+        period = sensor_period_seconds(sources, ceiling, fast)
         hours = beats_to_hours(beats, period)
         jobs.append(
             Job(
@@ -338,6 +351,7 @@ def derive_sensor_jobs(
                 extra={
                     "sources": sources,
                     "loop_max_seconds": period,
+                    "period_source": "fast-wave" if period != ceiling or "fast-wave" in sources else "heartbeat",
                     "cadence_default_beats": default_beats,
                     "cadence_env": cadence_env,
                 },
@@ -849,7 +863,7 @@ def derive_census_jobs(
                         unparseable.append(c)
                 jobs.append(
                     Job(
-                        id=f"fleet/{repo}/{Path(path).stem}",
+                        id=f"fleet/{repo}/{Path(path).name}",  # the file name, not its stem: ci.yml and ci.yaml are two
                         plane=plane_id,
                         crons=crons,
                         tz="UTC",

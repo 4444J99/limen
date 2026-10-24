@@ -43,3 +43,10 @@ Not covered by the review: live launchctl on a Mac, the private plists' Label/st
 ## Done predicate
 
 `bash scripts/run-pytest-hermetic.sh cli/tests/test_schedules_registry.py cli/tests/test_schedule_census.py -q` green; `python3 scripts/check-schedules.py`, `check-sensors.py`, `check-params.py`, `check-gates.py`, `check-his-hand.py` exit 0; with the receipt on the host, `check-schedules.py` reports every ceiling met and `schedule-utilization.py --json` scores the two fleet planes with no repository name in any detail string; without it, the three planes read `not_this_host`.
+
+## Review rounds 3–4 (Codex on #3186, 2026-10-24) — past the two-round bound; verdicts in #3197, fixes on #3191 / #3196
+
+1. `_census_receipt` returned the first census plane's receipt, so with distinct locators an absent first receipt switched ceiling and off-state enforcement off for every plane → `check_census` and `check_redaction` read each plane's own receipt (a locator is read once).
+2. A newest run still queued or running (`last_conclusion` null) hid yesterday's success → the census records the summarized page's newest success as `last_success_at` (#3196) and the reader prefers it, falling back to the newest run on older receipts.
+3. Ids from `Path(path).stem` collided for `ci.yml` and `ci.yaml`, so two such workflows at one minute escaped the shared-minute ceiling → the id keeps the file name.
+4. Deleting a zero off-state ceiling while its match rule remained passed the ratchet (0 → unlimited) → a ceiling key may never be dropped while its rule remains; a rule leaves only at 0.

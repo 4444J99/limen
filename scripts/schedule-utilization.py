@@ -577,11 +577,17 @@ def _success_window(job: S.Job) -> timedelta:
 
 def _recent_success(job: S.Job, generated: datetime | None) -> bool:
     """The receipt's scheduled-run summary shows this workflow succeeded within its success window of the receipt's
-    generated_at — a weekly template that last succeeded 10 days ago is still alive; a daily one is not."""
+    generated_at — a weekly template that last succeeded 10 days ago is still alive; a daily one is not. The
+    census records the summarized page's newest SUCCESS (`last_success_at`, from #3196 on), so a newest run still
+    queued or running at collection time does not hide yesterday's success; an older receipt carries only the
+    newest run, which counts when it is the success."""
     fired = job.extra.get("fired")
-    if not isinstance(fired, dict) or fired.get("last_conclusion") != "success" or generated is None:
+    if not isinstance(fired, dict) or generated is None:
         return False
-    last = S.census_generated_at({"generated_at": fired.get("last_at")})
+    when = fired.get("last_success_at")
+    if when is None and fired.get("last_conclusion") == "success":
+        when = fired.get("last_at")
+    last = S.census_generated_at({"generated_at": when})
     if last is None:
         return False
     return (generated - last) <= _success_window(job)

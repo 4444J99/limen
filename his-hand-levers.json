@@ -5744,7 +5744,7 @@
       "steps": [
         "DONE: diagnosed from provider annotations (not from a 404 log or a guess): every failed job in both private repos carries the billing message; limen (public) scheduled runs continue, which isolates the cause to private-repo Actions billing.",
         "REMAINING (human): open GitHub > Settings > Billing & plans for 4444J99; resolve the failed payment or raise the spending limit for Actions.",
-        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own.",
+        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own. (the predicate reads that report through cloudflare-ops-scheduler, whose only evidence is the weekly witness-audit — #3188 item 2)",
         "REMAINING (agent, after the human step): re-run the census (`python3 scripts/schedule-census.py --check-registry --force`) and read github-actions-fleet-private's observed count in logs/schedule-utilization.json; the private half of the fleet should leave `underfilled` on its own."
       ],
       "issue": 3177,
