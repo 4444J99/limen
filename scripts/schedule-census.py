@@ -76,9 +76,8 @@ ESSENTIAL_CHANNELS = ("tree", "actions-workflows", "contents", "scheduled-runs")
 FINDING_VERDICTS = frozenset({"declared-never-fired", "firing-but-failing", "auto-disabled"})
 HYGIENE_KINDS = frozenset({"dependabot", "renovate"})  # dependency-update schedules: hygiene, not an operator scheduler
 RUN_LISTING_CAP = 2500  # the Actions run listing stops counting here; a total at the cap is a floor, not a count
-HOURS_PER_DAY, DAYS_PER_WEEK, DAYS_PER_MONTH, MONTHS_PER_YEAR = 24, 7, 30.44, 12
 DEFAULT_RETRY_HOURS = 24.0
-MAX_INCOMPLETE_SHARE = 0.25
+MAX_INCOMPLETE_SHARE = S.CENSUS_MAX_INCOMPLETE_SHARE
 
 CHANNELS = {
     "gh-workflow": "Actions workflow files with on.schedule; state from the Actions API",
@@ -293,41 +292,14 @@ def _on_block(data: object) -> dict | None:
 
 
 def cron_rate(cron: str) -> tuple[float | None, str]:
-    """(nominal fires per day, cadence label) from the cron's own fields — never the registry's routine-parity
-    classes, which read `*/30 * * * *` as "daily" because no day field is restricted."""
+    """(nominal fires per day, cadence label) from the cron's own fields — _schedules.cron_fires_per_day /
+    cadence_label, shared with the utilization sensor so the two never label one cron differently. Never the
+    registry's routine-parity classes, which read `*/30 * * * *` as "daily" because no day field is restricted."""
     try:
         c = S.parse_cron(cron)
     except Exception:  # noqa: BLE001 — a cron we cannot parse is still a declaration
         return None, "unparsed"
-    base = float(len(c.minutes) * len(c.hours))
-    dow_share = len(c.dow) / DAYS_PER_WEEK
-    dom_share = len(c.dom) / DAYS_PER_MONTH
-    if c.dow_restricted and c.dom_restricted:
-        day_share = min(1.0, dow_share + dom_share)  # vixie OR
-    elif c.dow_restricted:
-        day_share = dow_share
-    elif c.dom_restricted:
-        day_share = dom_share
-    else:
-        day_share = 1.0
-    per_day = base * day_share * (len(c.months) / MONTHS_PER_YEAR)
-    if c.dow_restricted and c.dow == frozenset({1, 2, 3, 4, 5}) and base == 1:
-        label = "weekdays"
-    elif c.dow_restricted and len(c.dow) == 1 and base == 1 and not c.dom_restricted:
-        label = "weekly"
-    elif c.dom_restricted and len(c.dom) == 1 and base == 1 and not c.dow_restricted:
-        label = "monthly"
-    elif per_day > HOURS_PER_DAY:
-        label = "sub-hourly"
-    elif len(c.hours) == HOURS_PER_DAY and len(c.minutes) == 1 and day_share == 1.0:
-        label = "hourly"
-    elif per_day > 1:
-        label = "intraday"
-    elif per_day == 1:
-        label = "daily"
-    else:
-        label = "other"
-    return round(per_day, 3), label
+    return S.cron_fires_per_day(c), S.cadence_label(c)
 
 
 def _cron_cadence(cron: str) -> str:
@@ -414,11 +386,13 @@ def parse_vercel(text: str) -> list[dict] | None:
 
 
 _PLIST_INTERVAL_RX = re.compile(r"<key>\s*StartInterval\s*</key>\s*<integer>\s*(\d+)\s*</integer>")
+_PLIST_LABEL_RX = re.compile(r"<key>\s*Label\s*</key>\s*<string>\s*([^<]+?)\s*</string>")
 
 
 def parse_launchd(text: str) -> dict | None:
-    """None = not a plist; {} = a plist that schedules nothing; else interval/calendar keys. A plist expat
-    rejects (a `--` inside an XML comment is the common case) is read again by regex for StartInterval; one
+    """None = not a plist; {} = a plist that schedules nothing; else interval/calendar keys plus the plist's
+    `Label` (the launchd-host plane keys its rows by Label, falling back to the file stem). A plist expat rejects
+    (a `--` inside an XML comment is the common case) is read again by regex for StartInterval and Label; one
     that also carries StartCalendarInterval stays unparseable rather than half-read."""
     try:
         data = plistlib.loads(text.encode("utf-8"))
@@ -428,7 +402,13 @@ def parse_launchd(text: str) -> dict | None:
         m = _PLIST_INTERVAL_RX.search(text)
         if "StartCalendarInterval" in text:
             return None
-        return {"interval_seconds": int(m.group(1)), "parse": "regex"} if m else {}
+        if not m:
+            return {}
+        out = {"interval_seconds": int(m.group(1)), "parse": "regex"}
+        label = _PLIST_LABEL_RX.search(text)
+        if label:
+            out["label"] = label.group(1)
+        return out
     if not isinstance(data, dict):
         return {}
     out: dict = {}
@@ -439,6 +419,8 @@ def parse_launchd(text: str) -> dict | None:
         cal = [cal]
     if isinstance(cal, list):
         out["calendar"] = [{k: v for k, v in c.items()} for c in cal if isinstance(c, dict)]
+    if out and isinstance(data.get("Label"), str) and data["Label"].strip():
+        out["label"] = data["Label"].strip()
     return out
 
 
@@ -1049,30 +1031,26 @@ def verdict_for_repo(row: dict) -> str:
 # ── registry parity ─────────────────────────────────────────────────────────────────────────
 
 
-def registry_covered_repos(root: Path, self_repo: str) -> set[str]:
+def load_registry_or_none(root: Path) -> dict | None:
     try:
-        planes = S.load_registry(root).get("planes") or {}
+        return S.load_registry(root)
     except Exception:  # noqa: BLE001 — no registry here is simply no coverage
-        return set()
-    covered: set[str] = set()
-    for plane in planes.values():
-        if not isinstance(plane, dict):
-            continue
-        owner_repo = (plane.get("authority") or {}).get("owner_repo")
-        if owner_repo:
-            covered.add(str(owner_repo))
-        locator = str((plane.get("evidence") or {}).get("locator") or "")
-        m = re.match(r"^([\w.-]+/[\w.-]+)[:#]", locator)
-        if m:
-            covered.add(m.group(1))
-        if (plane.get("jobs_source") or {}).get("kind") == "workflows":
-            covered.add(self_repo)
-    return covered
+        return None
 
 
-def registry_gaps(rows: list[dict], covered: set[str]) -> list[dict]:
-    """Repositories outside every plane that declare an Actions cron GitHub reports active — or whose state could
-    not be read (listed under `unverified`: declared, possibly burning, not confirmed)."""
+def registry_covered_repos(root: Path, self_repo: str) -> set[str]:
+    """The repositories some SPECIFIC schedules.yaml plane already owns — _schedules.specific_plane_repos, the one
+    selector the registry gate, the sensor and this census share (a census plane never counts as coverage: it
+    owns the remainder, which is what a gap is measured against)."""
+    registry = load_registry_or_none(root)
+    return S.specific_plane_repos(registry, self_repo) if registry else set()
+
+
+def registry_gaps(rows: list[dict], covered: set[str], residual: dict | None = None) -> list[dict]:
+    """Repositories outside every SPECIFIC plane that declare an Actions cron GitHub reports active — or whose state
+    could not be read (listed under `unverified`: declared, possibly burning, not confirmed). When the registry
+    declares residual census planes, each gap carries `owned_by` — the plane that derives it by fact — and is no
+    longer a finding; a gap with `owned_by` null is allotment burning outside every plane."""
     gaps = []
     for row in rows:
         if row.get("reach") != OK or row["repo"] in covered:
@@ -1083,15 +1061,47 @@ def registry_gaps(rows: list[dict], covered: set[str]) -> list[dict]:
             if d.get("kind") == "gh-workflow" and d.get("crons") and d.get("state") in {"active", "unknown"}
         ]
         if timed:
+            visibility = "private" if row.get("private") else "public"
+            owner = (residual or {}).get(visibility) or (residual or {}).get(None)
             gaps.append(
                 {
                     "repo": row["repo"],
                     "workflows": [d["path"] for d in timed],
                     "crons": [c for d in timed for c in d["crons"]],
                     "unverified": [d["path"] for d in timed if d.get("state") != "active"],
+                    "owned_by": owner,
                 }
             )
     return gaps
+
+
+def cloudflare_target_crons(registry: dict | None) -> dict[str, list[str]]:
+    """cron text → declared job ids on cloudflare-provider planes (the ops scheduler's targets)."""
+    out: dict[str, list[str]] = {}
+    if not registry:
+        return out
+    cloudflare = {pid for pid, p in (registry.get("planes") or {}).items() if isinstance(p, dict) and p.get("provider") == "cloudflare"}
+    for job in S.declared_jobs(registry):
+        if job.plane in cloudflare:
+            for c in job.crons:
+                out.setdefault(c, []).append(job.id)
+    return out
+
+
+def wrangler_shadows(rows: list[dict], target_crons: dict[str, list[str]]) -> list[dict]:
+    """A repository's own wrangler [triggers] cron that equals an ops Cloudflare scheduler target's cron: two
+    schedulers aimed at one target — an advisory for the owner, never a finding here."""
+    shadows = []
+    for row in rows:
+        if row.get("reach") != OK:
+            continue
+        for d in row.get("declarations") or []:
+            if d.get("kind") != "wrangler" or not d.get("crons"):
+                continue
+            hits = sorted({jid for c in d["crons"] for jid in target_crons.get(str(c), [])})
+            if hits:
+                shadows.append({"repo": row["repo"], "path": d["path"], "crons": list(d["crons"]), "shadows": hits})
+    return shadows
 
 
 # ── receipt / ledger ────────────────────────────────────────────────────────────────────────
@@ -1106,6 +1116,8 @@ def build_report(
     gaps: list[dict] | None,
     started: float,
     skipped: list[str] | None = None,
+    residual_planes: dict | None = None,
+    shadows: list[dict] | None = None,
 ) -> dict:
     errors = [r for r in rows if r.get("verdict") == "error"]
     scanned = [r for r in rows if r.get("reach") == OK]
@@ -1155,6 +1167,8 @@ def build_report(
             "verdicts": verdicts,
         },
         "registry_gaps": gaps,
+        "residual_planes": {str(k) if k is not None else "all": v for k, v in (residual_planes or {}).items()},
+        "wrangler_shadows": shadows or [],
         "unreachable": unreachable,
         "unscanned_by_budget": unscanned,
         "skipped_archived": list(skipped or []),
@@ -1294,13 +1308,26 @@ def render_markdown(report: dict) -> str:
                 + (f"; +{len(items) - 10} more" if len(items) > 10 else "")
             )
     if report.get("registry_gaps"):
-        lines += ["", "## Not declared in schedules.yaml (Actions crons outside any plane)", ""]
+        unowned = [g for g in report["registry_gaps"] if not g.get("owned_by")]
+        lines += [
+            "",
+            f"## Actions crons outside every specific schedules.yaml plane ({len(report['registry_gaps'])} repositories; "
+            f"{len(unowned)} owned by no plane at all"
+            + (f"; the rest derived by fact into {', '.join(sorted(set(str(g.get('owned_by')) for g in report['registry_gaps'] if g.get('owned_by'))))}" if len(unowned) < len(report["registry_gaps"]) else "")
+            + ")",
+            "",
+        ]
         for g in report["registry_gaps"]:
             unverified = g.get("unverified") or []
             lines.append(
                 f"- {g['repo']}: {', '.join(g['workflows'])} — {', '.join(g['crons'])}"
                 + (f" (state unverified: {', '.join(unverified)})" if unverified else "")
+                + (f" → {g['owned_by']}" if g.get("owned_by") else " → OWNED BY NO PLANE")
             )
+    if report.get("wrangler_shadows"):
+        lines += ["", "## Cloudflare scheduler targets also declared in a repository's own wrangler triggers (two schedulers, one target — advisory)", ""]
+        for sh in report["wrangler_shadows"]:
+            lines.append(f"- {sh['repo']}:{sh['path']} {', '.join(sh['crons'])} shadows {', '.join(sh['shadows'])}")
     partial = [r for r in report["repos"] if r.get("partial")]
     if partial:
         lines += ["", "## Partially read (a channel was unreadable or skipped — absence is not concluded)", ""]
@@ -1331,19 +1358,8 @@ def render_markdown(report: dict) -> str:
 
 def receipt_is_complete(report: dict, *, max_incomplete_share: float = MAX_INCOMPLETE_SHARE) -> bool:
     """A receipt that read nothing, or left more than `max_incomplete_share` of its universe unread, is not a
-    census to rest on for a whole interval."""
-    d = report.get("denominators") or {}
-    try:
-        scanned = int(d.get("scanned") or 0)
-        universe = int(d.get("universe_count") or 0)
-        unread = (
-            int(d.get("unreachable") or 0) + int(d.get("unscanned_by_budget") or 0) + int(d.get("internal_errors") or 0)
-        )
-    except (TypeError, ValueError):
-        return False
-    if scanned == 0:
-        return False
-    return universe == 0 or unread / universe <= max_incomplete_share
+    census to rest on for a whole interval — _schedules.census_receipt_is_complete, shared with the sensor."""
+    return S.census_receipt_is_complete(report, max_incomplete_share=max_incomplete_share)
 
 
 def receipt_is_fresh(
@@ -1412,7 +1428,9 @@ def run_census(
             }
         calls_since_check += int(row.get("api_calls") or 0)
         rows.append(row)
-    gaps = registry_gaps(rows, registry_covered_repos(root, self_repo)) if check_registry else None
+    registry = load_registry_or_none(root) if check_registry else None
+    residual = S.residual_planes(registry) if registry else {}
+    gaps = registry_gaps(rows, S.specific_plane_repos(registry, self_repo) if registry else set(), residual) if check_registry else None
     return build_report(
         rows,
         universe=universe,
@@ -1421,18 +1439,23 @@ def run_census(
         gaps=gaps,
         started=started,
         skipped=skipped,
+        residual_planes=residual if check_registry else None,
+        shadows=wrangler_shadows(rows, cloudflare_target_crons(registry)) if check_registry else None,
     )
 
 
 def exit_code_for(report: dict) -> int:
     """4 internal errors (fix the engine) · 3 read nothing · 1 findings on the scanned set · 2 no findings but
-    coverage incomplete (unreachable, unscanned, partial) · 0 clean and complete."""
+    coverage incomplete (unreachable, unscanned, partial) · 0 clean and complete. A registry gap is a finding only
+    when no plane owns it: a gap a residual census plane derives by fact is declared, measured by the sensor, and
+    held to that plane's ceilings — not a floor to report twice."""
     d, t = report["denominators"], report["totals"]
     if d.get("internal_errors"):
         return 4
     if d["scanned"] == 0:
         return 3
-    if report.get("registry_gaps") or any(v in FINDING_VERDICTS for v in t["verdicts"]):
+    unowned = [g for g in report.get("registry_gaps") or [] if not g.get("owned_by")]
+    if unowned or any(v in FINDING_VERDICTS for v in t["verdicts"]):
         return 1
     if d["unreachable"] or d["unscanned_by_budget"] or d.get("scanned_partial"):
         return 2
@@ -1540,7 +1563,11 @@ def main(argv: list[str] | None = None) -> int:
         f"internal errors {d['internal_errors']}; Actions schedules {t['gh_workflows_with_schedule']} (active {t['gh_workflows_active']}, "
         f"auto-off {t['gh_workflows_disabled_inactivity']}, manual-off {t['gh_workflows_disabled_manually']}, "
         f"state unknown {t['gh_workflows_state_unknown']}); verdicts {t['verdicts']}"
-        + (f"; registry gaps {len(report['registry_gaps'])}" if report.get("registry_gaps") is not None else "")
+        + (
+            f"; outside specific planes {len(report['registry_gaps'])} ({sum(1 for g in report['registry_gaps'] if not g.get('owned_by'))} owned by no plane)"
+            if report.get("registry_gaps") is not None
+            else ""
+        )
     )
     return exit_code_for(report)
 

@@ -40,20 +40,60 @@
 #   fill_policy     declared | floor | idle-by-design
 #   floor           for fill_policy floor: the minimum runs (or active jobs) per window the operator wants
 #   jobs_source     null, or {kind: workflows|sensors|cloud-routines, locator} — rows derived by the gate
+#                   from limen's own files; or {kind: census, locator, carrier: gh-workflow|launchd,
+#                   scope: residual|all, visibility?: private|public} — rows derived AT READ TIME from the
+#                   git-ignored census receipt (logs/schedule-census.json, scripts/schedule-census.py).
+#                   `residual` = every carrier declaration in a repository no specific plane covers
+#                   (authority.owner_repo, a repository-shaped evidence locator, the workflows plane's own
+#                   repository); residual gh-workflow planes partition that remainder by visibility, exactly.
+#                   These rows exist only in memory and under logs/ — see the redaction convention below.
 #   declared_off    (workflows planes) list of {file, since, reason}: workflow files the operator has switched
 #                   off ON PURPOSE. The sensor reads GitHub's live state; a workflow that is disabled live but
 #                   not declared here is `undeclared-off` (red — an off-switch nobody owns), and one declared
-#                   here but active live is `declared-off-but-active` (red — the declaration rotted).
+#                   here but active live is `declared-off-but-active` (red — the declaration rotted). A `file`
+#                   that no longer exists is a rotted row (check A).
+#                   (census planes) list of {match: {archived?: bool, state?: [disabled_manually|
+#                   disabled_inactivity|disabled_fork]}, ceiling?: {<state>: int}, since, reason}: off-switches
+#                   owned by FACT, never by name. Every non-active row the receipt holds must be matched by one
+#                   rule (else `undeclared-off`); a `ceiling` caps how many rows a rule may own per state —
+#                   above it is `undeclared-growth` (a new off-switch nobody owns), below it is "lower to N".
+#   ceilings        (census planes) {active?, on-the-hour?, shared-minute?: int ≥ 0} over the plane's ENABLED
+#                   rows (live `active` state, non-archived). Above a ceiling = red (`undeclared-growth` for
+#                   active, `stagger-regressed` for the other two); below = the sensor's exit 3 "lower to N".
+#                   `active` may be raised deliberately; on-the-hour and shared-minute may only fall (check J —
+#                   the fleet's share of the ops house rule, ratcheted like schedule-stagger-baseline.txt).
+#                   shared-minute is counted per repository (two repositories firing at :17 is no collision).
 #   authority       (projected planes) {owner_repo, upstream_state: proposed|synced, note}: which repository
 #                   owns these rows and whether that owner has adopted this projection. `proposed` means limen
 #                   holds a verified mirror the owner has not yet ratified; the sibling-parity check keeps it
 #                   honest either way, and the field exists so the mirror can never silently become authority.
 #   evidence        {kind, locator, note}: what the utilization sensor reads. kind ∈
 #                   gh-actions-runs | bookend-tsv | witness-audit | voice-stamps | claude-snapshot |
-#                   board-dispatch-receipts | issue-comments | none
+#                   board-dispatch-receipts | issue-comments | census-receipt | launchctl | none
+#                   census-receipt: job-matched — an enabled residual workflow is observed when the receipt's
+#                   scheduled-run summary shows it succeeded within 2× its interval + 1.5d of generated_at;
+#                   partial rows count toward neither side; an ambiguous display-name join is unmeasured per
+#                   job. No receipt on this host = unmeasured `not_this_host` (never red, never stale: CI and
+#                   worktrees are not where the census runs); a receipt older than
+#                   LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS, incomplete, or of another schema = stale readback.
+#                   launchctl: one read-only `launchctl list`; observed = declared Labels loaded with last
+#                   exit status 0; no launchctl binary = `not_this_host`.
 #   declared_on     ISO date the plane entered this registry; a plane with evidence kind `none` reads as a
 #                   stale readback once LIMEN_SCHEDULE_READBACK_MAX_AGE_DAYS have passed since this date
 #   enabled         false = plane declared but deliberately not audited (reason in note)
+#
+# Redaction convention for census-derived planes (normative; scripts/check-schedules.py check H):
+#   R1  No committed line names a repository that is not already a disclosed projection token (a plane's
+#       authority.owner_repo, or a declared job id on a plane that carries `authority`). Fleet membership is
+#       a FACT SELECTOR (carrier, scope, visibility, archived, live state) resolved at read time against the
+#       git-ignored receipt; derived ids fleet/<owner>/<repo>/<stem> exist only in memory and in the
+#       git-ignored ledgers under logs/.
+#   R2  Sensor and gate output for census planes is counts-only (per plane, per cron slot) — never ids.
+#   R3  If a committed line ever MUST point at one private repository (none today), it uses
+#       ref:h16:<16 hex of HMAC-SHA256(key, "owner/name")> with the key hydrated by creds-hydrate (file
+#       sink, 0600); plain sha256 is forbidden (private names are guessable). Key absent = unmeasured.
+#   R4  An authored per-repository reason (none today) lives in private custody, never in this file;
+#       absent = unverifiable, never empty.
 #
 # job schema (declared rows only — derived planes carry none):
 #   id              <plane-short>/<job>, unique
@@ -134,6 +174,66 @@ planes:
     jobs_source: null
     evidence: {kind: witness-audit, locator: "4444J99/ops-witness:audit", note: "newest audit/*-witness.md, last-7-day bookend pairing per target (weekly; stale beyond 8 days)"}
     declared_on: 2026-10-23
+    enabled: true
+
+  # ── the undeclared fleet: every Actions cron the 2026-10-23 universe census found outside the planes above ──
+  # Census 2026-10-23T23:53Z over 267 repositories (267 scanned, 1 partial, 0 unreachable): 217 cron workflows
+  # in 67 repositories outside every specific plane, 118 of them live-active — 88 of those two org templates
+  # (stale.yml, codeql.yml) firing on Monday hours, and 112 of 182 observed workflows failing their last
+  # scheduled run (82 in private repositories after 2026-10-08: consistent with, not proven by,
+  # L-GITHUB-ACTIONS-BILLING). Nothing declared them; nothing measured them. These three planes own that
+  # remainder by FACT (visibility, archived, live state) so that no repository is named here (R1), and the
+  # ceilings pin the 2026-10-23 counts so growth is red and shrinkage is a number to lower.
+
+  github-actions-fleet-private:
+    provider: github
+    surface: cron
+    owner: fleet
+    effector: "refused runs → L-GITHUB-ACTIONS-BILLING (human; the private/public split is consistent with, not proof of, the billing cause); otherwise the owning repository fixes, retires or disables the workflow as a receipt-backed reap (mass template retirement → L-FLEET-TEMPLATE-RETIRE); agents never re-enable a schedule or write to a member repository"
+    allotment: {runs: null, window: calendar-day, concurrency: null, source: "GitHub Actions minutes for private repositories draw the 4444J99 account's included minutes and spending limit — a cost pool, not a run cap", entitlement: unpublished}
+    fill_policy: declared
+    floor: null
+    # RESIDUAL by construction: every gh-workflow cron in a PRIVATE census repository that no specific plane covers.
+    jobs_source: {kind: census, locator: logs/schedule-census.json, carrier: gh-workflow, scope: residual, visibility: private}
+    declared_off:
+      - {match: {archived: true}, since: "per repository archive (archived_at is not in the receipt)", reason: "GitHub runs no schedule in an archived repository; archiving IS the owned off-switch. Census 2026-10-23T23:53Z: 10 repositories, 66 cron workflows (41 active-state, 20 disabled_manually, 5 state unknown)"}
+      - {match: {archived: false, state: [disabled_manually, disabled_inactivity]}, ceiling: {disabled_manually: 17, disabled_inactivity: 1}, since: "census 2026-10-23T23:53Z", reason: "pre-registry live-repository off-switches, owned as a count; each leaves by reap (on.schedule removed in-tree) or owner re-enable, and the ceiling is lowered with it"}
+    # census 2026-10-23T23:53Z; live, non-archived, residual; shared-minute per repository; on-the-hour / shared-minute never rise (check J)
+    ceilings: {active: 77, on-the-hour: 67, shared-minute: 62}
+    evidence: {kind: census-receipt, locator: logs/schedule-census.json, note: "job-matched against the receipt's scheduled-run summary (see the evidence-kind doc above). 2026-10-23: 77 declared, 6 observed — the private half is dark"}
+    declared_on: 2026-10-24
+    enabled: true
+
+  github-actions-fleet-public:
+    provider: github
+    surface: cron
+    owner: fleet
+    effector: "the owning repository fixes, retires or disables the workflow (receipt-backed reap); template retirement → L-FLEET-TEMPLATE-RETIRE; agents never re-enable a schedule or write to a member repository"
+    allotment: {runs: null, window: calendar-day, concurrency: null, source: "GitHub Actions minutes are free for public repositories on standard runners — no run cap published", entitlement: unpublished}
+    fill_policy: declared
+    floor: null
+    jobs_source: {kind: census, locator: logs/schedule-census.json, carrier: gh-workflow, scope: residual, visibility: public}
+    declared_off:
+      - {match: {archived: false, state: [disabled_manually, disabled_inactivity]}, ceiling: {disabled_manually: 4, disabled_inactivity: 0}, since: "census 2026-10-23T23:53Z", reason: "pre-registry live-repository off-switches, owned as a count; shrinks by reap or owner re-enable"}
+    # census 2026-10-23T23:53Z; same semantics as github-actions-fleet-private
+    ceilings: {active: 41, on-the-hour: 40, shared-minute: 35}
+    evidence: {kind: census-receipt, locator: logs/schedule-census.json, note: "same reader and rules as github-actions-fleet-private. 2026-10-23: 41 declared, 39 observed — the public control for the private plane's refusals"}
+    declared_on: 2026-10-24
+    enabled: true
+
+  launchd-host:
+    provider: apple
+    surface: launchd
+    owner: fleet
+    effector: "the operator loads a plist on the host it was written for, or the owning repository removes it from git (receipt-backed reap); agents never bootstrap a LaunchAgent"
+    allotment: {runs: null, window: calendar-day, concurrency: null, source: "launchd publishes no run cap; StartInterval / StartCalendarInterval fires are the declared work", entitlement: unpublished}
+    fill_policy: declared
+    floor: null
+    # one job per distinct plist Label (fallback: the file stem), deduplicated across repositories; census 2026-10-23T23:53Z: 19 plists → 15 Labels. limen-beat's own heartbeat stays on limen-beat.
+    jobs_source: {kind: census, locator: logs/schedule-census.json, carrier: launchd, scope: all}
+    ceilings: {active: 15}
+    evidence: {kind: launchctl, locator: "launchctl list", note: "one read-only `launchctl list`: observed = declared Labels loaded with last exit status 0; no launchctl binary (Linux, CI) or no receipt = unmeasured not_this_host"}
+    declared_on: 2026-10-24
     enabled: true
 
   limen-beat:

@@ -2,8 +2,11 @@
 
 One definition of what a job IS — declared rows plus the rows DERIVED from limen's own source files
 (.github/workflows cron triggers, sensors.yaml cadence blocks, cloud-routines.json + the newest
-claude-triggers snapshot receipt) — so check-schedules.py (the pr-gate parity predicate) and
-schedule-utilization.py (the beat sensor) cannot disagree about the estate they measure.
+claude-triggers snapshot receipt) and, for the planes that own the undeclared fleet, from the
+git-ignored schedule-census receipt (every Actions cron and launchd plist the census read, selected
+by FACT — visibility, archived, live state — never by repository name) — so check-schedules.py (the
+pr-gate parity predicate), schedule-utilization.py (the beat sensor) and schedule-census.py (the
+universe reader) cannot disagree about the estate they measure.
 """
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -43,9 +47,11 @@ EVIDENCE_KINDS = {
     "claude-snapshot",
     "board-dispatch-receipts",
     "issue-comments",
+    "census-receipt",
+    "launchctl",
     "none",
 }
-JOBS_SOURCE_KINDS = {"workflows", "sensors", "cloud-routines"}
+JOBS_SOURCE_KINDS = {"workflows", "sensors", "cloud-routines", "census"}
 JOB_CLASSES = {"report", "keepalive", "witness", "dispatch", "landing", "ingest", "audit", "unknown"}
 STAGGER_RULES = ("on-the-hour", "shared-minute")
 
@@ -389,6 +395,8 @@ def derived_jobs(root: Path, registry: dict) -> list[Job]:
             jobs.extend(derive_sensor_jobs(root, plane_id, locator or SENSORS_REL))
         elif kind == "cloud-routines":
             jobs.extend(derive_cloud_routine_jobs(root, plane_id, locator or CLOUD_ROUTINES_REL))
+        elif kind == "census":
+            jobs.extend(derive_census_jobs(root, plane_id, src, registry))
     return jobs
 
 
@@ -443,3 +451,393 @@ def cadence_class(cron: Cron) -> str:
     if not cron.dow_restricted and not cron.dom_restricted:
         return "daily"
     return "other"
+
+
+# ── census-derived planes: the undeclared fleet, owned by fact selectors, never by name ──────────
+#
+# A census plane's `jobs_source` is {kind: census, locator, carrier: gh-workflow|launchd, scope:
+# residual|all, visibility?: private|public}. Its rows exist only in memory and in the git-ignored
+# ledgers under logs/: the receipt names private repositories, so nothing derived here may be written
+# into a committed file, and every consumer prints COUNTS for these planes, never ids (schedules.yaml
+# header, redaction convention R1–R4; check-schedules.py check H).
+
+CENSUS_REL = Path("logs/schedule-census.json")
+CENSUS_SCHEMA = "limen.schedule_census.v1"
+CENSUS_CARRIERS = {"gh-workflow", "launchd"}
+CENSUS_SCOPES = {"residual", "all"}
+CENSUS_VISIBILITIES = {"private", "public"}
+CEILING_KEYS = {"active", "on-the-hour", "shared-minute"}
+RATCHET_CEILING_KEYS = ("on-the-hour", "shared-minute")  # shrink-only across commits (check J); `active` may rise
+DECLARED_OFF_MATCH_KEYS = {"archived", "state"}
+WORKFLOW_OFF_STATES = {"disabled_manually", "disabled_inactivity", "disabled_fork"}
+# Evidence kinds whose locator is documented as owner/repo[:path|#N]; only these name a repository.
+REPO_LOCATOR_EVIDENCE_KINDS = {"gh-actions-runs", "bookend-tsv", "witness-audit", "issue-comments"}
+CENSUS_MAX_INCOMPLETE_SHARE = 0.25
+CENSUS_RECEIPT_STATES = ("absent", "unreadable", "wrong-schema", "incomplete", "stale", "present")
+HOURS_PER_DAY, DAYS_PER_WEEK, DAYS_PER_MONTH, MONTHS_PER_YEAR = 24, 7, 30.44, 12
+
+# owner/name, optionally followed by :path or #N. The name must start alphanumeric so `logs/.voice` and
+# `docs/receipts/…` (a third segment) are never read as repositories.
+_REPO_LOCATOR_RX = re.compile(r"^([A-Za-z0-9-]+/[A-Za-z0-9][\w.-]*)(?:[:#]|$)")
+
+
+def is_census_plane(plane: object) -> bool:
+    return isinstance(plane, dict) and isinstance(plane.get("jobs_source"), dict) and plane["jobs_source"].get("kind") == "census"
+
+
+def repo_of_locator(locator: object) -> str | None:
+    m = _REPO_LOCATOR_RX.match(str(locator or ""))
+    return m.group(1) if m else None
+
+
+def specific_plane_repos(registry: dict, self_repo: str | None = None) -> set[str]:
+    """Every repository some NON-census plane already owns: authority.owner_repo, a repository-shaped
+    evidence locator of a GitHub-backed evidence kind, a declared job's `source_of_truth` repo, and the
+    workflows plane's own repository when the caller names it. A census plane with scope `residual`
+    derives only what lies outside this set."""
+    covered: set[str] = set()
+    planes = registry.get("planes") or {}
+    for plane in planes.values():
+        if not isinstance(plane, dict) or is_census_plane(plane):
+            continue
+        owner_repo = (plane.get("authority") or {}).get("owner_repo") if isinstance(plane.get("authority"), dict) else None
+        if owner_repo:
+            covered.add(str(owner_repo))
+        evidence = plane.get("evidence") if isinstance(plane.get("evidence"), dict) else {}
+        if evidence.get("kind") in REPO_LOCATOR_EVIDENCE_KINDS:
+            repo = repo_of_locator(evidence.get("locator"))
+            if repo:
+                covered.add(repo)
+        if self_repo and (plane.get("jobs_source") or {}).get("kind") == "workflows":
+            covered.add(self_repo)
+    for row in registry.get("jobs") or []:
+        if isinstance(row, dict):
+            repo = repo_of_locator(row.get("source_of_truth"))
+            if repo:
+                covered.add(repo)
+    return covered
+
+
+def disclosed_repo_tokens(registry: dict) -> set[str]:
+    """Tokens a committed registry line may legitimately carry even when they name a private repository:
+    the specific planes' repositories (slug and bare name) and the job-id components of declared rows on
+    planes that carry `authority` (ops/<job>, cloudflare/<target> — projections the owner repo publishes)."""
+    tokens: set[str] = set()
+    for repo in specific_plane_repos(registry):
+        tokens.add(repo)
+        tokens.add(repo.split("/", 1)[1])
+    planes = registry.get("planes") or {}
+    authority_planes = {pid for pid, p in planes.items() if isinstance(p, dict) and isinstance(p.get("authority"), dict)}
+    for row in registry.get("jobs") or []:
+        if isinstance(row, dict) and row.get("plane") in authority_planes and isinstance(row.get("id"), str):
+            tokens.update(part for part in row["id"].split("/") if part)
+    return tokens
+
+
+def residual_planes(registry: dict, carrier: str = "gh-workflow") -> dict[str | None, str]:
+    """visibility (or None = both) → plane id, for every census plane of `carrier` with scope residual."""
+    out: dict[str | None, str] = {}
+    for pid, plane in (registry.get("planes") or {}).items():
+        if not is_census_plane(plane):
+            continue
+        src = plane["jobs_source"]
+        if src.get("carrier", "gh-workflow") == carrier and src.get("scope", "residual") == "residual":
+            vis = src.get("visibility")
+            out[str(vis) if vis else None] = pid
+    return out
+
+
+def cron_fires_per_day(cron: Cron) -> float:
+    """Nominal fires per day from the cron's own fields (day-of-week and day-of-month as shares of a week
+    and a 30.44-day month, vixie OR when both are restricted). The census and the sensor share this so a
+    `*/30 * * * *` is 48/day for both and never 'daily' because no day field is restricted."""
+    base = float(len(cron.minutes) * len(cron.hours))
+    dow_share = len(cron.dow) / DAYS_PER_WEEK
+    dom_share = len(cron.dom) / DAYS_PER_MONTH
+    if cron.dow_restricted and cron.dom_restricted:
+        day_share = min(1.0, dow_share + dom_share)
+    elif cron.dow_restricted:
+        day_share = dow_share
+    elif cron.dom_restricted:
+        day_share = dom_share
+    else:
+        day_share = 1.0
+    return round(base * day_share * (len(cron.months) / MONTHS_PER_YEAR), 3)
+
+
+def cadence_label(cron: Cron) -> str:
+    """weekdays | weekly | monthly | sub-hourly | hourly | intraday | daily | other — the census ledger's vocabulary."""
+    base = len(cron.minutes) * len(cron.hours)
+    per_day = cron_fires_per_day(cron)
+    day_share_full = not cron.dow_restricted and not cron.dom_restricted
+    if cron.dow_restricted and cron.dow == frozenset({1, 2, 3, 4, 5}) and base == 1:
+        return "weekdays"
+    if cron.dow_restricted and len(cron.dow) == 1 and base == 1 and not cron.dom_restricted:
+        return "weekly"
+    if cron.dom_restricted and len(cron.dom) == 1 and base == 1 and not cron.dow_restricted:
+        return "monthly"
+    if per_day > HOURS_PER_DAY:
+        return "sub-hourly"
+    if len(cron.hours) == HOURS_PER_DAY and len(cron.minutes) == 1 and day_share_full and len(cron.months) == 12:
+        return "hourly"
+    if per_day > 1:
+        return "intraday"
+    if per_day == 1:
+        return "daily"
+    return "other"
+
+
+def census_receipt_is_complete(report: dict, *, max_incomplete_share: float = CENSUS_MAX_INCOMPLETE_SHARE) -> bool:
+    """A receipt that read nothing, or left more than `max_incomplete_share` of its universe unread, is not a
+    census to rest on — the sensor reads it as a stale readback, never as the fleet."""
+    d = report.get("denominators") or {}
+    try:
+        scanned = int(d.get("scanned") or 0)
+        universe = int(d.get("universe_count") or 0)
+        unread = (
+            int(d.get("unreachable") or 0) + int(d.get("unscanned_by_budget") or 0) + int(d.get("internal_errors") or 0)
+        )
+    except (TypeError, ValueError):
+        return False
+    if scanned == 0:
+        return False
+    return universe == 0 or unread / universe <= max_incomplete_share
+
+
+def census_receipt_path(root: Path, locator: str | Path | None) -> Path:
+    path = Path(str(locator)) if locator else CENSUS_REL
+    return path if path.is_absolute() else root / path
+
+
+_CENSUS_CACHE: dict[tuple[str, int, int], dict | None] = {}
+
+
+def _read_census_json(path: Path) -> dict | None:
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    key = (str(path), st.st_mtime_ns, st.st_size)
+    if key not in _CENSUS_CACHE:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            data = None
+        _CENSUS_CACHE.clear()
+        _CENSUS_CACHE[key] = data if isinstance(data, dict) else None
+    return _CENSUS_CACHE[key]
+
+
+def census_generated_at(data: dict | None) -> datetime | None:
+    stamp = (data or {}).get("generated_at")
+    if not isinstance(stamp, str):
+        return None
+    try:
+        when = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return when.replace(tzinfo=timezone.utc) if when.tzinfo is None else when.astimezone(timezone.utc)
+
+
+def load_census_receipt(
+    root: Path, locator: str | Path | None, *, max_age_days: int | None = None, now: datetime | None = None
+) -> tuple[Path, dict | None, str]:
+    """(path, data, state) with state ∈ CENSUS_RECEIPT_STATES. `data` is returned for incomplete, stale and
+    present receipts (rows can still be derived; the caller decides what they prove) and is None otherwise.
+    absent is the ordinary state of a CI runner or a worktree: the census runs where gh carries the owner's
+    auth, and the receipt is git-ignored by convention (R1) — so absent is 'not this host', never drift."""
+    path = census_receipt_path(root, locator)
+    if not path.exists():
+        return path, None, "absent"
+    data = _read_census_json(path)
+    if data is None:
+        return path, None, "unreadable"
+    if data.get("schema") != CENSUS_SCHEMA:
+        return path, None, "wrong-schema"
+    if not census_receipt_is_complete(data):
+        return path, data, "incomplete"
+    if max_age_days is not None:
+        generated = census_generated_at(data)
+        moment = now or datetime.now(timezone.utc)
+        if generated is None or (moment - generated) > timedelta(days=max_age_days):
+            return path, data, "stale"
+    return path, data, "present"
+
+
+def _census_rows(data: dict) -> list[dict]:
+    return [r for r in data.get("repos") or [] if isinstance(r, dict) and r.get("reach") == "ok" and isinstance(r.get("repo"), str)]
+
+
+def derive_census_jobs(root: Path, plane_id: str, src: dict, registry: dict, *, receipt: dict | None = None) -> list[Job]:
+    """Rows for one census plane. gh-workflow: one job per cron-bearing Actions workflow the census read in a
+    repository of the plane's visibility that no specific plane covers (scope residual) — enabled ⟺ live state
+    `active` in a non-archived repository; the receipt's live state, archived flag, partial flag and the
+    workflow's scheduled-run summary ride in `extra`. launchd: one job per distinct plist Label (fallback: the
+    file stem), deduplicated across repositories. Returns [] when the receipt is absent or unreadable."""
+    if receipt is None:
+        _, receipt, state = load_census_receipt(root, src.get("locator"))
+        if receipt is None:
+            return []
+    carrier = str(src.get("carrier") or "gh-workflow")
+    scope = str(src.get("scope") or "residual")
+    visibility = src.get("visibility")
+    covered = specific_plane_repos(registry) if scope == "residual" else set()
+    generated_at = receipt.get("generated_at")
+    jobs: list[Job] = []
+    if carrier == "gh-workflow":
+        for row in _census_rows(receipt):
+            repo = row["repo"]
+            if repo in covered:
+                continue
+            private = bool(row.get("private"))
+            if visibility == "private" and not private or visibility == "public" and private:
+                continue
+            archived = bool(row.get("archived"))
+            partial = bool(row.get("partial"))
+            decls = [d for d in row.get("declarations") or [] if isinstance(d, dict) and d.get("kind") == "gh-workflow" and d.get("crons")]
+            names = [d.get("name") for d in decls]
+            by_workflow = ((row.get("fired") or {}).get("by_workflow") or {}) if isinstance(row.get("fired"), dict) else {}
+            for d in decls:
+                path = str(d.get("path") or "")
+                name = d.get("name")
+                state = str(d.get("state") or "unknown")
+                ambiguous = not isinstance(name, str) or names.count(name) > 1
+                crons = [str(c) for c in d["crons"]]
+                unparseable: list[str] = []
+                for c in crons:
+                    try:
+                        parse_cron(c)
+                    except CronError:
+                        unparseable.append(c)
+                jobs.append(
+                    Job(
+                        id=f"fleet/{repo}/{Path(path).stem}",
+                        plane=plane_id,
+                        crons=crons,
+                        tz="UTC",
+                        enabled=state == "active" and not archived,
+                        derived=True,
+                        source=str(src.get("locator") or CENSUS_REL),
+                        klass="unknown",
+                        extra={
+                            "repo": repo,
+                            "private": private,
+                            "archived": archived,
+                            "state": state,
+                            "name": name,
+                            "workflow_file": Path(path).name,
+                            "partial": partial,
+                            "fires_per_day": d.get("fires_per_day"),
+                            "fired": by_workflow.get(name) if isinstance(name, str) and not ambiguous else None,
+                            "ambiguous": ambiguous,
+                            "unparseable_crons": unparseable,
+                            "generated_at": generated_at,
+                        },
+                    )
+                )
+        return jobs
+    if carrier == "launchd":
+        by_label: dict[str, Job] = {}
+        for row in _census_rows(receipt):
+            repo = row["repo"]
+            if repo in covered:
+                continue
+            for d in row.get("declarations") or []:
+                if not isinstance(d, dict) or d.get("kind") != "launchd" or d.get("unparseable"):
+                    continue
+                if not (d.get("interval_seconds") or d.get("calendar")):
+                    continue
+                path = str(d.get("path") or "")
+                label = str(d.get("label") or Path(path).stem)
+                job = by_label.get(label)
+                if job is None:
+                    job = by_label[label] = Job(
+                        id=f"launchd/{label}",
+                        plane=plane_id,
+                        crons=[],
+                        tz="UTC",
+                        enabled=True,
+                        derived=True,
+                        source=str(src.get("locator") or CENSUS_REL),
+                        klass="unknown",
+                        extra={
+                            "label": label,
+                            "repos": [],
+                            "paths": [],
+                            "interval_seconds": d.get("interval_seconds"),
+                            "calendar": d.get("calendar"),
+                            "private": False,
+                            "partial": False,
+                            "generated_at": generated_at,
+                        },
+                    )
+                job.extra["repos"].append(repo)
+                job.extra["paths"].append(path)
+                job.extra["private"] = job.extra["private"] or bool(row.get("private"))
+                job.extra["partial"] = job.extra["partial"] or bool(row.get("partial"))
+        return list(by_label.values())
+    return jobs
+
+
+def census_plane_counts(jobs: list[Job]) -> dict[str, int]:
+    """The three ceiling counts for one census plane over its ENABLED rows: active, on-the-hour (any cron with
+    minute 0) and shared-minute — two workflows of one repository sharing a minute (the ops house rule is per
+    repository; two repositories firing at :17 is not a collision). Unparseable crons count as active only."""
+    enabled = [j for j in jobs if j.enabled]
+    on_hour = 0
+    by_repo_minute: dict[tuple[str, int], set[str]] = defaultdict(set)
+    for job in enabled:
+        hour_hit = False
+        for c in job.crons:
+            try:
+                cron = parse_cron(c)
+            except CronError:
+                continue
+            hour_hit = hour_hit or cron.on_the_hour
+            for m in cron.minutes:
+                by_repo_minute[(str(job.extra.get("repo")), m)].add(job.id)
+        on_hour += int(hour_hit)
+    sharing: set[str] = set()
+    for ids in by_repo_minute.values():
+        if len(ids) > 1:
+            sharing |= ids
+    return {"active": len(enabled), "on-the-hour": on_hour, "shared-minute": len(sharing)}
+
+
+def declared_off_match(match: dict, job: Job) -> bool:
+    """A declared_off match row selects by FACT: `archived: bool` and/or `state: [..]` (a str is one state)."""
+    if "archived" in match and bool(job.extra.get("archived")) != bool(match["archived"]):
+        return False
+    if "state" in match:
+        states = match["state"] if isinstance(match["state"], list) else [match["state"]]
+        if str(job.extra.get("state")) not in {str(s) for s in states}:
+            return False
+    return True
+
+
+def census_off_counts(plane: dict, jobs: list[Job]) -> tuple[list[dict[str, int]], list[Job], int]:
+    """(per-rule counts, undeclared-off jobs, unverified count) over the plane's NON-enabled rows. Each declared_off
+    match rule gets a dict of state → count (archived rows count under 'archived' as well as their state); a row
+    no rule matches is undeclared-off (an off-switch nobody owns); a live row whose state the census could not
+    read (`unknown`) is unverified — neither on nor off — and is counted separately."""
+    rules = [r for r in plane.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)]
+    per_rule: list[dict[str, int]] = [defaultdict(int) for _ in rules]
+    undeclared: list[Job] = []
+    unverified = 0
+    for job in jobs:
+        if job.enabled:
+            continue
+        state = str(job.extra.get("state"))
+        archived = bool(job.extra.get("archived"))
+        if state == "unknown" and not archived:
+            unverified += 1
+            continue
+        for i, rule in enumerate(rules):
+            if declared_off_match(rule["match"], job):
+                per_rule[i][state] += 1
+                if archived:
+                    per_rule[i]["archived"] += 1
+                break
+        else:
+            undeclared.append(job)
+    return [dict(c) for c in per_rule], undeclared, unverified

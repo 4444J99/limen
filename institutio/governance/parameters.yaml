@@ -6701,6 +6701,12 @@ parameters:
     self_update: none
     owner: governance
     note: "Hours before an incomplete census receipt (read nothing, or more than a quarter of its universe unreachable/unscanned/errored) is retried; a complete receipt rests for LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS."
+  LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS:
+    default: 8
+    env: LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS
+    self_update: none
+    owner: governance
+    note: "How old logs/schedule-census.json may be before the census-derived planes (github-actions-fleet-private / -public, launchd-host) read as a stale readback instead of trusting last week's fleet; one day past the 168h census interval. The gate (check-schedules) still compares ceilings against an older receipt and only advises its age."
   LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS:
     default: 1500
     env: LIMEN_SCHEDULE_CENSUS_BUDGET_SECONDS
