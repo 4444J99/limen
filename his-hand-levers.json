@@ -5730,6 +5730,158 @@
         "historical_gate_requires_verification": "Upload completeness is observable only in the vendor's own console.",
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-GITHUB-ACTIONS-BILLING",
+      "label": "Restore GitHub Actions on the 4444J99 private repositories: since 2026-10-07 every scheduled job in 4444J99/ops and 4444J99/ops-witness has been refused at job start with GitHub's own annotation 'The job was not started because recent account payments have failed or your spending limit needs to be increased' — the plane (i) cron backbone (org-hygiene-report, both keepalives, the weekly witness, the Jules API witness) is dark, and nothing in plane (i) can prove any run happened. Public-repo Actions (limen) still run.",
+      "owner": "yours",
+      "cost": "~5 min in GitHub > Settings > Billing & plans for the 4444J99 account: fix the failed payment method or raise the Actions spending limit; then re-run one scheduled workflow (gh workflow run org-hygiene-report.yml --repo 4444J99/ops) and read back a paired start/end bookend in 4444J99/ops:bookends/<day>.tsv",
+      "unlocks": "plane (i) and its witness come back: the daily hygiene report and bookends resume, the two keepalives stop failing (the 60-day auto-disable clock is otherwise unguarded), the weekly witness writes audit/<day>-witness.md again (which is also the only evidence path for the six Cloudflare scheduler targets), and the schedule-utilization sensor's github-actions-ops / github-actions-ops-witness / cloudflare-ops-scheduler rows leave dark/unmeasured",
+      "source_task": "schedule-estate registry (limen#3177), observed 2026-10-23: 4444J99/ops org-hygiene-report runs 124-140 (10-07..10-23) all failed in 3-5s; keepalive 10-12 and 10-19 failed; ops-witness weekly-witness 10-11 and 10-18 failed; Jules API witness runs 143-144 failed; check-run annotations on jobs 120447871476 (ops) and 120476682144 (ops-witness) carry the billing message verbatim. Workflow states are all `active`, so this is not the inactivity auto-disable.",
+      "gate": "account billing — a vendor-side payment/spending-limit change only the account holder can make; no organ can mint or approve it. This record names the CURRENT provider-evidenced action only; it does not attribute the cause to the discharged L-CARD-FRAUD-HOLD or to any earlier billing row.",
+      "status": "needs_human",
+      "added": "2026-10-23",
+      "steps": [
+        "DONE: diagnosed from provider annotations (not from a 404 log or a guess): every failed job in both private repos carries the billing message; limen (public) scheduled runs continue, which isolates the cause to private-repo Actions billing.",
+        "REMAINING (human): open GitHub > Settings > Billing & plans for 4444J99; resolve the failed payment or raise the spending limit for Actions.",
+        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own."
+      ],
+      "issue": 3177,
+      "sovereignty": {
+        "reason": "wallet_custody"
+      },
+      "diagnosed_at": "2026-10-23T18:32:00Z",
+      "diagnosis_provenance": "schedule-estate-registry-20261023.provider-annotation",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Keep plane (i) measured, not re-tried: the schedule-utilization sensor reads ops bookends and ops-witness audit reports and names this lever's effector when they are dark; no organ retries, re-enables, or pays. The human restores billing; the agent step afterwards is one manual dispatch plus a readback.",
+        "rationale": "A vendor-side billing refusal is the one scheduling failure no registry, predicate or keepalive can route around; recording it as a lever keeps it off chat and off memory, and keeps the discharged card-hold history from being reused as a diagnosis.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-GITHUB-ACTIONS-BILLING",
+          "institutio/governance/schedules.yaml",
+          "https://github.com/4444J99/ops/actions/runs/39963682185",
+          "https://github.com/4444J99/ops-witness/actions/runs/39971960272",
+          "https://github.com/4444J99/ops-witness/actions/runs/39129246586",
+          "https://github.com/4444J99/limen/issues/3177"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#credentials-are-organ-owned-never-recited-in-chat",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedule-estate registry (limen#3177); plane (i) owner 4444J99/ops (ops#6)",
+        "acceptance": {
+          "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day and the ops-witness weekly witness writes a new audit report.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')]; sys.exit(0 if len(ps)==2 and all(p['verdict'] in ('full','underfilled') for p in ps) else 1)\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [],
+        "remaining_human_action": "Fix the failed payment method or raise the Actions spending limit for the 4444J99 GitHub account.",
+        "historical_gate_requires_verification": "account billing is the account holder's alone",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Found while building the SCHEDULES registry: the gauge said github-actions-ops was dark (no bookend today) and ops-witness had 3 fired-but-failed runs; the step list could not be read (job logs 404) but the check-run annotations could. The ops-witness head commit 7ef2bc3 had earlier blamed a dependabot actions@v7 bump and pinned back to v4/v5; that pin did not change the 3-5s failures, which is consistent with a job that never starts."
+    },
+    {
+      "id": "L-SCHED-READBACKS",
+      "label": "Complete supported native schedule access and result coverage for ChatGPT tasks, Grok Automations, Gemini Apps schedules and Jules native schedules. Collector-mediated reads already observed 15 enabled ChatGPT tasks and 20 partial Grok notification excerpts; this is bounded evidence, not complete history, verified account capacity, acceptance or delivery. Remaining supported native access and full-result/coverage gaps stay open.",
+      "owner": "yours",
+      "cost": "Remaining effort is account-specific access or browser unlock where supported connector retrieval is unavailable, plus bounded collector continuation. ChatGPT and verified vendor Gmail reads do not require human copy/paste as the steady-state collection route. Keep native IDs, task titles, prompts and result bodies private; public updates carry only source coverage and gap ownership.",
+      "unlocks": "The existing native collector can retain ChatGPT results and Grok notification evidence through a durable private union instead of leaving collected work unobserved. Gemini Apps and Jules native schedule inventory/results, Grok full native results, complete run/history coverage, verified account usage/entitlement and downstream capacity remain separate gaps. Observed enabled tasks are not unused quota. Existing ~/.grokbot preservation remains unverified and is not established by Gmail access.",
+      "source_task": "Schedule-estate registry (limen#3177; docs/operations/schedule-collection.md). Connected ChatGPT task reads observed 15 enabled tasks at 2026-10-23T19:22:57Z, with 10 correlated full results and 5 unresolved full results; bounded vendor Gmail reads observed 20 partial unresolved Grok excerpts at 2026-10-23T19:37:34Z. The historical five ChatGPT engineering rows are not an exhaustive current inventory. No Gemini Apps, Grok Bot or Jules native account access is established by these reads.",
+      "gate": "Use supported collector-mediated reads where demonstrated. Missing native account access and originating-browser unlocks remain account-holder gates; Gmail access does not establish Grok Bot or full Grok result access. Preserve existing schedule ownership and sole Jules Steward launch authority. The historical Gemini and ops-witness window proposals remain unratified; source evidence, not guessed schedules, resolves them.",
+      "status": "needs_human",
+      "added": "2026-10-23",
+      "steps": [
+        "OBSERVED (collector): 15 enabled ChatGPT tasks with partial history; retain 10 correlated and 5 unresolved full results under their actual identities and preserve full bodies privately by digest plus occurrence provenance. Continue bounded current/history collection without treating native completion as acceptance or delivery.",
+        "REMAINING (supported native access / account holder where required): Gemini Apps active schedules, cadence, time zone, destinations and independently verified entitlement/usage. The old four-window proposal is not evidence that any schedule was created; no numeric account ceiling is asserted here.",
+        "OBSERVED / REMAINING (Grok): 20 bounded vendor-mail excerpts are partial and unresolved, not exhaustive history or full native results. Continue supported window/page collection; full-result and native Grok Bot access remain unverified. Preserve the existing ~/.grokbot custody-before-retirement requirement separately; Gmail retrieval does not prove that preservation.",
+        "REMAINING (supported native access / account holder where required): Jules native scheduled-task inventory, cadence, time zone and result destinations, separately from broker-local confirmed launches. Native account entitlement, competing callers and uncertain-attempt holds remain unresolved; no new launch authority follows.",
+        "REMAINING (collector / owner): durably union source observations, exact assessments, checkpoints and the private ChatGPT body/provenance archive; keep incomplete pages/windows and inaccessible sources open with owners/next actions. Natural scheduled collection, complete account/window coverage, exact owner acceptance and delivery remain separately unverified. Existing four-plane fail-closed acceptance predicate and pending status are unchanged."
+      ],
+      "issue": 3177,
+      "sovereignty": {
+        "reason": "identity"
+      },
+      "diagnosed_at": "2026-10-23T18:32:00Z",
+      "diagnosis_provenance": "schedule-estate-registry-20261023.inventory",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Use demonstrated supported collector-mediated native reads, preserve opaque public inventory and private evidence union, and report source coverage separately from acceptance/delivery. Missing supported native account access remains unverified; human readback is an account-specific fallback, not the steady-state collection mechanism.",
+        "rationale": "Direct ChatGPT and vendor-Gmail retrieval supersede the earlier no-readback-route assumption. Partial or unresolved evidence exposes remaining full-result/history/access gaps without fabricating zero usage, account entitlement or available quota.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-SCHED-READBACKS",
+          "institutio/governance/schedules.yaml",
+          "https://github.com/4444J99/limen/issues/3177",
+          "https://github.com/4444J99/limen/issues/2680"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#engage-the-real-problem-first",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedule-estate registry (limen#3177)",
+        "acceptance": {
+          "condition": "Each of the four planes has at least one declared job row with a delivery locator, or an explicit idle-by-design fill_policy, and schedule-utilization reports it measured.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('chatgpt-scheduled-tasks','grok-automations','gemini-scheduled-actions','jules-native-scheduled-tasks')]; sys.exit(0 if len(ps)==4 and not any(p['verdict']=='unmeasured' for p in ps) else 1)\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [],
+        "remaining_human_action": "Provide only the remaining account-specific supported native access or originating-browser unlocks/readbacks where required (including Gemini Apps and Jules native schedules); retain existing Grok custody obligations. ChatGPT and verified vendor-mail collection continue through supported connectors. No re-enable, launch, budget or authority hold is released.",
+        "historical_gate_requires_verification": "Earlier UI-only/readback-only diagnosis is superseded for demonstrated ChatGPT and vendor-Gmail retrieval; remaining native account/browser access gates still require verification.",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Reconciled with the collector evidence projection for limen#3177. Enabled inventory and bounded retrieved artifacts are distinct from full history, account capacity, accepted output and delivered work. Existing acceptance predicate, statuses, ownership and human/launch holds remain pending and unchanged."
+    },
+    {
+      "id": "L-SCHED-CLAUDE-REENABLE",
+      "label": "Bring plane (iii) back: all 13 contracted claude.ai scheduled tasks are off. Cohort A (7) failed with ACCESS_DENIED from 2026-08-31..09-05 and auto-disabled after the vendor's 72h GitHub-connection grace; cohort B (6) succeeded on 2026-10-16 and were switched off together at 2026-10-17T00:12:48Z..00:13:36Z by an action this repo does not record. Deliveries to the session-meta rolling issues had already stopped around 2026-08-17, so 'succeeded' runs were succeeding at being blocked (gate probe fails, exit 0).",
+      "owner": "yours",
+      "cost": "~15 min: at claude.ai/code/routines check the GitHub connection the routines run under (session-meta, organvm-corpvs-testamentvm, domus-genoma must be reachable), state why the six were disabled on 10-17, re-enable ONE canary routine and watch it deliver for 72h before the rest",
+      "unlocks": "The intended routine audit work may resume only through the existing human-owned repair/re-enable path. A fresh enabled trigger snapshot establishes configuration evidence; the truthful snapshot-only utilization reader still reports execution unmeasured. Separately verified real canary delivery and its exact owner predicate are required before closure; neither native success nor an arbitrary issue comment proves delivery.",
+      "source_task": "schedule-estate registry (limen#3177); live list_triggers census docs/receipts/claude-triggers-snapshot-20261023.json; delivery dates read from session-meta issues 36/34/29/32/79/28/30/31 on 2026-10-23",
+      "gate": "re-enabling spends subscription usage and acts through the operator's GitHub identity — a human toggle at claude.ai/code/routines. Re-enabling before the GitHub connection is repaired repeats the 72h auto-off.",
+      "status": "needs_human",
+      "added": "2026-10-23",
+      "steps": [
+        "DONE: fire-side census exported (20 triggers, 0 enabled) and committed as a dated receipt the registry reads.",
+        "REMAINING (human): repair/confirm the GitHub connection for the routine account; record the reason for the 2026-10-17 bulk disable (one sentence on limen#3177).",
+        "REMAINING (human): re-enable one canary routine only through the existing human-owned path (friction-federation last delivered in the dated 2026-10-16 evidence); verify real attributable canary delivery within the existing 72h window using its exact owner predicate before the human re-enables any remaining routines.",
+        "REMAINING (agent / owner): re-export the dated trigger snapshot as configuration evidence only. Define and separately verify the exact real canary-delivery predicate; the current snapshot-only sensor cannot attest this delivery or satisfy the existing full/underfilled acceptance predicate. Keep closure pending; do not restore configuration-as-execution or any-comment-as-delivery semantics (limen#894)."
+      ],
+      "issue": 3177,
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "diagnosed_at": "2026-10-23T18:32:00Z",
+      "diagnosis_provenance": "schedule-estate-registry-20261023.list_triggers",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Measure the claude plane from a dated trigger snapshot plus delivery evidence; never re-enable a routine from an agent; a snapshot older than LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS reads unmeasured.",
+        "rationale": "The trigger API is in-session-only and re-enabling spends; the registry can only declare, snapshot and audit this plane.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-SCHED-CLAUDE-REENABLE",
+          "docs/receipts/claude-triggers-snapshot-20261023.json",
+          "cloud-routines.json",
+          "https://github.com/4444J99/limen/issues/3177",
+          "https://github.com/4444J99/limen/issues/894"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#credentials-are-organ-owned-never-recited-in-chat",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedule-estate registry (limen#3177); routine contract cloud-routines.json (governance)",
+        "acceptance": {
+          "condition": "A fresh snapshot receipt shows the chosen routines enabled as configuration evidence only. Closure additionally requires separately verified real canary delivery bound to its exact owner predicate. The current snapshot-only sensor cannot attest execution/delivery or satisfy the existing fail-closed full/underfilled acceptance predicate, so acceptance remains pending; enabled configuration alone never closes this lever.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane']=='claude-cloud']; sys.exit(0 if ps and all(p['verdict'] in ('full','underfilled') for p in ps) else 1)\"",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "GitHub connection for the claude.ai routine account"
+        ],
+        "remaining_human_action": "Retain the existing human-owned repair, 10-17 reason and canary re-enable steps. Before any closure or wider human re-enable, obtain separately verified real canary delivery and its exact owner predicate; snapshot export alone is configuration evidence and the current sensor cannot attest delivery. Existing launch/subscription and uncertainty holds remain unchanged.",
+        "historical_gate_requires_verification": "re-enabling spends subscription usage",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Cohort B's 'SUCCEEDED' with no delivery is consistent with each prompt's gate probe (`gh auth status` fails → print GATE FAILED and stop) exiting 0; the vendor's run status is infrastructure success, not work success (code.claude.com/docs/en/routines)."
     }
   ]
 }

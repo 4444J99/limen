@@ -30,6 +30,8 @@ sanctioned:
   - {path: moneta, kind: dir, owner: docs, why: "MONETA docs"}
   - {path: needs-human-prep, kind: dir, owner: docs, why: "needs-human prep packets"}
   - {path: plans, kind: dir, owner: docs, why: "dated plans (plan-discipline)"}
+  - {path: operations, kind: dir, owner: governance, why: "Limen operational collection runbooks and bounded activation procedures"}
+  - {path: superpowers, kind: dir, owner: governance, why: "reviewed implementation plans for Limen source changes"}
   - {path: positioning, kind: dir, owner: docs, why: "positioning docs"}
   - {path: receipts, kind: dir, owner: docs, why: "tracked receipts (logs/receipts is gitignored)"}
   - {path: research, kind: dir, owner: docs, why: "research notes"}

@@ -1,0 +1,14 @@
+# schedule-stagger-baseline — known violations of the ops stagger rule (never on the hour; no two
+# jobs in one GitHub repo on the same minute) that predate the SCHEDULES registry. Shrink-only:
+# scripts/check-schedules.py fails on any violation NOT listed here and on any listed line whose
+# violation no longer exists (so the file cannot rot). Fix a violation by moving the cron in its
+# source_of_truth and deleting its line here — deleting the line IS the receipt.
+# line format: <plane>:<job-id>:<rule>    rule ∈ on-the-hour | shared-minute
+github-actions-limen:limen/auto-scale:on-the-hour
+github-actions-limen:limen/auto-scale:shared-minute
+github-actions-limen:limen/deploy:on-the-hour
+github-actions-limen:limen/deploy:shared-minute
+github-actions-limen:limen/cloudflare-kv-preflight:shared-minute
+github-actions-limen:limen/conductor-report:shared-minute
+github-actions-limen:limen/deploy-danse:shared-minute
+github-actions-ops-witness:ops-witness/jules-api-witness:on-the-hour
