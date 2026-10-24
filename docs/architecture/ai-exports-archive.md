@@ -255,6 +255,11 @@ live run is by hand at closeout and is the only proof about the real archive.
 
 ## Custody
 
+Encrypted remote portability is a separate opt-in layer described in
+[encrypted knowledge publication](encrypted-knowledge-publication.md). It preserves this archive
+loop and the physical backup below. Its implementation/review status and live acceptance gates are
+explicit; a ciphertext workflow is not a new physical-custody receipt or a live publication claim.
+
 The committed receipt `docs/receipts/receipt-custody-ai-exports-second-copy-20261018.json` owns the
 numbers and states what the second-copy run claims.
 
