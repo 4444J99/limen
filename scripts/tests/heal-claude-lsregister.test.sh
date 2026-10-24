@@ -85,6 +85,20 @@ export REG_FILE="$TMP/registrations"
 
 BUNDLE="$HOME/.local/share/claude/ClaudeCode.app"
 
+# A recording stand-in for claude-bundle-identity-heal.py. Every armed run now invokes the identity
+# heal, so without this seam each contract below would run the REAL heal over the fixture's
+# versions/ directory. HEAL_STUB_EXIT lets a contract make it fail.
+HEAL_RECORD="$TMP/bundle-heal-calls"
+HEAL_STUB="$TMP/bundle-heal-stub.py"
+cat >"$HEAL_STUB" <<'PYSTUB'
+import os, sys
+with open(os.environ["HEAL_RECORD"], "a") as f:
+    f.write(" ".join(sys.argv[1:]) + "\n")
+print("stub heal says: nothing to do" if os.environ.get("HEAL_STUB_EXIT", "0") == "0" else "stub heal says: PRECONDITION FAILED")
+sys.exit(int(os.environ.get("HEAL_STUB_EXIT", "0")))
+PYSTUB
+export LIMEN_CLAUDE_BUNDLE_HEAL_BIN="$HEAL_STUB" HEAL_RECORD
+
 echo "heal-claude-lsregister.test"
 
 # --- 1. the load-bearing contract: unregister, never remove -------------------------------------
@@ -244,6 +258,28 @@ case "$sensor_out" in
   *inert*) ok "sensor: reports inert once nothing is registered" ;;
   *) bad "sensor: should read inert with an empty registration set (got: $sensor_out)" ;;
 esac
+
+# --- 13. THE UPDATE TRIGGER: an armed run also runs the bundle-identity heal (#3200) -----------------
+# The identity heal needs a carrier that fires on every vendor update. This agent's WatchPaths
+# already do, so the step lives here -- but it must never change what this script reports.
+rm -rf "$BUNDLE"; : >"$REG_FILE"; : >"$HEAL_RECORD"
+out="$(bash "$HEAL" --apply 2>&1)"; rc=$?
+check "trigger: armed run invokes the identity heal with --apply" "$(cat "$HEAL_RECORD")" "--apply"
+case "$out" in *"claude-bundle-identity-heal: ok"*) ok "trigger: success is logged" ;; *) bad "trigger: success is logged (got: $out)" ;; esac
+
+: >"$HEAL_RECORD"
+bash "$HEAL" >/dev/null 2>&1
+check "trigger: a dry run never invokes the identity heal" "$(wc -c <"$HEAL_RECORD" | tr -d ' ')" "0"
+
+: >"$HEAL_RECORD"
+out="$(HEAL_STUB_EXIT=3 bash "$HEAL" --apply 2>&1)"; rc=$?
+check "trigger: a FAILING identity heal does not change this script's exit status" "$rc" "0"
+case "$out" in *"claude-bundle-identity-heal: failed (exit 3)"*) ok "trigger: failure is logged with its exit code" ;; *) bad "trigger: failure is logged (got: $out)" ;; esac
+case "$out" in *inert*) ok "trigger: lsregister verdict still reported after a failed heal" ;; *) bad "trigger: lsregister verdict lost (got: $out)" ;; esac
+
+out="$(LIMEN_CLAUDE_BUNDLE_HEAL_BIN="$TMP/does-not-exist.py" bash "$HEAL" --apply 2>&1)"; rc=$?
+check "trigger: a missing identity heal does not change the exit status" "$rc" "0"
+case "$out" in *"not found"*) ok "trigger: a missing identity heal is reported and skipped" ;; *) bad "trigger: missing heal not reported (got: $out)" ;; esac
 
 echo
 echo "heal-claude-lsregister.test: $pass passed, $fail failed"

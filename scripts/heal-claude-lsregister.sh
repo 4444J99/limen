@@ -178,6 +178,38 @@ done <<EOF
 $(enumerate)
 EOF
 
+# 4) BUNDLE-IDENTITY HEAL — the update trigger for scripts/claude-bundle-identity-heal.py (#3200).
+#
+#    This agent's WatchPaths already fire on every write under ~/.local/share/claude, i.e. on every
+#    vendor update, and the vendor's hardlink at versions/<new> lands there. Running the identity
+#    heal from the same fire turns the new hardlink into a symlink into the bundle before a second
+#    session can start under the bare-version TCC client. The legacy beat that used to carry it
+#    stopped ~2026-08-21 and the current heartbeat is observe-only (see #3200).
+#
+#    ARMED RUNS ONLY, and it runs LAST on purpose. Step 0's fast path exists to shorten the window in
+#    which macOS can raise the "damaged" dialog after the vendor rewrites the bundle, and the heal
+#    swaps a symlink then exec-verifies a ~270 MB binary. Nothing here depends on it running first —
+#    it decides from versions/ alone — so it must not spend the latency budget the cure above is
+#    measured against. Its outcome is logged and NEVER changes this script's exit status: that
+#    status stays the lsregister verdict the beat already reads. A heal that cannot run (no script,
+#    PRECONDITION FAILED) must not mask or manufacture a Gatekeeper finding.
+#
+#    LIMEN_CLAUDE_BUNDLE_HEAL_BIN is the test seam, sibling of LIMEN_CLAUDE_LSREGISTER_BIN: it
+#    points the production path at a stub so the contracts never touch a real versions/ directory.
+#    /usr/bin/python3 is deliberate: the WatchPaths agent runs with PATH=/usr/bin:/bin:/usr/sbin:/sbin.
+if [ "$ARMED" = 1 ]; then
+  BUNDLE_HEAL="${LIMEN_CLAUDE_BUNDLE_HEAL_BIN:-$(dirname "${BASH_SOURCE[0]}")/claude-bundle-identity-heal.py}"
+  if [ -f "$BUNDLE_HEAL" ]; then
+    if heal_out="$(/usr/bin/python3 "$BUNDLE_HEAL" --apply 2>&1)"; then
+      log "claude-bundle-identity-heal: ok — $(printf '%s' "$heal_out" | tail -n 1)"
+    else
+      log "claude-bundle-identity-heal: failed (exit $?) — $(printf '%s' "$heal_out" | tail -n 1)"
+    fi
+  else
+    log "claude-bundle-identity-heal: not found at $BUNDLE_HEAL — skipped"
+  fi
+fi
+
 if [ "$remaining" -eq 0 ] && { [ "$ARMED" = 1 ] || [ "$found" -eq 0 ]; }; then
   log "claude-lsregister-heal: inert (0 unassessable ClaudeCode.app registrations)"
   exit 0
