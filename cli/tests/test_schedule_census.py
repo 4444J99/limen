@@ -294,7 +294,10 @@ def test_every_carrier_kind_parses_and_a_carrier_without_a_schedule_is_no_declar
         '<?xml version="1.0" encoding="UTF-8"?>\n<!-- install: organvm heartbeat --install -->\n'
         '<plist version="1.0"><dict><key>Label</key><string>x</string><key>StartInterval</key><integer>900</integer></dict></plist>\n'
     )
-    assert C.parse_launchd(commented) == {"interval_seconds": 900, "parse": "regex"}
+    assert C.parse_launchd(commented) == {"interval_seconds": 900, "parse": "regex", "label": "x"}
+    # the Label rides along only when the plist schedules something (launchd-host keys its rows by Label)
+    labelled = '<plist version="1.0"><dict><key>Label</key><string>com.x.beat</string><key>StartInterval</key><integer>60</integer></dict></plist>'
+    assert C.parse_launchd(labelled) == {"interval_seconds": 60, "label": "com.x.beat"}
     assert (
         C.parse_launchd('<!-- a -- b --><plist version="1.0"><dict><key>Label</key><string>x</string></dict></plist>')
         == {}
@@ -764,7 +767,9 @@ def test_main_writes_receipt_and_ledger_and_exits_on_findings(monkeypatch, tmp_p
     assert json.loads(receipt.read_text())["denominators"]["scanned"] == 0
 
 
-def test_exit_codes_tell_engine_errors_from_read_nothing_from_findings_from_partial_coverage(monkeypatch):
+def test_exit_codes_tell_engine_errors_from_read_nothing_from_findings_from_partial_coverage(
+    monkeypatch, tmp_path_factory
+):
     clean = _clean_table("4444J99/one")
     clean["repos/4444J99/one/issues?state=all&per_page=100&page=1&sort=created&direction=desc"] = (C.OK, [])
     monkeypatch.setattr(C, "gh_api", FakeGH(clean))
@@ -782,8 +787,24 @@ def test_exit_codes_tell_engine_errors_from_read_nothing_from_findings_from_part
     # one unreachable neighbour: no finding, but coverage is incomplete
     report = C.run_census([{"repo": "4444J99/one"}, {"repo": "4444J99/dark"}], "explicit", budget_seconds=60, root=ROOT)
     assert report["denominators"]["unreachable"] == 1 and C.exit_code_for(report) == 2
-    # a registry gap is a finding
+    # a registry gap the shipped registry's residual census planes own by fact is declared, not a finding …
     report = C.run_census([{"repo": "4444J99/one"}], "explicit", budget_seconds=60, root=ROOT, check_registry=True)
+    assert report["registry_gaps"][0]["owned_by"] == "github-actions-fleet-private"  # the fixture repo is private
+    assert report["residual_planes"] == {
+        "private": "github-actions-fleet-private",
+        "public": "github-actions-fleet-public",
+    }
+    assert C.exit_code_for(report) == 0
+    # … and a gap no plane owns at all is one (a registry without residual planes)
+    bare = tmp_path_factory.mktemp("bare-registry")
+    gov = bare / "institutio" / "governance"
+    gov.mkdir(parents=True)
+    (gov / "schedules.yaml").write_text(
+        "planes:\n  github-actions-limen:\n    provider: github\n    jobs_source: {kind: workflows, locator: .github/workflows}\n"
+        "    evidence: {kind: gh-actions-runs, locator: 4444J99/limen}\njobs: []\n"
+    )
+    report = C.run_census([{"repo": "4444J99/one"}], "explicit", budget_seconds=60, root=bare, check_registry=True)
+    assert report["registry_gaps"][0]["owned_by"] is None and report["residual_planes"] == {}
     assert C.exit_code_for(report) == 1
     # everything skipped → read nothing, exit 3, whatever the reason
     report = C.run_census([{"repo": "4444J99/one", "archived": True}], "explicit", root=ROOT, skip_archived=True)

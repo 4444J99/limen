@@ -14,7 +14,12 @@ three numbers and one verdict for the current UTC day:
               unscheduled-headroom  fill_policy floor and fewer jobs/runs are declared than the floor
               underfilled        observed < declared × LIMEN_SCHEDULE_FILL_FLOOR, or < floor
               dark               declared > 0 and observed == 0 (evidence readable, nothing ran)
-              unmeasured         evidence kind `none`, unreadable, or a snapshot past its max age
+              undeclared-off     (workflows / census planes) a workflow is off live and no declared_off row owns it
+              declared-off-but-active  (workflows planes) a declared_off file is active live — the row rotted
+              undeclared-growth  (census planes) more active or more declared-off workflows than the ceilings
+              stagger-regressed  (census planes) more on-the-hour or shared-minute workflows than the ceilings
+              unmeasured         evidence kind `none`, unreadable, a snapshot past its max age — or `not_this_host`
+                                 (census planes on a host without the receipt / launchctl: never red, never stale)
 
 An unmeasured plane is NEVER red — 'I could not look' and 'nothing happened' are different facts
 (Data Grounding). dark / underfilled / unscheduled-headroom exit 1 (advisory in the beat) and the
@@ -51,7 +56,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _schedules as S  # noqa: E402
 from _schedule_reporting import capacity_report, read_native_snapshot  # noqa: E402
 
-RED_VERDICTS = {"dark", "underfilled", "unscheduled-headroom", "undeclared-off", "declared-off-but-active"}
+RED_VERDICTS = {
+    "dark",
+    "underfilled",
+    "unscheduled-headroom",
+    "undeclared-off",
+    "declared-off-but-active",
+    "undeclared-growth",
+    "stagger-regressed",
+}
 EXIT_RED = 1
 EXIT_STALE_READBACK = (
     3  # no red, but a plane WITH an evidence path could not be read (stale snapshot, dead witness, gh down)
@@ -552,6 +565,227 @@ def read_issue_comments(
     return None, f"{len(rows)} comment(s) on {locator} today; attribution, acceptance and delivery unverified"
 
 
+NOT_THIS_HOST = {"not_this_host": True}
+
+
+def _success_window(job: S.Job) -> timedelta:
+    """2× the workflow's nominal interval + 1.5d: the span in which a live workflow must show one success."""
+    per_day = job.extra.get("fires_per_day")
+    interval_days = (1.0 / per_day) if isinstance(per_day, (int, float)) and per_day > 0 else 36500.0
+    return timedelta(days=2 * interval_days + 1.5)
+
+
+def _recent_success(job: S.Job, generated: datetime | None) -> bool:
+    """The receipt's scheduled-run summary shows this workflow succeeded within its success window of the receipt's
+    generated_at — a weekly template that last succeeded 10 days ago is still alive; a daily one is not."""
+    fired = job.extra.get("fired")
+    if not isinstance(fired, dict) or fired.get("last_conclusion") != "success" or generated is None:
+        return False
+    last = S.census_generated_at({"generated_at": fired.get("last_at")})
+    if last is None:
+        return False
+    return (generated - last) <= _success_window(job)
+
+
+def _crowded_off_listing(job: S.Job, generated: datetime | None) -> bool:
+    """No row for this workflow in the repository's run summary, and the summarized page's oldest run is younger
+    than the workflow's success window: that page was filled by busier workflows, so this one is unmeasurable
+    here — not 'did not succeed'. The page's edge is `page_oldest_seen`; a receipt that read the deepest page too
+    carries the repository's FIRST run in `oldest_seen`, which says nothing about the summarized page, so without
+    the edge such a workflow is unmeasurable rather than scored."""
+    if job.extra.get("fired") is not None or generated is None:
+        return False
+    boundary = job.extra.get("fired_page_oldest_seen")
+    if boundary is None and job.extra.get("fired_oldest_page_read"):
+        return True
+    oldest = S.census_generated_at({"generated_at": boundary or job.extra.get("fired_oldest_seen")})
+    if oldest is None:
+        return False
+    return (generated - oldest) < _success_window(job)
+
+
+def _census_receipt_state(plane: dict, today: date, root: Path) -> tuple[Path, dict | None, str, int | None]:
+    """(path, data, state, age_days) of the receipt a census plane's rows derive from — read at the plane's
+    jobs_source locator, the same file derive_census_jobs reads, so the sensor can never score one receipt while
+    the rows come from another."""
+    src = plane.get("jobs_source") if isinstance(plane.get("jobs_source"), dict) else {}
+    locator = str(src.get("locator") or (plane.get("evidence") or {}).get("locator") or S.CENSUS_REL)
+    max_age = _env_int("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", 8)
+    path, data, state = S.load_census_receipt(
+        root, locator, max_age_days=max_age, now=datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc)
+    )
+    generated = S.census_generated_at(data)
+    age = (today - generated.date()).days if generated else None
+    return path, data, state, age
+
+
+def _unmeasured_receipt(path: Path, data: dict | None, state: str, age: int | None) -> tuple[None, str, dict]:
+    """The one wording for a receipt that exists but cannot be scored: a stale readback, never not_this_host."""
+    if data is None:
+        return None, f"{path.name} is {state} — not a {S.CENSUS_SCHEMA} receipt", {}
+    if state == "incomplete":
+        d = data.get("denominators") or {}
+        return (
+            None,
+            (
+                f"{path.name} is incomplete ({d.get('scanned')}/{d.get('universe_count')} scanned, {d.get('unreachable')} unreachable, "
+                f"{d.get('unscanned_by_budget')} unscanned, {d.get('internal_errors')} errors) — the census retries on its own horizon; nothing concluded"
+            ),
+            {},
+        )
+    max_age = _env_int("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", 8)
+    return None, f"{path.name} is {age}d old (> {max_age}d) — re-run the census before trusting the fleet counts", {}
+
+
+def read_census_receipt(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str, dict]:
+    """Census planes (the undeclared fleet). Job-matched: declared = enabled residual workflows the receipt could
+    measure (partial rows and ambiguous display-name joins excluded), observed = those with a recent success.
+    Counts only in the detail — the rows name private repositories (R2). Overrides, in order: undeclared-off
+    (an off-switch no match rule owns) > undeclared-growth (active or declared-off count above its ceiling) >
+    stagger-regressed (on-the-hour / shared-minute above its ceiling). A count BELOW a ceiling is slack the
+    operator lowers — reported as readback_overdue so the beat exits 3, never red."""
+    path, data, state, age = _census_receipt_state(plane, today, root)
+    if state == "absent":
+        return (
+            None,
+            f"no census receipt at {path.name} on this host — the census runs where gh carries the owner's auth (not this host)",
+            dict(NOT_THIS_HOST),
+        )
+    if state != "present":
+        return _unmeasured_receipt(path, data, state, age)
+    generated = S.census_generated_at(data)
+    enabled = [j for j in jobs if j.enabled]
+    partial = sum(1 for j in enabled if j.extra.get("partial"))
+    ambiguous = sum(1 for j in enabled if j.extra.get("ambiguous") and not j.extra.get("partial"))
+    candidates = [j for j in enabled if not j.extra.get("partial") and not j.extra.get("ambiguous")]
+    crowded = sum(1 for j in candidates if _crowded_off_listing(j, generated))
+    measurable = [j for j in candidates if not _crowded_off_listing(j, generated)]
+    observed = sum(1 for j in measurable if _recent_success(j, generated))
+    counts = S.census_plane_counts(jobs)
+    ceilings = (
+        {k: v for k, v in (plane.get("ceilings") or {}).items() if isinstance(v, int) and not isinstance(v, bool)}
+        if isinstance(plane.get("ceilings"), dict)
+        else {}
+    )
+    per_rule, undeclared, unverified = S.census_off_counts(plane, jobs)
+    rules = [r for r in plane.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)]
+    off_total = sum(sum(v for k, v in c.items() if k != "archived") for c in per_rule)
+    floor_unmeasured = S.census_floor_unmeasured(data, jobs)
+    extra: dict = {"declared_jobs": measurable}
+    over: list[str] = []
+    slack: list[str] = []
+    for key, cap in ceilings.items():
+        n = counts.get(key, 0)
+        if n > cap:
+            over.append(f"{key} {n}>{cap}")
+        elif n < cap:
+            slack.append(f"lower ceilings.{key} to {n} (ceiling {cap})")
+    off_over: list[str] = []
+    for i, rule in enumerate(rules):
+        ceiling = rule.get("ceiling") if isinstance(rule.get("ceiling"), dict) else {}
+        for state_key, cap in ceiling.items():
+            if not isinstance(cap, int) or isinstance(cap, bool):
+                continue
+            n = per_rule[i].get(str(state_key), 0) if i < len(per_rule) else 0
+            if n > cap:
+                off_over.append(f"{state_key} {n}>{cap}")
+            elif n < cap:
+                slack.append(f"lower declared_off[{i}].ceiling.{state_key} to {n} (ceiling {cap})")
+    detail = (
+        f"{observed}/{len(measurable)} enabled residual workflows succeeded within 2× their interval (+1.5d) of the receipt "
+        f"({age}d old); {off_total} declared off by fact; {partial} on partially read rows, {ambiguous} ambiguous name join(s) and "
+        f"{crowded} crowded off the run listing unmeasured"
+        + (f"; {unverified} state unknown" if unverified else "")
+        + "; counts "
+        + ", ".join(f"{k} {counts.get(k, 0)}/{v}" for k, v in sorted(ceilings.items()))
+    )
+    if undeclared:
+        extra["override"] = "undeclared-off"
+        detail += f"; UNDECLARED OFF: {len(undeclared)} off-state workflow(s) no declared_off match owns"
+    elif over and any(x.startswith("active ") for x in over) or off_over:
+        extra["override"] = "undeclared-growth"
+        detail += "; UNDECLARED GROWTH above ceilings: " + ", ".join(
+            [x for x in over if x.startswith("active ")] + off_over
+        )
+    elif over:
+        extra["override"] = "stagger-regressed"
+        detail += "; STAGGER REGRESSED above ceilings: " + ", ".join(over)
+    if slack and "override" not in extra:
+        if floor_unmeasured:
+            # a count below its ceiling on a receipt that left something unread is an undercount, not a floor
+            detail += (
+                "; below ceilings but floor unmeasured ("
+                + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items()))
+                + ") — do not lower"
+            )
+        else:
+            extra["readback_overdue"] = True
+            detail += "; slack ceilings — " + "; ".join(slack)
+    if not measurable and enabled and "override" not in extra:
+        # every enabled row sits on a partial read, an ambiguous join or a crowded listing: we had a way to look and could score nothing
+        return None, detail + "; nothing measurable — unmeasured, not idle", extra
+    return observed, detail, extra
+
+
+_LAUNCHCTL_ROW_RX = re.compile(r"^(\S+)\s+(-?\d+)\s+(\S+)\s*$")
+
+
+def read_launchctl(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str, dict]:
+    """One read-only `launchctl list`: observed = declared Labels loaded with last exit status 0. Counts only."""
+    if shutil.which("launchctl") is None:
+        return (
+            None,
+            "no launchctl on this host (Linux, CI) — launchd planes are measured on the Mac that loads them (not this host)",
+            dict(NOT_THIS_HOST),
+        )
+    path, data, state, age = _census_receipt_state(plane, today, root)
+    if state == "absent":
+        return (
+            None,
+            f"no census receipt at {path.name} on this host — no declared Labels to look for (not this host)",
+            dict(NOT_THIS_HOST),
+        )
+    if state != "present":
+        return _unmeasured_receipt(path, data, state, age)
+    try:
+        run = subprocess.run(["launchctl", "list"], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"launchctl list failed: {exc.__class__.__name__}", {}
+    if run.returncode != 0:
+        return None, f"launchctl list exited {run.returncode}", {}
+    loaded: dict[str, str] = {}
+    for line in run.stdout.splitlines():
+        m = _LAUNCHCTL_ROW_RX.match(line)
+        if m:
+            loaded[m.group(3)] = m.group(2)
+    declared = [j for j in jobs if j.enabled]
+    healthy = sum(1 for j in declared if loaded.get(str(j.extra.get("label"))) == "0")
+    present = sum(1 for j in declared if str(j.extra.get("label")) in loaded)
+    extra: dict = {"declared_jobs": declared}
+    counts = S.census_plane_counts(jobs)
+    cap = (plane.get("ceilings") or {}).get("active") if isinstance(plane.get("ceilings"), dict) else None
+    floor_unmeasured = S.census_floor_unmeasured(data, jobs)
+    detail = f"{healthy}/{len(declared)} declared Labels loaded with last exit 0 ({present} loaded at all; {len(loaded)} jobs in launchctl list; receipt {age}d old)"
+    if isinstance(cap, int) and not isinstance(cap, bool):
+        if counts["active"] > cap:
+            extra["override"] = "undeclared-growth"
+            detail += f"; UNDECLARED GROWTH: {counts['active']} Labels above ceiling {cap}"
+        elif counts["active"] < cap and floor_unmeasured:
+            detail += (
+                f"; {counts['active']} Labels below ceiling {cap} but floor unmeasured ("
+                + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items()))
+                + ") — do not lower"
+            )
+        elif counts["active"] < cap:
+            extra["readback_overdue"] = True
+            detail += f"; slack — lower ceilings.active to {counts['active']} (ceiling {cap})"
+    return healthy, detail, extra
+
+
 def read_none(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
     """A plane nobody can read. Unmeasured, never zero — but not forever: after the readback budget
     (counted from the plane's `declared_on`) the silence itself becomes a stale readback (exit 3)."""
@@ -583,6 +817,8 @@ READERS = {
     "claude-snapshot": read_claude_snapshot,
     "board-dispatch-receipts": read_board_dispatch_receipts,
     "issue-comments": read_issue_comments,
+    "census-receipt": read_census_receipt,
+    "launchctl": read_launchctl,
     "none": read_none,
 }
 
@@ -619,6 +855,10 @@ def declared_for(plane: dict, jobs: list[S.Job], today: date, now: datetime) -> 
         return sum(1 for j in enabled if _fires_so_far(j, today, now))
     if kind == "voice-stamps":
         return sum(1 for j in enabled if j.cadence_hours and j.cadence_hours <= 24)
+    if kind in {"census-receipt", "launchctl"}:
+        return len(
+            enabled
+        )  # job-matched: measurable fleet workflows / declared Labels, 1:1 against the receipt or launchctl
     return sum(_fires_so_far(job, today, now) for job in enabled)
 
 
@@ -682,6 +922,7 @@ def evaluate(
         except Exception as exc:  # a broken reader is an unmeasured plane, never a crash of the beat
             observed, detail = None, f"reader error: {exc.__class__.__name__}: {exc}"
         readback_overdue = bool(extra.get("readback_overdue"))
+        not_this_host = bool(extra.get("not_this_host"))
         declared_jobs = extra.get("declared_jobs")
         declared = declared_for(plane, declared_jobs if isinstance(declared_jobs, list) else plane_jobs, today, now)
         allot = plane.get("allotment") or {}
@@ -719,6 +960,7 @@ def evaluate(
                 "verdict": verdict,
                 "evidence": kind,
                 "readback_overdue": readback_overdue,
+                "not_this_host": not_this_host,
                 "readback_fresh": extra.get("readback_fresh") is True,
                 "readback_max_age_days": extra.get("readback_max_age_days"),
                 "witness_report_date": extra.get("witness_report_date"),
@@ -731,16 +973,31 @@ def evaluate(
         )
     red = [p for p in planes if p["verdict"] in RED_VERDICTS]
     unmeasured = [p for p in planes if p["verdict"] == "unmeasured"]
-    # had a way to look and could not, or has had no way to look for longer than the readback budget
+    # had a way to look and could not, or has had no way to look for longer than the readback budget, or is
+    # measured but carries slack a human must lower (readback_overdue on a non-red plane). A plane that is
+    # simply not measured on THIS host (no census receipt, no launchctl) is neither stale nor measurable, and a
+    # fresh configuration / native-evidence readback is unmeasured by design, not stale (#3192).
     stale = [
-        p["plane"] for p in unmeasured
-        if p["readback_overdue"] or (
-            p["evidence"] != "none" and not (
-                p["readback_fresh"] and p["measurement_kind"] in {"configuration", "native-evidence"}
+        p["plane"]
+        for p in planes
+        if not p["not_this_host"]
+        and (
+            (
+                p["verdict"] == "unmeasured"
+                and (
+                    p["readback_overdue"]
+                    or (
+                        p["evidence"] != "none"
+                        and not (
+                            p["readback_fresh"] and p.get("measurement_kind") in {"configuration", "native-evidence"}
+                        )
+                    )
+                )
             )
+            or (p["readback_overdue"] and p["verdict"] not in RED_VERDICTS and p["verdict"] != "unmeasured")
         )
     ]
-    measurable = [p for p in planes if p["evidence"] != "none"]
+    measurable = [p for p in planes if p["evidence"] != "none" and not p["not_this_host"]]
     measured = [p for p in measurable if p["observed"] is not None]
     status = "fail" if red else ("stale-readback" if stale else "pass")
     return {
