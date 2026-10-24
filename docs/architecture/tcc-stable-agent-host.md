@@ -190,14 +190,23 @@ inside the vendor binary, but the path it names is not: `scripts/claude-bundle-i
 replaces the live `versions/<v>` hardlink with a symlink into the bundle, and the
 session then resolves to `com.anthropic.claude-code`. The hardlink alone is not
 enough: one inode with two names is reported under whichever the kernel last
-cached (a signed test binary exec'd through a bundle symlink was still named by
-the hardlinked versions path until that hardlink was gone, 2026-10-24). That bundle
+cached. Observed 2026-10-24: tccd attributed already-running sessions (no re-exec)
+to `versions/2.1.310` before the hardlink name was replaced and to
+`com.anthropic.claude-code` within seconds after; a bundle-ID row can also appear
+while the hardlink exists, so path attribution under a hardlink is likely, not
+certain. That bundle
 row's Full Disk Access `csreq` is Anthropic's Developer ID team plus the
 identifier, so it survives every update. The heal runs **after** the vendor writes
-`versions/<new>`, so it only works if something runs it after each update. With
-the beat silent (last keeper receipt 2026-08-27), 2.1.301 → 2.1.310 minted ten
-bare-version clients in eight days (#3200). The keeper below is that heal's
-precondition, not the cure itself.
+`versions/<new>`, so it only works if something runs it after each update — and
+nothing did: every logged beat run was dry-run (valve unarmed), the legacy
+metabolize beat that carried it stopped about 2026-08-21, and the current
+`limen heartbeat` runs observe-only probes that never invoke it. Six
+bare-version clients (2.1.301, 302, 307–310) appeared 2026-10-16 → 10-24 (#3200).
+Consequences of the healed shape: the bundle binary becomes the live bytes' only
+name (trashing `ClaudeCode.app` breaks the launcher), a healed `versions/<old>`
+aliases whatever the bundle holds after the next update, and the bundle ID
+re-prompts once for each service it was never granted. The keeper below is that
+heal's precondition, not the cure itself.
 
 `_jb()` returns early when the hardlink already carries the running binary's
 inode, skipping the `unlink`/`link` pair that concurrent session starts can

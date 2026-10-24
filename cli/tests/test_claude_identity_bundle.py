@@ -135,7 +135,9 @@ def test_hardlink_to_a_superseded_version_is_stale_not_ok(tmp_path: Path):
 
     healed = KEEPER.repair(env)
     assert healed["ok"] is True
-    assert "removed_stale_hardlink" in healed["actions"]
+    assert "replaced_stale_hardlink" in healed["actions"]
+    macos = Path(env["LIMEN_CLAUDE_STORE"]) / "ClaudeCode.app/Contents/MacOS"
+    assert not list(macos.glob("claude.tmp.*")), "the staged link must be renamed over, never left behind"
     assert "linked_current_binary" in healed["actions"]
 
 
@@ -209,8 +211,9 @@ def test_versions_symlinked_into_the_bundle_are_not_a_race_risk(tmp_path: Path):
 
 
 def test_info_plist_tracks_the_current_vendor_bytes():
-    """2.1.310's _jb() writes a DOCTYPE line; a keeper constant without it would rewrite the vendor's
-    file on every run while the vendor rewrote it back on every start."""
+    """The current vendor _jb() (present in 2.1.309 and 2.1.310) writes a DOCTYPE line; a keeper
+    constant without it would rewrite the vendor's file on every run while the vendor rewrote it back
+    on every start."""
     assert '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"' in KEEPER.INFO_PLIST
 
 
