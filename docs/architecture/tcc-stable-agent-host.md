@@ -38,11 +38,18 @@ signed binary. Claude Desktop, Claude Code, Codex Desktop, and tracked editor
 MCP registrations use this interface before any rotating `uvx`, `npx`, Node,
 Python, or portable/Homebrew Ruby executable.
 
-Every committed `com.limen.*` control-plane LaunchAgent, including the
-generated heartbeat, enters `DomusAgentHost.app` before Bash, Python, dispatch,
-or provider work. The generated heartbeat also preserves its selected host path
-in `LIMEN_AGENT_HOST_BIN`, so descendants audit the same identity that owns the
-job. An inherited `DOMUS_AGENT_HOST_ACTIVE=1` marker is trusted only after the
+Every owned LaunchAgent (`com.limen.*`, `com.ianva.*`, `com.domus.*`,
+`org.organvm.*`, plus the adopted `com.github.domt4.homebrew-autoupdate`) must
+enter `DomusAgentHost.app` as `argv[0]` (`DomusAgentHost run -- …`) before Bash,
+Python, node, brew, dispatch, or provider work. This matters only under launchd:
+the host does not disclaim, so a job started from a terminal stays attributed to
+the terminal, while launchd makes a job its own responsible process — an
+unhosted interpreter `argv[0]` then mints a new TCC client every time its path
+rotates. That is what produced the 2026-09/10 `python3.12`–`3.15` (heartbeat
+probes on rotating runtime venvs) and portable-ruby (Homebrew autoupdate) rows.
+This was previously asserted here as already true for the generated heartbeat;
+it was not (the `domus-limen-runtime` generator emitted the venv `limen` as
+`argv[0]`), which is why predicate 5 below now measures it instead. An inherited `DOMUS_AGENT_HOST_ACTIVE=1` marker is trusted only after the
 native host verifies that its lifetime descriptor is the expected pipe
 identity; a reused descriptor cannot bypass wrapping. Strict audits always
 query the installed host and LaunchServices live; fixture-backed
@@ -83,7 +90,7 @@ Relevant clients are classified as:
   available; and
 - `unrelated`: an application or path outside the managed runtime families.
 
-The audit reports four independent predicates:
+The audit reports five independent predicates:
 
 1. **Active-leak containment:** no enabled managed App Management path row and
    no new managed TCC identity absent from the baseline.
@@ -102,8 +109,15 @@ The audit reports four independent predicates:
    judged that service, so the inventory could read fully green while every
    vendor update minted a new identity and re-prompted. This predicate counts
    the sprawl directly and names the services still pinned to a rotating path.
+5. **LaunchAgent hosting:** every owned plist in `~/Library/LaunchAgents`
+   starts with the stable host executable followed by `run --` (`Program` or
+   `ProgramArguments[0]`). An unparseable owned plist is a violation, never a
+   pass. Only labels and executable basenames are reported — job arguments can
+   name token files. This is the *cause* side of predicate 4: predicate 4 sees a
+   rotating client after it has been minted; predicate 5 sees the job that will
+   mint it.
 
-A fifth preservation check requires the unrelated App Management bundle-grant
+A sixth preservation check requires the unrelated App Management bundle-grant
 map to remain byte-for-byte equivalent after normalization. Strict mode also
 fails if managed automatic updates are disabled, the host is absent or
 invalidly signed, its stable identity is absent from the readable TCC inventory,

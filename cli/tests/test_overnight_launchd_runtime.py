@@ -37,6 +37,13 @@ def test_remaining_limen_launchd_control_plane_enters_stable_host() -> None:
         ]
 
 
+def test_gateway_enters_stable_host() -> None:
+    """launchd makes the gateway its own TCC responsible process; its rotating python/npx/uv
+    descendants minted per-interpreter privacy clients until the host became argv[0]."""
+    gateway = plistlib.loads((ROOT / "ianva/deploy/com.ianva.gateway.plist").read_bytes())
+    assert gateway["ProgramArguments"][:4] == [STABLE_HOST, "run", "--", "/bin/bash"]
+
+
 def test_immutable_runtime_declares_trial_protocol_dependency() -> None:
     with PYPROJECT.open("rb") as handle:
         dependencies = tomllib.load(handle)["project"]["dependencies"]
