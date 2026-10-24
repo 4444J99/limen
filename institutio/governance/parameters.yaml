@@ -5203,6 +5203,12 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Override for the lsregister binary invoked by scripts/heal-claude-lsregister.sh. Unset in production; exists so scripts/tests/heal-claude-lsregister.test.sh can drive the whole production code path against a stub and prove the effector UNREGISTERS without removing."
+  LIMEN_CLAUDE_BUNDLE_HEAL_BIN:
+    default: ""
+    env: LIMEN_CLAUDE_BUNDLE_HEAL_BIN
+    self_update: none
+    owner: tabularius
+    note: "Override for the claude-bundle-identity-heal.py invoked by scripts/heal-claude-lsregister.sh on armed runs (the vendor-update trigger, #3200). Unset in production; exists so scripts/tests/heal-claude-lsregister.test.sh can assert the trigger fires, stays out of dry runs, and never changes the script's exit status, without a real versions/ directory. Sibling of LIMEN_CLAUDE_LSREGISTER_BIN."
   LIMEN_HEAL_SCRIPT_UNDER_TEST:
     default: ""
     env: LIMEN_HEAL_SCRIPT_UNDER_TEST
