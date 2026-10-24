@@ -1497,8 +1497,13 @@ def test_census_locator_must_be_gitignored(tmp_path):
     other = tmp_path / "plain"
     other.mkdir()
     write_fleet_root(other, FLEET_PLANES, receipt=FLEET_RECEIPT, ignore=False)
-    run = run_check(other)
+    run = run_check(other, env={"GIT_CEILING_DIRECTORIES": str(tmp_path)})
     assert run.returncode == 0 and "cannot ask git whether logs/schedule-census.json is ignored" in run.stdout
+    # the real leak: a receipt that is matched by .gitignore but TRACKED anyway (git check-ignore says not ignored)
+    (repo / "logs" / ".gitignore").write_text("*\n!.gitignore\n")
+    _git(repo, "add", "-f", "logs/schedule-census.json")
+    run = run_check(repo)
+    assert run.returncode == 1 and "is not git-ignored" in run.stdout
 
 
 def test_redaction_fails_a_private_slug_and_exempts_disclosed_tokens(tmp_path):
@@ -1533,9 +1538,244 @@ def test_redaction_fails_a_private_slug_and_exempts_disclosed_tokens(tmp_path):
     assert "institutio/governance/schedules.yaml:" in line and SECRET not in line and "secret-thing" not in line
     # a compound bare name in the baseline fails too; a disclosed owner repository's bare name does not
     planes["github-actions-fleet-private"].pop("note")
-    write_registry(tmp_path, planes, jobs, baseline=["# ops-like keeps :36; secret-thing moved off the hour"])
+    write_registry(tmp_path, planes, jobs, baseline=["# ops-like keeps :36", "# secret-thing moved off the hour"])
     run = run_check(tmp_path)
-    assert run.returncode == 1 and "schedule-stagger-baseline.txt:2 names a private repository" in run.stdout
+    assert run.returncode == 1
+    assert (
+        "schedule-stagger-baseline.txt:3 names a private repository" in run.stdout
+    )  # line 1 is the header, 2 the disclosed owner name
+    assert "schedule-stagger-baseline.txt:2 names" not in run.stdout
+
+
+def test_redaction_catches_sentence_end_git_suffix_and_case_and_exempts_exactly_r1(tmp_path):
+    base_planes = json.loads(json.dumps(FLEET_PLANES))
+    write_fleet_root(tmp_path, base_planes, receipt=FLEET_RECEIPT)
+    assert run_check(tmp_path).returncode == 0
+    for spelling in (f"see {SECRET}.", f"clone {SECRET}.git first", SECRET.upper(), "the Secret-Thing workflows"):
+        planes = json.loads(json.dumps(FLEET_PLANES))
+        planes["github-actions-fleet-private"]["note"] = spelling
+        write_registry(tmp_path, planes, [])
+        run = run_check(tmp_path)
+        assert run.returncode == 1 and "names a private repository" in run.stdout, spelling
+        assert "secret-thing" not in run.stdout.lower().replace("secret-thing", "") or SECRET not in run.stdout
+    # a different token that merely starts with the name is not the name
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["note"] = "secret-thing.yml is a workflow file name, secret-thinger a word"
+    write_registry(tmp_path, planes, [])
+    assert run_check(tmp_path).returncode == 0
+    # R1 exactly: a source_of_truth or an evidence locator on a non-authority plane does NOT exempt the name
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["limen-beat-like"] = _plane(
+        provider="limen", surface="launchd", evidence={"kind": "gh-actions-runs", "locator": SECRET}
+    )
+    write_registry(
+        tmp_path, planes, [_job("beat/x", "limen-beat-like", "11 7 * * *", source_of_truth=f"{SECRET}:a.yml")]
+    )
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and run.stdout.count("names a private repository") >= 2
+    assert SECRET not in S.disclosed_repo_tokens(S.load_registry(tmp_path))
+
+
+def test_incomplete_or_stale_receipt_is_unmeasured_in_the_gate_but_growth_still_fails(tmp_path, monkeypatch):
+    write_fleet_root(
+        tmp_path, FLEET_PLANES, receipt=_receipt(FLEET_RECEIPT["repos"], universe_count=40, unreachable=30)
+    )
+    run = run_check(tmp_path)
+    assert run.returncode == 0, run.stdout
+    assert (
+        "census receipt is incomplete" in run.stdout
+        and "lower ceilings" not in run.stdout
+        and "✗ [B]" not in run.stdout
+    )
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["ceilings"]["active"] = 1  # 3 > 1 on an undercount is still growth
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and "active is 3, above its ceiling 1" in run.stdout
+    # stale: compared, but never "lower to N"
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["ceilings"]["active"] = 9
+    write_registry(tmp_path, planes, [])
+    write_receipt(tmp_path, _receipt(FLEET_RECEIPT["repos"], generated_at="2026-09-01T00:00:00+00:00"))
+    run = run_check(tmp_path)
+    assert (
+        run.returncode == 0
+        and "receipt_stale 1" in run.stdout
+        and "do not lower" in run.stdout
+        and "lower ceilings.active to 3" not in run.stdout
+    )
+
+
+def test_slack_advice_is_withheld_when_the_floor_is_unmeasured(tmp_path):
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["ceilings"]["shared-minute"] = 4
+    receipt = _receipt(
+        FLEET_RECEIPT["repos"], universe_count=5, unreachable=1
+    )  # 20% unread: still complete, but not a floor
+    write_fleet_root(tmp_path, planes, receipt=receipt)
+    run = run_check(tmp_path)
+    assert run.returncode == 0
+    assert "shared-minute is 2, below its ceiling 4 — floor unmeasured (unreachable 1) — do not lower" in run.stdout
+    report, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (
+        priv["verdict"] == "full"
+        and priv["readback_overdue"] is False
+        and "floor unmeasured (unreachable 1) — do not lower" in priv["detail"]
+    )
+    assert "github-actions-fleet-private" not in report["stale_readback"]
+    # a partial row in the plane has the same effect
+    receipt = json.loads(json.dumps(FLEET_RECEIPT))
+    receipt["repos"][1]["partial"] = True
+    write_receipt(tmp_path, receipt)
+    run = run_check(tmp_path)
+    assert "floor unmeasured (partial_rows 4" in run.stdout and "lower ceilings.shared-minute" not in run.stdout
+
+
+def test_zero_rows_from_a_complete_receipt_is_advisory_and_malformed_caps_do_not_crash(tmp_path):
+    receipt = _receipt(
+        [r for r in FLEET_RECEIPT["repos"] if r["private"] or r["repo"] == "o/limen"]
+    )  # no public residual rows
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-public"]["ceilings"] = {"active": 0, "on-the-hour": 0, "shared-minute": 0}
+    write_fleet_root(tmp_path, planes, receipt=receipt)
+    run = run_check(tmp_path)
+    assert run.returncode == 0, run.stdout
+    assert "plane github-actions-fleet-public: a complete census receipt derived zero rows" in run.stdout
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["declared_off"][1]["ceiling"] = {
+        "disabled_manually": "17",
+        "disabled_inactivity": 0,
+    }
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert (
+        run.returncode == 1
+        and "ceiling.disabled_manually must be an int ≥ 0" in run.stdout
+        and "Traceback" not in run.stderr
+    )
+    planes["github-actions-fleet-private"]["declared_off"][1]["ceiling"] = [17]
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and "`ceiling` must be a mapping" in run.stdout and "Traceback" not in run.stderr
+
+
+def test_census_plane_locators_must_agree_and_a_workflows_plane_must_name_its_repo(tmp_path):
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["evidence"] = {"kind": "census-receipt", "locator": "logs/other.json"}
+    planes["github-actions-limen"]["evidence"] = {"kind": "none", "locator": None}
+    write_fleet_root(tmp_path, planes, receipt=FLEET_RECEIPT)
+    run = run_check(tmp_path)
+    assert run.returncode == 1
+    assert (
+        "evidence.locator 'logs/other.json' differs from jobs_source.locator 'logs/schedule-census.json'" in run.stdout
+    )
+    assert "plane github-actions-limen: a workflows plane must name its own repository" in run.stdout
+    # without census planes the workflows plane may keep evidence none (unit fixtures do)
+    write_registry(tmp_path, {"github-actions-limen": planes["github-actions-limen"]}, [])
+    assert run_check(tmp_path).returncode == 0
+
+
+def test_scope_all_and_a_lone_residual_plane_and_a_str_state(tmp_path):
+    planes = {
+        "github-actions-limen": FLEET_PLANES["github-actions-limen"],
+        "fleet-all": _census_plane(None, ceilings={"active": 5}),
+    }
+    planes["fleet-all"]["jobs_source"]["scope"] = "all"
+    planes["fleet-all"]["declared_off"] = [
+        {"match": {"state": "disabled_manually"}, "since": "x", "reason": "str state"},
+        {"match": {"archived": True}, "since": "x", "reason": "r"},
+    ]
+    write_fleet_root(tmp_path, planes, receipt=FLEET_RECEIPT)
+    registry = S.load_registry(tmp_path)
+    jobs = [j for j in S.derived_jobs(tmp_path, registry) if j.plane == "fleet-all"]
+    assert "fleet/o/limen/own" in {j.id for j in jobs}  # scope all: the covered repository is in too
+    assert S.census_plane_counts(jobs)["active"] == 5
+    per_rule, undeclared, _ = S.census_off_counts(planes["fleet-all"], jobs)
+    assert per_rule[0] == {"disabled_manually": 1} and undeclared == []
+    assert run_check(tmp_path).returncode == 0
+    # a lone residual plane with no visibility owns both halves
+    planes["fleet-all"]["jobs_source"]["scope"] = "residual"
+    write_registry(tmp_path, planes, [])
+    registry = S.load_registry(tmp_path)
+    ids = {j.id for j in S.derived_jobs(tmp_path, registry) if j.plane == "fleet-all"}
+    assert "fleet/o/limen/own" not in ids and "fleet/o/public-thing/p" in ids and f"fleet/{SECRET}/a" in ids
+    assert S.residual_planes(registry) == {None: "fleet-all"}
+    planes["fleet-all"]["ceilings"] = {"active": 4}
+    write_registry(tmp_path, planes, [])
+    assert run_check(tmp_path).returncode == 0
+
+
+def test_a_workflow_crowded_off_the_run_listing_is_unmeasurable_not_failed(tmp_path):
+    receipt = json.loads(json.dumps(FLEET_RECEIPT))
+    repo = receipt["repos"][1]
+    repo["declarations"].append(
+        {
+            "kind": "gh-workflow",
+            "path": ".github/workflows/weekly.yml",
+            "crons": ["49 4 * * 1"],
+            "state": "active",
+            "name": "weekly",
+            "fires_per_day": 0.143,
+        }
+    )
+    repo["fired"]["oldest_seen"] = (
+        "2026-10-22T20:00:00Z"  # the page spans 4h: a weekly job with no row is unmeasurable, not dark
+    )
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["ceilings"] = {"active": 4, "on-the-hour": 1, "shared-minute": 2}
+    write_fleet_root(tmp_path, planes, receipt=receipt)
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (3, 2) and "1 crowded off the run listing unmeasured" in priv[
+        "detail"
+    ]
+    # with a listing that reaches back past the window, the same silent workflow is simply not observed
+    repo["fired"]["oldest_seen"] = "2026-09-01T00:00:00Z"
+    write_receipt(tmp_path, receipt)
+    _, by = _fleet_eval(tmp_path)
+    priv = by["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (4, 2) and "0 crowded" in priv["detail"]
+
+
+def test_launchctl_reader_honours_the_receipt_state(tmp_path, monkeypatch):
+    monkeypatch.setattr(UTIL.shutil, "which", lambda name: "/bin/launchctl" if name == "launchctl" else None)
+
+    class Run:
+        returncode = 0
+        stdout = "PID\tStatus\tLabel\n412\t0\tcom.x.beat\n"
+
+    monkeypatch.setattr(UTIL.subprocess, "run", lambda *a, **k: Run())
+    write_fleet_root(tmp_path, FLEET_PLANES)  # no receipt at all
+    report, by = _fleet_eval(tmp_path)
+    assert by["launchd-host"]["verdict"] == "unmeasured" and by["launchd-host"]["not_this_host"] is True
+    write_receipt(tmp_path, _receipt(FLEET_RECEIPT["repos"], generated_at="2026-10-01T00:00:00+00:00"))  # stale
+    report, by = _fleet_eval(tmp_path)
+    ld = by["launchd-host"]
+    assert (
+        ld["verdict"] == "unmeasured"
+        and ld["not_this_host"] is False
+        and "22d old" in ld["detail"]
+        and "launchd-host" in report["stale_readback"]
+    )
+    (tmp_path / "logs" / "schedule-census.json").write_text(json.dumps({"schema": "other"}))
+    report, by = _fleet_eval(tmp_path)
+    assert (
+        by["launchd-host"]["verdict"] == "unmeasured"
+        and "wrong-schema" in by["launchd-host"]["detail"]
+        and "launchd-host" in report["stale_readback"]
+    )
+    write_receipt(
+        tmp_path, _receipt(FLEET_RECEIPT["repos"], universe_count=5, unreachable=1)
+    )  # complete, but not a floor
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["launchd-host"]["ceilings"] = {"active": 3}
+    write_registry(tmp_path, planes, [])
+    _, by = _fleet_eval(tmp_path)
+    assert (
+        by["launchd-host"]["readback_overdue"] is False
+        and "floor unmeasured (unreachable 1) — do not lower" in by["launchd-host"]["detail"]
+    )
 
 
 def test_ratchet_direction_fails_a_rising_ceiling_against_the_merge_base(tmp_path):
@@ -1547,10 +1787,14 @@ def test_ratchet_direction_fails_a_rising_ceiling_against_the_merge_base(tmp_pat
     assert run_check(tmp_path).returncode == 0
     # active may rise (deliberately); on-the-hour and shared-minute may not; nor may a declared_off ceiling
     planes = json.loads(json.dumps(FLEET_PLANES))
-    planes["github-actions-fleet-private"]["ceilings"]["active"] = 3
-    planes["github-actions-fleet-private"]["ceilings"]["on-the-hour"] = 1
+    planes["github-actions-fleet-private"]["ceilings"]["active"] = 4
     write_registry(tmp_path, planes, [])
-    assert run_check(tmp_path).returncode == 0
+    run = run_check(tmp_path)
+    assert run.returncode == 0 and "[J]" not in run.stdout
+    assert (
+        "active is 3, below its ceiling 4 — lower ceilings.active to 3" in run.stdout
+    )  # a complete receipt with no partial rows: the floor is measured
+    planes["github-actions-fleet-private"]["ceilings"]["active"] = 3
     planes["github-actions-fleet-private"]["ceilings"]["on-the-hour"] = 2
     planes["github-actions-fleet-private"]["declared_off"][1]["ceiling"]["disabled_manually"] = 2
     write_registry(tmp_path, planes, [])
@@ -1560,6 +1804,39 @@ def test_ratchet_direction_fails_a_rising_ceiling_against_the_merge_base(tmp_pat
     assert "declared_off ceiling disabled_manually rose 1 → 2" in run.stdout
     # (the receipt still says on-the-hour is 1, so A also reports the slack — a raised ceiling is wrong twice)
     assert "on-the-hour is 1, below its ceiling 2" in run.stdout
+    # the other escapes: dropping a ratchet key, dropping a rule's ceiling, deleting a rule with a live ceiling, respelling the match
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    del planes["github-actions-fleet-private"]["ceilings"]["shared-minute"]
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and "ceilings.shared-minute was 2 at" in run.stdout and "is gone now" in run.stdout
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["declared_off"][1]["match"]["state"] = [
+        "disabled_inactivity",
+        "disabled_manually",
+    ]  # reordered
+    del planes["github-actions-fleet-private"]["declared_off"][1]["ceiling"]["disabled_manually"]
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert run.returncode == 1 and "declared_off ceiling disabled_manually was 1 at" in run.stdout
+    planes = json.loads(json.dumps(FLEET_PLANES))
+    planes["github-actions-fleet-private"]["declared_off"] = planes["github-actions-fleet-private"]["declared_off"][:1]
+    write_registry(tmp_path, planes, [])
+    run = run_check(tmp_path)
+    assert (
+        run.returncode == 1
+        and "with ceilings {'disabled_manually': 1} at" in run.stdout
+        and "is gone — a rule leaves only once its ceilings reach 0" in run.stdout
+    )
+    # a plane the base never had is not ratcheted against anything
+    _git(tmp_path, "rm", "-rq", "--cached", "institutio")
+    write_registry(tmp_path, {"github-actions-limen": FLEET_PLANES["github-actions-limen"]}, [])
+    _git(tmp_path, "add", "institutio")
+    _git(tmp_path, "commit", "-q", "-m", "no census planes yet")
+    _git(tmp_path, "update-ref", "refs/remotes/origin/main", "HEAD")
+    write_registry(tmp_path, FLEET_PLANES, [])
+    run = run_check(tmp_path)
+    assert run.returncode == 0 and "[J]" not in run.stdout
 
 
 def test_stagger_exempts_census_planes_and_slot_map_folds_them_to_counts(tmp_path):
@@ -1575,6 +1852,15 @@ def test_stagger_exempts_census_planes_and_slot_map_folds_them_to_counts(tmp_pat
     assert any("| 03:00 | 1 fleet workflow (counts only) | github-actions-fleet-private |" in ln for ln in rows)
     assert not any("04:23" in ln for ln in rows)  # off.yml is disabled: an off-switch is not a slot
     assert any("| 05:36 | 1 fleet workflow (counts only) | github-actions-fleet-public |" in ln for ln in rows)
+    # --compact never merges census slots: the same three rows survive, each on its own plane
+    compact = run_check(tmp_path, "--slot-map", "--compact", "--day", "2026-10-26").stdout
+    for needle in (
+        "| 09:17 | 1 fleet workflow (counts only) | github-actions-fleet-private |",
+        "| 03:00 | 1 fleet workflow (counts only) | github-actions-fleet-private |",
+        "| 05:36 | 1 fleet workflow (counts only) | github-actions-fleet-public |",
+    ):
+        assert needle in compact, compact
+    assert SECRET not in compact
 
 
 def _fleet_eval(root: Path):
@@ -1622,7 +1908,10 @@ def test_census_reader_scores_recent_successes_job_matched_and_overrides(tmp_pat
     priv = by["github-actions-fleet-private"]
     # every enabled row is on the partial read or the ambiguous join: nothing measurable is unmeasured, not idle
     assert (priv["declared"], priv["observed"], priv["verdict"]) == (0, None, "unmeasured")
-    assert "4 workflow(s) on partially read rows and 2 ambiguous name join(s) unmeasured" in priv["detail"]
+    assert (
+        "3 on partially read rows, 2 ambiguous name join(s) and 0 crowded off the run listing unmeasured"
+        in priv["detail"]
+    )
     assert "github-actions-fleet-private" in report["stale_readback"]
     # overrides: undeclared-off > undeclared-growth > stagger-regressed
     planes = json.loads(json.dumps(FLEET_PLANES))
@@ -1725,7 +2014,10 @@ def test_launchctl_reader_counts_loaded_labels_only(tmp_path, monkeypatch):
     report, by = _fleet_eval(tmp_path)
     ld = by["launchd-host"]
     assert (ld["declared"], ld["observed"], ld["verdict"]) == (2, 1, "full")  # 1/2 meets the 0.5 fill floor
-    assert "1/2 declared Labels loaded with last exit 0 (2 loaded at all; 3 jobs in launchctl list)" in ld["detail"]
+    assert (
+        "1/2 declared Labels loaded with last exit 0 (2 loaded at all; 3 jobs in launchctl list; receipt 0d old)"
+        in ld["detail"]
+    )
     assert ld["not_this_host"] is False and "com.x.beat" not in ld["detail"] and SECRET not in ld["detail"]
     Run.stdout = (
         "PID\tStatus\tLabel\n-\t78\tcom.x.beat\n-\t1\tcom.y.tend\n"  # both loaded, both failing: nothing observed

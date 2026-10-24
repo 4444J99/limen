@@ -490,12 +490,28 @@ def repo_of_locator(locator: object) -> str | None:
     return m.group(1) if m else None
 
 
+def self_repos_from_registry(registry: dict) -> set[str]:
+    """The repositories whose workflow files limen itself derives (planes with jobs_source kind `workflows`),
+    read from each such plane's repository-shaped gh-actions-runs evidence locator — the one place the
+    registry has to name its own repository for the sensor to read its runs at all."""
+    out: set[str] = set()
+    for plane in (registry.get("planes") or {}).values():
+        if not isinstance(plane, dict) or (plane.get("jobs_source") or {}).get("kind") != "workflows":
+            continue
+        evidence = plane.get("evidence") if isinstance(plane.get("evidence"), dict) else {}
+        repo = repo_of_locator(evidence.get("locator")) if evidence.get("kind") in REPO_LOCATOR_EVIDENCE_KINDS else None
+        if repo:
+            out.add(repo)
+    return out
+
+
 def specific_plane_repos(registry: dict, self_repo: str | None = None) -> set[str]:
     """Every repository some NON-census plane already owns: authority.owner_repo, a repository-shaped
     evidence locator of a GitHub-backed evidence kind, a declared job's `source_of_truth` repo, and the
-    workflows plane's own repository when the caller names it. A census plane with scope `residual`
-    derives only what lies outside this set."""
-    covered: set[str] = set()
+    workflows planes' own repositories (self_repos_from_registry, plus `self_repo` when a caller names one
+    explicitly). The gate, the sensor and the census all derive the residual against THIS set — there is no
+    second covered set anywhere."""
+    covered: set[str] = set(self_repos_from_registry(registry))
     planes = registry.get("planes") or {}
     for plane in planes.values():
         if not isinstance(plane, dict) or is_census_plane(plane):
@@ -519,15 +535,22 @@ def specific_plane_repos(registry: dict, self_repo: str | None = None) -> set[st
 
 
 def disclosed_repo_tokens(registry: dict) -> set[str]:
-    """Tokens a committed registry line may legitimately carry even when they name a private repository:
-    the specific planes' repositories (slug and bare name) and the job-id components of declared rows on
-    planes that carry `authority` (ops/<job>, cloudflare/<target> — projections the owner repo publishes)."""
+    """Tokens a committed registry line may legitimately carry even when they name a private repository —
+    exactly rule R1, nothing wider: a plane's authority.owner_repo (slug and bare name) and the job-id
+    components of declared rows on planes that carry `authority` (ops/<job>, cloudflare/<target> —
+    projections the owner repository publishes). A `source_of_truth` or an evidence locator is NOT a
+    disclosure: a commit must never be able to exempt its own leak by adding the name somewhere else."""
     tokens: set[str] = set()
-    for repo in specific_plane_repos(registry):
-        tokens.add(repo)
-        tokens.add(repo.split("/", 1)[1])
     planes = registry.get("planes") or {}
-    authority_planes = {pid for pid, p in planes.items() if isinstance(p, dict) and isinstance(p.get("authority"), dict)}
+    authority_planes: set[str] = set()
+    for pid, plane in planes.items():
+        if not isinstance(plane, dict) or not isinstance(plane.get("authority"), dict):
+            continue
+        authority_planes.add(pid)
+        owner_repo = plane["authority"].get("owner_repo")
+        if isinstance(owner_repo, str) and "/" in owner_repo:
+            tokens.add(owner_repo)
+            tokens.add(owner_repo.split("/", 1)[1])
     for row in registry.get("jobs") or []:
         if isinstance(row, dict) and row.get("plane") in authority_planes and isinstance(row.get("id"), str):
             tokens.update(part for part in row["id"].split("/") if part)
@@ -566,19 +589,23 @@ def cron_fires_per_day(cron: Cron) -> float:
 
 
 def cadence_label(cron: Cron) -> str:
-    """weekdays | weekly | monthly | sub-hourly | hourly | intraday | daily | other — the census ledger's vocabulary."""
+    """weekdays | weekly | monthly | sub-hourly | hourly | intraday | daily | other — the census ledger's vocabulary.
+    A day field spelled out to cover every day (`0-6`, `1-31`) is unrestricted; the named labels need every month."""
     base = len(cron.minutes) * len(cron.hours)
     per_day = cron_fires_per_day(cron)
-    day_share_full = not cron.dow_restricted and not cron.dom_restricted
-    if cron.dow_restricted and cron.dow == frozenset({1, 2, 3, 4, 5}) and base == 1:
+    dow_restricted = cron.dow_restricted and len(cron.dow) < 7
+    dom_restricted = cron.dom_restricted and len(cron.dom) < 31
+    every_month = len(cron.months) == 12
+    day_share_full = not dow_restricted and not dom_restricted
+    if dow_restricted and cron.dow == frozenset({1, 2, 3, 4, 5}) and base == 1 and every_month and not dom_restricted:
         return "weekdays"
-    if cron.dow_restricted and len(cron.dow) == 1 and base == 1 and not cron.dom_restricted:
+    if dow_restricted and len(cron.dow) == 1 and base == 1 and not dom_restricted and every_month:
         return "weekly"
-    if cron.dom_restricted and len(cron.dom) == 1 and base == 1 and not cron.dow_restricted:
+    if dom_restricted and len(cron.dom) == 1 and base == 1 and not dow_restricted and every_month:
         return "monthly"
     if per_day > HOURS_PER_DAY:
         return "sub-hourly"
-    if len(cron.hours) == HOURS_PER_DAY and len(cron.minutes) == 1 and day_share_full and len(cron.months) == 12:
+    if len(cron.hours) == HOURS_PER_DAY and len(cron.minutes) == 1 and day_share_full and every_month:
         return "hourly"
     if per_day > 1:
         return "intraday"
@@ -664,6 +691,37 @@ def load_census_receipt(
     return path, data, "present"
 
 
+def census_unread(data: dict | None) -> dict[str, int]:
+    """What the receipt did NOT read, from its own denominators — the reasons a count below a ceiling is an
+    undercount rather than a floor: repositories unreachable, unscanned (budget/quota), errored, or read only
+    partially. Non-zero means 'do not lower a ceiling from this receipt'."""
+    d = (data or {}).get("denominators") or {}
+    out: dict[str, int] = {}
+    for key in ("unreachable", "unscanned_by_budget", "internal_errors", "scanned_partial"):
+        try:
+            n = int(d.get(key) or 0)
+        except (TypeError, ValueError):
+            n = 0
+        if n:
+            out[key] = n
+    return out
+
+
+def census_floor_unmeasured(data: dict | None, jobs: list[Job]) -> dict[str, int]:
+    """Why a plane's ceiling counts may be undercounts: receipt-wide unread repositories (census_unread) plus
+    this plane's rows on partially read repositories and live rows whose Actions state could not be read.
+    Empty ⟺ every count is a floor and "lower the ceiling to N" is sound advice (the ratchet only falls, so
+    lowering from an undercount makes the next complete census red on unchanged repositories)."""
+    out = census_unread(data)
+    partial = sum(1 for j in jobs if j.extra.get("partial"))
+    unverified = sum(1 for j in jobs if not j.enabled and str(j.extra.get("state")) == "unknown" and not j.extra.get("archived"))
+    if partial:
+        out["partial_rows"] = partial
+    if unverified:
+        out["unverified_rows"] = unverified
+    return out
+
+
 def _census_rows(data: dict) -> list[dict]:
     return [r for r in data.get("repos") or [] if isinstance(r, dict) and r.get("reach") == "ok" and isinstance(r.get("repo"), str)]
 
@@ -696,7 +754,8 @@ def derive_census_jobs(root: Path, plane_id: str, src: dict, registry: dict, *, 
             partial = bool(row.get("partial"))
             decls = [d for d in row.get("declarations") or [] if isinstance(d, dict) and d.get("kind") == "gh-workflow" and d.get("crons")]
             names = [d.get("name") for d in decls]
-            by_workflow = ((row.get("fired") or {}).get("by_workflow") or {}) if isinstance(row.get("fired"), dict) else {}
+            fired_row = row.get("fired") if isinstance(row.get("fired"), dict) else {}
+            by_workflow = fired_row.get("by_workflow") or {}
             for d in decls:
                 path = str(d.get("path") or "")
                 name = d.get("name")
@@ -729,6 +788,9 @@ def derive_census_jobs(root: Path, plane_id: str, src: dict, registry: dict, *, 
                             "partial": partial,
                             "fires_per_day": d.get("fires_per_day"),
                             "fired": by_workflow.get(name) if isinstance(name, str) and not ambiguous else None,
+                            "fired_oldest_seen": fired_row.get("oldest_seen"),
+                            "fired_listed": fired_row.get("total_scheduled_runs"),
+                            "fired_capped": bool(fired_row.get("listing_capped")),
                             "ambiguous": ambiguous,
                             "unparseable_crons": unparseable,
                             "generated_at": generated_at,

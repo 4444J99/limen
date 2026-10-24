@@ -469,18 +469,64 @@ def read_issue_comments(plane_id: str, plane: dict, jobs: list[S.Job], today: da
 NOT_THIS_HOST = {"not_this_host": True}
 
 
+def _success_window(job: S.Job) -> timedelta:
+    """2× the workflow's nominal interval + 1.5d: the span in which a live workflow must show one success."""
+    per_day = job.extra.get("fires_per_day")
+    interval_days = (1.0 / per_day) if isinstance(per_day, (int, float)) and per_day > 0 else 36500.0
+    return timedelta(days=2 * interval_days + 1.5)
+
+
 def _recent_success(job: S.Job, generated: datetime | None) -> bool:
-    """The receipt's scheduled-run summary shows this workflow succeeded within 2× its nominal interval + 1.5d of
-    the receipt's generated_at — a weekly template that last succeeded 10 days ago is still alive; a daily one is not."""
+    """The receipt's scheduled-run summary shows this workflow succeeded within its success window of the receipt's
+    generated_at — a weekly template that last succeeded 10 days ago is still alive; a daily one is not."""
     fired = job.extra.get("fired")
     if not isinstance(fired, dict) or fired.get("last_conclusion") != "success" or generated is None:
         return False
     last = S.census_generated_at({"generated_at": fired.get("last_at")})
     if last is None:
         return False
-    per_day = job.extra.get("fires_per_day")
-    interval_days = (1.0 / per_day) if isinstance(per_day, (int, float)) and per_day > 0 else 36500.0
-    return (generated - last) <= timedelta(days=2 * interval_days + 1.5)
+    return (generated - last) <= _success_window(job)
+
+
+def _crowded_off_listing(job: S.Job, generated: datetime | None) -> bool:
+    """No row for this workflow in the repository's run summary, and the summary's oldest listed run is younger
+    than the workflow's success window: the page the census read was filled by busier workflows, so this one is
+    unmeasurable here — not 'did not succeed'."""
+    if job.extra.get("fired") is not None or generated is None:
+        return False
+    oldest = S.census_generated_at({"generated_at": job.extra.get("fired_oldest_seen")})
+    if oldest is None:
+        return False
+    return (generated - oldest) < _success_window(job)
+
+
+def _census_receipt_state(plane: dict, today: date, root: Path) -> tuple[Path, dict | None, str, int | None]:
+    """(path, data, state, age_days) of the receipt a census plane's rows derive from — read at the plane's
+    jobs_source locator, the same file derive_census_jobs reads, so the sensor can never score one receipt while
+    the rows come from another."""
+    src = plane.get("jobs_source") if isinstance(plane.get("jobs_source"), dict) else {}
+    locator = str(src.get("locator") or (plane.get("evidence") or {}).get("locator") or S.CENSUS_REL)
+    max_age = _env_int("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", 8)
+    path, data, state = S.load_census_receipt(
+        root, locator, max_age_days=max_age, now=datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc)
+    )
+    generated = S.census_generated_at(data)
+    age = (today - generated.date()).days if generated else None
+    return path, data, state, age
+
+
+def _unmeasured_receipt(path: Path, data: dict | None, state: str, age: int | None) -> tuple[None, str, dict]:
+    """The one wording for a receipt that exists but cannot be scored: a stale readback, never not_this_host."""
+    if data is None:
+        return None, f"{path.name} is {state} — not a {S.CENSUS_SCHEMA} receipt", {}
+    if state == "incomplete":
+        d = data.get("denominators") or {}
+        return None, (
+            f"{path.name} is incomplete ({d.get('scanned')}/{d.get('universe_count')} scanned, {d.get('unreachable')} unreachable, "
+            f"{d.get('unscanned_by_budget')} unscanned, {d.get('internal_errors')} errors) — the census retries on its own horizon; nothing concluded"
+        ), {}
+    max_age = _env_int("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", 8)
+    return None, f"{path.name} is {age}d old (> {max_age}d) — re-run the census before trusting the fleet counts", {}
 
 
 def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
@@ -490,29 +536,25 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
     (an off-switch no match rule owns) > undeclared-growth (active or declared-off count above its ceiling) >
     stagger-regressed (on-the-hour / shared-minute above its ceiling). A count BELOW a ceiling is slack the
     operator lowers — reported as readback_overdue so the beat exits 3, never red."""
-    locator = str(plane["evidence"].get("locator") or S.CENSUS_REL)
-    max_age = _env_int("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", 8)
-    path, data, state = S.load_census_receipt(root, locator, max_age_days=max_age, now=datetime.combine(today, datetime.max.time(), tzinfo=timezone.utc))
+    path, data, state, age = _census_receipt_state(plane, today, root)
     if state == "absent":
-        return None, f"no census receipt at {locator} on this host — the census runs where gh carries the owner's auth (not this host)", dict(NOT_THIS_HOST)
-    if data is None:
-        return None, f"{path.name} is {state} — not a {S.CENSUS_SCHEMA} receipt", {}
+        return None, f"no census receipt at {path.name} on this host — the census runs where gh carries the owner's auth (not this host)", dict(NOT_THIS_HOST)
+    if state != "present":
+        return _unmeasured_receipt(path, data, state, age)
     generated = S.census_generated_at(data)
-    age = (today - generated.date()).days if generated else None
-    if state == "incomplete":
-        d = data.get("denominators") or {}
-        return None, f"{path.name} is incomplete ({d.get('scanned')}/{d.get('universe_count')} scanned, {d.get('unreachable')} unreachable, {d.get('unscanned_by_budget')} unscanned, {d.get('internal_errors')} errors) — the census retries on its own horizon; nothing concluded", {}
-    if state == "stale":
-        return None, f"{path.name} is {age}d old (> {max_age}d) — re-run the census before trusting the fleet counts", {}
-    measurable = [j for j in jobs if j.enabled and not j.extra.get("partial") and not j.extra.get("ambiguous")]
-    partial = sum(1 for j in jobs if j.extra.get("partial"))
-    ambiguous = sum(1 for j in jobs if j.enabled and j.extra.get("ambiguous"))
+    enabled = [j for j in jobs if j.enabled]
+    partial = sum(1 for j in enabled if j.extra.get("partial"))
+    ambiguous = sum(1 for j in enabled if j.extra.get("ambiguous") and not j.extra.get("partial"))
+    candidates = [j for j in enabled if not j.extra.get("partial") and not j.extra.get("ambiguous")]
+    crowded = sum(1 for j in candidates if _crowded_off_listing(j, generated))
+    measurable = [j for j in candidates if not _crowded_off_listing(j, generated)]
     observed = sum(1 for j in measurable if _recent_success(j, generated))
     counts = S.census_plane_counts(jobs)
-    ceilings = {k: v for k, v in (plane.get("ceilings") or {}).items() if isinstance(v, int)}
+    ceilings = {k: v for k, v in (plane.get("ceilings") or {}).items() if isinstance(v, int) and not isinstance(v, bool)} if isinstance(plane.get("ceilings"), dict) else {}
     per_rule, undeclared, unverified = S.census_off_counts(plane, jobs)
     rules = [r for r in plane.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)]
     off_total = sum(sum(v for k, v in c.items() if k != "archived") for c in per_rule)
+    floor_unmeasured = S.census_floor_unmeasured(data, jobs)
     extra: dict = {"declared_jobs": measurable}
     over: list[str] = []
     slack: list[str] = []
@@ -524,15 +566,19 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
             slack.append(f"lower ceilings.{key} to {n} (ceiling {cap})")
     off_over: list[str] = []
     for i, rule in enumerate(rules):
-        for state_key, cap in (rule.get("ceiling") or {}).items():
+        ceiling = rule.get("ceiling") if isinstance(rule.get("ceiling"), dict) else {}
+        for state_key, cap in ceiling.items():
+            if not isinstance(cap, int) or isinstance(cap, bool):
+                continue
             n = per_rule[i].get(str(state_key), 0) if i < len(per_rule) else 0
-            if isinstance(cap, int) and n > cap:
+            if n > cap:
                 off_over.append(f"{state_key} {n}>{cap}")
-            elif isinstance(cap, int) and n < cap:
+            elif n < cap:
                 slack.append(f"lower declared_off[{i}].ceiling.{state_key} to {n} (ceiling {cap})")
     detail = (
         f"{observed}/{len(measurable)} enabled residual workflows succeeded within 2× their interval (+1.5d) of the receipt "
-        f"({age}d old); {off_total} declared off by fact; {partial} workflow(s) on partially read rows and {ambiguous} ambiguous name join(s) unmeasured"
+        f"({age}d old); {off_total} declared off by fact; {partial} on partially read rows, {ambiguous} ambiguous name join(s) and "
+        f"{crowded} crowded off the run listing unmeasured"
         + (f"; {unverified} state unknown" if unverified else "")
         + "; counts " + ", ".join(f"{k} {counts.get(k, 0)}/{v}" for k, v in sorted(ceilings.items()))
     )
@@ -546,10 +592,14 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
         extra["override"] = "stagger-regressed"
         detail += "; STAGGER REGRESSED above ceilings: " + ", ".join(over)
     if slack and "override" not in extra:
-        extra["readback_overdue"] = True
-        detail += "; slack ceilings — " + "; ".join(slack)
-    if not measurable and any(j.enabled for j in jobs) and "override" not in extra:
-        # every enabled row sits on a partial read or an ambiguous join: we had a way to look and could score nothing
+        if floor_unmeasured:
+            # a count below its ceiling on a receipt that left something unread is an undercount, not a floor
+            detail += "; below ceilings but floor unmeasured (" + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items())) + ") — do not lower"
+        else:
+            extra["readback_overdue"] = True
+            detail += "; slack ceilings — " + "; ".join(slack)
+    if not measurable and enabled and "override" not in extra:
+        # every enabled row sits on a partial read, an ambiguous join or a crowded listing: we had a way to look and could score nothing
         return None, detail + "; nothing measurable — unmeasured, not idle", extra
     return observed, detail, extra
 
@@ -561,8 +611,11 @@ def read_launchctl(plane_id: str, plane: dict, jobs: list[S.Job], today: date, r
     """One read-only `launchctl list`: observed = declared Labels loaded with last exit status 0. Counts only."""
     if shutil.which("launchctl") is None:
         return None, "no launchctl on this host (Linux, CI) — launchd planes are measured on the Mac that loads them (not this host)", dict(NOT_THIS_HOST)
-    if not jobs:
-        return None, "no census receipt on this host — no declared Labels to look for (not this host)", dict(NOT_THIS_HOST)
+    path, data, state, age = _census_receipt_state(plane, today, root)
+    if state == "absent":
+        return None, f"no census receipt at {path.name} on this host — no declared Labels to look for (not this host)", dict(NOT_THIS_HOST)
+    if state != "present":
+        return _unmeasured_receipt(path, data, state, age)
     try:
         run = subprocess.run(["launchctl", "list"], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
     except (OSError, subprocess.SubprocessError) as exc:
@@ -579,12 +632,15 @@ def read_launchctl(plane_id: str, plane: dict, jobs: list[S.Job], today: date, r
     present = sum(1 for j in declared if str(j.extra.get("label")) in loaded)
     extra: dict = {"declared_jobs": declared}
     counts = S.census_plane_counts(jobs)
-    cap = (plane.get("ceilings") or {}).get("active")
-    detail = f"{healthy}/{len(declared)} declared Labels loaded with last exit 0 ({present} loaded at all; {len(loaded)} jobs in launchctl list)"
-    if isinstance(cap, int):
+    cap = (plane.get("ceilings") or {}).get("active") if isinstance(plane.get("ceilings"), dict) else None
+    floor_unmeasured = S.census_floor_unmeasured(data, jobs)
+    detail = f"{healthy}/{len(declared)} declared Labels loaded with last exit 0 ({present} loaded at all; {len(loaded)} jobs in launchctl list; receipt {age}d old)"
+    if isinstance(cap, int) and not isinstance(cap, bool):
         if counts["active"] > cap:
             extra["override"] = "undeclared-growth"
             detail += f"; UNDECLARED GROWTH: {counts['active']} Labels above ceiling {cap}"
+        elif counts["active"] < cap and floor_unmeasured:
+            detail += f"; {counts['active']} Labels below ceiling {cap} but floor unmeasured (" + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items())) + ") — do not lower"
         elif counts["active"] < cap:
             extra["readback_overdue"] = True
             detail += f"; slack — lower ceilings.active to {counts['active']} (ceiling {cap})"

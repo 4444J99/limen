@@ -11,13 +11,19 @@ Named checks (the check-*.py ratchet discipline):
   A schema        — plane/job required fields, enums, every cron parses (5 fields, no names), tz resolves;
                     census planes: jobs_source carrier/scope/visibility, `ceilings` keys, declared_off rows
                     select by FACT (`match: {archived, state}` + per-state `ceiling`), residual gh-workflow
-                    planes partition by visibility exactly; workflows planes: every declared_off `file` still
-                    exists (a row for a reaped file has rotted); with a census receipt on this host, every
-                    ceiling holds (count above = undeclared growth, FAIL; below = advisory "lower to N"),
-                    every off-state workflow is owned by a match row, and declared_off ceilings hold
+                    planes partition by visibility exactly, a census plane's evidence locator is its
+                    jobs_source locator, and once a census plane exists every workflows plane names its own
+                    repository in a gh-actions-runs locator (the residual selector covers it from there);
+                    workflows planes: every declared_off `file` still exists (a row for a reaped file has
+                    rotted); with a census receipt on this host, every ceiling holds (count above = undeclared
+                    growth, FAIL on any data-bearing receipt since an undercount cannot overshoot; below =
+                    advisory "lower to N" only when the receipt is complete and the plane has no partial or
+                    unverified rows — an undercount is never a floor), every off-state workflow is owned by a
+                    match row, and declared_off ceilings hold
   B derived       — every `jobs_source` resolves and yields ≥1 row; no declared row duplicates a derived plane;
-                    a census locator is git-ignored (R1: the receipt names private repositories) and its
-                    absence is "not this host", never drift
+                    a census locator is git-ignored (R1: the receipt names private repositories); an absent
+                    receipt is "not this host", an incomplete or stale one is unmeasured, and a present receipt
+                    that derives zero rows for a plane is the ratchet's goal state (advisory), never drift
   C claude parity — every enabled cloud-routines.json routine appears in the newest snapshot receipt by
                     `routine`, its live cron's cadence class matches the manifest cadence, and every live
                     contracted routine appears in the manifest (no snapshot ⇒ unverifiable here, not drift)
@@ -64,6 +70,14 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import _schedules as S  # noqa: E402
+
+
+def _census_max_age_days() -> int:
+    try:
+        value = int(os.environ.get("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", "") or 8)
+    except ValueError:
+        return 8
+    return value if value > 0 else 8
 
 _failures: list[str] = []
 _advisories: list[str] = []
@@ -134,6 +148,14 @@ def check_schema(registry: dict) -> None:
             fail("A", f"{where}: `ceilings` belongs to census planes only (other planes are ratcheted by the stagger baseline)")
         _validate_declared_off(where, plane)
     _validate_residual_partition(planes)
+    if any(S.is_census_plane(p) for p in planes.values()):
+        for pid, plane in planes.items():
+            if not isinstance(plane, dict) or (plane.get("jobs_source") or {}).get("kind") != "workflows":
+                continue
+            evidence = plane.get("evidence") if isinstance(plane.get("evidence"), dict) else {}
+            repo = S.repo_of_locator(evidence.get("locator")) if evidence.get("kind") in S.REPO_LOCATOR_EVIDENCE_KINDS else None
+            if not repo:
+                fail("A", f"plane {pid}: a workflows plane must name its own repository in a gh-actions-runs evidence locator (owner/name) once census planes exist — the residual selector covers it from there, and nothing else keeps its crons out of the fleet")
     seen: set[str] = set()
     for i, row in enumerate(registry.get("jobs") or []):
         where = f"job[{i}]"
@@ -198,6 +220,8 @@ def _validate_census_source(where: str, plane: dict, src: dict) -> None:
     evidence = plane.get("evidence") if isinstance(plane.get("evidence"), dict) else {}
     if evidence.get("kind") not in {"census-receipt", "launchctl", "none"}:
         fail("A", f"{where}: a census plane's evidence kind must be census-receipt, launchctl or none (its rows are read from the receipt, never from gh)")
+    if evidence.get("kind") == "census-receipt" and str(evidence.get("locator") or "") != str(src.get("locator") or ""):
+        fail("A", f"{where}: evidence.locator {evidence.get('locator')!r} differs from jobs_source.locator {src.get('locator')!r} — the sensor would read one receipt while the rows derive from another")
 
 
 def _validate_declared_off(where: str, plane: dict) -> None:
@@ -285,7 +309,7 @@ def _git(root: Path, *args: str) -> tuple[int, str]:
 
 def _check_census_source(root: Path, pid: str, plane: dict, src: dict, derived: list[S.Job]) -> None:
     locator = str(src.get("locator") or S.CENSUS_REL)
-    path, data, state = S.load_census_receipt(root, locator)
+    path, data, state = S.load_census_receipt(root, locator, max_age_days=_census_max_age_days())
     rc, _ = _git(root, "check-ignore", "-q", locator)
     if rc == 1:
         fail("B", f"plane {pid}: census locator {locator} is not git-ignored — the receipt names private repositories (R1); add it to logs/.gitignore")
@@ -298,8 +322,11 @@ def _check_census_source(root: Path, pid: str, plane: dict, src: dict, derived: 
         fail("B", f"plane {pid}: {path} is {state} — not a {S.CENSUS_SCHEMA} receipt; the locator points at something that is not the census")
         return
     rows = [j for j in derived if j.plane == pid]
-    if not rows:
-        fail("B", f"plane {pid}: a readable census receipt ({state}) derived zero rows — the carrier/scope/visibility selector selects nothing")
+    if state != "present":
+        unread = S.census_unread(data)
+        advise("B", f"plane {pid}: census receipt is {state} ({unread or 'aged out'}) — {len(rows)} row(s) derive from it but nothing is concluded about their floor (unmeasured, not drift)")
+    elif not rows:
+        advise("B", f"plane {pid}: a complete census receipt derived zero rows — the selector selects nothing, which is the ratchet's goal state; retire the plane or keep it as a guard")
         return
     unparseable = sum(1 for j in rows if j.extra.get("unparseable_crons"))
     if unparseable:
@@ -486,13 +513,21 @@ def _census_receipt(root: Path, registry: dict) -> tuple[dict | None, str, Path 
     """The one receipt every census plane in this registry reads (they share a locator by construction)."""
     for plane in (registry.get("planes") or {}).values():
         if S.is_census_plane(plane):
-            path, data, state = S.load_census_receipt(root, plane["jobs_source"].get("locator"))
+            path, data, state = S.load_census_receipt(root, plane["jobs_source"].get("locator"), max_age_days=_census_max_age_days())
             return data, state, path
     return None, "no-census-planes", None
 
 
+def _is_cap(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def check_census(root: Path, registry: dict, jobs: list[S.Job], now: datetime) -> None:
-    """A (census): with a receipt on this host, every ceiling holds and every off-state row is owned."""
+    """A (census): with a receipt on this host, every ceiling holds and every off-state row is owned. A count
+    above a ceiling fails on any data-bearing receipt — an incomplete or stale receipt can only undercount, so
+    the overshoot is real. "Lower to N" is advised only from a complete receipt with no partial or unverified
+    rows in the plane: the ratchet only falls, and lowering from an undercount makes the next complete census
+    red on unchanged repositories."""
     data, state, path = _census_receipt(root, registry)
     if data is None:
         return
@@ -504,21 +539,29 @@ def check_census(root: Path, registry: dict, jobs: list[S.Job], now: datetime) -
             continue
         rows = [j for j in jobs if j.plane == pid]
         counts = S.census_plane_counts(rows)
-        for key, cap in (plane.get("ceilings") or {}).items():
-            if not isinstance(cap, int) or key not in counts:
+        unmeasured = S.census_floor_unmeasured(data, rows)
+        if state != "present":
+            unmeasured = {"receipt_" + state: 1, **unmeasured}
+        floor_note = f"floor unmeasured ({', '.join(f'{k} {v}' for k, v in sorted(unmeasured.items()))}) — do not lower" if unmeasured else None
+        ceilings = plane.get("ceilings") if isinstance(plane.get("ceilings"), dict) else {}
+        for key, cap in ceilings.items():
+            if not _is_cap(cap) or key not in counts:
                 continue
             if counts[key] > cap:
                 fail("A", f"plane {pid}: {key} is {counts[key]}, above its ceiling {cap} — undeclared growth; retire or disable what grew (receipt-backed reap), or raise `active` deliberately ({key} ceilings other than active may never rise, check J)")
             elif counts[key] < cap:
-                advise("A", f"plane {pid}: {key} is {counts[key]}, below its ceiling {cap} — lower ceilings.{key} to {counts[key]} (shrink-only ratchet)")
+                advise("A", f"plane {pid}: {key} is {counts[key]}, below its ceiling {cap} — " + (floor_note or f"lower ceilings.{key} to {counts[key]} (shrink-only ratchet)"))
         per_rule, undeclared, unverified = S.census_off_counts(plane, rows)
         for i, row in enumerate(r for r in plane.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)):
-            for state_key, cap in (row.get("ceiling") or {}).items():
+            ceiling = row.get("ceiling") if isinstance(row.get("ceiling"), dict) else {}
+            for state_key, cap in ceiling.items():
+                if not _is_cap(cap):
+                    continue
                 n = per_rule[i].get(str(state_key), 0) if i < len(per_rule) else 0
                 if n > cap:
                     fail("A", f"plane {pid}: declared_off[{i}] counts {n} {state_key} workflow(s), above its ceiling {cap} — a new off-switch nobody owns")
                 elif n < cap:
-                    advise("A", f"plane {pid}: declared_off[{i}] counts {n} {state_key}, below its ceiling {cap} — lower it to {n}")
+                    advise("A", f"plane {pid}: declared_off[{i}] counts {n} {state_key}, below its ceiling {cap} — " + (floor_note or f"lower it to {n}"))
         if undeclared:
             states = Counter(str(j.extra.get("state")) + (" (archived)" if j.extra.get("archived") else "") for j in undeclared)
             fail("A", f"plane {pid}: {len(undeclared)} off-state workflow(s) no declared_off match owns — {dict(states)}; add a match row (by fact, never by name)")
@@ -540,16 +583,19 @@ def check_redaction(root: Path, registry: dict) -> None:
     private = sorted({r["repo"] for r in (data.get("repos") or []) if isinstance(r, dict) and r.get("private") and isinstance(r.get("repo"), str)})
     patterns: list[re.Pattern[str]] = []
     skipped_bare = 0
+    # A token ends where a word character, `-`, or `.<word>` would continue it: `name.` at a sentence end and
+    # `name.git` are still the name; `name.yml` is a different token. Case-insensitive: GitHub names are.
+    tail = r"(?:\.git)?(?!(?:[\w-]|\.[\w-]))"
     for slug in private:
         if slug not in disclosed:
-            patterns.append(re.compile(r"(?<![\w-])" + re.escape(slug) + r"(?![\w.-])"))
+            patterns.append(re.compile(r"(?<![\w-])" + re.escape(slug) + tail, re.I))
         name = slug.split("/", 1)[1]
         if name in disclosed:
             continue
         if _PRIVATE_SKIP_BARE.match(name):
             skipped_bare += 1
             continue
-        patterns.append(re.compile(r"(?<![\w./-])" + re.escape(name) + r"(?![\w.-])"))
+        patterns.append(re.compile(r"(?<![\w./-])" + re.escape(name) + tail, re.I))
     for rel in (S.REGISTRY_REL, S.BASELINE_REL):
         try:
             lines = (root / rel).read_text(encoding="utf-8").splitlines()
@@ -574,7 +620,21 @@ def _registry_at(root: Path, ref: str) -> dict | None:
 
 
 def _match_key(row: dict) -> str:
-    return json.dumps(row.get("match"), sort_keys=True)
+    """A declared_off rule's identity across commits: its match, normalized (state as a sorted list of str,
+    `archived: false` the same as absent) so reordering or respelling the selector cannot shake off its ceiling."""
+    match = row.get("match") if isinstance(row.get("match"), dict) else {}
+    norm: dict = {}
+    if match.get("archived") is True:
+        norm["archived"] = True
+    if "state" in match:
+        raw = match["state"] if isinstance(match["state"], list) else [match["state"]]
+        norm["state"] = sorted(str(x) for x in raw)
+    return json.dumps(norm, sort_keys=True)
+
+
+def _rule_ceilings(row: dict) -> dict[str, int]:
+    ceiling = row.get("ceiling") if isinstance(row.get("ceiling"), dict) else {}
+    return {str(k): v for k, v in ceiling.items() if _is_cap(v)}
 
 
 def check_ratchet_direction(root: Path, registry: dict) -> None:
@@ -594,21 +654,33 @@ def check_ratchet_direction(root: Path, registry: dict) -> None:
         before = (old.get("planes") or {}).get(pid)
         if not isinstance(before, dict):
             continue
-        old_ceilings = before.get("ceilings") or {}
+        old_ceilings = before.get("ceilings") if isinstance(before.get("ceilings"), dict) else {}
+        new_ceilings = plane.get("ceilings") if isinstance(plane.get("ceilings"), dict) else {}
         for key in S.RATCHET_CEILING_KEYS:
-            new_v, old_v = (plane.get("ceilings") or {}).get(key), old_ceilings.get(key)
-            if isinstance(new_v, int) and isinstance(old_v, int) and new_v > old_v:
+            new_v, old_v = new_ceilings.get(key), old_ceilings.get(key)
+            if not _is_cap(old_v):
+                continue
+            if not _is_cap(new_v):
+                fail("J", f"plane {pid}: ceilings.{key} was {old_v} at {base[:9]} and is gone now — dropping a ratchet ceiling is a rise to unlimited; lower it, never delete it")
+            elif new_v > old_v:
                 fail("J", f"plane {pid}: ceilings.{key} rose {old_v} → {new_v} against {base[:9]} — this ceiling only falls; a new on-the-hour or shared-minute cron is a stagger regression to fix in its repository")
         old_rules = {_match_key(r): r for r in before.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)}
-        for row in plane.get("declared_off") or []:
-            if not (isinstance(row, dict) and isinstance(row.get("match"), dict)):
+        new_rules = {_match_key(r): r for r in plane.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)}
+        for key, prior in old_rules.items():
+            old_caps = _rule_ceilings(prior)
+            row = new_rules.get(key)
+            if row is None:
+                live = {k: v for k, v in old_caps.items() if v > 0}
+                if live:
+                    fail("J", f"plane {pid}: declared_off rule {key} with ceilings {live} at {base[:9]} is gone — a rule leaves only once its ceilings reach 0 (reap or re-enable), never by deletion")
                 continue
-            prior = old_rules.get(_match_key(row))
-            if prior is None:
-                continue
-            for state_key, new_v in (row.get("ceiling") or {}).items():
-                old_v = (prior.get("ceiling") or {}).get(state_key)
-                if isinstance(new_v, int) and isinstance(old_v, int) and new_v > old_v:
+            new_caps = _rule_ceilings(row)
+            for state_key, old_v in old_caps.items():
+                new_v = new_caps.get(state_key)
+                if new_v is None:
+                    if old_v > 0:
+                        fail("J", f"plane {pid}: declared_off ceiling {state_key} was {old_v} at {base[:9]} and is gone now — lower it to 0 before dropping it")
+                elif new_v > old_v:
                     fail("J", f"plane {pid}: declared_off ceiling {state_key} rose {old_v} → {new_v} against {base[:9]} — an off-switch count only falls (reap or re-enable), it is never re-declared upward")
 
 
@@ -725,7 +797,7 @@ def slot_map(registry: dict, jobs: list[S.Job], day: date) -> list[dict]:
                 cell[1] += r["fires"]
         for (plane, utc, sort), (workflows, fires) in folded.items():
             kept.append(
-                {"utc": utc, "sort": sort, "job": f"{workflows} fleet workflow{'s' if workflows != 1 else ''} (counts only)", "plane": plane, "cron": "—", "tz": "UTC", "enabled": True, "fires": fires, "flags": ""}
+                {"utc": utc, "sort": sort, "job": f"{workflows} fleet workflow{'s' if workflows != 1 else ''} (counts only)", "plane": plane, "cron": "—", "tz": "UTC", "enabled": True, "fires": fires, "flags": "", "census": True}
             )
         rows = kept
     rows.sort(key=lambda r: (r["sort"], r["plane"], r["job"]))
@@ -737,10 +809,13 @@ def print_slot_map(registry: dict, jobs: list[S.Job], day: date, compact: bool =
     ('hourly at :17 (24/day)') so the table reads as a day, not as a log."""
     rows = slot_map(registry, jobs, day)
     if compact:
+        # census planes are already one count per slot; folding them by (job, cron) would merge slots and planes
+        census_rows = [r for r in rows if r.get("census")]
         folded: dict[tuple[str, str], list[dict]] = {}
         for r in rows:
-            folded.setdefault((r["job"], r["cron"]), []).append(r)
-        rows = []
+            if not r.get("census"):
+                folded.setdefault((r["job"], r["cron"]), []).append(r)
+        rows = list(census_rows)
         for (job, cron), group in folded.items():
             first = dict(group[0])
             n = sum(g["fires"] for g in group)

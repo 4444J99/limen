@@ -1038,10 +1038,11 @@ def load_registry_or_none(root: Path) -> dict | None:
         return None
 
 
-def registry_covered_repos(root: Path, self_repo: str) -> set[str]:
+def registry_covered_repos(root: Path, self_repo: str | None = None) -> set[str]:
     """The repositories some SPECIFIC schedules.yaml plane already owns — _schedules.specific_plane_repos, the one
     selector the registry gate, the sensor and this census share (a census plane never counts as coverage: it
-    owns the remainder, which is what a gap is measured against)."""
+    owns the remainder, which is what a gap is measured against). The workflows plane's own repository comes
+    from the registry itself; `self_repo` only ADDS an explicit override and never replaces that."""
     registry = load_registry_or_none(root)
     return S.specific_plane_repos(registry, self_repo) if registry else set()
 
@@ -1391,7 +1392,7 @@ def run_census(
     budget_seconds: float = 1500,
     check_registry: bool = False,
     root: Path = ROOT,
-    self_repo: str = "4444J99/limen",
+    self_repo: str | None = None,
     skip_archived: bool = False,
     rate_check_every_calls: int = RATE_CHECK_EVERY_CALLS,
 ) -> dict:
@@ -1494,7 +1495,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--check-registry", action="store_true", help="list active Actions schedules outside every schedules.yaml plane"
     )
-    ap.add_argument("--self-repo", default="4444J99/limen")
+    ap.add_argument(
+        "--self-repo",
+        default=None,
+        help="an extra repository to treat as registry-covered (the workflows plane's own repository is read from the registry itself)",
+    )
     ap.add_argument(
         "--skip-archived", action="store_true", help="skip archived repositories (their historical attempts go unread)"
     )
