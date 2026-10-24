@@ -30,9 +30,10 @@ WORKFLOWS_REL = Path(".github/workflows")
 SNAPSHOT_GLOB = "docs/receipts/claude-triggers-snapshot-*.json"
 # A sensor `cadence` is counted in BEATS (beat-sensors.py `_due`: `beat % cadence == 0`, or stamp age ≥
 # cadence × loop_max). The beat is adaptive (LIMEN_LOOP_MIN…LIMEN_LOOP_MAX seconds), so the only wall-clock
-# bound a cadence carries is its WORST case: cadence × LIMEN_LOOP_MAX. `cadence: 48` is 24h at the default
-# 1,800s ceiling — a daily sensor — never "48 hours".
+# bound for heartbeat sensors is cadence × LIMEN_LOOP_MAX. Fast-wave sensors use the independent
+# LIMEN_VITALS_SAMPLE_SECONDS period. `cadence: 48` is 24h at the heartbeat's default 1,800s ceiling.
 BEAT_LOOP_MAX_SECONDS = 1800
+FAST_WAVE_SECONDS = 300
 SECONDS_PER_HOUR = 3600
 
 PLANE_SURFACES = {"cron", "launchd", "ui", "ui+api", "api"}
@@ -257,6 +258,30 @@ def beats_to_hours(cadence_beats: int, loop_max: int) -> int:
     return max(1, -(-(cadence_beats * max(1, loop_max)) // SECONDS_PER_HOUR))
 
 
+def fast_wave_seconds() -> int:
+    """Match runner/canary period and env-file fallback without loading unrelated environment values."""
+    raw = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS")
+    if raw is None:
+        path = Path(os.environ.get("LIMEN_ENV_FILE", str(Path.home() / ".limen.env"))).expanduser()
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            lines = []
+        raw = ""
+        for line in lines:
+            key, separator, value = line.strip().removeprefix("export ").partition("=")
+            if separator and key.strip() == "LIMEN_VITALS_SAMPLE_SECONDS":
+                # Only digit values can survive the runner's validation. Honor quotes,
+                # whitespace-separated comments and the last assignment, without shell evaluation.
+                match = re.fullmatch(r"""(?:([0-9]+)|'([0-9]+)'|"([0-9]+)")(?:\s+#.*)?""", value.strip())
+                raw = next((part for part in match.groups() if part is not None), "") if match else ""
+    try:
+        value = int(raw) if re.fullmatch(r"[0-9]+", raw) else FAST_WAVE_SECONDS
+    except ValueError:
+        value = FAST_WAVE_SECONDS
+    return value if value > 0 else FAST_WAVE_SECONDS
+
+
 def _positive_int(spec, *, fallback: int | None = None) -> int | None:
     """Mirror beat-sensors.py's registry/env/default fallback order; parity is tested against the runner."""
     if spec is None:
@@ -295,7 +320,9 @@ def derive_sensor_jobs(
             continue
         default_beats = _positive_int(cadence.get("default") if isinstance(cadence, dict) else cadence)
         cadence_env = str(cadence.get("env") or "") if isinstance(cadence, dict) else ""
-        hours = beats_to_hours(beats, ceiling)
+        sources = list(sensor.get("source") or [])
+        period = fast_wave_seconds() if "fast-wave" in sources else ceiling
+        hours = beats_to_hours(beats, period)
         jobs.append(
             Job(
                 id=f"beat/{sid}",
@@ -309,8 +336,8 @@ def derive_sensor_jobs(
                 cadence_hours=hours,
                 cadence_beats=beats,
                 extra={
-                    "sources": list(sensor.get("source") or []),
-                    "loop_max_seconds": ceiling,
+                    "sources": sources,
+                    "loop_max_seconds": period,
                     "cadence_default_beats": default_beats,
                     "cadence_env": cadence_env,
                 },
