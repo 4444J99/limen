@@ -715,13 +715,14 @@ def history_from_git(clone: Path) -> dict:
         status, path = parts[0][0], parts[-1]
         change = {"A": "added", "D": "removed", "M": "modified", "R": "renamed"}.get(status, status)
         events.append({"at": at, "sha": sha[:10], "path": path, "change": change})
-    patches = _git(clone, *GIT_LOG, "--format=commit %H", "-p", "--", WORKFLOW_DIR) or ""
+    patches = _git(clone, *GIT_LOG, "--format=commit %H", "-p", *GIT_PATCH, "--", WORKFLOW_DIR) or ""
     # keyed by (commit, path): a commit that moves a cron in a.yml and edits a comment in b.yml must not hand
     # b.yml a scheduling attempt it never had
     added: dict[tuple[str, str], list[str]] = {}
     removed: dict[tuple[str, str], list[str]] = {}
     cur = None
     cur_path = None
+    unparsed_headers = 0
     for line in patches.splitlines():
         if line.startswith("commit "):
             cur = line.split(" ", 1)[1][:10]
@@ -729,6 +730,8 @@ def history_from_git(clone: Path) -> dict:
             continue
         if line.startswith("diff --git "):
             cur_path = _diff_header_path(line)
+            if cur_path is None:
+                unparsed_headers += 1  # loud, not silent: the crons under this header go unattributed
             continue
         if cur is None or cur_path is None or len(line) < 2 or line.startswith(("+++", "---")):
             continue
@@ -741,14 +744,21 @@ def history_from_git(clone: Path) -> dict:
         ev["crons_added"] = added.get((ev["sha"], ev["path"]), [])
         ev["crons_removed"] = removed.get((ev["sha"], ev["path"]), [])
     commits = {e["sha"] for e in events}
-    return {"source": "git", "status": OK, "commits_seen": len(commits), "truncated": False, "events": events}
+    out = {"source": "git", "status": OK, "commits_seen": len(commits), "truncated": False, "events": events}
+    if unparsed_headers:
+        out["status"], out["truncated"] = "partial", True
+        out["note"] = f"{unparsed_headers} diff header(s) unparsed: their cron changes are not attributed"
+    return out
 
 
 DIFF_HEADER_RX = re.compile(r'^diff --git (?:"a/.*?"|a/.*?) (?:"b/(.*)"|b/(.*))$')
 # core.quotePath=false: --name-status and the diff headers print the same raw UTF-8 path, so a workflow named
 # café.yml keys its cron changes by (commit, path) like any other (git would otherwise octal-escape one and not
 # the other)
-GIT_LOG = ("-c", "core.quotePath=false", "log", "--all", "--date-order")
+GIT_LOG = ("-c", "core.quotePath=false", "log", "--all", "--date-order", "--no-color")
+# the -p read pins the header shape too: a host whose diff.noprefix / diff.external / color.ui would otherwise
+# reshape `diff --git a/x b/x` must not silently un-attribute every cron change
+GIT_PATCH = ("--src-prefix=a/", "--dst-prefix=b/", "--no-ext-diff")
 
 
 def _diff_header_path(line: str) -> str | None:
@@ -1025,7 +1035,14 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
         channels["issues-prs"] = str(out["attempts"].get("status") or (OK if out["attempts"]["readable"] else ERROR))
 
     by = (out.get("fired") or {}).get("by_workflow") or {}
-    out["failing_workflows"] = sorted(n for n, v in by.items() if v.get("last_conclusion") in BAD_CONCLUSIONS)
+    firing = {
+        d.get("name")
+        for d in out["declarations"]
+        if d.get("kind") == "gh-workflow" and d.get("state") == "active" and d.get("crons")
+    }
+    bad = {n for n, v in by.items() if v.get("last_conclusion") in BAD_CONCLUSIONS}
+    out["failing_workflows"] = sorted(bad & firing)  # still scheduled and failing: a finding
+    out["failing_not_firing"] = sorted(bad - firing)  # disabled, retired or deleted since: history, never a finding
     out["actions_registered_not_in_tree"] = sorted(d["path"] for d in out["declarations"] if d.get("absent_from_tree"))
 
     if clone_is_full(clone):
