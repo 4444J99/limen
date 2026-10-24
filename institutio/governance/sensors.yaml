@@ -2545,9 +2545,10 @@ sensors:
     # only LIMEN_SCHEDULE_CENSUS_RETRY_HOURS): on every other metabolize pass it reads the receipt's age and
     # exits 0, so the hourly cost is one stat. Reads only. Unreachable is never "nothing scheduled", a partial
     # read never concludes absence; the receipt states universe / scanned (partial) / unreachable / unscanned /
-    # skipped / internal errors before any total, and a pass that read less than the standing receipt lands
-    # beside it as *.last-attempt.json, never over it.
+    # skipped / internal errors before any total, and a pass that would not replace the standing receipt by
+    # keeps_standing_receipt's rules (narrower than a universe census; within the receipt's horizon: another narrow
+    # scope, incomplete against complete, or lower complete coverage) lands beside it as *.last-attempt.json.
     steps:
       - command: "python3 scripts/schedule-census.py --check-registry --receipt logs/schedule-census.json"
         severity: advisory
-        escalation: "exit 1: the schedule census found allotment burning outside the registry (an Actions cron in a repository no schedules.yaml plane declares), schedules declared but never fired, firing but failing, or auto-disabled — read logs/schedule-census.md; declare each gap as a plane or as declared_off, re-enable or retire what GitHub switched off. exit 2: no finding, but coverage was incomplete (unreachable, unscanned or partial rows, or a universe short of an owner — a listing that failed or sat at its cap, a stale estate roster — all listed in the receipt). exit 3: read nothing. exit 4: the engine itself failed on a repository (receipt → internal_errors) — fix the census, not the repository"
+        escalation: "exit 1: the schedule census found allotment burning outside the registry (an Actions cron in a repository no schedules.yaml plane declares), schedules declared but never fired, firing but failing, or auto-disabled — read logs/schedule-census.md; declare each gap as a plane or as declared_off, re-enable or retire what GitHub switched off. exit 2: no finding, but coverage was incomplete (unreachable, unscanned or partial rows, or a universe short of an owner — a listing that failed or sat at its cap, a stale estate roster — or a scheduled workflow whose latest run lies beyond the summarized page — all listed in the receipt). exit 3: read nothing. exit 4: the engine itself failed on a repository (receipt → internal_errors) — fix the census, not the repository"

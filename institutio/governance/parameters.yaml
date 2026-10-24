@@ -6694,7 +6694,7 @@ parameters:
     env: LIMEN_SCHEDULE_CENSUS_INTERVAL_HOURS
     self_update: none
     owner: governance
-    note: "Wall-clock hours between censuses; a younger logs/schedule-census.json makes the sensor a no-op (--force overrides)."
+    note: "Wall-clock hours between censuses; a younger same-scope logs/schedule-census.json (or a same-scope *.last-attempt.json within LIMEN_SCHEDULE_CENSUS_RETRY_HOURS) makes the sensor a no-op (--force overrides)."
   LIMEN_SCHEDULE_CENSUS_RETRY_HOURS:
     default: 24
     env: LIMEN_SCHEDULE_CENSUS_RETRY_HOURS

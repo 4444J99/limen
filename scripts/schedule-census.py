@@ -27,10 +27,11 @@ Receipt: logs/schedule-census.json (atomic) + optional Markdown ledger. The orga
 interval (`--interval-hours`, default 168) so a metabolize-pass caller stays cheap between censuses; an
 incomplete receipt (read nothing; an owner whose repository listing failed; more than a quarter of the universe
 unreachable, unscanned, partially read or errored) earns only the shorter `--retry-hours` horizon. A pass is written
-beside the standing receipt as `*.last-attempt.json` instead of over it when it is narrower than a universe census,
-incomplete where the standing one is complete, or lower in complete coverage share — while that receipt is still
-within its horizon; past it, the newer pass is the census. A fresh receipt (or last attempt) answers only a request
-for the same scope.
+beside the standing receipt as `*.last-attempt.json` instead of over it when it is narrower than a universe census
+(at any age) or, while the standing receipt is within its horizon, of another narrow scope, incomplete where the
+standing one is complete, or lower in complete coverage share; past that horizon the newer pass is the census, and a
+complete pass always replaces an incomplete receipt. A fresh receipt (or last attempt) answers only a request for
+the same scope.
 
 Every repository row carries a per-channel read status; a row whose essential channels were not all read is
 `partial` and may confirm what it saw but never concludes absence. Exit codes: 0 clean and complete · 1 findings
@@ -1162,7 +1163,7 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
         int((out.get("fired") or {}).get("total_scheduled_runs") or 0) if isinstance(out.get("fired"), dict) else 0
     )
     page_runs = int((out.get("fired") or {}).get("page_runs") or 0) if isinstance(out.get("fired"), dict) else 0
-    seen_keys = set(by) | {str(v.get("name")) for v in by.values() if v.get("name")}
+    seen_keys = set(by)  # a run keys by path, by name only when it carried none: a twin's display name hides nothing
     out["runs_unmeasured"] = sorted(
         str(d.get("name") or d.get("path"))
         for d in timed_active
@@ -1199,8 +1200,9 @@ def scan_repo(repo: str, *, clone: Path | None = None, history_cap: int = 30, de
 def verdict_for_repo(row: dict) -> str:
     """One word per repository, from evidence only. unreachable ≠ none, and a partial read ≠ none.
 
-    Positive evidence wins in this order: an active Actions schedule (then: fired-unmeasured when the run listing
-    could not be read, declared-never-fired, firing-but-failing, active) → a disabled one (auto-disabled is a
+    Positive evidence wins in this order: an active Actions schedule (then: fired-unmeasured when the run listing,
+    or every live workflow's latest run, could not be read; declared-never-fired when no live workflow has a run in
+    the whole retained listing; firing-but-failing; active) → a disabled one (auto-disabled is a
     state GitHub passes only on scheduled workflows, so it stands without the cron lines; a manual disable or a
     fork disable needs them) → a declared cron whose state could not be verified → a schedule outside Actions →
     a cron removed in history → partial (something essential was not read) → none. A row whose only non-Actions
@@ -1221,7 +1223,12 @@ def verdict_for_repo(row: dict) -> str:
         by = fired.get("by_workflow") or {}
         firing = {d.get("path") for d in active} | {d.get("name") for d in active if d.get("name")}
         live = {k: v for k, v in by.items() if k in firing}  # a retired workflow's failures are history, not this
-        if live and all(v.get("last_conclusion") in BAD_CONCLUSIONS for v in live.values()):
+        if not live:
+            # no live schedule has a run on the summarized page: never fired (within retention) when that page is the
+            # whole listing; unmeasured when its latest run may sit on an unread page
+            whole = int(fired.get("page_runs") or 0) >= int(fired.get("total_scheduled_runs") or 0)
+            return "declared-never-fired" if whole else "fired-unmeasured"
+        if all(v.get("last_conclusion") in BAD_CONCLUSIONS for v in live.values()):
             return "firing-but-failing"
         return "active"
     if any(d.get("state") == "disabled_inactivity" for d in gh):
@@ -1630,24 +1637,30 @@ def keeps_standing_receipt(
     now: datetime | None = None,
 ) -> str | None:
     """Why this pass is parked beside the standing receipt (`*.last-attempt.json`) instead of replacing it — or None
-    when it replaces it. In order: a narrower pass (explicit set, repos file) never overwrites a universe receipt and
-    a universe pass always displaces a narrower one; a standing receipt past its own horizon is no longer standing;
-    an incomplete pass never replaces a complete receipt; and within one scope the complete coverage share
-    (scanned minus partial, over the universe) must not fall."""
+    when it replaces it. In order: a narrower pass (explicit set, repos file) never overwrites a universe receipt, at
+    any age, and a universe pass always displaces a narrower one; a standing receipt past its own horizon is no
+    longer standing; within that horizon a sibling narrow scope is parked, an incomplete pass never replaces a
+    complete receipt, a complete pass always replaces an incomplete one, and within one scope the complete coverage
+    share (scanned minus partial, over the universe) must not fall."""
     if previous is None:
         return None
     prev_scope = receipt_scope(previous)
     if prev_scope != scope:
         if scope[0] == "universe":
-            return None
-        return f"the standing receipt is a {prev_scope[0]} census and this pass a narrower {scope[0]} one"
+            return None  # a universe pass always displaces a narrower receipt
+        if prev_scope[0] == "universe":
+            return f"the standing receipt is a universe census and this pass a narrower {scope[0]} one"
     moment = now or datetime.now(timezone.utc)
     generated = _generated_at(previous)
     horizon = interval_hours if receipt_is_complete(previous) else min(interval_hours, retry_hours)
     if generated is None or moment - generated >= timedelta(hours=horizon):
         return None  # past its horizon the standing receipt is history; this pass is the census now
+    if prev_scope != scope:
+        return f"the standing receipt is another {prev_scope[0]} scope, still within its horizon"
     if receipt_is_complete(previous) and not receipt_is_complete(report):
         return "this pass is incomplete and the standing receipt (still within its horizon) is complete"
+    if receipt_is_complete(report) and not receipt_is_complete(previous):
+        return None  # a complete census outranks an incomplete one whatever the two universes' sizes
     share, previous_share = coverage_share(report), coverage_share(previous)
     if share < previous_share:
         return f"complete coverage {share:.0%} is below the standing receipt's {previous_share:.0%}"
@@ -1747,7 +1760,8 @@ def run_census(
 
 def exit_code_for(report: dict) -> int:
     """4 internal errors (fix the engine) · 3 read nothing · 1 findings on the scanned set · 2 no findings but
-    coverage incomplete (unreachable, unscanned, partial, an owner unlisted) · 0 clean and complete.
+    coverage incomplete (unreachable, unscanned, partial, an owner unlisted, or a scheduled workflow whose latest
+    run lies beyond the summarized page) · 0 clean and complete.
 
     Findings are read from the workflow-level totals as well as the repository verdicts: a verdict is one word per
     repository and `active` outranks an auto-disabled or failing schedule beside a healthy one — the totals
@@ -1762,7 +1776,13 @@ def exit_code_for(report: dict) -> int:
     )
     if report.get("registry_gaps") or workflow_findings or any(v in FINDING_VERDICTS for v in t["verdicts"]):
         return 1
-    if d["unreachable"] or d["unscanned_by_budget"] or d.get("scanned_partial") or d.get("universe_unlisted_owners"):
+    if (
+        d["unreachable"]
+        or d["unscanned_by_budget"]
+        or d.get("scanned_partial")
+        or d.get("universe_unlisted_owners")
+        or int(t.get("workflows_runs_unmeasured") or 0)
+    ):
         return 2
     return 0
 
