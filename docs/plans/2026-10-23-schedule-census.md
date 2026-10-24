@@ -41,6 +41,14 @@ PR: #3184
 
 Folded should-fixes: trailing-comma jsonc; rate guard keyed by API calls (every 50) with a 200-call floor; the budget deadline reaches inside `scan_repo` (remaining channels recorded `skipped:budget`); ledger sections for historical attempts, partial reads, notes, internal errors and skipped archived; `scheduled_runs_in_retention` → `scheduled_runs_listed`; repository metadata 404 → unreachable (missing, renamed, or not visible), never none.
 
+## Review round 2 (Codex on #3184, 2026-10-24) — five P2 findings, all verified by reading, all applied
+
+1. `history_from_git` keyed cron changes by commit alone, so a commit touching two workflows handed both the same cron change → keyed by (commit, path) from the `diff --git` headers; a comment-only edit beside a cron move carries no crons.
+2. `history_from_api` ran up to `--history-cap` sequential detail requests with no deadline (≈750 s past the budget at the 25 s timeout, inside the sensor's 1800 s kill) → the deadline reaches inside the sample (and the issues pager); the remainder is recorded `partial` with a budget note, never silently skipped.
+3. `exit_code_for` read findings from the one-word repository verdict only, so an auto-disabled or failing schedule beside a healthy active one exited 0 while the totals said otherwise → findings also derive from `gh_workflows_disabled_inactivity` and `workflows_failing_last_scheduled_run`.
+4. A failed `gh repo list <owner>` became an empty list and the reduced universe read as complete coverage for 168 h → `resolve_universe` returns the unlisted owners; they land in `denominators.universe_unlisted_owners`, the ledger and the receipt, make the receipt incomplete (retry horizon) and exit 2.
+5. `receipt_is_complete` ignored `scanned_partial`, so a transient outage that left every row partially read rested a week → partial rows count toward the unread share.
+
 ## Done predicate
 
 `bash scripts/run-pytest-hermetic.sh cli/tests/test_schedule_census.py -q` green; `python3 scripts/check-schedules.py`, `check-sensors.py`, `check-params.py`, `check-gates.py`, `check-runner-coverage.py` exit 0; on the host, `logs/schedule-census.json` exists with `denominators.scanned` equal to the universe, `scanned_partial`, `unscanned_by_budget` and `internal_errors` all 0.
