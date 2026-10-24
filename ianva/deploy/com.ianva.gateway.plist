@@ -15,7 +15,13 @@
 <dict>
   <key>Label</key>            <string>com.ianva.gateway</string>
   <key>ProgramArguments</key>
+  <!-- DomusAgentHost is argv[0]: launchd makes a job its own TCC responsible process, and the
+       rotating python/npx/uv/playwright descendants would otherwise mint a new privacy client per
+       interpreter path (2026-10 python3.15 rows). Same shape as com.limen.creds-hydrate. -->
   <array>
+    <string>/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost</string>
+    <string>run</string>
+    <string>--</string>
     <string>/bin/bash</string>
     <string>/Users/4jp/.local/share/limen/current/source/ianva/scripts/ianva-serve.sh</string>
   </array>

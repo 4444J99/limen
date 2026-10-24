@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import plistlib
 import shutil
 import sqlite3
 import subprocess
@@ -154,6 +155,7 @@ def test_disabled_baseline_versions_are_visible_but_not_active_leaks(tmp_path: P
         "active_leaks": 0,
         "visible_app_management_path_rows": 0,
         "unhosted_configured_ingresses": 0,
+        "unhosted_launch_agents": 0,
         # Revoked (auth_value 0) version-path grants are not future re-prompts.
         "rotating_identity_active_grants": 0,
         "unrelated": 1,
@@ -1184,3 +1186,70 @@ def test_documents_grant_on_a_version_path_is_caught_though_app_management_is_cl
     assert "rotating_identity_active_grants" in payload["failures"]
     assert payload["ok"] is False
     assert payload["status"] == "blocked"  # a real finding, never "unmeasured"
+
+
+def _launch_agent(env: dict[str, str], label: str, argv: list[str]) -> Path:
+    agents = Path(env["HOME"]) / "Library/LaunchAgents"
+    agents.mkdir(parents=True, exist_ok=True)
+    path = agents / f"{label}.plist"
+    with path.open("wb") as handle:
+        plistlib.dump({"Label": label, "ProgramArguments": argv}, handle)
+    return path
+
+
+def test_owned_launch_agents_must_enter_the_stable_host(tmp_path: Path):
+    """launchd makes a job its own responsible process: an unhosted interpreter argv[0] mints a
+    fresh TCC client each time that interpreter's path rotates (the 2026-10 heartbeat/brew rows)."""
+    env = _environment(tmp_path, [])
+    host = str(Path(env["HOME"]) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost")
+    _launch_agent(env, "com.limen.hosted", [host, "run", "--", "/bin/bash", "job.sh"])
+    _launch_agent(env, "com.limen.heartbeat", ["/runtime/venv/bin/limen", "heartbeat", "--once"])
+    _launch_agent(env, "com.ianva.gateway", ["/bin/bash", "ianva-serve.sh"])
+    _launch_agent(env, "com.github.domt4.homebrew-autoupdate", ["/path/brew_autoupdate"])
+    _launch_agent(env, "com.vendor.updater", ["/opt/vendor/updater"])  # not owned: out of scope
+
+    payload = AUDIT.audit(env, platform_name="Darwin")
+
+    predicate = payload["predicates"]["unhosted_launch_agents"]
+    assert predicate["ok"] is False
+    assert predicate["owned_count"] == 4
+    assert {item["label"] for item in predicate["agents"]} == {
+        "com.limen.heartbeat",
+        "com.ianva.gateway",
+        "com.github.domt4.homebrew-autoupdate",
+    }
+    assert all(item["reason"] == "missing_domus_agent_host_run" for item in predicate["agents"])
+    assert payload["summary"]["unhosted_launch_agents"] == 3
+    assert "unhosted_launch_agent" in payload["failures"]
+
+
+def test_launch_agent_host_check_rejects_an_impostor_and_a_bare_host(tmp_path: Path):
+    """Same basename elsewhere is not the host, and the host without `run --` hosts nothing."""
+    env = _environment(tmp_path, [])
+    impostor = str(tmp_path / "elsewhere/DomusAgentHost")
+    host = str(Path(env["HOME"]) / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost")
+    _launch_agent(env, "com.limen.impostor", [impostor, "run", "--", "/bin/true"])
+    _launch_agent(env, "com.limen.bare", [host, "status", "--json"])
+
+    predicate = AUDIT.audit(env, platform_name="Darwin")["predicates"]["unhosted_launch_agents"]
+    assert {item["label"] for item in predicate["agents"]} == {"com.limen.impostor", "com.limen.bare"}
+
+
+def test_unreadable_owned_launch_agent_is_a_violation_not_a_pass(tmp_path: Path):
+    env = _environment(tmp_path, [])
+    agents = Path(env["HOME"]) / "Library/LaunchAgents"
+    agents.mkdir(parents=True)
+    (agents / "com.limen.broken.plist").write_text("not a plist")
+
+    predicate = AUDIT.audit(env, platform_name="Darwin")["predicates"]["unhosted_launch_agents"]
+    assert predicate["agents"] == [{"label": "com.limen.broken", "program": "", "reason": "plist_unreadable"}]
+
+
+def test_launch_agent_report_never_carries_full_argv(tmp_path: Path):
+    """Job arguments can name token files; the predicate reports labels and basenames only."""
+    env = _environment(tmp_path, [])
+    _launch_agent(env, "com.limen.moneta-tunnel", ["/opt/homebrew/bin/cloudflared", "--token-file", "/secret/token"])
+
+    payload = AUDIT.audit(env, platform_name="Darwin")
+    assert "/secret/token" not in json.dumps(payload)
+    assert payload["predicates"]["unhosted_launch_agents"]["agents"][0]["program"] == "cloudflared"

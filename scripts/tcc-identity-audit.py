@@ -9,6 +9,7 @@ import json
 import math
 import os
 import platform
+import plistlib
 import re
 import sqlite3
 import subprocess
@@ -528,6 +529,79 @@ def _redacted_predicate_identity(item: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+# launchd starts a job as its own responsible process, so a job whose argv[0] is a rotating
+# interpreter (Homebrew/mise/uv python, node, git, portable ruby) becomes a fresh path-keyed TCC
+# client every time that interpreter's path rotates. DomusAgentHost does not disclaim, so it is
+# the stable identity exactly for launchd-started jobs -- the shape com.limen.creds-hydrate and
+# com.limen.claude-stub-heal already use. Owned jobs must start with it.
+OWNED_LAUNCH_AGENT_PREFIXES = ("com.limen.", "com.ianva.", "com.domus.", "org.organvm.")
+# Third-party jobs the estate has adopted: the homebrew-autoupdate tap is gone, so nothing else
+# owns this orphaned plist, and its brew -> portable ruby -> git/python chain mints a new client
+# with every upgrade (portable-ruby AppBundles rows, 2026-10-14 and 10-22).
+ADOPTED_LAUNCH_AGENT_LABELS = frozenset({"com.github.domt4.homebrew-autoupdate"})
+
+
+def _launch_agents_dir(env: Mapping[str, str]) -> Path:
+    if override := env.get("LIMEN_LAUNCH_AGENTS_DIR"):
+        return _expand_user_path(override, env)
+    return _home(env) / "Library/LaunchAgents"
+
+
+def _unhosted_launch_agents(env: Mapping[str, str]) -> tuple[list[dict[str, str]], int, bool]:
+    """Owned LaunchAgents whose argv does not begin with `DomusAgentHost run --`.
+
+    Returns (violations, owned_count, measured). A plist that cannot be parsed is a violation,
+    never a pass: an unreadable job is exactly one nobody can show is hosted. Only labels and
+    executable basenames are reported, never full argv (job arguments can carry token paths).
+    """
+    root = _launch_agents_dir(env)
+    if not root.exists():
+        return [], 0, True  # no LaunchAgents directory: nothing installed, nothing unhosted
+    try:
+        entries = sorted(root.glob("*.plist"))
+    except OSError:
+        return [], 0, False
+    expected_host = _stable_host_executable(env).resolve(strict=False)
+    violations: list[dict[str, str]] = []
+    owned = 0
+    for path in entries:
+        label = path.stem
+        if not (label.startswith(OWNED_LAUNCH_AGENT_PREFIXES) or label in ADOPTED_LAUNCH_AGENT_LABELS):
+            continue
+        owned += 1
+        try:
+            with path.open("rb") as handle:
+                document = plistlib.load(handle)
+        except (OSError, plistlib.InvalidFileException, ValueError):
+            violations.append({"label": label, "program": "", "reason": "plist_unreadable"})
+            continue
+        if not isinstance(document, dict):
+            violations.append({"label": label, "program": "", "reason": "plist_unreadable"})
+            continue
+        label = str(document.get("Label") or label)
+        arguments = document.get("ProgramArguments")
+        program = document.get("Program")
+        argv = [str(item) for item in arguments] if isinstance(arguments, list) else []
+        executable = str(program) if isinstance(program, str) and program else (argv[0] if argv else "")
+        # With `Program` set, ProgramArguments[0] is only argv[0]; the host's verbs follow it.
+        verbs = argv[1:3]
+        hosted = (
+            bool(executable)
+            and _expand_user_path(executable, env).resolve(strict=False) == expected_host
+            and verbs == ["run", "--"]
+            and len(argv) >= 4
+        )
+        if not hosted:
+            violations.append(
+                {
+                    "label": label,
+                    "program": Path(executable).name if executable else "",
+                    "reason": "missing_domus_agent_host_run",
+                }
+            )
+    return violations, owned, True
+
+
 def _configured_ingress_violations(
     env: Mapping[str, str],
 ) -> tuple[list[dict[str, str]], int]:
@@ -888,6 +962,7 @@ def audit(
                 "active_leaks": 0,
                 "visible_app_management_path_rows": 0,
                 "unhosted_configured_ingresses": 0,
+                "unhosted_launch_agents": 0,
                 "rotating_identity_active_grants": 0,
                 "unrelated": 0,
             },
@@ -907,6 +982,13 @@ def audit(
                     "count": 0,
                     "configured_count": 0,
                     "ingresses": [],
+                },
+                "unhosted_launch_agents": {
+                    "ok": True,
+                    "measured": False,
+                    "count": 0,
+                    "owned_count": 0,
+                    "agents": [],
                 },
                 "rotating_identity_active_grants": {
                     "ok": True,
@@ -1027,6 +1109,7 @@ def audit(
         if item.get("pattern") is not None and item["client_kind"] == "path" and item["active_services"]
     ]
     ingress_violations, configured_ingresses = _configured_ingress_violations(values)
+    launch_agent_violations, owned_launch_agents, launch_agents_measured = _unhosted_launch_agents(values)
 
     # Every database-derived predicate below reads an EMPTY `clients` when the TCC
     # database could not be read, and emptiness then reads as evidence: `active_leaks`
@@ -1061,6 +1144,14 @@ def audit(
             "configured_count": configured_ingresses,
             "ingresses": ingress_violations,
         },
+        "unhosted_launch_agents": {
+            # Plist-derived, like the ingress predicate: measurable even when TCC is blind.
+            "ok": launch_agents_measured and not launch_agent_violations,
+            "measured": launch_agents_measured,
+            "count": len(launch_agent_violations),
+            "owned_count": owned_launch_agents,
+            "agents": launch_agent_violations,
+        },
         "rotating_identity_active_grants": {
             "ok": db_measured and not rotating_grants,
             "measured": db_measured,
@@ -1086,6 +1177,7 @@ def audit(
             "active_leaks": len(active_leaks),
             "visible_app_management_path_rows": len(visible_path_rows),
             "unhosted_configured_ingresses": len(ingress_violations),
+            "unhosted_launch_agents": len(launch_agent_violations),
             "rotating_identity_active_grants": len(rotating_grants),
             "unrelated": unrelated,
         }
@@ -1103,6 +1195,10 @@ def audit(
         failures.append("stable_host_app_management_grant_missing")
     if ingress_violations:
         failures.append("unhosted_configured_ingress")
+    if launch_agent_violations:
+        failures.append("unhosted_launch_agent")
+    elif not launch_agents_measured:
+        failures.append("launch_agents_unreadable")
     if strict and not counts["stable_host"] and db_measured:
         failures.append("stable_host_tcc_identity_missing")
 
