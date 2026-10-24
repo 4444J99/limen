@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""schedule-utilization — every scheduler plane's allotment vs declared vs observed, as one gauge.
+"""schedule-utilization — audit inventory, bounded observations and separately evidenced capacity.
 
 Reads institutio/governance/schedules.yaml (the SCHEDULES registry) and, per enabled plane, answers
 three numbers and one verdict for the current UTC day:
 
   allotment   what the vendor/carrier allows (runs per window, or active-task cap)
   declared    what is scheduled against it (cron fires today, active jobs, or the plane's floor)
-  observed    what the plane's declared evidence shows actually happened (None = could not look)
+    observed    attributable execution evidence (None = unmeasured); configuration is separate
 
   verdict     full               observed covers declared (or the floor) — nothing on the floor
+              partial-evidence   bounded native collection or partial pages; never whole-plane full
               idle-by-design     the plane is declared idle on purpose
               unscheduled-headroom  fill_policy floor and fewer jobs/runs are declared than the floor
               underfilled        observed < declared × LIMEN_SCHEDULE_FILL_FLOOR, or < floor
@@ -36,6 +37,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -45,11 +49,19 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import _schedules as S  # noqa: E402
+from _schedule_reporting import capacity_report, read_native_snapshot  # noqa: E402
 
 RED_VERDICTS = {"dark", "underfilled", "unscheduled-headroom", "undeclared-off", "declared-off-but-active"}
 EXIT_RED = 1
-EXIT_STALE_READBACK = 3  # no red, but a plane WITH an evidence path could not be read (stale snapshot, dead witness, gh down)
+EXIT_STALE_READBACK = (
+    3  # no red, but a plane WITH an evidence path could not be read (stale snapshot, dead witness, gh down)
+)
 GH_TIMEOUT = 25
+_COLLECTION_DEADLINE: ContextVar[float | None] = ContextVar("schedule_collection_deadline", default=None)
+
+
+class CollectionDeadlineReached(TimeoutError):
+    """No remote read may consume the time reserved for publishing the sensor receipt."""
 
 
 def _env_float(name: str, default: float) -> float:
@@ -68,6 +80,37 @@ def _env_int(name: str, default: int) -> int:
     return value if value > 0 else default
 
 
+@contextmanager
+def _collection_budget():
+    # Share the existing sensor ceiling, leaving half for local readers and atomic receipt/history
+    # writes. A fresh evaluation gets a fresh budget; nested evaluations cannot extend their parent.
+    budget = min(60.0, _env_int("LIMEN_SCHEDULE_UTILIZATION_TIMEOUT", 120) / 2)
+    deadline = time.monotonic() + budget
+    parent_deadline = _COLLECTION_DEADLINE.get()
+    token = _COLLECTION_DEADLINE.set(min(deadline, parent_deadline) if parent_deadline is not None else deadline)
+    try:
+        yield
+    finally:
+        _COLLECTION_DEADLINE.reset(token)
+
+
+def _gh_timeout() -> float:
+    deadline = _COLLECTION_DEADLINE.get()
+    remaining = GH_TIMEOUT if deadline is None else min(GH_TIMEOUT, deadline - time.monotonic())
+    if remaining <= 0:
+        raise CollectionDeadlineReached("collection deadline reached")
+    return remaining
+
+
+def _run_gh(args: list[str]) -> subprocess.CompletedProcess | None:
+    timeout = _gh_timeout()
+    try:
+        return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, check=False)
+    except (OSError, subprocess.SubprocessError):
+        _gh_timeout()  # expose an exhausted shared budget, rather than starting another timeout
+        return None
+
+
 def gh_available() -> bool:
     return shutil.which("gh") is not None
 
@@ -76,11 +119,8 @@ def gh_json(args: list[str]) -> object | None:
     """Run gh and parse JSON; None on any failure (missing binary, auth, network)."""
     if not gh_available():
         return None
-    try:
-        run = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
-    except (OSError, subprocess.SubprocessError):
-        return None
-    if run.returncode != 0 or not run.stdout.strip():
+    run = _run_gh(args)
+    if run is None or run.returncode != 0 or not run.stdout.strip():
         return None
     try:
         return json.loads(run.stdout)
@@ -90,10 +130,16 @@ def gh_json(args: list[str]) -> object | None:
 
 # ── evidence readers: (plane_id, plane, jobs, today, root) -> (observed | None, detail) ────────
 
+
 def summarize_runs(rows: list) -> tuple[int, int]:
     """(successful, failed-or-cancelled) scheduled runs; an in-progress run counts as neither."""
     ok = sum(1 for r in rows if isinstance(r, dict) and r.get("conclusion") == "success")
-    bad = sum(1 for r in rows if isinstance(r, dict) and r.get("conclusion") in {"failure", "cancelled", "timed_out", "startup_failure", "action_required"})
+    bad = sum(
+        1
+        for r in rows
+        if isinstance(r, dict)
+        and r.get("conclusion") in {"failure", "cancelled", "timed_out", "startup_failure", "action_required"}
+    )
     return ok, bad
 
 
@@ -110,7 +156,9 @@ def workflow_states(repo: str) -> dict[str, str] | None:
     return out
 
 
-def read_gh_actions_runs(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
+def read_gh_actions_runs(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str, dict]:
     """Scheduled runs today across the plane's cron workflows. A workflow GitHub reports as disabled is
     NOT declared work (a deliberate off-switch is not a dropped slot) and is named in the detail instead."""
     repo = str(plane["evidence"].get("locator"))
@@ -121,6 +169,7 @@ def read_gh_actions_runs(plane_id: str, plane: dict, jobs: list[S.Job], today: d
         return None, f"cannot read workflow states for {repo}", {}
     total = 0
     failed = 0
+    truncated = False
     active: list[S.Job] = []
     disabled: list[str] = []
     declared_off = {str(row.get("file")): row for row in (plane.get("declared_off") or []) if isinstance(row, dict)}
@@ -129,7 +178,9 @@ def read_gh_actions_runs(plane_id: str, plane: dict, jobs: list[S.Job], today: d
     for job in jobs:
         if not job.enabled or not job.crons:
             continue
-        wf = job.extra.get("workflow_file") or (job.source.split(".github/workflows/", 1)[1] if ".github/workflows/" in job.source else None)
+        wf = job.extra.get("workflow_file") or (
+            job.source.split(".github/workflows/", 1)[1] if ".github/workflows/" in job.source else None
+        )
         if not wf:
             continue
         state = states.get(wf, "unknown")
@@ -140,9 +191,27 @@ def read_gh_actions_runs(plane_id: str, plane: dict, jobs: list[S.Job], today: d
             continue
         if wf in declared_off:
             rotten_off.append(wf)
-        rows = gh_json(["run", "list", "--repo", repo, "--workflow", wf, "--event", "schedule", "--created", today.isoformat(), "--json", "conclusion", "--limit", "100"])
-        if rows is None:
+        rows = gh_json(
+            [
+                "run",
+                "list",
+                "--repo",
+                repo,
+                "--workflow",
+                wf,
+                "--event",
+                "schedule",
+                "--created",
+                today.isoformat(),
+                "--json",
+                "conclusion",
+                "--limit",
+                "100",
+            ]
+        )
+        if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
             return None, f"gh run list failed for {repo} {wf}", {}
+        truncated = truncated or len(rows) >= 100
         active.append(job)
         ok, bad = summarize_runs(rows if isinstance(rows, list) else [])
         total += ok
@@ -154,7 +223,11 @@ def read_gh_actions_runs(plane_id: str, plane: dict, jobs: list[S.Job], today: d
         detail += f"; {failed} fired-but-failed (a run that dies is a run left on the floor)"
     if disabled:
         detail += f"; declared off, not counted: {', '.join(sorted(disabled))}"
-    extra: dict = {"declared_jobs": active}
+    extra: dict = {
+        "declared_jobs": active,
+        "measurement_kind": "execution",
+        "coverage": "partial" if truncated else "complete",
+    }
     if undeclared_off:
         extra["override"] = "undeclared-off"
         detail += f"; UNDECLARED OFF (nobody owns the switch): {', '.join(sorted(undeclared_off))}"
@@ -170,9 +243,8 @@ PRESENT, ABSENT, UNREADABLE = "present", "absent", "unreadable"
 def _gh_api(path: str) -> tuple[int, object | None]:
     """(exit code, parsed stdout JSON or None). `gh api` prints the error body to stdout on an HTTP error, so
     the body survives for inspection; -1 means gh itself could not run."""
-    try:
-        run = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
-    except (OSError, subprocess.SubprocessError):
+    run = _run_gh(["api", path])
+    if run is None:
         return -1, None
     try:
         return run.returncode, json.loads(run.stdout) if run.stdout.strip() else None
@@ -181,7 +253,9 @@ def _gh_api(path: str) -> tuple[int, object | None]:
 
 
 def _is_404(payload: object) -> bool:
-    return isinstance(payload, dict) and (str(payload.get("status", "")) == "404" or payload.get("message") == "Not Found")
+    return isinstance(payload, dict) and (
+        str(payload.get("status", "")) == "404" or payload.get("message") == "Not Found"
+    )
 
 
 def _gh_contents(repo: str, rel: str) -> tuple[str | None, str]:
@@ -250,7 +324,9 @@ def read_bookend_tsv(plane_id: str, plane: dict, jobs: list[S.Job], today: date,
 _WITNESS_ROW_RX = re.compile(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([\w-]+)\s*\|\s*(yes|no)\s*\|\s*(yes|no)\s*\|", re.M)
 
 
-def read_witness_audit(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
+def read_witness_audit(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str]:
     locator = str(plane["evidence"].get("locator"))  # "owner/repo:audit"
     repo, _, folder = locator.partition(":")
     clone = S.sibling_root(repo, dict(os.environ), Path.home())
@@ -260,7 +336,11 @@ def read_witness_audit(plane_id: str, plane: dict, jobs: list[S.Job], today: dat
     else:
         listing = gh_json(["api", f"repos/{repo}/contents/{folder}"])
         if isinstance(listing, list):
-            names = sorted(str(e.get("name")) for e in listing if isinstance(e, dict) and str(e.get("name", "")).endswith("-witness.md"))
+            names = sorted(
+                str(e.get("name"))
+                for e in listing
+                if isinstance(e, dict) and str(e.get("name", "")).endswith("-witness.md")
+            )
     if not names:
         return None, f"no *-witness.md readable in {repo}:{folder}"
     newest = names[-1]
@@ -297,7 +377,10 @@ def read_voice_stamps(plane_id: str, plane: dict, jobs: list[S.Job], today: date
     if not ever_stamped:
         # The directory exists (a sensor run or hook created it) but no heartbeat has ever stamped here:
         # this checkout is not a beating host, so there is nothing to score.
-        return None, f"{voice} holds no stamps at all — no heartbeat beats on this checkout (CI or worktree) — unmeasured"
+        return (
+            None,
+            f"{voice} holds no stamps at all — no heartbeat beats on this checkout (CI or worktree) — unmeasured",
+        )
     daily = [j for j in jobs if j.cadence_hours and j.cadence_hours <= 24]
     now_ts = datetime.now(timezone.utc).timestamp()
     current = 0
@@ -331,7 +414,7 @@ def _stamp_bound_seconds(job: S.Job) -> float:
     return (job.cadence_hours or 1) * S.SECONDS_PER_HOUR * 2
 
 
-def read_claude_snapshot(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
+def read_claude_snapshot(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple:
     path, snapshot = S.newest_snapshot(root)
     if path is None or snapshot is None:
         return None, "no claude-triggers snapshot receipt — export one from an interactive session (list_triggers)"
@@ -343,7 +426,11 @@ def read_claude_snapshot(plane_id: str, plane: dict, jobs: list[S.Job], today: d
     rows = [r for r in snapshot.get("triggers") or [] if isinstance(r, dict) and r.get("routine") in contracted]
     enabled = sum(1 for r in rows if r.get("enabled"))
     denied = sum(1 for r in rows if (r.get("last_run_failure_reason") or "") == "ACCESS_DENIED")
-    return enabled, f"{enabled}/{len(contracted)} contracted routines enabled in {path.name} ({age}d old); {denied} last failed ACCESS_DENIED"
+    return (
+        None,
+        f"{enabled}/{len(contracted)} contracted routines enabled in {path.name} ({age}d old); {denied} last failed ACCESS_DENIED; configuration only, execution unmeasured",
+        {"configured_enabled": enabled, "measurement_kind": "configuration", "coverage": "partial"},
+    )
 
 
 def _as_utc(stamp: object) -> datetime | None:
@@ -403,7 +490,9 @@ def is_public_projection(data: object) -> bool:
     return not data.get("tasks") and isinstance(portal, dict) and "public_projection" in portal
 
 
-def read_board_dispatch_receipts(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
+def read_board_dispatch_receipts(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str]:
     board = board_path(root, str(plane["evidence"].get("locator")))
     if not board.exists():
         return None, f"{board} absent"
@@ -442,7 +531,9 @@ def read_board_dispatch_receipts(plane_id: str, plane: dict, jobs: list[S.Job], 
     )
 
 
-def read_issue_comments(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
+def read_issue_comments(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str]:
     locator = str(plane["evidence"].get("locator"))  # "owner/repo#N"
     repo, _, number = locator.partition("#")
     if not gh_available():
@@ -450,7 +541,7 @@ def read_issue_comments(plane_id: str, plane: dict, jobs: list[S.Job], today: da
     rows = gh_json(["api", f"repos/{repo}/issues/{number}/comments?since={today.isoformat()}T00:00:00Z&per_page=100"])
     if not isinstance(rows, list):
         return None, f"cannot read comments on {locator}"
-    return len(rows), f"{len(rows)} comment(s) on {locator} today (delivery signal, not a run count)"
+    return None, f"{len(rows)} comment(s) on {locator} today; attribution, acceptance and delivery unverified"
 
 
 def read_none(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
@@ -467,11 +558,16 @@ def read_none(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: 
         return None, detail + " (no declared_on date; readback budget cannot be applied)", {"readback_overdue": True}
     age = (today - since).days
     if age > budget:
-        return None, f"{detail}; unmeasured for {age}d, past the {budget}d readback budget (L-SCHED-READBACKS)", {"readback_overdue": True}
+        return (
+            None,
+            f"{detail}; unmeasured for {age}d, past the {budget}d readback budget (L-SCHED-READBACKS)",
+            {"readback_overdue": True},
+        )
     return None, f"{detail}; {budget - age}d of readback budget left", {}
 
 
 READERS = {
+    "native-snapshot": read_native_snapshot,
     "gh-actions-runs": read_gh_actions_runs,
     "bookend-tsv": read_bookend_tsv,
     "witness-audit": read_witness_audit,
@@ -484,6 +580,7 @@ READERS = {
 
 
 # ── declared counts ───────────────────────────────────────────────────────────────────────────
+
 
 def _fires_so_far(job: S.Job, today: date, now: datetime) -> int:
     """Cron fires on `today` that have already come due — a half-elapsed day is compared to half its fires."""
@@ -501,7 +598,8 @@ def declared_for(plane: dict, jobs: list[S.Job], today: date, now: datetime) -> 
     kind = (plane.get("evidence") or {}).get("kind")
     enabled = [j for j in jobs if j.enabled]
     if window == "active-tasks":
-        return len(enabled)
+        inventory = plane.get("native_inventory") or {}
+        return inventory.get("enabled_count", len(enabled))
     if window == "rolling-24h" and plane.get("fill_policy") == "floor":
         return int(plane.get("floor") or 0)
     if kind == "claude-snapshot":
@@ -520,6 +618,9 @@ def verdict_for(plane: dict, declared: int, observed: int | None, fill_floor: fl
     policy = plane.get("fill_policy")
     if policy == "idle-by-design":
         return "idle-by-design"
+    kind = (plane.get("evidence") or {}).get("kind")
+    if kind in {"issue-comments", "native-snapshot", "claude-snapshot", "board-dispatch-receipts"}:
+        return "unmeasured" if observed is None else "partial-evidence"
     floor = int(plane.get("floor") or 0) if policy == "floor" else 0
     if policy == "floor" and declared < floor and (plane.get("allotment") or {}).get("window") != "rolling-24h":
         return "unscheduled-headroom"
@@ -529,9 +630,6 @@ def verdict_for(plane: dict, declared: int, observed: int | None, fill_floor: fl
         return "idle-by-design"
     if observed == 0:
         return "dark"
-    kind = (plane.get("evidence") or {}).get("kind")
-    if kind == "issue-comments":
-        return "full"  # any delivery today is the signal; comment counts are not run counts
     if policy == "floor" and observed < floor:
         return "underfilled"
     if observed < declared * fill_floor:
@@ -539,9 +637,22 @@ def verdict_for(plane: dict, declared: int, observed: int | None, fill_floor: fl
     return "full"
 
 
-def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datetime | None = None) -> dict:
+@_collection_budget()
+def evaluate(
+    root: Path,
+    today: date,
+    *,
+    readers: dict | None = None,
+    now: datetime | None = None,
+    registry_path: Path | None = None,
+    snapshot_path: Path | None = None,
+) -> dict:
     now = now or datetime.now(timezone.utc)
-    registry = S.load_registry(root)
+    registry = S.load_registry(root, registry_path)
+    if snapshot_path:
+        for plane in registry.get("planes", {}).values():
+            if (plane.get("evidence") or {}).get("kind") == "native-snapshot":
+                plane["evidence"]["locator"] = str(snapshot_path.resolve())
     jobs = S.all_jobs(root, registry)
     readers = readers or READERS
     fill_floor = _env_float("LIMEN_SCHEDULE_FILL_FLOOR", 0.5)
@@ -557,6 +668,8 @@ def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datet
             result = reader(pid, plane, plane_jobs, today, root)
             observed, detail = result[0], result[1]
             extra = result[2] if len(result) > 2 and isinstance(result[2], dict) else {}
+        except CollectionDeadlineReached:
+            observed, detail = None, "collection deadline reached — unmeasured, not zero"
         except Exception as exc:  # a broken reader is an unmeasured plane, never a crash of the beat
             observed, detail = None, f"reader error: {exc.__class__.__name__}: {exc}"
         readback_overdue = bool(extra.get("readback_overdue"))
@@ -564,21 +677,30 @@ def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datet
         declared = declared_for(plane, declared_jobs if isinstance(declared_jobs, list) else plane_jobs, today, now)
         allot = plane.get("allotment") or {}
         verdict = verdict_for(plane, declared, observed, fill_floor)
+        if extra.get("coverage") in {"partial", "unknown"} and verdict == "full":
+            verdict = "partial-evidence"
         if extra.get("override") in RED_VERDICTS:
             verdict = str(extra["override"])
         runs_cap = allot.get("runs")
         # declared is a RUN count only for cron-fire planes and an active-task count for active-task planes;
         # for job-matched evidence kinds (witness rows, snapshot rows, bookend jobs, voice stamps) it is a job
         # count in a different unit from the allotment, so no gap is computed rather than a wrong one.
-        same_unit = allot.get("window") == "active-tasks" or (allot.get("window") == "calendar-day" and kind in {"gh-actions-runs", "issue-comments", "none"})
+        same_unit = allot.get("window") == "active-tasks" or (
+            allot.get("window") == "calendar-day" and kind in {"gh-actions-runs", "issue-comments", "none"}
+        )
         allocation_gap = (runs_cap - declared) if isinstance(runs_cap, int) and same_unit else None
-        execution_gap = (declared - observed) if isinstance(observed, int) else None
+        execution_gap = (declared - observed) if isinstance(observed, int) and kind != "native-snapshot" else None
         planes.append(
             {
                 "plane": pid,
                 "provider": plane.get("provider"),
                 "surface": plane.get("surface"),
                 "allotment": allot.get("runs"),
+                "capacity": capacity_report(plane, now),
+                "measurement_kind": extra.get("measurement_kind", "execution" if observed is not None else "unknown"),
+                "coverage": extra.get("coverage", "unknown"),
+                "native_counts": extra.get("native_counts"),
+                "configured_enabled": extra.get("configured_enabled"),
                 "window": allot.get("window"),
                 "entitlement": allot.get("entitlement"),
                 "declared": declared,
@@ -607,6 +729,8 @@ def evaluate(root: Path, today: date, *, readers: dict | None = None, now: datet
         "day": today.isoformat(),
         "as_of": now.isoformat(timespec="seconds"),
         "status": status,
+        "operational_readiness": "degraded" if red else "unverified",
+        "coverage_gaps": registry.get("coverage_gaps", []),
         "measured": f"{len(measured)}/{len(measurable)}",
         "red": [p["plane"] for p in red],
         "unmeasured": [p["plane"] for p in unmeasured],
@@ -629,7 +753,19 @@ def write_receipt(path: Path, report: dict, history: Path | None) -> None:
     if history is not None:
         with open(history, "a", encoding="utf-8") as fh:
             for plane in report["planes"]:
-                fh.write(json.dumps({"ts": report["generated_at"], "day": report["day"], **{k: plane[k] for k in ("plane", "allotment", "window", "declared", "observed", "verdict")}}, sort_keys=True) + "\n")
+                fh.write(
+                    json.dumps(
+                        {
+                            "ts": report["generated_at"],
+                            "day": report["day"],
+                            **{
+                                k: plane[k] for k in ("plane", "allotment", "window", "declared", "observed", "verdict")
+                            },
+                        },
+                        sort_keys=True,
+                    )
+                    + "\n"
+                )
 
 
 def print_table(report: dict) -> None:
@@ -641,7 +777,9 @@ def print_table(report: dict) -> None:
     for p in report["planes"]:
         obs = "—" if p["observed"] is None else str(p["observed"])
         allot = "—" if p["allotment"] is None else str(p["allotment"])
-        print(f"{p['plane']:28} {allot:>6} {str(p['window']):13} {p['declared']:>5} {obs:>5}  {p['verdict']:21} {p['detail']}")
+        print(
+            f"{p['plane']:28} {allot:>6} {str(p['window']):13} {p['declared']:>5} {obs:>5}  {p['verdict']:21} {p['detail']}"
+        )
         if p["verdict"] in RED_VERDICTS:
             print(f"  ↑ {p['plane']} is {p['verdict']} — effector: {p['effector']}")
 
@@ -649,13 +787,17 @@ def print_table(report: dict) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--root", default=str(ROOT))
+    parser.add_argument("--registry", type=Path, help="offline registry override; relative locators use --root")
+    parser.add_argument("--snapshot", type=Path, help="bounded private native metadata snapshot override")
     parser.add_argument("--day", default=None, help="UTC day to evaluate (YYYY-MM-DD; default today)")
-    parser.add_argument("--receipt", default=None, help="write the JSON receipt here (atomic) and append history beside it")
+    parser.add_argument(
+        "--receipt", default=None, help="write the JSON receipt here (atomic) and append history beside it"
+    )
     parser.add_argument("--json", action="store_true", help="print the report as JSON instead of a table")
     args = parser.parse_args(argv)
     root = Path(args.root)
     today = date.fromisoformat(args.day) if args.day else datetime.now(timezone.utc).date()
-    report = evaluate(root, today)
+    report = evaluate(root, today, registry_path=args.registry, snapshot_path=args.snapshot)
     report["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     if args.receipt:
         receipt = Path(args.receipt)
