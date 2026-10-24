@@ -1947,6 +1947,30 @@ def test_census_floor_is_unmeasured_from_a_targeted_census_or_a_universe_short_o
     assert priv["readback_overdue"] is False and "explicit_scope 1" in priv["detail"]
 
 
+def test_fleet_rows_join_their_runs_by_path_first_then_by_name(tmp_path):
+    write_fleet_root(tmp_path, FLEET_PLANES, receipt=FLEET_RECEIPT)
+    _, by_name = _fleet_eval(tmp_path)
+    baseline = by_name["github-actions-fleet-private"]
+    # the census keys the run summary by workflow path from #3196 on: the join is exact even when every workflow
+    # in the repository shares one display name (which a name join would have to call ambiguous)
+    receipt = json.loads(json.dumps(FLEET_RECEIPT))
+    for repo in receipt["repos"]:
+        by = (repo.get("fired") or {}).get("by_workflow") or {}
+        keyed = {}
+        for d in repo["declarations"]:
+            if d.get("kind") == "gh-workflow" and d.get("name") in by:
+                keyed[d["path"]] = {**by[d["name"]], "name": "same"}
+            if d.get("kind") == "gh-workflow":
+                d["name"] = "same"
+        if repo.get("fired"):
+            repo["fired"]["by_workflow"] = keyed
+    write_receipt(tmp_path, receipt)
+    _, by_path = _fleet_eval(tmp_path)
+    priv = by_path["github-actions-fleet-private"]
+    assert (priv["declared"], priv["observed"]) == (baseline["declared"], baseline["observed"])
+    assert "0 ambiguous" in priv["detail"]
+
+
 def test_launchctl_reader_honours_the_receipt_state(tmp_path, monkeypatch):
     monkeypatch.setattr(UTIL.shutil, "which", lambda name: "/bin/launchctl" if name == "launchctl" else None)
 

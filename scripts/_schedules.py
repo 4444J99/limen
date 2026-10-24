@@ -810,7 +810,9 @@ def derive_census_jobs(
                 path = str(d.get("path") or "")
                 name = d.get("name")
                 state = str(d.get("state") or "unknown")
-                ambiguous = not isinstance(name, str) or names.count(name) > 1
+                # the run summary is keyed by workflow path from #3196 on (exact join, never ambiguous) and by display
+                # name on older receipts (ambiguous when two files share a name)
+                ambiguous = path not in by_workflow and (not isinstance(name, str) or names.count(name) > 1)
                 crons = [str(c) for c in d["crons"]]
                 unparseable: list[str] = []
                 for c in crons:
@@ -837,7 +839,8 @@ def derive_census_jobs(
                             "workflow_file": Path(path).name,
                             "partial": partial,
                             "fires_per_day": d.get("fires_per_day"),
-                            "fired": by_workflow.get(name) if isinstance(name, str) and not ambiguous else None,
+                            "fired": by_workflow.get(path)
+                            or (by_workflow.get(name) if isinstance(name, str) and not ambiguous else None),
                             "fired_oldest_seen": fired_row.get("oldest_seen"),
                             "fired_oldest_page_read": bool(fired_row.get("oldest_page_read")),
                             "fired_page_oldest_seen": fired_row.get("page_oldest_seen"),
