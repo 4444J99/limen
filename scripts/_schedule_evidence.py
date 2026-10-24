@@ -90,6 +90,49 @@ def _observed(value):
     return value
 
 
+def validate_account_binding(binding, profile, *, source, account_ref, rows, now):
+    """Check a caller-attested fresh profile against a pinned private source identity.
+
+    This validates supplied evidence, not connector authentication. No historical
+    alias is inferred and no normalized row or stored observation is rewritten.
+    """
+    binding_keys = {"schema", "source", "provider", "surface", "account_ref", "profile_provider",
+                    "principal_sha256", "evidence_ref", "bound_at"}
+    profile_keys = {"schema", "provider", "principal_id", "observed_at", "evidence_ref"}
+    if (not isinstance(binding, dict) or set(binding) != binding_keys
+            or binding.get("schema") != "limen.schedule_account_binding.v1"
+            or not isinstance(profile, dict) or set(profile) != profile_keys
+            or profile.get("schema") != "limen.schedule_profile_observation.v1"):
+        raise ValueError("invalid account binding or profile observation")
+    for value in (*binding.values(), *profile.values()):
+        _ref(value, required=True)
+    bound_at, observed_at = _time(binding["bound_at"]), _time(profile["observed_at"])
+    if (bound_at is None or bound_at > now or observed_at is None
+            or not 0 <= (now - observed_at).total_seconds() <= 900):
+        raise ValueError("account profile is not fresh")
+    native_scope = {"chatgpt": ("chatgpt", "tasks", "chatgpt"),
+                    "grok-email": ("grok", "automations_email", "gmail")}.get(source)
+    if (binding["source"] != source or binding["account_ref"] != account_ref
+            or profile["provider"] != binding["profile_provider"]
+            or (native_scope is not None and native_scope != (
+                binding["provider"], binding["surface"], binding["profile_provider"]))
+            or any((row["provider"], row["surface"], row["account_ref"]) != (
+                binding["provider"], binding["surface"], binding["account_ref"]) for row in rows)):
+        raise ValueError("account binding scope mismatch")
+    principal_digest = hashlib.sha256(
+        (profile["provider"] + "\0" + profile["principal_id"]).encode("utf-8")
+    ).hexdigest()
+    if (not re.fullmatch("[0-9a-f]{64}", binding["principal_sha256"])
+            or principal_digest != binding["principal_sha256"]):
+        raise ValueError("account principal mismatch")
+    return {"status": "matched", "authentication": "caller-attested",
+            "source": source, "provider": binding["provider"], "surface": binding["surface"],
+            "account_ref": account_ref, "principal_sha256": principal_digest,
+            "binding_sha256": _hash(binding), "profile_observation_sha256": _hash(profile),
+            "profile_observed_at": profile["observed_at"],
+            "binding_evidence_ref": binding["evidence_ref"], "profile_evidence_ref": profile["evidence_ref"]}
+
+
 def _content(value):
     if not isinstance(value, (str, bytes)):
         raise ValueError("artifact content must be text or bytes")

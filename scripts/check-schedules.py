@@ -557,7 +557,19 @@ def main(argv: list[str] | None = None) -> int:
     derived = S.derived_jobs(root, registry)
     declared = S.declared_jobs(registry)
     jobs = derived + declared
+    for job in derived:
+        cadence_env = job.extra.get("cadence_env")
+        default_beats = job.extra.get("cadence_default_beats")
+        if cadence_env and job.cadence_beats != default_beats:
+            advise(
+                "B",
+                f"{job.id}: cadence override {cadence_env}={job.cadence_beats} beats "
+                f"(registry default {default_beats}; worst-case {job.cadence_hours}h)",
+            )
     if args.slot_map:
+        if not args.quiet:
+            for advisory in _advisories:
+                print(f"  · {advisory}")
         day = date.fromisoformat(args.day) if args.day else datetime.now(timezone.utc).date()
         print_slot_map(registry, jobs, day, compact=args.compact)
         return 0

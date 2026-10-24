@@ -37,6 +37,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -54,6 +57,11 @@ EXIT_STALE_READBACK = (
     3  # no red, but a plane WITH an evidence path could not be read (stale snapshot, dead witness, gh down)
 )
 GH_TIMEOUT = 25
+_COLLECTION_DEADLINE: ContextVar[float | None] = ContextVar("schedule_collection_deadline", default=None)
+
+
+class CollectionDeadlineReached(TimeoutError):
+    """No remote read may consume the time reserved for publishing the sensor receipt."""
 
 
 def _env_float(name: str, default: float) -> float:
@@ -72,6 +80,37 @@ def _env_int(name: str, default: int) -> int:
     return value if value > 0 else default
 
 
+@contextmanager
+def _collection_budget():
+    # Share the existing sensor ceiling, leaving half for local readers and atomic receipt/history
+    # writes. A fresh evaluation gets a fresh budget; nested evaluations cannot extend their parent.
+    budget = min(60.0, _env_int("LIMEN_SCHEDULE_UTILIZATION_TIMEOUT", 120) / 2)
+    deadline = time.monotonic() + budget
+    parent_deadline = _COLLECTION_DEADLINE.get()
+    token = _COLLECTION_DEADLINE.set(min(deadline, parent_deadline) if parent_deadline is not None else deadline)
+    try:
+        yield
+    finally:
+        _COLLECTION_DEADLINE.reset(token)
+
+
+def _gh_timeout() -> float:
+    deadline = _COLLECTION_DEADLINE.get()
+    remaining = GH_TIMEOUT if deadline is None else min(GH_TIMEOUT, deadline - time.monotonic())
+    if remaining <= 0:
+        raise CollectionDeadlineReached("collection deadline reached")
+    return remaining
+
+
+def _run_gh(args: list[str]) -> subprocess.CompletedProcess | None:
+    timeout = _gh_timeout()
+    try:
+        return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, check=False)
+    except (OSError, subprocess.SubprocessError):
+        _gh_timeout()  # expose an exhausted shared budget, rather than starting another timeout
+        return None
+
+
 def gh_available() -> bool:
     return shutil.which("gh") is not None
 
@@ -80,11 +119,8 @@ def gh_json(args: list[str]) -> object | None:
     """Run gh and parse JSON; None on any failure (missing binary, auth, network)."""
     if not gh_available():
         return None
-    try:
-        run = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
-    except (OSError, subprocess.SubprocessError):
-        return None
-    if run.returncode != 0 or not run.stdout.strip():
+    run = _run_gh(args)
+    if run is None or run.returncode != 0 or not run.stdout.strip():
         return None
     try:
         return json.loads(run.stdout)
@@ -207,9 +243,8 @@ PRESENT, ABSENT, UNREADABLE = "present", "absent", "unreadable"
 def _gh_api(path: str) -> tuple[int, object | None]:
     """(exit code, parsed stdout JSON or None). `gh api` prints the error body to stdout on an HTTP error, so
     the body survives for inspection; -1 means gh itself could not run."""
-    try:
-        run = subprocess.run(["gh", "api", path], capture_output=True, text=True, timeout=GH_TIMEOUT, check=False)
-    except (OSError, subprocess.SubprocessError):
+    run = _run_gh(["api", path])
+    if run is None:
         return -1, None
     try:
         return run.returncode, json.loads(run.stdout) if run.stdout.strip() else None
@@ -602,6 +637,7 @@ def verdict_for(plane: dict, declared: int, observed: int | None, fill_floor: fl
     return "full"
 
 
+@_collection_budget()
 def evaluate(
     root: Path,
     today: date,
@@ -632,6 +668,8 @@ def evaluate(
             result = reader(pid, plane, plane_jobs, today, root)
             observed, detail = result[0], result[1]
             extra = result[2] if len(result) > 2 and isinstance(result[2], dict) else {}
+        except CollectionDeadlineReached:
+            observed, detail = None, "collection deadline reached — unmeasured, not zero"
         except Exception as exc:  # a broken reader is an unmeasured plane, never a crash of the beat
             observed, detail = None, f"reader error: {exc.__class__.__name__}: {exc}"
         readback_overdue = bool(extra.get("readback_overdue"))

@@ -8,7 +8,7 @@ import importlib.util
 import json
 import os
 import stat
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -856,3 +856,359 @@ def test_malformed_publication_is_rejected_without_report_crash(publication):
         U.capacity_report({"allotment": allotment}, datetime(2026, 10, 23, tzinfo=timezone.utc))["published_ceiling"]
         is None
     )
+
+
+# Account binding and actual local CLI receipt regressions.
+
+
+def _identity_write_json(path, value):
+    path.write_text(json.dumps(value))
+    path.chmod(0o600)
+    return path
+
+
+@pytest.fixture
+def identity_collection(tmp_path):
+    private = tmp_path / "private"
+    private.mkdir(mode=0o700)
+    now = datetime.now(timezone.utc)
+    stamp = now.isoformat()
+    principal = "PRIVATE_PRINCIPAL_DO_NOT_PRINT"
+    binding = {
+        "schema": "limen.schedule_account_binding.v1",
+        "source": "grok-email",
+        "provider": "grok",
+        "surface": "automations_email",
+        "account_ref": "private:stable-mailbox",
+        "profile_provider": "gmail",
+        "principal_sha256": hashlib.sha256(("gmail\0" + principal).encode()).hexdigest(),
+        "evidence_ref": "private:profile-binding",
+        "bound_at": stamp,
+    }
+    profile = {
+        "schema": "limen.schedule_profile_observation.v1",
+        "provider": "gmail",
+        "principal_id": principal,
+        "observed_at": stamp,
+        "evidence_ref": "private:profile-readback",
+    }
+    source = [
+        {
+            "id": "PRIVATE_MESSAGE_DO_NOT_PRINT",
+            "threadId": "PRIVATE_THREAD_DO_NOT_PRINT",
+            "internalDate": "1792778400000",
+            "payload": {
+                "headers": [{"name": "From", "value": "noreply@x.ai"}],
+                "mimeType": "text/plain",
+                "body": {"content": "PRIVATE_BODY_DO_NOT_PRINT"},
+            },
+        }
+    ]
+    _identity_write_json(private / "binding.json", binding)
+    _identity_write_json(private / "profile.json", profile)
+    _identity_write_json(private / "source.json", source)
+    return {
+        "private": private,
+        "binding": binding,
+        "profile": profile,
+        "stamp": stamp,
+        "window_start": (now - timedelta(days=1)).isoformat(),
+        "principal": principal,
+    }
+
+
+def _identity_collect_args(c, *, account="private:stable-mailbox", strict=True):
+    private = c["private"]
+    args = [
+        "collect",
+        "--source",
+        "grok-email",
+        "--input",
+        private / "source.json",
+        "--db",
+        private / "evidence.db",
+        "--observed-at",
+        c["stamp"],
+        "--account-ref",
+        account,
+        "--owner-ref",
+        "private:owner",
+    ]
+    if strict:
+        args += ["--account-binding", private / "binding.json", "--profile-observation", private / "profile.json"]
+    return args
+
+
+def _identity_export_snapshot(c, filename="export.json", *extra):
+    target = c["private"] / filename
+    run = cli("export", "--db", c["private"] / "evidence.db", "--output", target, *extra)
+    assert run.returncode == 0, run.stderr
+    return json.loads(target.read_text())
+
+
+def _identity_assert_redacted(run, c):
+    text = run.stdout + run.stderr
+    for value in (
+        c["principal"],
+        "PRIVATE_BODY_DO_NOT_PRINT",
+        "PRIVATE_MESSAGE_DO_NOT_PRINT",
+        "private:stable-mailbox",
+        str(c["private"]),
+    ):
+        assert value not in text
+
+
+def test_strict_collect_repeats_deduplicate_and_receipt_records_local_execution(identity_collection):
+    c = identity_collection
+    receipts = []
+    for index, expected in enumerate(({"inserted": 1, "deduplicated": 0}, {"inserted": 0, "deduplicated": 1})):
+        path = c["private"] / f"collect-{index}.json"
+        run = cli(
+            *_identity_collect_args(c),
+            "--receipt",
+            path,
+            "--window-start",
+            c["window_start"],
+            "--window-end",
+            c["stamp"],
+        )
+        assert run.returncode == 0, run.stderr
+        assert json.loads(run.stdout) == {"status": "ok", **expected}
+        _identity_assert_redacted(run, c)
+        receipt = json.loads(path.read_text())
+        assert receipt["schema"] == "limen.schedule_collection_execution.v1"
+        assert receipt["evidence_kind"] == "local-cli-self-report"
+        assert receipt["operation_outcome"] == {"status": "ok", "exit_code": 0}
+        assert receipt["account_binding"]["status"] == "matched"
+        assert receipt["account_binding"]["authentication"] == "caller-attested"
+        assert receipt["input_sha256"] == hashlib.sha256((c["private"] / "source.json").read_bytes()).hexdigest()
+        assert receipt["caller_attested"]["source_window"] == {"start": c["window_start"], "end": c["stamp"]}
+        assert datetime.fromisoformat(receipt["finished_at"]) >= datetime.fromisoformat(receipt["started_at"])
+        assert receipt["source_files"] == {
+            name: hashlib.sha256((SCRIPTS / name).read_bytes()).hexdigest()
+            for name in ("schedule-collect.py", "_schedule_evidence.py")
+        }
+        assert c["principal"] not in path.read_text()
+        assert "PRIVATE_BODY_DO_NOT_PRINT" not in path.read_text()
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+        receipts.append(receipt)
+    snapshot = _identity_export_snapshot(c)
+    assert len(snapshot["observations"]) == 1
+    ids = [snapshot["observations"][0]["observation_id"]]
+    assert receipts[0]["observation_ids"] == receipts[1]["observation_ids"] == ids
+    assert receipts[0]["invocation_id"] != receipts[1]["invocation_id"]
+
+
+@pytest.mark.parametrize(
+    "changed",
+    ["label", "principal", "provider", "surface", "source", "stale", "future", "missing-profile", "missing-binding"],
+)
+def test_strict_mismatch_fails_before_database_mutation_and_writes_failure_receipt(identity_collection, changed):
+    c = identity_collection
+    args = _identity_collect_args(c)
+    if changed == "label":
+        args[args.index("--account-ref") + 1] = "private:invented-new-label"
+    elif changed in ("principal", "stale", "future"):
+        if changed == "principal":
+            c["profile"]["principal_id"] = "PRIVATE_WRONG_PRINCIPAL"
+        else:
+            offset = timedelta(hours=-1 if changed == "stale" else 1)
+            c["profile"]["observed_at"] = (datetime.now(timezone.utc) + offset).isoformat()
+        _identity_write_json(c["private"] / "profile.json", c["profile"])
+    elif changed in ("provider", "surface", "source"):
+        c["binding"][changed] = "wrong-scope"
+        _identity_write_json(c["private"] / "binding.json", c["binding"])
+    else:
+        flag = "--profile-observation" if changed == "missing-profile" else "--account-binding"
+        index = args.index(flag)
+        del args[index : index + 2]
+    receipt = c["private"] / "rejected.json"
+    run = cli(*args, "--receipt", receipt)
+    assert run.returncode == 2
+    assert json.loads(run.stderr)["status"] == "error"
+    _identity_assert_redacted(run, c)
+    assert not (c["private"] / "evidence.db").exists()
+    report = json.loads(receipt.read_text())
+    assert report["operation_outcome"] == {"status": "error", "exit_code": 2}
+    assert report["observation_ids"] == []
+
+
+def test_strict_binding_never_relabels_or_collapses_unbound_history(identity_collection):
+    c = identity_collection
+    for account in ("private:stable-mailbox", "private:distinct-mailbox"):
+        run = cli(*_identity_collect_args(c, account=account, strict=False))
+        assert run.returncode == 0, run.stderr
+    original = _identity_export_snapshot(c, "before.json")
+    run = cli(*_identity_collect_args(c), "--receipt", c["private"] / "strict.json")
+    assert run.returncode == 0, run.stderr
+    after = _identity_export_snapshot(c, "after.json")
+    assert after == original
+    assert len(after["observations"]) == 2
+    assert {row["account_ref"] for row in after["observations"]} == {
+        "private:stable-mailbox",
+        "private:distinct-mailbox",
+    }
+
+
+def test_export_receipt_binds_actual_written_snapshot_and_reports_conflict(identity_collection):
+    c = identity_collection
+    assert cli(*_identity_collect_args(c)).returncode == 0
+    receipt = c["private"] / "export-receipt.json"
+    snapshot = _identity_export_snapshot(c, "export.json", "--receipt", receipt)
+    body = (c["private"] / "export.json").read_bytes()
+    result = json.loads(receipt.read_text())
+    assert result["command"] == "export"
+    assert result["export_sha256"] == hashlib.sha256(body).hexdigest()
+    assert result["result"]["observations"] == len(snapshot["observations"]) == 1
+    failed = c["private"] / "failed-export.json"
+    run = cli(
+        "export",
+        "--db",
+        c["private"] / "evidence.db",
+        "--output",
+        c["private"] / "export.json",
+        "--expected-sha256",
+        "0" * 64,
+        "--receipt",
+        failed,
+    )
+    assert run.returncode == 2
+    assert (c["private"] / "export.json").read_bytes() == body
+    error_receipt = json.loads(failed.read_text())
+    assert error_receipt["operation_outcome"] == {"status": "error", "exit_code": 2}
+    assert error_receipt["export_sha256"] is None
+
+
+@pytest.mark.parametrize("target", ["existing", "database", "input"])
+def test_receipt_collision_cannot_overwrite_private_inputs_or_create_database(identity_collection, target):
+    c = identity_collection
+    paths = {
+        "existing": c["private"] / "old-receipt.json",
+        "database": c["private"] / "evidence.db",
+        "input": c["private"] / "source.json",
+    }
+    receipt = paths[target]
+    if target == "existing":
+        receipt.write_text("prior receipt")
+    original = receipt.read_bytes() if receipt.exists() else None
+    run = cli(*_identity_collect_args(c), "--receipt", receipt)
+    assert run.returncode == 2
+    assert json.loads(run.stderr)["status"] == "error"
+    assert not (c["private"] / "evidence.db").exists()
+    assert receipt.read_bytes() == original if original is not None else not receipt.exists()
+
+
+def test_invalid_window_cannot_commit_collection(identity_collection):
+    c = identity_collection
+    run = cli(
+        *_identity_collect_args(c),
+        "--receipt",
+        c["private"] / "bad-window.json",
+        "--window-start",
+        c["stamp"],
+        "--window-end",
+        c["window_start"],
+    )
+    assert run.returncode == 2
+    assert not (c["private"] / "evidence.db").exists()
+    assert json.loads((c["private"] / "bad-window.json").read_text())["operation_outcome"]["status"] == "error"
+
+
+def test_empty_binding_arguments_cannot_silently_disable_strict_collection(identity_collection):
+    c = identity_collection
+    run = cli(
+        *_identity_collect_args(c, strict=False),
+        "--account-binding",
+        "",
+        "--profile-observation",
+        "",
+        "--receipt",
+        c["private"] / "empty-binding.json",
+    )
+    assert run.returncode == 2
+    assert not (c["private"] / "evidence.db").exists()
+    assert json.loads((c["private"] / "empty-binding.json").read_text())["operation_outcome"]["status"] == "error"
+
+
+@pytest.mark.parametrize("options", [("--receipt", ""), ("--window-start", "", "--window-end", "")])
+def test_empty_requested_receipt_or_window_fails_before_collection(identity_collection, options):
+    c = identity_collection
+    run = cli(*_identity_collect_args(c), *options)
+    assert run.returncode == 2
+    assert not (c["private"] / "evidence.db").exists()
+
+
+def test_export_mismatching_readback_is_uncertain_not_a_success_receipt(tmp_path, monkeypatch, capsys):
+    path, _ = snapshot(tmp_path)
+    target = path.parent / "export.json"
+    receipt = path.parent / "execution.json"
+    replace = K.os.replace
+
+    def external_replacement(source, destination):
+        replace(source, destination)
+        if Path(destination) == target:
+            target.write_text('{"external_replacement": true}')
+
+    monkeypatch.setattr(K.os, "replace", external_replacement)
+    result = K.main(
+        ["export", "--db", str(path.parent / "store.db"), "--output", str(target), "--receipt", str(receipt)]
+    )
+    assert result == 2
+    public = json.loads(capsys.readouterr().err)
+    assert public["status"] == "error" and public["commit_state"] == "uncertain"
+    assert "readback mismatch" in public["error"]
+    report = json.loads(receipt.read_text())
+    assert report["operation_outcome"] == {"status": "error", "exit_code": 2}
+    assert report["export_sha256"] is None
+
+
+@pytest.mark.parametrize("suffix", ["-journal", "-wal", "-shm"])
+def test_execution_receipt_cannot_occupy_sqlite_sidecars(identity_collection, suffix):
+    c = identity_collection
+    receipt = c["private"] / ("evidence.db" + suffix)
+    run = cli(*_identity_collect_args(c), "--receipt", receipt)
+    assert run.returncode == 2
+    assert not (c["private"] / "evidence.db").exists()
+    assert not receipt.exists()
+
+
+def test_receipt_lock_cannot_create_database_before_identity_rejection(identity_collection):
+    c = identity_collection
+    c["profile"]["principal_id"] = "wrong-principal"
+    _identity_write_json(c["private"] / "profile.json", c["profile"])
+    args = _identity_collect_args(c)
+    database = c["private"] / ".invocation.lock"
+    args[args.index("--db") + 1] = database
+    run = cli(*args, "--receipt", c["private"] / "invocation")
+    assert run.returncode == 2
+    assert not database.exists()
+
+
+def test_receipt_publication_failure_keeps_operation_outcome_separate_from_cli_exit(tmp_path, monkeypatch, capsys):
+    path, _ = snapshot(tmp_path)
+    target = path.parent / "export.json"
+    receipt = path.parent / "execution.json"
+    replace, fsync = K.os.replace, K.os.fsync
+    receipt_replacements = []
+
+    def observe_replace(source, destination):
+        replace(source, destination)
+        if Path(destination) == receipt:
+            receipt_replacements.append(destination)
+
+    def fail_final_receipt_sync(descriptor):
+        if len(receipt_replacements) == 2 and stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            raise OSError("synthetic terminal receipt sync failure")
+        fsync(descriptor)
+
+    monkeypatch.setattr(K.os, "replace", observe_replace)
+    monkeypatch.setattr(K.os, "fsync", fail_final_receipt_sync)
+    result = K.main(
+        ["export", "--db", str(path.parent / "store.db"), "--output", str(target), "--receipt", str(receipt)]
+    )
+    assert result == 2
+    assert json.loads(capsys.readouterr().err)["status"] == "error"
+    report = json.loads(receipt.read_text())
+    assert report["operation_outcome"] == {"status": "ok", "exit_code": 0}
+    assert "outcome" not in report
+    assert report["export_sha256"] == hashlib.sha256(target.read_bytes()).hexdigest()

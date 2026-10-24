@@ -93,6 +93,93 @@ python3 scripts/schedule-collect.py import --db PRIVATE_DB --input PRIVATE_UNION
 python3 scripts/schedule-collect.py export --db PRIVATE_DB --output PRIVATE_NEW_SNAPSHOT
 ```
 
+### Strict account binding
+
+For a source with authenticated principal readback, supply **both** `--account-binding` and
+`--profile-observation` to `collect`. The optional mode preserves existing unbound callers when
+both arguments are omitted; a configured source must require the pair in its native collector
+prompt. Missing or empty arguments, wrong source/provider/surface/account, a different principal,
+or stale profile evidence fail before opening the evidence database. Existing observations are
+never relabelled or merged. Matching Gmail message IDs or digests do not establish account aliases;
+historical label drift without authenticated provenance remains unresolved.
+
+Both inputs belong in the dedicated private directory. The binding has exactly these fields
+(replace the example references and digest with the actual private evidence):
+
+```json
+{
+  "schema": "limen.schedule_account_binding.v1",
+  "source": "grok-email",
+  "provider": "grok",
+  "surface": "automations_email",
+  "account_ref": "private:stable-mailbox",
+  "profile_provider": "gmail",
+  "principal_sha256": "64-lowercase-hex-digits",
+  "evidence_ref": "private:account-binding-evidence",
+  "bound_at": "2026-10-24T00:00:00Z"
+}
+```
+
+Compute `principal_sha256` as SHA256 of the UTF-8 bytes of
+`profile_provider + "\u0000" + principal_id`. Use the stable ID returned by the authenticated
+profile operation, without inventing an ID from task names or message matches. The fresh profile
+observation has exactly these fields:
+
+```json
+{
+  "schema": "limen.schedule_profile_observation.v1",
+  "provider": "gmail",
+  "principal_id": "private-authenticated-principal-id",
+  "observed_at": "2026-10-24T00:01:00Z",
+  "evidence_ref": "private:exact-profile-tool-readback"
+}
+```
+
+The observation must be no more than **900 seconds old** and not future-dated against the actual
+CLI clock; `--observed-at` cannot extend that freshness window. The binding date must also not be
+in the future. Native Grok email requires profile provider `gmail`; native ChatGPT tasks require
+`chatgpt`. If authenticated principal access is unavailable for a source, retain that limitation
+instead of manufacturing a profile. Generic artifact bindings must match every normalized row's
+provider, surface and account. The CLI checks the consistency and freshness of **caller-attested
+inputs**; it does not authenticate the connector itself. Preserve the actual profile tool result
+privately so the account claim can be checked independently.
+
+### Local execution receipts
+
+`collect` and `export` accept `--receipt PRIVATE_NEW_RECEIPT`. Each invocation requires a new
+unused private path, distinct from its inputs, database and export. Collection additionally accepts
+paired `--window-start` and `--window-end` timestamps; the start must precede the end. These window
+bounds describe the caller's requested read and do not prove pagination or source coverage.
+
+```bash
+python3 scripts/schedule-collect.py collect --source grok-email --input PRIVATE_READBACK_JSON --db PRIVATE_DB --observed-at ISO_WITH_TIMEZONE --account-ref OPAQUE_ACCOUNT --owner-ref OWNER --account-binding PRIVATE_BINDING_JSON --profile-observation PRIVATE_FRESH_PROFILE_JSON --window-start ISO_START --window-end ISO_END --receipt PRIVATE_NEW_COLLECT_RECEIPT
+python3 scripts/schedule-collect.py export --db PRIVATE_DB --output PRIVATE_NEW_SNAPSHOT --receipt PRIVATE_NEW_EXPORT_RECEIPT
+```
+
+The `limen.schedule_collection_execution.v1` receipt identifies itself as
+`local-cli-self-report`. It records a unique invocation, actual start/finish times, hashes of the
+CLI and evidence module, outcome and counts, and up to the collection limit of 1,000 observation
+IDs. `input_sha256` hashes the exact byte buffer parsed for collection. A matched binding contributes
+its scope and evidence digests without exposing the raw principal. Source observation time, source
+window and profile authentication remain explicitly caller-attested. Successful export records
+`export_sha256` only after comparing the local readback with the exact serialized bytes written.
+A mismatching readback returns `commit_state: uncertain`; it is not a successful export receipt.
+
+The CLI reserves a `started` receipt before evidence operations and atomically updates that same
+invocation on completion. A crash can leave it `started`; failed receipt publication returns an
+error and evidence operations may already have committed. Re-read durable state before retrying;
+do not treat a missing terminal receipt as proof that nothing happened. Normal stdout/stderr remains
+counts/status only. Save the actual execution-tool result and separately verify remote snapshot,
+archive and receipt versions/digests. Receipt JSON alone cannot prove pinned code ran in a native
+scheduled occurrence. If execution is unavailable, preserve the previous normalized union and record
+an incomplete attempt instead of hand-authoring normalized observations or claiming execution.
+
+`operation_outcome` describes the evidence operation **before receipt publication**, not the final
+CLI exit. A terminal receipt can already be visible when its directory sync fails and the CLI exits
+2. Always take the actual process exit from the execution-tool result. The receipt target and its
+lock must also avoid the database's `-journal`, `-wal` and `-shm` sidecars and the export lock; these
+collisions are rejected before creating any of those paths.
+
 Generic artifacts require explicit provider, surface, account, owner, source and native identities,
 coverage and attribution evidence. CLI account/owner scope must match the payload. Imported text
 never executes shell instructions or creates work. Collection does not execute owner predicates.
