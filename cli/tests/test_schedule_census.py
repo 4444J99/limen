@@ -517,7 +517,7 @@ def test_verdict_matrix():
 # ── history from a real full clone ───────────────────────────────────────────────────────────
 
 
-def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_path):
+def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_path, monkeypatch):
     repo = tmp_path / "r"
     repo.mkdir()
     wf = repo / ".github" / "workflows"
@@ -557,6 +557,20 @@ def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_pat
     ]
     # a non-ASCII name keys its crons like any other: git prints it raw in both listings (core.quotePath=false)
     assert [c for c in changes if c[0] == "café.yml"] == [("café.yml", "added", ["5 4 * * *"], [])]
+    # a host gitconfig that reshapes diff headers (noprefix, colour) cannot silently un-attribute the crons
+    gc = tmp_path / "gitconfig"
+    gc.write_text("[diff]\n\tnoprefix = true\n[color]\n\tui = always\n")
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(gc))
+    pinned = C.history_from_git(repo)
+    assert pinned["status"] == C.OK and [
+        (e["change"], e["crons_added"], e["crons_removed"])
+        for e in pinned["events"]
+        if e["path"].endswith("nightly.yml")
+    ] == [("removed", [], ["15 2 * * *"]), ("modified", ["15 2 * * *"], ["0 2 * * *"]), ("added", ["0 2 * * *"], [])]
+    monkeypatch.setattr(C, "_diff_header_path", lambda line: None)
+    loud = C.history_from_git(repo)
+    assert loud["status"] == "partial" and loud["truncated"] is True and "diff header(s) unparsed" in loud["note"]
+    monkeypatch.undo()  # the parser stub above must not reach the unit checks below
     assert C._diff_header_path('diff --git "a/w s.yml" "b/w s.yml"') == "w s.yml"
     assert (
         C._diff_header_path("diff --git a/old.yml b/new.yml") == "new.yml" and C._diff_header_path("index 1..2") is None
@@ -813,6 +827,53 @@ def test_exit_codes_tell_engine_errors_from_read_nothing_from_findings_from_part
     assert "Internal errors (the engine" in C.render_markdown(report)
 
 
+def test_failing_runs_of_workflows_no_longer_firing_are_history_not_findings(monkeypatch):
+    repo = "4444J99/one"
+    table = _clean_table(repo)
+    table[f"repos/{repo}/issues?state=all&per_page=100&page=1&sort=created&direction=desc"] = (C.OK, [])
+    nightly = ".github/workflows/nightly.yml"
+    wf_key = f"repos/{repo}/actions/workflows?per_page=100&page=1"
+    wf = table[wf_key][1]
+    table[wf_key] = (
+        C.OK,
+        {
+            **wf,
+            "workflows": wf["workflows"]
+            + [{"path": nightly, "state": "disabled_manually", "name": "nightly", "id": 9}],
+        },
+    )
+    tree_key = f"repos/{repo}/git/trees/main?recursive=1"
+    tree = table[tree_key][1]
+    table[tree_key] = (C.OK, {**tree, "tree": tree["tree"] + [{"type": "blob", "path": nightly}]})
+    table[f"repos/{repo}/contents/{nightly}?ref=main"] = (C.OK, _b64(WORKFLOW_CRON))
+    runs_key = f"repos/{repo}/actions/runs?event=schedule&per_page=100"
+
+    def runs(hygiene: str) -> tuple:
+        rows = [
+            {"name": "nightly", "created_at": "2026-10-24T01:00:00Z", "conclusion": "failure"},  # disabled since
+            {"name": "hygiene", "created_at": "2026-10-23T13:36:00Z", "conclusion": hygiene},
+        ]
+        return C.OK, {"total_count": len(rows), "workflow_runs": rows}
+
+    table[runs_key] = runs("success")
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["verdict"] == "active" and row["partial"] is False
+    assert row["failing_workflows"] == [] and row["failing_not_firing"] == ["nightly"]
+    report = C.build_report(
+        [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
+    )
+    assert report["totals"]["workflows_failing_last_scheduled_run"] == 0 and C.exit_code_for(report) == 0
+    # the healthy sibling failing is still a finding beside the active verdict (round-2 fix 3 holds)
+    table[runs_key] = runs("failure")
+    row = C.scan_repo(repo)
+    assert row["failing_workflows"] == ["hygiene"] and row["failing_not_firing"] == ["nightly"]
+    report = C.build_report(
+        [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
+    )
+    assert report["totals"]["workflows_failing_last_scheduled_run"] == 1 and C.exit_code_for(report) == 1
+
+
 def test_partial_reads_never_conclude_absence(monkeypatch):
     repo = "4444J99/one"
     # the tree could not be listed: nothing about carriers is known, so the verdict is partial, not none
@@ -928,11 +989,25 @@ def test_history_sampling_and_the_attempts_pager_stop_at_the_census_deadline(mon
     att = C.read_attempts(repo, call, pages=3, deadline=5.0)  # page 1 is always read; page 2 is past the deadline
     assert len(pages) == 1 and att["status"] == "partial" and att["truncated"] is True and len(att["items"]) == 100
     assert att["note"] == "issues listing stopped after 1 page(s): census budget reached"
-    # through scan_repo the stopped history is recorded on the row, never read as a quiet history
+    # scan_repo hands its deadline to both readers, and a stopped history lands on the row as partial
     clock["t"] = 0.0
     fake.calls.clear()
+    seen: dict[str, float | None] = {}
+    real_history, real_attempts = C.history_from_api, C.read_attempts
+
+    def spy_history(*a, **k):
+        seen["history"] = k.get("deadline")
+        return {**real_history(*a, **k), "status": "partial", "truncated": True}
+
+    def spy_attempts(*a, **k):
+        seen["attempts"] = k.get("deadline")
+        return real_attempts(*a, **k)
+
+    monkeypatch.setattr(C, "history_from_api", spy_history)
+    monkeypatch.setattr(C, "read_attempts", spy_attempts)
     row = C.scan_repo(repo, deadline=10_000.0)
-    assert row["channels"]["history"] == "api" and row["history"]["status"] == C.OK
+    assert seen == {"history": 10_000.0, "attempts": 10_000.0}
+    assert row["channels"]["history"] == "api:partial" and row["history"]["truncated"] is True
 
 
 def test_workflow_listing_is_paginated(monkeypatch):
