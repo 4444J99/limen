@@ -249,6 +249,11 @@ def test_every_carrier_kind_parses_and_a_carrier_without_a_schedule_is_no_declar
         "daily 04:00"
     ]
     assert C.parse_renovate('{"schedule": ["after 10pm"]}') == ["after 10pm"]
+    # a schedule may live on a package rule, not the root — the checked-in renovate.json does exactly that
+    assert C.parse_renovate('{"packageRules": [{"schedule": ["before 6am on monday"]}, {"groupName": "x"}]}') == [
+        "before 6am on monday"
+    ]
+    assert C.parse_renovate('{"schedule": ["a"], "packageRules": [{"schedule": ["a", "b"]}]}') == ["a", "b"]
     assert C.parse_cloud_routines('{"routines": [{"cron": "0 9 * * *"}, {"name": "x"}]}') == 1
     assert C.parse_manifest("{ name: 'a', maxInvocationsPerDay: 6,\n schedule: '0 1,5 * * *' }")[0] == {
         "name": "a",
@@ -464,7 +469,7 @@ def test_verdict_matrix():
         return base
 
     def wf(state, crons=("0 1 * * *",)):
-        return {"kind": "gh-workflow", "path": "w.yml", "state": state, "crons": list(crons)}
+        return {"kind": "gh-workflow", "path": "w.yml", "state": state, "crons": list(crons), "name": "w"}
 
     assert C.verdict_for_repo(row(reach=C.UNREACHABLE)) == "unreachable"
     assert C.verdict_for_repo(row(declarations=[wf("disabled_manually")])) == "manually-disabled"
@@ -486,6 +491,14 @@ def test_verdict_matrix():
         "by_workflow": {"w": {"last_conclusion": "success"}, "v": {"last_conclusion": "failure"}},
     }
     assert C.verdict_for_repo(row(declarations=[wf("active")], fired=fired_ok)) == "active"
+    # failures that belong only to a retired workflow are history: the live schedule is not firing-but-failing
+    retired_bad = {"total_scheduled_runs": 5, "by_workflow": {"old": {"last_conclusion": "failure"}}}
+    assert C.verdict_for_repo(row(declarations=[wf("active")], fired=retired_bad)) == "active"
+    both_bad = {
+        "total_scheduled_runs": 5,
+        "by_workflow": {"old": {"last_conclusion": "failure"}, "w": {"last_conclusion": "failure"}},
+    }
+    assert C.verdict_for_repo(row(declarations=[wf("active")], fired=both_bad)) == "firing-but-failing"
     # abandoned needs a cron actually removed — a deleted lint workflow is not a schedule attempt
     assert C.verdict_for_repo(row(history={"events": [{"change": "removed", "crons_removed": ["0 2 * * *"]}]})) == (
         "abandoned-in-history"
@@ -677,8 +690,10 @@ def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_pa
     assert C.resolve_universe(["a/b"], None, tmp_path / "none.json") == ([{"repo": "a/b"}], "explicit", [])
     f = tmp_path / "repos.txt"
     f.write_text("# comment\na/b\n\nc/d\n")
+    f.write_text("# comment\na/b\n\nc/d\na/b\n")  # listed twice: one repository
     rows, src, unlisted = C.resolve_universe([], f, tmp_path / "none.json")
     assert [r["repo"] for r in rows] == ["a/b", "c/d"] and src.startswith("repos-file:") and unlisted == []
+    assert "workflow files only" in C.CHANNELS["gh-workflow-history"]
     cache = tmp_path / "estate-repos.json"
     cache.write_text(
         json.dumps(
@@ -693,6 +708,11 @@ def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_pa
             }
         )
     )
+
+    def never_live(owners=None):
+        raise AssertionError("a fresh cache must not list live")
+
+    monkeypatch.setattr(C, "universe_from_gh_repo_list", never_live)
     rows, src, unlisted = C.resolve_universe([], None, cache)
     assert (
         [r["repo"] for r in rows] == ["4444J99/a", "4444J99/z"]
@@ -700,6 +720,7 @@ def test_universe_resolution_prefers_explicit_then_file_then_estate_cache(tmp_pa
         and src.startswith("estate-cache:")
         and unlisted == []
     )
+    monkeypatch.undo()
     # a name listed twice is one repository, scanned and counted once
     assert C.resolve_universe(["a/b", "a/b", "c/d"], None, tmp_path / "none.json")[0] == [
         {"repo": "a/b"},
@@ -913,10 +934,14 @@ def test_an_unread_history_is_coverage_incomplete_but_a_read_one_is_not(monkeypa
         [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
     )
     assert report["denominators"]["scanned_partial"] == 1 and C.exit_code_for(report) == 2
-    # a listing that answers 404 is an observation (no commits touched the workflow dir): read, not partial
+    # no commits touched the workflow dir: the Commits API answers 200 [] — read, not partial
+    table[listing] = (C.OK, [])
+    row = C.scan_repo(repo)
+    assert row["channels"]["history"] == "api" and row["partial"] is False
+    # a 404 there is not an observation about commits (the repository or the token's view of it is gone): partial
     del table[listing]
     row = C.scan_repo(repo)
-    assert row["channels"]["history"] == "api:absent" and row["partial"] is False
+    assert row["channels"]["history"] == "api:absent" and row["partial"] is True
 
 
 def test_runs_are_grouped_by_workflow_path_and_failing_joins_on_it(monkeypatch):
@@ -953,17 +978,76 @@ def test_runs_are_grouped_by_workflow_path_and_failing_joins_on_it(monkeypatch):
     )  # b.yml, by path, not hidden by a.yml
 
 
+def test_an_active_workflow_beyond_the_summarized_page_is_unmeasured_and_the_ledger_shows_every_schedule(monkeypatch):
+    repo = "4444J99/one"
+    table = _clean_table(repo)
+    nightly = ".github/workflows/nightly.yml"
+    wf_key = f"repos/{repo}/actions/workflows?per_page=100&page=1"
+    wf = table[wf_key][1]
+    table[wf_key] = (
+        C.OK,
+        {**wf, "workflows": wf["workflows"] + [{"path": nightly, "state": "active", "name": "nightly", "id": 9}]},
+    )
+    tree_key = f"repos/{repo}/git/trees/main?recursive=1"
+    tree = table[tree_key][1]
+    table[tree_key] = (C.OK, {**tree, "tree": tree["tree"] + [{"type": "blob", "path": nightly}]})
+    table[f"repos/{repo}/contents/{nightly}?ref=main"] = (C.OK, _b64(WORKFLOW_CRON))
+    runs_key = f"repos/{repo}/actions/runs?event=schedule&per_page=100"
+    page = [
+        {"name": "hygiene", "created_at": f"2026-10-23T{h:02d}:00:00Z", "conclusion": "success"}
+        for h in range(23, -1, -1)
+    ]
+    table[runs_key] = (
+        C.OK,
+        {"total_count": 150, "workflow_runs": page},
+    )  # 150 runs, 24 on the page: nightly is beyond it
+    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    row = C.scan_repo(repo)
+    assert row["fired"]["page_oldest_seen"] == "2026-10-23T00:00:00Z" and row["fired"]["page_runs"] == 24
+    assert row["runs_unmeasured"] == ["nightly"] and row["failing_workflows"] == [] and row["verdict"] == "active"
+    report = C.build_report(
+        [row], universe=[{"repo": repo}], universe_source="explicit", unscanned=[], gaps=None, started=0.0
+    )
+    assert report["totals"]["workflows_runs_unmeasured"] == 1
+    md = C.render_markdown(report)
+    assert "latest run beyond the summarized page (unmeasured): nightly" in md
+    # when the page holds every retained run, a silent workflow simply never fired: nothing is unmeasured
+    table[runs_key] = (C.OK, {"total_count": 24, "workflow_runs": page})
+    row = C.scan_repo(repo)
+    assert row["runs_unmeasured"] == []
+    # the ledger renders dependabot intervals, renovate schedules and cloud routines as the schedules they are: only
+    # the workflow without a cron is "without a schedule"
+    timed, rest = C._timed_declarations(
+        [
+            {"kind": "dependabot", "path": ".github/dependabot.yml", "intervals": ["weekly monday"]},
+            {"kind": "cloud-routines", "path": "cloud-routines.json", "routines": 13},
+            {"kind": "renovate", "path": "renovate.json", "schedule": ["after 10pm"]},
+            {"kind": "gh-workflow", "path": ".github/workflows/build.yml", "crons": []},
+        ]
+    )
+    assert [x["kind"] for x in timed] == ["dependabot", "cloud-routines", "renovate"] and [x["kind"] for x in rest] == [
+        "gh-workflow"
+    ]
+    assert "dependabot without a schedule" not in md and "cloud-routines without a schedule" not in md
+    assert "1 gh-workflow without a schedule" in md  # build.yml, which has no cron
+
+
 def test_an_empty_repository_answering_409_is_empty_not_partial(monkeypatch):
     repo = "4444J99/one"
     table = _table(repo)
     table[f"repos/{repo}"] = (C.OK, {**table[f"repos/{repo}"][1], "size": 0})
-    table[f"repos/{repo}/git/trees/main?recursive=1"] = (
-        C.ERROR,
-        {"message": "Git Repository is empty.", "status": "409"},
-    )
-    monkeypatch.setattr(C, "gh_api", FakeGH(table))
+    empty = (C.ERROR, {"message": "Git Repository is empty.", "status": "409"})
+    table[f"repos/{repo}/git/trees/main?recursive=1"] = empty
+    table[f"repos/{repo}/commits?path=.github/workflows&per_page=100"] = empty  # the Commits API says it too
+    fake = FakeGH(table)
+    monkeypatch.setattr(C, "gh_api", fake)
     row = C.scan_repo(repo)
-    assert row["channels"]["tree"] == "empty" and row["partial"] is False
+    assert row["channels"]["tree"] == "empty" and row["channels"]["history"] == "empty" and row["partial"] is False
+    assert not any("/commits" in c for c in fake.calls)  # nothing to read: the Commits API is never asked
+    # size 0 proves nothing on its own (GitHub computes it lazily): a 500 on the tree is an error, never an empty tree
+    table[f"repos/{repo}/git/trees/main?recursive=1"] = (C.ERROR, {"message": "Server Error", "status": "500"})
+    row = C.scan_repo(repo)
+    assert row["channels"]["tree"] == C.ERROR and row["partial"] is True and row["actions_registered_not_in_tree"] == []
 
 
 def _receipt_file(path, *, generated_at, source, repos, partial=0):
@@ -1004,6 +1088,16 @@ def test_receipt_freshness_respects_scope_and_counts_the_last_attempt(tmp_path):
         "universe",
         None,
     )
+    # an explicit receipt covers every name it was asked for — scanned, unscanned by budget or skipped — and names
+    # compare case-insensitively, as GitHub does
+    cut = {
+        "denominators": {"universe_source": "explicit"},
+        "repos": [{"repo": "A/B"}],
+        "unscanned_by_budget": ["c/d"],
+        "skipped_archived": ["e/f"],
+    }
+    assert C.receipt_scope(cut) == C.requested_scope(["a/b", "C/D", "e/f"], None)
+    assert C._dedupe([{"repo": "a/b"}, {"repo": "A/B"}]) == [{"repo": "a/b"}]
     # an old standing receipt plus a degraded attempt parked beside it: the attempt earns the retry horizon
     _receipt_file(receipt, generated_at=now - C.timedelta(days=10), source="explicit", repos=["a/b"])
     assert not C.receipt_is_fresh(receipt, 168, now=now, scope=one, sidecar=sidecar)
@@ -1014,25 +1108,52 @@ def test_receipt_freshness_respects_scope_and_counts_the_last_attempt(tmp_path):
     assert not C.receipt_is_fresh(receipt, 168, now=now, scope=one, sidecar=sidecar)  # another scope's attempt
 
 
-def test_coverage_share_decides_replacement_and_the_ledger_is_written_first(monkeypatch, tmp_path):
+def test_the_standing_receipt_is_kept_or_replaced_by_rule_and_the_ledger_is_written_first(monkeypatch, tmp_path):
     monkeypatch.setattr(C, "gh_api", FakeGH(_clean_table("4444J99/one")))
     receipt = tmp_path / "census.json"
     both = ["--repos", "4444J99/one", "4444J99/two", "--receipt", str(receipt)]
     assert C.main(both + ["--force"]) == 2  # two is unreachable: half the universe read completely
     d = json.loads(receipt.read_text())["denominators"]
     assert (d["universe_count"], d["scanned"], d["unreachable"]) == (2, 1, 1)
-    # a smaller universe read whole is better coverage, not a lesser pass: it replaces the receipt
+    # a different explicit set is another scope: it is parked beside the receipt, never over it
     assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt), "--force"]) == 0
-    assert json.loads(receipt.read_text())["denominators"]["universe_count"] == 1
-    # the degraded pass lands beside it ...
-    assert C.main(both + ["--force"]) == 2
-    assert json.loads(receipt.read_text())["denominators"]["universe_count"] == 1
-    side = json.loads(C.sidecar_path(receipt).read_text())["denominators"]
-    assert (side["universe_count"], side["unreachable"]) == (2, 1)
-    # ... and counts as the last attempt for its scope: no every-beat rescan while the retry horizon holds
-    assert C.main(both) == 0
-    # another scope is not answered by this receipt or its attempt: it scans (two alone is unreachable: read nothing)
-    assert C.main(["--repos", "4444J99/two", "--receipt", str(receipt)]) == 3
+    assert json.loads(receipt.read_text())["denominators"]["universe_count"] == 2
+    assert json.loads(C.sidecar_path(receipt).read_text())["denominators"]["universe_count"] == 1
+    # … and that attempt counts for ITS scope: an immediate rerun is a no-op while the retry horizon holds
+    assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt)]) == 0
+    # the same scope with lower complete coverage (nothing readable) is parked; the standing receipt survives
+    monkeypatch.setattr(C, "gh_api", lambda path: (C.UNREACHABLE, None))
+    assert C.main(both + ["--force"]) == 3
+    assert json.loads(receipt.read_text())["denominators"]["scanned"] == 1
+    monkeypatch.setattr(C, "gh_api", FakeGH(_clean_table("4444J99/one")))
+    # a universe-scope pass displaces a narrower receipt …
+    cache = tmp_path / "estate.json"
+    cache.write_text(
+        json.dumps(
+            {
+                "schema": C.ESTATE_CACHE_SCHEMA,
+                "fetched_at": C.datetime.now(C.timezone.utc).isoformat(timespec="seconds"),
+                "repos": {"4444J99/one": {"archived": False, "fork": False}},
+            }
+        )
+    )
+    universe = ["--receipt", str(receipt), "--estate-cache", str(cache)]
+    assert C.main(universe + ["--force"]) == 0
+    assert json.loads(receipt.read_text())["denominators"]["universe_source"].startswith("estate-cache:")
+    # … and no explicit pass, however complete, overwrites a universe receipt
+    assert C.main(["--repos", "4444J99/one", "--receipt", str(receipt), "--force"]) == 0
+    assert json.loads(receipt.read_text())["denominators"]["universe_source"].startswith("estate-cache:")
+    # the rule itself: a short universe (an owner unlisted) is incomplete and never replaces a complete receipt …
+    standing = json.loads(receipt.read_text())
+    short = {**standing, "denominators": {**standing["denominators"], "universe_unlisted_owners": 1}}
+    assert C.keeps_standing_receipt(standing, short, ("universe", None), interval_hours=168) is not None
+    # … unless the standing receipt is past its own horizon, when the newer pass is the census
+    old = {**standing, "generated_at": "2026-01-01T00:00:00+00:00"}
+    assert C.keeps_standing_receipt(old, short, ("universe", None), interval_hours=168) is None
+    assert (
+        C.coverage_share(standing) == 1.0
+        and C.keeps_standing_receipt(None, short, ("universe", None), interval_hours=1) is None
+    )
     # the ledger is written before the receipt: a failure between the two never pairs a fresh receipt with a stale ledger
     fresh = tmp_path / "fresh" / "census.json"
 
@@ -1043,6 +1164,9 @@ def test_coverage_share_decides_replacement_and_the_ledger_is_written_first(monk
     with pytest.raises(OSError):
         C.main(["--repos", "4444J99/one", "--receipt", str(fresh), "--force"])
     assert fresh.with_suffix(".md").exists() and not fresh.exists()
+
+
+def test_partial_reads_never_conclude_absence(monkeypatch):
     repo = "4444J99/one"
     # the tree could not be listed: nothing about carriers is known, so the verdict is partial, not none
     table = _table(repo)
