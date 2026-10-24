@@ -5736,15 +5736,16 @@
       "label": "Restore GitHub Actions on the 4444J99 private repositories: since 2026-10-07 every scheduled job in 4444J99/ops and 4444J99/ops-witness has been refused at job start with GitHub's own annotation 'The job was not started because recent account payments have failed or your spending limit needs to be increased' — the plane (i) cron backbone (org-hygiene-report, both keepalives, the weekly witness, the Jules API witness) is dark, and nothing in plane (i) can prove any run happened. Public-repo Actions (limen) still run.",
       "owner": "yours",
       "cost": "~5 min in GitHub > Settings > Billing & plans for the 4444J99 account: fix the failed payment method or raise the Actions spending limit; then re-run one scheduled workflow (gh workflow run org-hygiene-report.yml --repo 4444J99/ops) and read back a paired start/end bookend in 4444J99/ops:bookends/<day>.tsv",
-      "unlocks": "plane (i) and its witness come back: the daily hygiene report and bookends resume, the two keepalives stop failing (the 60-day auto-disable clock is otherwise unguarded), the weekly witness writes audit/<day>-witness.md again (which is also the only evidence path for the six Cloudflare scheduler targets), and the schedule-utilization sensor's github-actions-ops / github-actions-ops-witness / cloudflare-ops-scheduler rows leave dark/unmeasured",
-      "source_task": "schedule-estate registry (limen#3177), observed 2026-10-23: 4444J99/ops org-hygiene-report runs 124-140 (10-07..10-23) all failed in 3-5s; keepalive 10-12 and 10-19 failed; ops-witness weekly-witness 10-11 and 10-18 failed; Jules API witness runs 143-144 failed; check-run annotations on jobs 120447871476 (ops) and 120476682144 (ops-witness) carry the billing message verbatim. Workflow states are all `active`, so this is not the inactivity auto-disable.",
+      "unlocks": "plane (i) and its witness come back: the daily hygiene report and bookends resume, the two keepalives stop failing (the 60-day auto-disable clock is otherwise unguarded), the weekly witness writes audit/<day>-witness.md again (which is also the only evidence path for the six Cloudflare scheduler targets), and the schedule-utilization sensor's github-actions-ops / github-actions-ops-witness / cloudflare-ops-scheduler rows leave dark/unmeasured; the SCHEDULES registry's github-actions-fleet-private plane (every private-repository Actions cron outside the specific planes, owned by fact — 77 active workflows on the 2026-10-23 census, 6 observed succeeding) sees its observed count rise above 6 on the next census once refused runs start again",
+      "source_task": "schedule-estate registry (limen#3177), observed 2026-10-23: 4444J99/ops org-hygiene-report runs 124-140 (10-07..10-23) all failed in 3-5s; keepalive 10-12 and 10-19 failed; ops-witness weekly-witness 10-11 and 10-18 failed; Jules API witness runs 143-144 failed; check-run annotations on jobs 120447871476 (ops) and 120476682144 (ops-witness) carry the billing message verbatim. Workflow states are all `active`, so this is not the inactivity auto-disable.. Universe census 2026-10-23T23:53Z (limen#3185, receipt git-ignored): 82 private-repository workflows failing their last scheduled run after 2026-10-08 against 39 of 41 public ones succeeding — consistent with this lever's cause, not proof of it per repository",
       "gate": "account billing — a vendor-side payment/spending-limit change only the account holder can make; no organ can mint or approve it. This record names the CURRENT provider-evidenced action only; it does not attribute the cause to the discharged L-CARD-FRAUD-HOLD or to any earlier billing row.",
       "status": "needs_human",
       "added": "2026-10-23",
       "steps": [
         "DONE: diagnosed from provider annotations (not from a 404 log or a guess): every failed job in both private repos carries the billing message; limen (public) scheduled runs continue, which isolates the cause to private-repo Actions billing.",
         "REMAINING (human): open GitHub > Settings > Billing & plans for 4444J99; resolve the failed payment or raise the spending limit for Actions.",
-        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own."
+        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own.",
+        "REMAINING (agent, after the human step): re-run the census (`python3 scripts/schedule-census.py --check-registry --force`) and read github-actions-fleet-private's observed count in logs/schedule-utilization.json; the private half of the fleet should leave `underfilled` on its own."
       ],
       "issue": 3177,
       "sovereignty": {
@@ -5762,7 +5763,8 @@
           "https://github.com/4444J99/ops/actions/runs/39963682185",
           "https://github.com/4444J99/ops-witness/actions/runs/39971960272",
           "https://github.com/4444J99/ops-witness/actions/runs/39129246586",
-          "https://github.com/4444J99/limen/issues/3177"
+          "https://github.com/4444J99/limen/issues/3177",
+          "https://github.com/4444J99/limen/issues/3185"
         ],
         "doctrine_refs": [
           "CLAUDE.md#credentials-are-organ-owned-never-recited-in-chat",
@@ -5770,8 +5772,8 @@
         ],
         "owner": "schedule-estate registry (limen#3177); plane (i) owner 4444J99/ops (ops#6)",
         "acceptance": {
-          "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day and the ops-witness weekly witness writes a new audit report. The cloudflare-ops-scheduler witness-audit readback must be fresh, with a report date strictly after this lever's diagnosed_at UTC date; date-only reports establish new recovery evidence, not the exact repair sequence.",
-          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import datetime as d,json,sys; r=json.load(sys.stdin); l=next(l for l in json.load(open('his-hand-levers.json'))['levers'] if l['id']=='L-GITHUB-ACTIONS-BILLING'); cutoff=d.datetime.fromisoformat(l['diagnosed_at'].replace('Z','+00:00')).astimezone(d.timezone.utc).date(); ps=[p for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')]; ws=[p for p in r['planes'] if p['plane']=='cloudflare-ops-scheduler']; sys.exit(0 if len(ps)==2 and all(p['verdict'] in ('full','underfilled') for p in ps) and len(ws)==1 and ws[0]['verdict'] in ('full','underfilled') and ws[0].get('evidence')=='witness-audit' and ws[0].get('readback_fresh') is True and ws[0].get('witness_report_date') and d.date.fromisoformat(ws[0]['witness_report_date']) > cutoff else 1)\"",
+          "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day and the ops-witness weekly witness writes a new audit report. The cloudflare-ops-scheduler witness-audit readback must be fresh, with a report date strictly after this lever's diagnosed_at UTC date; date-only reports establish new recovery evidence, not the exact repair sequence. The census-derived github-actions-fleet-private plane reports full or underfilled with observed above 6.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import datetime as d,json,sys; r=json.load(sys.stdin); l=next(l for l in json.load(open('his-hand-levers.json'))['levers'] if l['id']=='L-GITHUB-ACTIONS-BILLING'); cutoff=d.datetime.fromisoformat(l['diagnosed_at'].replace('Z','+00:00')).astimezone(d.timezone.utc).date(); ps=[p for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')]; ws=[p for p in r['planes'] if p['plane']=='cloudflare-ops-scheduler']; fp=[p for p in r['planes'] if p['plane']=='github-actions-fleet-private']; sys.exit(0 if len(ps)==2 and all(p['verdict'] in ('full','underfilled') for p in ps) and len(ws)==1 and ws[0]['verdict'] in ('full','underfilled') and ws[0].get('evidence')=='witness-audit' and ws[0].get('readback_fresh') is True and ws[0].get('witness_report_date') and d.date.fromisoformat(ws[0]['witness_report_date']) > cutoff and fp and fp[0]['verdict'] in ('full','underfilled') and (fp[0]['observed'] or 0) > 6 else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [],
@@ -5780,6 +5782,56 @@
         "decision_status": "chosen_pending_evidence"
       },
       "note": "Found while building the SCHEDULES registry: the gauge said github-actions-ops was dark (no bookend today) and ops-witness had 3 fired-but-failed runs; the step list could not be read (job logs 404) but the check-run annotations could. The ops-witness head commit 7ef2bc3 had earlier blamed a dependabot actions@v7 bump and pinned back to v4/v5; that pin did not change the 3-5s failures, which is consistent with a job that never starts."
+    },
+    {
+      "id": "L-FLEET-TEMPLATE-RETIRE",
+      "label": "Retire the two org-template cron workflows (stale.yml, Monday 09:00 UTC; codeql.yml, mostly Monday 06:00 UTC, some 02:00) across the fleet: the 2026-10-23 universe census found 82 of the 118 live-active Actions crons outside every specific SCHEDULES plane are these two templates (49 stale.yml, 33 codeql.yml), stacked on Monday 06:00 and 09:00 in repositories whose schedules nothing declared until the fleet planes landed. They are the bulk of the fleet-private plane's on-the-hour (67) and shared-minute (62) ceilings and spend the private-repository Actions pool on template work.",
+      "owner": "yours",
+      "cost": "one receipt-backed reap per repository — delete .github/workflows/stale.yml and codeql.yml, or drop their on.schedule block, on a branch + PR per repository (or the operator's own bulk tooling). A mass cross-repository write: human-gated by CLAUDE.md → Still human-gated levers; an agent may prepare the per-repository diffs but never pushes to a member repository",
+      "unlocks": "github-actions-fleet-private's on-the-hour and shared-minute ceilings fall by the retired count (the ratchet only falls — lower them in schedules.yaml as each reap lands); the Monday 06:00 / 09:00 stacks in the census slot map clear; the private Actions pool stops being spent on templates while L-GITHUB-ACTIONS-BILLING is open; the schedule-utilization sensor's fleet rows declare fewer, so 'nothing left on the floor' is measured against work the operator actually wants",
+      "source_task": "schedules fleet planes (limen#3185; docs/plans/2026-10-24-schedules-fleet-planes.md). Census 2026-10-23T23:53Z (logs/schedule-census.json, git-ignored; 267/267 repositories scanned, 1 partial): 217 cron workflows fleet-wide, 206 of them in 73 repositories outside every specific plane; 118 live-active; 82 of those are the two templates (49 stale.yml, 33 codeql.yml; 6 more stale.yml and 2 codeql.yml sit in archived or disabled rows the plane counts as off)",
+      "gate": "a write to many member repositories — a mass cross-repo change the charter keeps human-gated; the registry only declares the count (ceilings) and measures it. Nothing here re-enables or disables a workflow from an agent.",
+      "status": "needs_human",
+      "added": "2026-10-24",
+      "steps": [
+        "DONE: the two fleet planes own every residual Actions cron by fact and pin the counts (77 active / 67 on-the-hour / 62 shared-minute private; 41 / 40 / 35 public); check-schedules fails any rise.",
+        "REMAINING (human): decide per repository whether stale.yml / codeql.yml earn their Monday slot (an active repository with issues to sweep or code to scan keeps them; a dormant one retires them), then reap — delete the file or remove `on.schedule` — repository by repository or with bulk tooling.",
+        "REMAINING (agent, after each reap): re-run the census, read the new counts in logs/schedule-census.json, and lower github-actions-fleet-private / -public ceilings in schedules.yaml to match (check A names the number; check J refuses a rise)."
+      ],
+      "issue": 3185,
+      "sovereignty": {
+        "reason": "governance_choice"
+      },
+      "diagnosed_at": "2026-10-24T00:30:00Z",
+      "diagnosis_provenance": "schedule-census-20261023.receipt",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Own the undeclared fleet by fact in schedules.yaml (census-derived planes with ceilings) so the template crons are declared, counted and measured; the retirement itself is the operator's reap, after which the agent lowers the ceilings. No organ deletes, disables or re-enables a workflow in a member repository.",
+        "rationale": "82 template crons on two Monday hours were invisible to every gauge and are the largest single block of undeclared allotment; counting them makes the retirement a number that falls, not prose that rots, and keeps the mass write where the charter puts it — in the operator's hand.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-FLEET-TEMPLATE-RETIRE",
+          "institutio/governance/schedules.yaml",
+          "scripts/schedule-census.py",
+          "https://github.com/4444J99/limen/issues/3185",
+          "https://github.com/4444J99/limen/issues/3183"
+        ],
+        "doctrine_refs": [
+          "CLAUDE.md#merge--branch-protocol",
+          "CLAUDE.md#engage-the-real-problem-first",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "schedules fleet planes (limen#3185); each member repository owns its own reap",
+        "acceptance": {
+          "condition": "github-actions-fleet-private's on-the-hour ceiling in schedules.yaml is below 67 and shared-minute below 62, with check-schedules green against a complete census receipt generated after this lever was filed (2026-10-24).",
+          "predicate": "python3 -c \"import sys; sys.path.insert(0,'scripts'); import yaml, _schedules as S; from pathlib import Path; p=yaml.safe_load(open('institutio/governance/schedules.yaml'))['planes']['github-actions-fleet-private']['ceilings']; _,d,st=S.load_census_receipt(Path('.'), 'logs/schedule-census.json', max_age_days=8); sys.exit(0 if p['on-the-hour'] < 67 and p['shared-minute'] < 62 and st == 'present' and str(d.get('generated_at') or '') > '2026-10-24' else 1)\" && python3 scripts/check-schedules.py --quiet",
+          "status": "not_currently_verified"
+        },
+        "dependencies": [],
+        "remaining_human_action": "Decide and reap the template crons repository by repository; the agent lowers the ceilings afterwards.",
+        "historical_gate_requires_verification": "mass cross-repository writes stay in the operator's hand",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "Filed from the first universe census. The count is the lever's whole content: no repository is named here or in the registry (redaction convention R1 in schedules.yaml) — the receipt on the host carries the names."
     },
     {
       "id": "L-SCHED-READBACKS",
