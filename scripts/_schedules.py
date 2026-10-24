@@ -30,9 +30,10 @@ WORKFLOWS_REL = Path(".github/workflows")
 SNAPSHOT_GLOB = "docs/receipts/claude-triggers-snapshot-*.json"
 # A sensor `cadence` is counted in BEATS (beat-sensors.py `_due`: `beat % cadence == 0`, or stamp age ≥
 # cadence × loop_max). The beat is adaptive (LIMEN_LOOP_MIN…LIMEN_LOOP_MAX seconds), so the only wall-clock
-# bound a cadence carries is its WORST case: cadence × LIMEN_LOOP_MAX. `cadence: 48` is 24h at the default
-# 1,800s ceiling — a daily sensor — never "48 hours".
+# bound for heartbeat sensors is cadence × LIMEN_LOOP_MAX. Fast-wave sensors use the independent
+# LIMEN_VITALS_SAMPLE_SECONDS period. `cadence: 48` is 24h at the heartbeat's default 1,800s ceiling.
 BEAT_LOOP_MAX_SECONDS = 1800
+FAST_WAVE_SECONDS = 300
 SECONDS_PER_HOUR = 3600
 
 PLANE_SURFACES = {"cron", "launchd", "ui", "ui+api", "api"}
@@ -252,49 +253,6 @@ def beat_loop_max(env: dict[str, str] | None = None) -> int:
     return value if value > 0 else BEAT_LOOP_MAX_SECONDS
 
 
-FAST_WAVE_SECONDS_DEFAULT = 300
-FAST_WAVE_ENV = "LIMEN_VITALS_SAMPLE_SECONDS"
-
-
-def env_file_value(key: str, path: Path) -> str | None:
-    """One `KEY=VALUE` / `export KEY=VALUE` line from a shell-style env file — the deployed ~/.limen.env that
-    heartbeat-loop.sh and metabolize.sh source — with its quotes stripped; None when the file or the key is absent.
-    Only the named key is read and its value is never logged: the file also holds credentials."""
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError:
-        return None
-    found = None
-    for raw in text.splitlines():
-        line = raw.strip().removeprefix("export ").strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        name, _, value = line.partition("=")
-        if name.strip() != key:
-            continue
-        value = value.split(" #", 1)[0].strip()
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
-            value = value[1:-1]
-        found = value  # the last assignment wins, as `source` would have it
-    return found
-
-
-def fast_wave_seconds(env: dict[str, str] | None = None) -> int:
-    """The fast-wave period in seconds — heartbeat-loop.sh runs `source: [fast-wave]` sensors with
-    `--loop-max "$FAST_WAVE_SECONDS"` (`LIMEN_VITALS_SAMPLE_SECONDS`, 300 s default) and beat-sensors.py scores
-    their canary freshness with that period, never with LIMEN_LOOP_MAX. Mirrors beat-sensors.py: when the key is not
-    in the environment (a direct run, not a beat), the deployed env file (`LIMEN_ENV_FILE`, else ~/.limen.env) is
-    consulted, so a direct check scores the same period as the canary. Anything but a positive ASCII integer is the
-    default — `str.isdigit()` alone would pass `²` to `int()` and crash the evaluation."""
-    source = env if env is not None else os.environ
-    raw = source.get(FAST_WAVE_ENV)
-    if raw is None:
-        env_file = Path(source.get("LIMEN_ENV_FILE") or Path.home() / ".limen.env").expanduser()
-        raw = env_file_value(FAST_WAVE_ENV, env_file)
-    text = str(raw or "").strip()
-    return int(text) if text.isascii() and text.isdigit() and int(text) > 0 else FAST_WAVE_SECONDS_DEFAULT
-
-
 def sensor_period_seconds(sources: list[str] | set[str], loop_max: int, fast_wave: int) -> int:
     """beat-sensors.py: `period = fast_wave_seconds if "fast-wave" in sources else loop_max`."""
     return fast_wave if "fast-wave" in set(sources or []) else loop_max
@@ -303,6 +261,30 @@ def sensor_period_seconds(sources: list[str] | set[str], loop_max: int, fast_wav
 def beats_to_hours(cadence_beats: int, loop_max: int) -> int:
     """Worst-case wall-clock hours one cadence window can span: ceil(beats × loop_max / 3600), at least 1."""
     return max(1, -(-(cadence_beats * max(1, loop_max)) // SECONDS_PER_HOUR))
+
+
+def fast_wave_seconds() -> int:
+    """Match runner/canary period and env-file fallback without loading unrelated environment values."""
+    raw = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS")
+    if raw is None:
+        path = Path(os.environ.get("LIMEN_ENV_FILE", str(Path.home() / ".limen.env"))).expanduser()
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            lines = []
+        raw = ""
+        for line in lines:
+            key, separator, value = line.strip().removeprefix("export ").partition("=")
+            if separator and key.strip() == "LIMEN_VITALS_SAMPLE_SECONDS":
+                # Only digit values can survive the runner's validation. Honor quotes,
+                # whitespace-separated comments and the last assignment, without shell evaluation.
+                match = re.fullmatch(r"""(?:([0-9]+)|'([0-9]+)'|"([0-9]+)")(?:\s+#.*)?""", value.strip())
+                raw = next((part for part in match.groups() if part is not None), "") if match else ""
+    try:
+        value = int(raw) if re.fullmatch(r"[0-9]+", raw) else FAST_WAVE_SECONDS
+    except ValueError:
+        value = FAST_WAVE_SECONDS
+    return value if value > 0 else FAST_WAVE_SECONDS
 
 
 def _positive_int(spec, *, fallback: int | None = None) -> int | None:

@@ -302,9 +302,11 @@ def _sibling_file(repo: str, rel: str, root: Path) -> tuple[str | None, str]:
     if clone is not None:
         path = clone / rel
         if not path.exists():
-            # Absence is an observation only when the folder the file would live in is present; a clone root
-            # without the evidence folder (a wrong LIMEN_OPS_ROOT, a partial checkout) is nothing observed (#3188 item 3)
-            return None, (ABSENT if path.parent.is_dir() else UNREADABLE)
+            try:
+                names = {child.name for child in path.parent.iterdir()}
+            except OSError:
+                return None, UNREADABLE
+            return None, ABSENT if path.name not in names else UNREADABLE
         try:
             return path.read_text(encoding="utf-8"), PRESENT
         except (OSError, UnicodeDecodeError):
@@ -341,7 +343,7 @@ _WITNESS_ROW_RX = re.compile(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([\w-]+)\s*\|\s*
 
 def read_witness_audit(
     plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
-) -> tuple[int | None, str]:
+) -> tuple:
     locator = str(plane["evidence"].get("locator"))  # "owner/repo:audit"
     repo, _, folder = locator.partition(":")
     clone = S.sibling_root(repo, dict(os.environ), Path.home())
@@ -364,8 +366,8 @@ def read_witness_audit(
     except ValueError:
         return None, f"cannot date {newest}"
     max_age = _env_int("LIMEN_SCHEDULE_WITNESS_MAX_AGE_DAYS", 8)
-    if (today - report_day).days > max_age:
-        return None, f"newest witness report {newest} is {(today - report_day).days}d old (> {max_age}d)"
+    if not 0 <= (today - report_day).days <= max_age:
+        return None, f"newest witness report {newest} is {(today - report_day).days}d old (outside 0..{max_age}d)"
     text, state = _sibling_file(repo, f"{folder}/{newest}", root)
     if text is None:
         return None, f"cannot read {repo}:{folder}/{newest} ({state})"
@@ -378,7 +380,11 @@ def read_witness_audit(
         if prior is None or day > prior[0]:
             latest_day[job] = (day, start == "yes" and end == "yes")
     healthy = sum(1 for _, ok in latest_day.values() if ok)
-    return healthy, f"{healthy}/{len(targets)} targets healthy on their latest witnessed day ({newest})"
+    return (
+        healthy,
+        f"{healthy}/{len(targets)} targets healthy on their latest witnessed day ({newest})",
+        {"readback_fresh": True, "witness_report_date": report_day.isoformat()},
+    )
 
 
 def read_voice_stamps(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str]:
@@ -435,8 +441,8 @@ def read_claude_snapshot(plane_id: str, plane: dict, jobs: list[S.Job], today: d
         return None, "no claude-triggers snapshot receipt — export one from an interactive session (list_triggers)"
     age = S.snapshot_age_days(snapshot, today)
     max_age = _env_int("LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS", 7)
-    if age is None or age > max_age:
-        return None, f"snapshot {path.name} is {age}d old (> {max_age}d) — re-export before trusting it"
+    if age is None or not 0 <= age <= max_age:
+        return None, f"snapshot {path.name} is {age}d old (outside 0..{max_age}d) — re-export before trusting it"
     contracted = {j.id.split("/", 1)[1] for j in jobs if j.enabled}
     rows = [r for r in snapshot.get("triggers") or [] if isinstance(r, dict) and r.get("routine") in contracted]
     enabled = sum(1 for r in rows if r.get("enabled"))
@@ -444,7 +450,7 @@ def read_claude_snapshot(plane_id: str, plane: dict, jobs: list[S.Job], today: d
     return (
         None,
         f"{enabled}/{len(contracted)} contracted routines enabled in {path.name} ({age}d old); {denied} last failed ACCESS_DENIED; configuration only, execution unmeasured",
-        {"configured_enabled": enabled, "measurement_kind": "configuration", "coverage": "partial"},
+        {"configured_enabled": enabled, "measurement_kind": "configuration", "coverage": "partial", "readback_fresh": True},
     )
 
 
@@ -913,7 +919,8 @@ def evaluate(
         reader = readers.get(kind, read_none)
         extra: dict = {}
         try:
-            result = reader(pid, plane, plane_jobs, today, root)
+            result = (reader(pid, plane, plane_jobs, today, root, now=now) if reader is read_native_snapshot
+                      else reader(pid, plane, plane_jobs, today, root))
             observed, detail = result[0], result[1]
             extra = result[2] if len(result) > 2 and isinstance(result[2], dict) else {}
         except CollectionDeadlineReached:
@@ -960,6 +967,9 @@ def evaluate(
                 "evidence": kind,
                 "readback_overdue": readback_overdue,
                 "not_this_host": not_this_host,
+                "readback_fresh": extra.get("readback_fresh") is True,
+                "readback_max_age_days": extra.get("readback_max_age_days"),
+                "witness_report_date": extra.get("witness_report_date"),
                 "upstream_state": (plane.get("authority") or {}).get("upstream_state"),
                 "detail": detail,
                 "owner": plane.get("owner"),
@@ -971,10 +981,8 @@ def evaluate(
     unmeasured = [p for p in planes if p["verdict"] == "unmeasured"]
     # had a way to look and could not, or has had no way to look for longer than the readback budget, or is
     # measured but carries slack a human must lower (readback_overdue on a non-red plane). A plane that is
-    # simply not measured on THIS host (no census receipt, no launchctl) is neither stale nor measurable.
-    # A reader that completed a CONFIGURATION readback (a fresh claude-triggers snapshot: which routines are
-    # enabled, execution unmeasured by design) did look and did read; it is unmeasured but not a stale readback,
-    # or exit 3 would be permanent and could not tell a fresh snapshot from a dead witness (#3188 item 4).
+    # simply not measured on THIS host (no census receipt, no launchctl) is neither stale nor measurable, and a
+    # fresh configuration / native-evidence readback is unmeasured by design, not stale (#3192).
     stale = [
         p["plane"]
         for p in planes
@@ -982,7 +990,15 @@ def evaluate(
         and (
             (
                 p["verdict"] == "unmeasured"
-                and ((p["evidence"] != "none" and p["measurement_kind"] != "configuration") or p["readback_overdue"])
+                and (
+                    p["readback_overdue"]
+                    or (
+                        p["evidence"] != "none"
+                        and not (
+                            p["readback_fresh"] and p.get("measurement_kind") in {"configuration", "native-evidence"}
+                        )
+                    )
+                )
             )
             or (p["readback_overdue"] and p["verdict"] not in RED_VERDICTS and p["verdict"] != "unmeasured")
         )

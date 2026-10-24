@@ -604,6 +604,43 @@ def test_claude_snapshot_reader_age_and_enabled_count(tmp_path, monkeypatch):
     assert report["planes"][0]["verdict"] == "unmeasured" and "re-export" in report["planes"][0]["detail"]
 
 
+@pytest.mark.parametrize(
+    "observed_at,fresh",
+    [("2026-10-23T11:00:00Z", True), ("2026-10-15T11:00:00Z", False), ("2026-10-24T11:00:00Z", False), (None, False)],
+)
+def test_configuration_readback_freshness_is_separate_from_execution(tmp_path, observed_at, fresh):
+    write_registry(tmp_path, {"claude-cloud": _plane(evidence={"kind": "claude-snapshot"})}, [])
+    if observed_at is not None:
+        receipts = tmp_path / "docs" / "receipts"
+        receipts.mkdir(parents=True)
+        (receipts / "claude-triggers-snapshot-20261023.json").write_text(
+            json.dumps({"observed_at": observed_at, "triggers": []})
+        )
+    report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
+    plane = report["planes"][0]
+    assert plane["observed"] is None and plane["verdict"] == "unmeasured"
+    assert plane["readback_fresh"] is fresh
+    assert report["stale_readback"] == ([] if fresh else ["claude-cloud"])
+    assert report["status"] == ("pass" if fresh else "stale-readback")
+    assert report["operational_readiness"] == "unverified"
+
+
+@pytest.mark.parametrize(
+    "extra,fresh",
+    [({"readback_fresh": True}, True), ({}, False), ({"readback_fresh": True, "readback_overdue": True}, False)],
+)
+def test_native_unmeasured_requires_explicit_fresh_readback(tmp_path, extra, fresh):
+    write_registry(tmp_path, {"native": _plane(evidence={"kind": "native-snapshot"})}, [])
+
+    def reader(*args):
+        return None, "no attributable execution", {"measurement_kind": "native-evidence", **extra}
+
+    report = UTIL.evaluate(tmp_path, TODAY, now=NOW, readers={"native-snapshot": reader})
+    assert report["planes"][0]["observed"] is None
+    assert report["stale_readback"] == ([] if fresh else ["native"])
+    assert report["operational_readiness"] == "unverified"
+
+
 def test_bookend_reader_pairs_start_and_end(tmp_path, monkeypatch):
     clone = tmp_path / "ops"
     (clone / ".git").mkdir(parents=True)
@@ -617,6 +654,97 @@ def test_bookend_reader_pairs_start_and_end(tmp_path, monkeypatch):
     plane = _plane(evidence={"kind": "bookend-tsv", "locator": "4444J99/ops:bookends"})
     observed, detail = UTIL.read_bookend_tsv("github-actions-ops", plane, [], TODAY, tmp_path)
     assert observed == 1 and "org-hygiene-report" in detail and "died-mid-run" not in detail
+
+
+def test_bookend_missing_parent_is_unknown_but_readable_absence_is_zero(tmp_path, monkeypatch):
+    clone = tmp_path / "ops"
+    clone.mkdir()
+    monkeypatch.setenv("LIMEN_OPS_ROOT", str(clone))
+    plane = _plane(evidence={"kind": "bookend-tsv", "locator": "4444J99/ops:bookends"})
+    write_registry(tmp_path, {"github-actions-ops": plane}, [_job("ops/report", "github-actions-ops", "11 9 * * *")])
+    report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
+    assert report["planes"][0]["observed"] is None
+    assert report["status"] == "stale-readback"
+    (clone / "bookends").mkdir()
+    report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
+    assert report["planes"][0]["observed"] == 0
+    assert report["planes"][0]["verdict"] == "dark"
+
+
+@pytest.mark.parametrize(
+    "report_day,observed", [("2026-10-25", 1), ("2026-10-18", 1), ("2026-10-17", None), ("2026-10-27", None)]
+)
+def test_weekly_audit_reports_validated_freshness_and_date(tmp_path, monkeypatch, report_day, observed):
+    clone = tmp_path / "ops-witness"
+    audit = clone / "audit"
+    audit.mkdir(parents=True)
+    (audit / f"{report_day}-witness.md").write_text(f"| {report_day} | target | yes | yes |\n")
+    monkeypatch.setenv("LIMEN_OPS_WITNESS_ROOT", str(clone))
+    plane = _plane(evidence={"kind": "witness-audit", "locator": "4444J99/ops-witness:audit"})
+    write_registry(
+        tmp_path,
+        {"cloudflare-ops-scheduler": plane},
+        [_job("cloudflare/target", "cloudflare-ops-scheduler", "11 9 * * *")],
+    )
+    now = datetime(2026, 10, 26, 12, tzinfo=timezone.utc)
+    result = UTIL.evaluate(tmp_path, now.date(), now=now)["planes"][0]
+    assert result["observed"] == observed
+    assert result.get("readback_fresh") is (observed is not None)
+    assert result.get("witness_report_date") == (report_day if observed is not None else None)
+
+
+def test_billing_predicate_requires_new_fresh_weekly_audit(tmp_path):
+    import copy
+    import shlex
+
+    data = json.loads((ROOT / "his-hand-levers.json").read_text())
+    lever = next(row for row in data["levers"] if row["id"] == "L-GITHUB-ACTIONS-BILLING")
+    argv = shlex.split(lever["implementation"]["acceptance"]["predicate"].split(" | ", 1)[1])
+    local = tmp_path / "his-hand-levers.json"
+    local.write_text(json.dumps(data))
+    other_success = [
+        {"plane": "github-actions-ops", "verdict": "full", "observed": 1},
+        {"plane": "github-actions-ops-witness", "verdict": "underfilled", "observed": 1},
+    ]
+    weekly = {
+        "plane": "cloudflare-ops-scheduler",
+        "verdict": "full",
+        "observed": 6,
+        "evidence": "witness-audit",
+        "witness_report_date": "2026-10-25",
+        "readback_fresh": True,
+    }
+    # the census-derived private fleet must also be seen firing again (#3186): full or underfilled, observed > 6
+    fleet = {"plane": "github-actions-fleet-private", "verdict": "underfilled", "observed": 7}
+
+    def run(rows):
+        return subprocess.run(
+            argv, input=json.dumps({"planes": rows}), cwd=tmp_path, capture_output=True, text=True, check=False
+        ).returncode
+
+    assert run(other_success) != 0  # A Jules API witness success cannot discharge the weekly clause.
+    assert run(other_success + [weekly]) != 0  # … nor can the weekly witness alone: the private fleet must fire too
+    assert run(other_success + [weekly, fleet]) == 0
+    for patch in (
+        {"verdict": "unmeasured", "observed": None},
+        {"readback_fresh": False},
+        {"evidence": "gh-actions-runs"},
+        {"witness_report_date": "2026-10-23"},
+        {"witness_report_date": None},
+    ):
+        assert run(other_success + [{**weekly, **patch}, fleet]) != 0
+    for patch in ({"observed": 6}, {"verdict": "dark"}, {"verdict": "unmeasured", "observed": None}):
+        assert run(other_success + [weekly, {**fleet, **patch}]) != 0  # six observed is the dark floor, not recovery
+    assert run(other_success[1:] + [weekly, fleet]) != 0
+    assert run([{**other_success[0], "verdict": "dark"}, other_success[1], weekly, fleet]) != 0
+    changed = copy.deepcopy(data)
+    diagnosis = next(row for row in changed["levers"] if row["id"] == lever["id"])
+    diagnosis["diagnosed_at"] = "2026-10-25T00:30:00+01:00"  # UTC day24: report25 is newer.
+    local.write_text(json.dumps(changed))
+    assert run(other_success + [weekly, fleet]) == 0
+    diagnosis["diagnosed_at"] = "2026-10-25T18:32:00Z"
+    local.write_text(json.dumps(changed))
+    assert run(other_success + [weekly, fleet]) != 0  # Read the lever's current diagnosis, not a copied date.
 
 
 def test_declared_off_reconciles_against_live_workflow_state(tmp_path, monkeypatch):
@@ -1262,6 +1390,115 @@ def test_voice_reader_scores_stamps_against_their_cadence_window_not_midnight(tm
     )
     assert UTIL.declared_for(plane, jobs, TODAY, NOW) == 3
     assert UTIL._stamp_bound_seconds(job("daily", 48)) == 48 * 1800 * 2
+
+
+def test_fast_wave_sensor_freshness_and_daily_membership_follow_runner(tmp_path, monkeypatch):
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(tmp_path / "absent.env"))
+    shipped = {j.id: j for j in S.derive_sensor_jobs(ROOT, "limen-beat", loop_max=1800)}
+    assert UTIL._stamp_bound_seconds(shipped["beat/diurnal"]) == 600
+    sensors = {
+        "diurnal": {"cadence": 1, "source": ["fast-wave"]},
+        "daily": {"cadence": 288, "source": ["fast-wave"]},
+        "later": {"cadence": 289, "source": ["fast-wave"]},
+        "heartbeat": {"cadence": 48, "source": ["heartbeat"]},
+    }
+    registry = tmp_path / "sensors.yaml"
+    registry.write_text(yaml.safe_dump({"sensors": sensors}))
+    jobs = S.derive_sensor_jobs(tmp_path, "limen-beat", registry.name, loop_max=1800)
+    assert {j.id: j.cadence_hours for j in jobs} == {
+        "beat/diurnal": 1,
+        "beat/daily": 24,
+        "beat/later": 25,
+        "beat/heartbeat": 24,
+    }
+    plane = _plane(evidence={"kind": "voice-stamps", "locator": "voice"})
+    assert UTIL.declared_for(plane, jobs, TODAY, NOW) == 3
+    voice = tmp_path / "voice"
+    voice.mkdir()
+    for name in sensors:
+        (voice / name).touch()
+        os.utime(voice / name, (NOW.timestamp(), NOW.timestamp()))
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW
+
+    monkeypatch.setattr(UTIL, "datetime", Clock)
+    monkeypatch.setattr(BEAT.time, "time", lambda: NOW.timestamp())
+    for age, expected in ((600, 3), (601, 2)):
+        os.utime(voice / "diurnal", (NOW.timestamp() - age, NOW.timestamp() - age))
+        assert UTIL.read_voice_stamps("limen-beat", plane, jobs, TODAY, tmp_path)[0] == expected
+        assert BEAT.canary(registry=registry, loop_max=1800, voice_dir=voice) == (age > 600)
+
+
+@pytest.mark.parametrize(
+    "override,period",
+    [("60", 60), ("0300", 300), ("", 300), ("0", 300), ("-60", 300), ("+60", 300), (" 60 ", 300), ("junk", 300)],
+)
+def test_fast_wave_period_env_matches_runner_defaults(tmp_path, monkeypatch, override, period):
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", override)
+    registry = tmp_path / "sensors.yaml"
+    registry.write_text(
+        yaml.safe_dump(
+            {
+                "sensors": {
+                    "mixed": {"source": ["heartbeat", "fast-wave"], "cadence": 1},
+                    "slow": {"source": ["heartbeat"], "cadence": 1},
+                }
+            }
+        )
+    )
+    jobs = {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", registry.name, loop_max=900)}
+    assert jobs["beat/mixed"].extra["loop_max_seconds"] == period
+    assert UTIL._stamp_bound_seconds(jobs["beat/mixed"]) == period * 2
+    assert jobs["beat/slow"].extra["loop_max_seconds"] == 900
+
+
+@pytest.mark.parametrize("use_default", [False, True])
+@pytest.mark.parametrize("process_value,period", [(None, 60), ("120", 120), ("junk", 300)])
+def test_fast_wave_env_file_fallback_matches_canary(tmp_path, monkeypatch, use_default, process_value, period):
+    env_file = tmp_path / (".limen.env" if use_default else "configured.env")
+    env_file.write_text("UNRELATED_PRIVATE_ENV=from-file\nexport LIMEN_VITALS_SAMPLE_SECONDS='60' # deployed\n")
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "restore-sentinel")
+    if process_value is None:
+        monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS")
+    else:
+        monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", process_value)
+    monkeypatch.setenv("UNRELATED_PRIVATE_ENV", "unchanged")
+    if use_default:
+        monkeypatch.delenv("LIMEN_ENV_FILE", raising=False)
+    else:
+        monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+    registry = tmp_path / "sensors.yaml"
+    registry.write_text(yaml.safe_dump({"sensors": {"fast": {"source": ["fast-wave"], "cadence": 1}}}))
+    jobs = S.derive_sensor_jobs(tmp_path, "limen-beat", registry.name)
+    assert jobs[0].extra["loop_max_seconds"] == period
+    assert os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS") == process_value
+    assert os.environ["UNRELATED_PRIVATE_ENV"] == "unchanged"
+    voice = tmp_path / "voice"
+    voice.mkdir()
+    (voice / "fast").touch()
+    os.utime(voice / "fast", (NOW.timestamp() - 200, NOW.timestamp() - 200))
+    monkeypatch.setattr(BEAT.time, "time", lambda: NOW.timestamp())
+    assert BEAT.canary(registry=registry, voice_dir=voice) == (period == 60)
+    assert UTIL._stamp_bound_seconds(jobs[0]) == period * 2
+
+
+@pytest.mark.parametrize(
+    "assignment,period", [('"60" # deployed', 60), ("60 # deployed", 60), ("' 60 '", 300), ("junk", 300)]
+)
+def test_fast_wave_env_file_last_assignment_and_digit_defaults(tmp_path, monkeypatch, assignment, period):
+    env_file = tmp_path / "configured.env"
+    env_file.write_text(f"LIMEN_VITALS_SAMPLE_SECONDS=120\nLIMEN_VITALS_SAMPLE_SECONDS={assignment}\n")
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "restore-sentinel")
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS")
+    assert S.fast_wave_seconds() == period
+    BEAT._load_env_file(env_file)
+    assert S.fast_wave_seconds() == period
 
 
 def test_readbacks_lever_predicate_requires_all_four_ui_only_planes():
@@ -2445,9 +2682,7 @@ def test_fast_wave_sensors_resolve_the_fast_wave_period_not_the_heartbeat_ceilin
     deployed = tmp_path / "limen.env"
     deployed.write_text("# deployed\nexport LIMEN_VITALS_SAMPLE_SECONDS='120'  # vitals\nLIMEN_LOOP_MAX=900\n")
     monkeypatch.setenv("LIMEN_ENV_FILE", str(deployed))
-    assert S.fast_wave_seconds() == 120 and S.env_file_value("LIMEN_LOOP_MAX", deployed) == "900"
-    assert S.fast_wave_seconds({"LIMEN_VITALS_SAMPLE_SECONDS": "90", "LIMEN_ENV_FILE": str(deployed)}) == 90
-    assert S.env_file_value("LIMEN_VITALS_SAMPLE_SECONDS", tmp_path / "absent.env") is None
+    assert S.fast_wave_seconds() == 120
     jobs = {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}
     assert UTIL._stamp_bound_seconds(jobs["beat/diurnal"]) == 240  # the deployed 120 s period, read from the file
 
@@ -2495,37 +2730,3 @@ def test_configuration_readback_is_unmeasured_but_not_a_stale_readback(tmp_path)
     assert (
         report["stale_readback"] == ["claude-cloud"] and report["status"] == "stale-readback"
     )  # the snapshot aged out
-
-
-def test_billing_lever_predicate_requires_the_weekly_witness_and_the_fleet_private_plane():
-    import shlex
-
-    levers = json.loads((ROOT / "his-hand-levers.json").read_text())
-    lever = next(lv for lv in levers["levers"] if lv["id"] == "L-GITHUB-ACTIONS-BILLING")
-    predicate = json.dumps(lever, ensure_ascii=False)
-    m = re.search(r"schedule-utilization\.py --json \| (python3 -c .*?)(?<!\\\\)\"(?=[,}])", predicate)
-    assert m, "predicate not found"
-    argv = shlex.split(json.loads('"' + m.group(1) + '"'))
-
-    def run(verdicts, fleet_observed=7):
-        planes = [
-            {"plane": p, "verdict": v, "observed": fleet_observed if p == "github-actions-fleet-private" else 1}
-            for p, v in verdicts.items()
-        ]
-        return subprocess.run(
-            argv, input=json.dumps({"planes": planes}), capture_output=True, text=True, check=False
-        ).returncode
-
-    base = {
-        "github-actions-ops": "full",
-        "github-actions-ops-witness": "underfilled",
-        "cloudflare-ops-scheduler": "full",
-        "github-actions-fleet-private": "underfilled",
-    }
-    assert run(base) == 0
-    assert (
-        run({**base, "cloudflare-ops-scheduler": "unmeasured"}) == 1
-    )  # only the Jules API witness succeeding is not the weekly audit
-    assert run({k: v for k, v in base.items() if k != "cloudflare-ops-scheduler"}) == 1
-    assert run(base, fleet_observed=6) == 1  # the private fleet must rise above the 2026-10-23 reading
-    assert run({**base, "github-actions-fleet-private": "dark"}) == 1
