@@ -32,22 +32,29 @@ The daemon runs its pty host FROM the bundle, then hands the session process its
 disclaims into its own TCC identity. So per-version consent prompts persist with
 a perfectly kept bundle. That argv is composed inside the vendor binary; nothing
 outside it can redirect the session onto the bundled path without patching a
-signed 271MB Mach-O, which would break both its signature and auto-update. This
-organ keeps the bundle correct -- a real precondition, and demonstrably not the
-whole cure. Do not let a green reading here be read as "prompts are fixed."
+signed 271MB Mach-O, which would break both its signature and auto-update. The
+argv is fixed, but the PATH it names is not: ``scripts/claude-bundle-identity-heal.py``
+(#2467, sensor ``dialogs-silenced``, armed by ``LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL``)
+replaces the live ``versions/<v>`` hardlink with a symlink into this bundle, so the
+session's exec resolves to ``com.anthropic.claude-code``. While both names are
+hardlinks of one inode the kernel reports whichever it last cached (a signed test
+binary exec'd through a symlink to the bundle was still named by the hardlinked
+versions path until that hardlink was removed, 2026-10-24). This organ keeps the
+bundle correct -- the precondition that heal relies on, not the cure itself. A green
+reading here is not "prompts are fixed"; the heal must also run after each update.
 
-``_jb()`` wraps ``mkdir`` + ``writeFile`` + ``stat`` + ``unlink`` + ``link`` in a
-single bare ``catch { return null }``, and it takes an EARLY RETURN when the
-hardlink already has the running binary's inode::
+``_jb()`` wraps its bundle writes in a single bare ``catch { return null }`` and
+takes an EARLY RETURN when the bundle binary already has the running binary's
+inode. Older builds then did ``unlink`` + ``link`` (a window two concurrent starts
+could race into ``EEXIST``); 2.1.309+ link to a temp name and rename over the
+bundle path, so the vendor path never leaves it missing. ``repair()`` does the
+same. Keeping the bundle present and inode-correct keeps every start on the early
+return.
 
-    if ((await stat(r)).ino === n) return r;   // <- no unlink, no link, no race
-    await unlink(r);
-    return await link(process.execPath, r), r; // <- concurrent starts collide here
-
-So keeping the bundle present and inode-correct is not decoration: it is what
-keeps every session on the early return, where there is no window for two
-concurrent starts to race the unlink/link pair into an ``EEXIST`` that silently
-demotes one of them to a versioned identity.
+The bundle binary is the inode's ONLY name once the heal has symlinked
+``versions/<v>`` into it -- so removing or trashing ``ClaudeCode.app`` (the object
+macOS's "damaged" dialog offers to Trash) leaves the launcher dangling. Unregister
+it (``heal-claude-lsregister.sh``); never delete it.
 
 This organ is idempotent and never edits TCC, never signs anything, and never
 removes a version. It writes exactly what the vendor writes, so a live session
@@ -111,6 +118,7 @@ LSREGISTER = (
 # bundle is indistinguishable from a vendor-written one -- if these diverged, the
 # vendor would rewrite the file on every start and the keeper would be noise.
 INFO_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict><key>CFBundleIdentifier</key><string>com.anthropic.claude-code</string><key>CFBundleName</key><string>Claude Code</string><key>CFBundleDisplayName</key><string>Claude Code</string><key>CFBundleExecutable</key><string>claude</string><key>CFBundlePackageType</key><string>APPL</string><key>LSUIElement</key><true/><key>NSMicrophoneUsageDescription</key><string>Claude Code uses the microphone for voice dictation.</string><key>NSAppleEventsUsageDescription</key><string>Claude Code needs to send Apple Events to open URLs and control applications you authorize.</string><key>NSLocalNetworkUsageDescription</key><string>Claude Code connects to servers and devices on your local network when commands you run need to reach them.</string></dict></plist>
 """
 
@@ -141,10 +149,10 @@ def _current_binary(env: Mapping[str, str]) -> tuple[Path | None, str | None]:
     A launcher pointing anywhere else means the bundle path is not in play and
     there is nothing for this organ to keep.
 
-    ONE EXCEPTION: the native installer (`~/.local/bin/claude`, no npm `versions/`
-    tree of independent copies) has itself started symlinking `versions/<v>` to
-    `<bundle>/Contents/MacOS/claude` on some hosts -- verified 2026-08-15 on
-    `versions/2.1.233 -> .../ClaudeCode.app/Contents/MacOS/claude`. A strict resolve
+    ONE EXCEPTION: `scripts/claude-bundle-identity-heal.py` (#2467) symlinks
+    `versions/<v>` to `<bundle>/Contents/MacOS/claude` -- e.g. 2026-08-15 on
+    `versions/2.1.233` (earlier attributed here to the native installer; the heal
+    merged hours before that symlink's mtime). A strict resolve
     of the launcher then chases straight through BOTH hops and lands on the bundle
     binary itself, which sits outside `versions/` by construction -- so the check
     above misreads an already-repaired install as `launcher_unresolvable` and the
@@ -197,6 +205,7 @@ def _installed_versions(env: Mapping[str, str]) -> list[dict[str, Any]]:
         found.append(
             {
                 "version": entry.name,
+                "inode": info.st_ino,
                 "size_bytes": info.st_size,
                 "runnable": bool(info.st_size) and os.access(entry, os.X_OK),
             }
@@ -329,7 +338,8 @@ def inspect(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     binary, error = _current_binary(values)
     payload["current_binary"] = str(binary) if binary else None
     payload["versions"] = _installed_versions(values)
-    runnable = [item for item in payload["versions"] if item["runnable"]]
+    # Entries the bundle-identity heal symlinked share the bundle's inode; only DISTINCT inodes race.
+    runnable = {item["inode"] for item in payload["versions"] if item["runnable"]}
     payload["concurrent_version_race_risk"] = len(runnable) > 1
     payload["instances"] = _instances(values, binary)
     payload["class_findings"] = _class_findings(payload["instances"])
@@ -400,12 +410,14 @@ def repair(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         plist.write_text(INFO_PLIST, encoding="utf-8")
         actions.append("wrote_info_plist")
     if not before.get("hardlink_inode_matches"):
-        try:
-            link.unlink()
-            actions.append("removed_stale_hardlink")
-        except FileNotFoundError:
-            pass
-        os.link(binary, link)
+        # Link to a temp name, then rename over: the bundle path never goes missing, which
+        # matters once healed versions/<v> symlinks make it the only name for live bytes.
+        staged = macos / f"claude.tmp.{os.getpid()}"
+        staged.unlink(missing_ok=True)
+        os.link(binary, staged)
+        if link.exists() or link.is_symlink():
+            actions.append("replaced_stale_hardlink")
+        os.replace(staged, link)
         actions.append("linked_current_binary")
 
     after = inspect(values)
@@ -468,10 +480,12 @@ def main(argv: list[str] | None = None) -> int:
         for action in payload.get("actions", []):
             print(f"  action: {action}")
         if payload.get("concurrent_version_race_risk"):
-            runnable = [item["version"] for item in payload.get("versions", []) if item["runnable"]]
-            print(
-                f"  advisory: {len(runnable)} runnable versions present ({', '.join(runnable)}) — concurrent starts can still race"
-            )
+            groups: dict[int, list[str]] = {}
+            for item in payload.get("versions", []):
+                if item["runnable"]:
+                    groups.setdefault(item["inode"], []).append(item["version"])
+            listed = "; ".join(", ".join(names) for names in groups.values())
+            print(f"  advisory: {len(groups)} distinct runnable binaries ({listed}) — concurrent starts can still race")
     if args.strict:
         return 0 if payload.get("strict_ok") else 1
     return 0 if payload.get("ok") else 1

@@ -135,7 +135,9 @@ def test_hardlink_to_a_superseded_version_is_stale_not_ok(tmp_path: Path):
 
     healed = KEEPER.repair(env)
     assert healed["ok"] is True
-    assert "removed_stale_hardlink" in healed["actions"]
+    assert "replaced_stale_hardlink" in healed["actions"]
+    macos = Path(env["LIMEN_CLAUDE_STORE"]) / "ClaudeCode.app/Contents/MacOS"
+    assert not list(macos.glob("claude.tmp.*")), "the staged link must be renamed over, never left behind"
     assert "linked_current_binary" in healed["actions"]
 
 
@@ -195,6 +197,24 @@ def test_two_runnable_versions_are_reported_as_a_standing_race_risk(tmp_path: Pa
     empty.write_bytes(b"")
     runnable = [item["version"] for item in KEEPER.inspect(env)["versions"] if item["runnable"]]
     assert "2.1.221" not in runnable, "a zero-byte install artifact is not a runnable version"
+
+
+def test_versions_symlinked_into_the_bundle_are_not_a_race_risk(tmp_path: Path):
+    """claude-bundle-identity-heal.py turns versions/<v> into a symlink into the bundle; entries that
+    share the bundle's inode cannot race each other, so they must not raise the advisory."""
+    env = _store(tmp_path)
+    KEEPER.repair(env)
+    store = Path(env["LIMEN_CLAUDE_STORE"])
+    (store / "versions/2.1.221").symlink_to(store / "ClaudeCode.app/Contents/MacOS/claude")
+
+    assert KEEPER.inspect(env)["concurrent_version_race_risk"] is False
+
+
+def test_info_plist_tracks_the_current_vendor_bytes():
+    """The current vendor _jb() (present in 2.1.309 and 2.1.310) writes a DOCTYPE line; a keeper
+    constant without it would rewrite the vendor's file on every run while the vendor rewrote it back
+    on every start."""
+    assert '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"' in KEEPER.INFO_PLIST
 
 
 def test_non_darwin_is_not_applicable_rather_than_a_failure(tmp_path: Path, monkeypatch):

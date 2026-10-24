@@ -185,9 +185,28 @@ The daemon runs its pty host **from the bundle**, then passes the session proces
 its `versions/<version>` path as literal argv; that session is the one that
 disclaims, so it becomes its own privacy client regardless of the bundle's state.
 Four of five live processes ran from the versioned path. The argv is composed
-inside the vendor binary, so nothing outside it redirects the session onto the
-bundled path — this is an upstream defect, and the keeper below is a precondition
-for the stable identity, not a cure for per-version prompts.
+inside the vendor binary, but the path it names is not: `scripts/claude-bundle-identity-heal.py`
+(#2467; sensor `dialogs-silenced`, armed by `LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL`)
+replaces the live `versions/<v>` hardlink with a symlink into the bundle, and the
+session then resolves to `com.anthropic.claude-code`. The hardlink alone is not
+enough: one inode with two names is reported under whichever the kernel last
+cached. Observed 2026-10-24: tccd attributed already-running sessions (no re-exec)
+to `versions/2.1.310` before the hardlink name was replaced and to
+`com.anthropic.claude-code` within seconds after; a bundle-ID row can also appear
+while the hardlink exists, so path attribution under a hardlink is likely, not
+certain. That bundle
+row's Full Disk Access `csreq` is Anthropic's Developer ID team plus the
+identifier, so it survives every update. The heal runs **after** the vendor writes
+`versions/<new>`, so it only works if something runs it after each update — and
+nothing did: every logged beat run was dry-run (valve unarmed), the legacy
+metabolize beat that carried it stopped about 2026-08-21, and the current
+`limen heartbeat` runs observe-only probes that never invoke it. Six
+bare-version clients (2.1.301, 302, 307–310) appeared 2026-10-16 → 10-24 (#3200).
+Consequences of the healed shape: the bundle binary becomes the live bytes' only
+name (trashing `ClaudeCode.app` breaks the launcher), a healed `versions/<old>`
+aliases whatever the bundle holds after the next update, and the bundle ID
+re-prompts once for each service it was never granted. The keeper below is that
+heal's precondition, not the cure itself.
 
 `_jb()` returns early when the hardlink already carries the running binary's
 inode, skipping the `unlink`/`link` pair that concurrent session starts can
