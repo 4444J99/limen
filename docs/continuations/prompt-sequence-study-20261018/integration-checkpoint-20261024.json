@@ -1,0 +1,124 @@
+{
+  "record_type": "prompt_integration_checkpoint",
+  "observed_at": "2026-10-24T02:33:19Z",
+  "owner_url": "https://github.com/4444J99/limen/issues/3173",
+  "research_owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "repair_pr": "https://github.com/4444J99/limen/pull/3189",
+  "implementation_head": "82d78aa5abed6689223ec7701f0860db07e96f86",
+  "original_pr_head": "eedc8c76972cbbb0a2c37be4b003e28840956d9d",
+  "source_published": true,
+  "source_merged": false,
+  "source_deployed": false,
+  "session_released": false,
+  "original_goal_completed": false,
+  "authorization": {
+    "received_at": "2026-10-23T13:52:53Z",
+    "original_cumulative_limit_minutes": 120,
+    "budget_reset": false,
+    "recorded_attempt_deadline": "2026-10-23T14:41:46Z",
+    "post_deadline_activity": "preservation and observation only; no replacement checkout or implementation started"
+  },
+  "verification": {
+    "projection_before": {
+      "exit_code": 1,
+      "expected_regression_failures": 3,
+      "other_passes": 12
+    },
+    "projection_after": {
+      "exit_code": 0,
+      "passed": 15
+    },
+    "changed_python_lint": {
+      "exit_code": 0
+    },
+    "changed_python_format": {
+      "exit_code": 0
+    },
+    "source_replay": {
+      "source_columns": 19,
+      "backward_pairs_before": 29,
+      "backward_pairs_after": 0,
+      "changed_response_positions": 28,
+      "source_hashes_match": true,
+      "source_input_projections_unchanged": true
+    },
+    "catalog_dom_logic": {
+      "exit_code": 0,
+      "columns": 382,
+      "prompt_rows": 3500,
+      "lineage_views": 37,
+      "captured_parents": 7,
+      "managed_inputs": 6,
+      "current_proposal_names": 21
+    },
+    "browser_visual": {
+      "status": "blocked",
+      "reason": "Browser security policy rejected the local file URL and explicitly forbids workarounds."
+    },
+    "scoped_batch": {
+      "command": "bash scripts/verify-scoped.sh --base origin/main --total-timeout-seconds 540",
+      "head": "82d78aa5abed6689223ec7701f0860db07e96f86",
+      "exit_code": 1,
+      "elapsed_seconds": 107.58,
+      "log_sha256": "b75ca261ad2254463157e3402716618eba398a1355096cf499ffda89105639e7",
+      "log_bytes": 49431,
+      "finished_gates": 37,
+      "passing_gates": 36,
+      "failed_gates": [
+        "python-typecheck"
+      ],
+      "heavy_started": false,
+      "log_modified_at": "2026-10-23T14:04:58.866127+00:00",
+      "failure": "Selected interpreter could not import mypy; heavy gates did not start."
+    }
+  },
+  "private_derivatives": {
+    "root_retained": true,
+    "current_readback_at": "2026-10-24T02:30:00Z",
+    "files": [
+      {
+        "name": "native-stream-reply-order-20261023.json",
+        "bytes": 39592219,
+        "sha256": "3e06487f119b322932a3fb857108ee960501c4d0ea1f4a1630c191c5a723f844"
+      },
+      {
+        "name": "native-catalog-reply-order-20261023.html",
+        "bytes": 37750614,
+        "sha256": "cb3f202b5e01ea36433a92ec2d69d43aa3d4fc6fa4c300e1de4f038d7dfa56b3"
+      }
+    ],
+    "independent_restoration_custody": "unproven",
+    "original_snapshot_and_catalog": "Hashes were unchanged during the replay; their old checkout is now absent, so continued original-payload custody is not inferred."
+  },
+  "checkout_observation": {
+    "coordinator_root": "absent",
+    "original_prompt_source_root": "absent",
+    "worktree_inventory": "Both roots are absent from the live Git worktree inventory; their parent directories contain only native name markers.",
+    "cause": "not established",
+    "previous_ignored_payloads": "presently unlocated; preserve existing owners including Domus 535",
+    "replacement_created": false,
+    "coordinator_deletion_performed": false
+  },
+  "original_cleanup_counts": {
+    "native_archives": 4,
+    "reaped_branches": 6,
+    "additional_archives": 0,
+    "additional_reaps": 0
+  },
+  "separate_source_updates": {
+    "next_advisories": {
+      "pr": 3181,
+      "state": "merged",
+      "merge_commit": "0ebf8d69179a976b124119d1e2c192442e9a2d4a",
+      "owner_issue_3175": "closed"
+    },
+    "python_and_worker_audits": {
+      "pr": 3187,
+      "state": "merged",
+      "merge_commit": "19ea40f588538ae3654389d4308961bc6c3ab86e",
+      "owner_issue_3145": "open"
+    },
+    "attribution": "Observed external work; not performed by this coordinator. Live adoption is not inferred."
+  },
+  "next_acceptance": "Recover an admitted execution checkout and account for the missing private originals, restore the complete test toolchain, then run only the missing implicated gates under valid remaining authority. Keep shared-turn causal uncertainty and all original research, custody and native acceptance requirements."
+}

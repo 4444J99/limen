@@ -1,0 +1,500 @@
+{
+  "schema": "limen.prompt_sequence_short_review.v1",
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "vocabulary": "vocabulary-v5.json",
+  "coverage": {
+    "file_sequences": 16,
+    "retained_prompt_positions": 32,
+    "post_opener_positions": 16,
+    "independent_intentions": null,
+    "substitution_success_rate": null
+  },
+  "status": "same_coder_contextual_candidates",
+  "rules": [
+    "Keep exact source and stage bindings; a repeated operation can have a different evidence-bound outcome.",
+    "Read each opener and reply with the follow-up; retain all domain payload.",
+    "Historical replies remain claims, external references remain explicit limits.",
+    "Do not add this cohort to independent-human or substitution denominators."
+  ],
+  "sequences": [
+    {
+      "alias": "E01",
+      "key": "b760bfd40198",
+      "lines": [
+        15,
+        289
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Review three peer records, plan repairs and implement",
+      "operations": [
+        "/fix",
+        "/continue"
+      ],
+      "intent": "Resolve storage/access causes without deletion or safeguard bypass, then execute the existing plan through its existing owners.",
+      "outcome": "The reply reports restored existing-worktree access, one merged healthcheck fix and two published Limen updates; heavy verification, deployment and full recovery remain incomplete.",
+      "limit": "Three opener attachments were referenced but not read in this tranche; do not claim their complete contents reviewed.",
+      "case": {
+        "position": 2,
+        "source_line": 289,
+        "candidate_operations": [
+          "/fix",
+          "/continue"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E02",
+      "key": "9484ade1e6aa",
+      "lines": [
+        10,
+        203
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Close out a review whose checkout disappeared",
+      "operations": [
+        "/next"
+      ],
+      "intent": "Derive the minimum actual human action from current access/ownership evidence; investigation and repair remain agent work.",
+      "outcome": "The reply says there is no terminal command to run yet and describes a concrete policy request that still needs preparation.",
+      "limit": "A prospective approval request is not approval, admission or a proven repair.",
+      "case": {
+        "position": 2,
+        "source_line": 203,
+        "candidate_operations": [
+          "/next"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E03",
+      "key": "286d6e09fd72",
+      "lines": [
+        10,
+        196
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Inventory agent directories and plan provider-neutral containment",
+      "operations": [
+        "/review"
+      ],
+      "intent": "Adversarially evaluate the entire preceding session against its original multi-part request, source claims, coverage and durable deliverables.",
+      "outcome": "The reply identifies incomplete census/plan delivery and unsafe recovery assumptions while preserving successful reconnaissance as partial evidence.",
+      "limit": "This study reads the retained request/reply sequence; it does not re-audit every filesystem and external claim in that historical review.",
+      "case": {
+        "position": 2,
+        "source_line": 196,
+        "candidate_operations": [
+          "/review"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E04",
+      "key": "e5486e84c834",
+      "lines": [
+        10,
+        75
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Repair strict YAML lint while preserving configuration values",
+      "operations": [
+        "/verify"
+      ],
+      "intent": "Check archival eligibility of the work conversation, without deleting the chat or authorizing checkout retirement.",
+      "outcome": "The reply permits chat archival but says formal session closeout and a terminal receipt remain unverified.",
+      "limit": "A yes answer to archival eligibility does not establish a passing formal release predicate.",
+      "case": {
+        "position": 2,
+        "source_line": 75,
+        "candidate_operations": [
+          "/verify"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E05",
+      "key": "d72e4ff8bf64",
+      "lines": [
+        10,
+        891
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Finish incomplete local-CI fixes and integration",
+      "operations": [
+        "/verify"
+      ],
+      "intent": "Check chat archival eligibility against published work and remaining owned state.",
+      "outcome": "The reply permits chat archival while requiring worktree retention because an uncommitted child edit has unknown ownership.",
+      "limit": "Conversation archival and custody-qualified deletion have different predicates.",
+      "case": {
+        "position": 2,
+        "source_line": 891,
+        "candidate_operations": [
+          "/verify"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E06",
+      "key": "372f808b1d01",
+      "lines": [
+        10,
+        642
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Harden the native Doctor adapter and prove its deployed behavior",
+      "operations": [
+        "/verify"
+      ],
+      "intent": "Check archival eligibility as a durable handoff while preserving the unmerged delivery owner and private evidence.",
+      "outcome": "The reply permits archival, reports a matching installed helper and published clean checkout, and explicitly retains the worktree with its PR still open.",
+      "limit": "Archival as a handoff does not prove merge or authorize deleting source/evidence.",
+      "case": {
+        "position": 2,
+        "source_line": 642,
+        "candidate_operations": [
+          "/verify"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E07",
+      "key": "6838400d1152",
+      "lines": [
+        10,
+        750
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Finish live skills consolidation, use, capture and rollback",
+      "operations": [
+        "/next",
+        "/plan"
+      ],
+      "intent": "Derive the complete remaining rollout sequence with all consumer, capture, review, recovery and retirement gates preserved.",
+      "outcome": "The reply gives a controlled five-consumer rollout and distinguishes engineering from eligible-review/account authority.",
+      "limit": "This opener matches another reviewed view in wording; source/turn lineage must be reconciled before counting independent intentions.",
+      "case": {
+        "position": 2,
+        "source_line": 750,
+        "candidate_operations": [
+          "/next",
+          "/plan"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E08",
+      "key": "cffcc86b2fdf",
+      "lines": [
+        12,
+        185
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Give evidence-grounded feedback on day-to-day operation",
+      "operations": [
+        "/continue"
+      ],
+      "intent": "Finish the already requested activity analysis using its bounded evidence sample.",
+      "outcome": "The reply provides the assessment and recommendations with explicit sample coverage rather than a complete time-use audit.",
+      "limit": "Continuation can finish an analytical response; it does not authorize implementing its recommendations or altering schedules.",
+      "case": {
+        "position": 2,
+        "source_line": 185,
+        "candidate_operations": [
+          "/continue"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E09",
+      "key": "325388a4989e",
+      "lines": [
+        9,
+        646
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Recover production and deployment automation under exact-source constraints",
+      "operations": [
+        "/next",
+        "/plan",
+        "/handoff"
+      ],
+      "intent": "Derive next work, assess serialized multi-agent preparation/execution, and draft a separate bounded relay for each role.",
+      "outcome": "The reply supplies three role handoffs with temporal, authority, custody, accounting and full-day acceptance dependencies.",
+      "limit": "Drafting handoffs does not reserve capacity, spawn agents, send messages, schedule future execution or prove deployment/recovery.",
+      "case": {
+        "position": 2,
+        "source_line": 646,
+        "candidate_operations": [
+          "/next",
+          "/plan",
+          "/handoff"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E10",
+      "key": "a01b845e1fe4",
+      "lines": [
+        12,
+        223
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Recover a storage-quota-blocked launcher safely",
+      "operations": [
+        "/correct",
+        "/plan"
+      ],
+      "intent": "Correct one-off cleanup into durable recurrence prevention, retaining the existing archive/restoration owner and original data.",
+      "outcome": "The reply supplies a preventive maintenance plan and corrects the supplied claim that an archive process was running.",
+      "limit": "The supplied operational assertion remains a claim; a plan is not preventive deployment or restored native history.",
+      "case": {
+        "position": 2,
+        "source_line": 223,
+        "candidate_operations": [
+          "/correct",
+          "/plan"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E11",
+      "key": "3addcf764b75",
+      "lines": [
+        9,
+        54
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Diagnose quota and two MCP startup failures",
+      "operations": [
+        "/fix",
+        "/verify"
+      ],
+      "intent": "Execute only the specifically selected technical repair: negotiation compatibility and a prepared fixed-version launcher.",
+      "outcome": "The reply reports tool discovery for both integrations but leaves full installer completion and independent monthly quota exhaustion open.",
+      "limit": "Permission to fix MCP startup does not authorize paid quota changes or make a still-running installer terminal.",
+      "case": {
+        "position": 2,
+        "source_line": 54,
+        "candidate_operations": [
+          "/fix",
+          "/verify"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E12",
+      "key": "a92ca768e5a3",
+      "lines": [
+        9,
+        85
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Proceed with the named C0 reconciliation stage",
+      "operations": [
+        "/continue"
+      ],
+      "intent": "Repeat the same C0-stage request while retaining its source prerequisites, accepted policy boundaries and existing allowance.",
+      "outcome": "The first reply cannot locate B0; the second reports C0 staged on B0 with tests and HOLD for acceptance/review.",
+      "limit": "The repeated instruction alone does not prove B0 was found, authorize unrelated extraction, waive prerequisites or adopt policy.",
+      "case": {
+        "position": 2,
+        "source_line": 85,
+        "candidate_operations": [
+          "/continue"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E13",
+      "key": "d9a614769649",
+      "lines": [
+        9,
+        1418
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Build a purpose-specific governed repository factory",
+      "operations": [
+        "/closeout"
+      ],
+      "intent": "Resolve this session's obligations and prove its release without substituting project completion or merge acceptance.",
+      "outcome": "The reply reports two unchanged passing release runs while explicitly leaving task completion, estate completion, retirement and merge unclaimed.",
+      "limit": "Historical release claims are preserved as such; this study does not rerun the old predicate.",
+      "case": {
+        "position": 2,
+        "source_line": 1418,
+        "candidate_operations": [
+          "/closeout"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E14",
+      "key": "fc79f3672823",
+      "lines": [
+        12,
+        337
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Diagnose local/remote editor dictation failures",
+      "operations": [
+        "/context",
+        "/verify"
+      ],
+      "intent": "Supply the new local-run error as evidence that tests the earlier Codespaces-specific hypothesis.",
+      "outcome": "The reply identifies the same transcription challenge locally and gives a redacted escalation route rather than a microphone/reinstall fix.",
+      "limit": "The error attachment is not fully read here. No challenge tokens or personal log material are reproduced; no feedback is submitted by this study.",
+      "case": {
+        "position": 2,
+        "source_line": 337,
+        "candidate_operations": [
+          "/context",
+          "/verify"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E15",
+      "key": "704e82f73833",
+      "lines": [
+        9,
+        641
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Complete the assigned miscellaneous-repository workstream",
+      "operations": [
+        "/closeout"
+      ],
+      "intent": "Attempt the complete original session-release contract, preserving its task owners and custody requirements.",
+      "outcome": "The reply reports exit 2/unmeasured after bootstrap and a read-back handoff; release remains unverified.",
+      "limit": "The same closeout operation as E13 can return a different result because evidence differs.",
+      "case": {
+        "position": 2,
+        "source_line": 641,
+        "candidate_operations": [
+          "/closeout"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    },
+    {
+      "alias": "E16",
+      "key": "e29f61b15f28",
+      "lines": [
+        9,
+        96
+      ],
+      "shared": [],
+      "source_eof": true,
+      "retained_flags": [
+        true,
+        true
+      ],
+      "opener": "Plan healing of an allegedly missing closeout protocol",
+      "operations": [
+        "/closeout"
+      ],
+      "intent": "Prove release for this healing session while retaining the prior plan and original session obligations separately.",
+      "outcome": "The reply reports exit 0 and a published durable handoff after the earlier reply identified a partly stale blocker.",
+      "limit": "This response does not by itself prove every original foreign-session task predicate passed.",
+      "case": {
+        "position": 2,
+        "source_line": 96,
+        "candidate_operations": [
+          "/closeout"
+        ],
+        "interpretation_status": "same_coder_contextual_candidate_not_independently_validated"
+      }
+    }
+  ]
+}

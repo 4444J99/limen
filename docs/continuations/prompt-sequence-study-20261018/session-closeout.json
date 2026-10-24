@@ -1,0 +1,119 @@
+{
+  "schema": "limen.session_closeout.v2",
+  "session_id": "01a14e66-dd33-79d2-8b81-fccbda7c8c2d",
+  "session_root_path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+  "receipt_root_id": "repair",
+  "owner_url": "https://github.com/4444J99/limen/pull/3087",
+  "disposition": "handoff",
+  "scope_roots": [
+    {
+      "id": "repair",
+      "kind": "git",
+      "path_sha256": "1800d38a31c4a881ca6c83d171fdeb1a806b506046a21d98ce595319bf0fdc78",
+      "repository": "4444J99/limen",
+      "repository_id": 1255213941,
+      "base_head": "bbcc7cbb98367755aa588236aef0aa5bc0ab99d5",
+      "publication_branch": "fix/codex-hook-closeout-01a14e66",
+      "owned_paths": [
+        "cli/src/limen/action_admission.py",
+        "cli/src/limen/action_admission_runtime.py",
+        "cli/tests/test_codex_host_admission_hook.py",
+        "docs/continuations/prompt-sequence-study-20261018/handoff.json",
+        "docs/continuations/prompt-sequence-study-20261018/bootstrap-domus.sh",
+        "docs/continuations/prompt-sequence-study-20261018/domus-host-contracts.proposed.patch",
+        "docs/continuations/prompt-sequence-study-20261018/capture-native-review.py",
+        "docs/continuations/prompt-sequence-study-20261018/capture-native-stream.py",
+        "docs/continuations/prompt-sequence-study-20261018/check-native-catalog.cjs",
+        "docs/continuations/prompt-sequence-study-20261018/native-catalog.js",
+        "docs/continuations/prompt-sequence-study-20261018/native-sequence-review.json",
+        "docs/continuations/prompt-sequence-study-20261018/render-native-catalog.py",
+        "docs/continuations/prompt-sequence-study-20261018/render-native-review.py",
+        "docs/continuations/prompt-sequence-study-20261018/study-v2.md",
+        "docs/continuations/prompt-sequence-study-20261018/vocabulary-v2.json",
+        "docs/continuations/prompt-sequence-study-20261018/capture-native-projection.py",
+        "docs/continuations/prompt-sequence-study-20261018/test_native_projection.py",
+        "docs/continuations/prompt-sequence-study-20261018/substitution-review-v1.json",
+        "docs/continuations/prompt-sequence-study-20261018/study-v3.md",
+        "institutio/governance/gates.yaml"
+      ],
+      "retained_work": []
+    }
+  ],
+  "verification": [
+    {
+      "root_id": "repair",
+      "command": "hermetic admission and closeout tests (68 passed); scoped Ruff and diff checks; credential-wall --check",
+      "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    },
+    {
+      "root_id": "repair",
+      "command": "AdmissionController.status(probe=True): require allowed=true",
+      "head": "70116b637304bec7dd5a30f03588de21d1b0db59",
+      "exit_code": 1,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb",
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/pull/3087"
+    },
+    {
+      "root_id": "repair",
+      "command": "Native catalog data/selection checks, scoped Ruff, JavaScript syntax, credential-wall and whitespace",
+      "head": "46d8a0cdf6c5270af58092764da98305f5f8de55",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    },
+    {
+      "root_id": "repair",
+      "command": "12 hermetic projection/rollout tests; native catalog logic, Ruff, registry, credential and whitespace checks",
+      "head": "1b3402ad8a7cdb78ee2fc2320043b1b76bb9a813",
+      "exit_code": 0,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "root_ids": [
+      "repair"
+    ],
+    "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+    "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+  },
+  "external_effects": [
+    {
+      "id": "remaining-prompt-study",
+      "kind": "unfinished-study",
+      "verified": false,
+      "owner_url": "https://github.com/4444J99/limen/issues/3056",
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    },
+    {
+      "id": "currency-reconciliation",
+      "kind": "deployment-readback",
+      "verified": true,
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    },
+    {
+      "id": "process-source-repair",
+      "kind": "unfinished-source-repair",
+      "verified": false,
+      "owner_url": "https://github.com/4444J99/limen/pull/3087",
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    },
+    {
+      "id": "native-study-v2-private-derivatives",
+      "kind": "retained-private-research",
+      "verified": false,
+      "owner_url": "https://github.com/4444J99/limen/issues/3056",
+      "evidence": "docs/continuations/prompt-sequence-study-20261018/session-evidence.json",
+      "sha256": "bcf68bf5350b05045d0c5e05c19f497e2982517c258f5e26f747df4e00b6a6cb"
+    }
+  ]
+}

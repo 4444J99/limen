@@ -1,0 +1,584 @@
+{
+  "schema": "limen.native-reply-order-findings.v1",
+  "column_key_namespace": {
+    "field": "column",
+    "rule": "Legacy first-12 SHA256 of captured source path; not the native header-plus-snapshot namespace.",
+    "canonical_crosswalk": "source-key-namespace-v1.json"
+  },
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "publication": "https://github.com/4444J99/limen/pull/3087",
+  "status": "reproduced_on_native_sources_projector_fix_proposed_not_executed",
+  "census_scope": "Existing primary prompt rows only: 3500 total including 3489 Codex positions and the separate 11-row Claude example. Derived context frames are excluded from this negative-order census; the 29 verified affected pairs are all native Codex records.",
+  "counts": {
+    "backwards_associations": 29,
+    "affected_source_positions": 28,
+    "affected_file_columns": 19,
+    "affected_all_true_retention_columns": 0,
+    "affected_positions_in_unknown_review": 1
+  },
+  "invariant": "A recorded response cannot be treated as the outcome of an input that follows it in native order and timestamp, even when the native turn IDs agree.",
+  "root_cause": {
+    "source": "capture-native-projection.py",
+    "function": "project_rows",
+    "finding": "All selected finals for a native turn are assigned to every user item in that turn, without checking whether the reply follows that input. A reused turn ID therefore carries an earlier outcome into a later input.",
+    "proposed_change": "Select replies strictly after each input before choosing explicit finals or last-commentary fallback; preserve excluded preceding reply references and existing shared-turn uncertainty."
+  },
+  "source_verification": {
+    "sources": 19,
+    "decoded_bytes": 406176098,
+    "read_mode": "sequential streaming; 128KiB chunks; 4MiB selected-record bound; 128MiB source bound; 20-second per-source deadline",
+    "snapshot_hashes_matched": true,
+    "stable_before_after_stat": true,
+    "all_29_pairs_same_bound_native_turn": true,
+    "all_29_pairs_native_ordinal_precedes_input": true,
+    "all_29_pairs_timestamp_precedes_input": true,
+    "all_selected_native_bodies_match_capture": true
+  },
+  "sources": [
+    {
+      "column": "22e9905c43b0",
+      "decoded_bytes": 49297101,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 20,
+          "input_source_line": 826,
+          "prior_reply_source_line": 823,
+          "input_native_ordinal": 825,
+          "reply_native_ordinal": 822,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "3dde40cedc8f",
+      "decoded_bytes": 55746593,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 17,
+          "input_source_line": 18447,
+          "prior_reply_source_line": 18444,
+          "input_native_ordinal": 18446,
+          "reply_native_ordinal": 18443,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "e044f87430cc",
+      "decoded_bytes": 25009884,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 6,
+          "input_source_line": 2678,
+          "prior_reply_source_line": 2675,
+          "input_native_ordinal": 2677,
+          "reply_native_ordinal": 2674,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "3fff96b675de",
+      "decoded_bytes": 85354301,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 42,
+          "input_source_line": 8638,
+          "prior_reply_source_line": 8635,
+          "input_native_ordinal": 8637,
+          "reply_native_ordinal": 8634,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 43,
+          "input_source_line": 8644,
+          "prior_reply_source_line": 8635,
+          "input_native_ordinal": 8643,
+          "reply_native_ordinal": 8634,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 43,
+          "input_source_line": 8644,
+          "prior_reply_source_line": 8641,
+          "input_native_ordinal": 8643,
+          "reply_native_ordinal": 8640,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "e519eac9c84e",
+      "decoded_bytes": 16818448,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 2,
+          "input_source_line": 2687,
+          "prior_reply_source_line": 2684,
+          "input_native_ordinal": 2686,
+          "reply_native_ordinal": 2683,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "native-turn"
+        }
+      ]
+    },
+    {
+      "column": "af18495c8d25",
+      "decoded_bytes": 21908871,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 3,
+          "input_source_line": 3364,
+          "prior_reply_source_line": 3362,
+          "input_native_ordinal": 3363,
+          "reply_native_ordinal": 3361,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "4adc78bce9e8",
+      "decoded_bytes": 26074787,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 5,
+          "input_source_line": 3566,
+          "prior_reply_source_line": 3564,
+          "input_native_ordinal": 3565,
+          "reply_native_ordinal": 3563,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "af291bc589fc",
+      "decoded_bytes": 20893398,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 6,
+          "input_source_line": 529,
+          "prior_reply_source_line": 527,
+          "input_native_ordinal": 528,
+          "reply_native_ordinal": 526,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 7,
+          "input_source_line": 555,
+          "prior_reply_source_line": 527,
+          "input_native_ordinal": 554,
+          "reply_native_ordinal": 526,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "8ea40621c7c3",
+      "decoded_bytes": 18432210,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 4,
+          "input_source_line": 3205,
+          "prior_reply_source_line": 3176,
+          "input_native_ordinal": 3204,
+          "reply_native_ordinal": 3175,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "0eea18215964",
+      "decoded_bytes": 16988444,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 7,
+          "input_source_line": 2303,
+          "prior_reply_source_line": 2301,
+          "input_native_ordinal": 2302,
+          "reply_native_ordinal": 2300,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "fd5bc8b7b3d6",
+      "decoded_bytes": 2624112,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 3,
+          "input_source_line": 538,
+          "prior_reply_source_line": 536,
+          "input_native_ordinal": 537,
+          "reply_native_ordinal": 535,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "58ef6a507966",
+      "decoded_bytes": 2505811,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 8,
+          "input_source_line": 539,
+          "prior_reply_source_line": 537,
+          "input_native_ordinal": 538,
+          "reply_native_ordinal": 536,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "f3152fff00ef",
+      "decoded_bytes": 16883829,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 16,
+          "input_source_line": 3109,
+          "prior_reply_source_line": 3107,
+          "input_native_ordinal": 3108,
+          "reply_native_ordinal": 3106,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 17,
+          "input_source_line": 3166,
+          "prior_reply_source_line": 3107,
+          "input_native_ordinal": 3165,
+          "reply_native_ordinal": 3106,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 18,
+          "input_source_line": 3218,
+          "prior_reply_source_line": 3107,
+          "input_native_ordinal": 3217,
+          "reply_native_ordinal": 3106,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "afef6db7962b",
+      "decoded_bytes": 4416282,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 5,
+          "input_source_line": 1357,
+          "prior_reply_source_line": 1355,
+          "input_native_ordinal": 1356,
+          "reply_native_ordinal": 1354,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "2b653f5e4b39",
+      "decoded_bytes": 1131699,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 4,
+          "input_source_line": 151,
+          "prior_reply_source_line": 149,
+          "input_native_ordinal": 150,
+          "reply_native_ordinal": 148,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 5,
+          "input_source_line": 153,
+          "prior_reply_source_line": 149,
+          "input_native_ordinal": 152,
+          "reply_native_ordinal": 148,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "2ba5f1ccc49d",
+      "decoded_bytes": 4862832,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 3,
+          "input_source_line": 1118,
+          "prior_reply_source_line": 1116,
+          "input_native_ordinal": 1117,
+          "reply_native_ordinal": 1115,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 4,
+          "input_source_line": 1209,
+          "prior_reply_source_line": 1116,
+          "input_native_ordinal": 1208,
+          "reply_native_ordinal": 1115,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 5,
+          "input_source_line": 1245,
+          "prior_reply_source_line": 1116,
+          "input_native_ordinal": 1244,
+          "reply_native_ordinal": 1115,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "e9f4c64c0ddd",
+      "decoded_bytes": 19889409,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 28,
+          "input_source_line": 6775,
+          "prior_reply_source_line": 6773,
+          "input_native_ordinal": 6774,
+          "reply_native_ordinal": 6772,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "ea85c85f9575",
+      "decoded_bytes": 13475677,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 10,
+          "input_source_line": 1281,
+          "prior_reply_source_line": 1279,
+          "input_native_ordinal": 1280,
+          "reply_native_ordinal": 1278,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 11,
+          "input_source_line": 1283,
+          "prior_reply_source_line": 1279,
+          "input_native_ordinal": 1282,
+          "reply_native_ordinal": 1278,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        },
+        {
+          "position": 12,
+          "input_source_line": 1291,
+          "prior_reply_source_line": 1279,
+          "input_native_ordinal": 1290,
+          "reply_native_ordinal": 1278,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    },
+    {
+      "column": "1ee193c93d44",
+      "decoded_bytes": 3862410,
+      "source_snapshot_match": true,
+      "stable_read": true,
+      "verified_pairs": [
+        {
+          "position": 3,
+          "input_source_line": 310,
+          "prior_reply_source_line": 308,
+          "input_native_ordinal": 309,
+          "reply_native_ordinal": 307,
+          "same_bound_native_turn": true,
+          "native_ordinal_precedes_input": true,
+          "timestamp_precedes_input": true,
+          "captured_bodies_match": true,
+          "response_attribution": "shared-native-turn"
+        }
+      ]
+    }
+  ],
+  "impact": {
+    "existing_capture": "Not regenerated or silently edited. These 29 associations are invalid as outcomes of their later inputs.",
+    "branch_review_v1": "No all-true-retention column is affected; the earlier seven-source branch review is outside these findings.",
+    "unknown_retention_review_v1": "N03 position 2 excludes prior reply line 2684 and uses its later reply at line 2690.",
+    "scope_limit": "The negative order check does not prove that every remaining forward association is causal or independent."
+  },
+  "regression_tests": {
+    "file": "test_native_projection.py",
+    "new_tests": 3,
+    "coverage": [
+      "Explicit later final excludes an earlier final in the same turn.",
+      "A later prompt without a later reply remains missing.",
+      "A later commentary may be inferred only after the later prompt; excluded native references remain source-qualified."
+    ],
+    "execution": "not_run",
+    "expected_baseline_failures": "Three behavioral assertion failures are expected but have not been executed.",
+    "denials": [
+      {
+        "attempt": 1,
+        "command_shape": "absolute hermetic wrapper and test path",
+        "reason": "shared-checkout-write"
+      },
+      {
+        "attempt": 2,
+        "command_shape": "repository-relative hermetic wrapper with explicit owned worktree working directory",
+        "reason": "shared-checkout-write"
+      }
+    ]
+  },
+  "repair": {
+    "patch": "native-reply-order.proposed.patch",
+    "script": "repair-native-reply-order.sh",
+    "dry_run": "bash docs/continuations/prompt-sequence-study-20261018/repair-native-reply-order.sh --dry-run",
+    "apply": "bash docs/continuations/prompt-sequence-study-20261018/repair-native-reply-order.sh --apply",
+    "next_gate": "Admit this exact worktree's hermetic regression run through the owning source/cwd repair; run and inspect the three baseline failures, then apply the proposed patch and pass the complete fixture file. Re-capture affected columns and reconcile the catalog before claiming repaired attribution."
+  },
+  "patch_applicability": {
+    "command": "git apply --check docs/continuations/prompt-sequence-study-20261018/native-reply-order.proposed.patch",
+    "result": "passed",
+    "verified_utc": "2026-10-19T20:54:27Z",
+    "active_projector_changed": false,
+    "regression_tests_executed": false
+  },
+  "original_goal_complete": false
+}

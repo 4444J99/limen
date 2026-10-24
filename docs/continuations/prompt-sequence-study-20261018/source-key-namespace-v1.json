@@ -1,0 +1,231 @@
+{
+  "schema": "limen.prompt_study_source_key_namespace.v1",
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "rules": {
+    "snapshot_column": "First 12 SHA256 hex characters of native header ID plus newline plus full decoded-source SHA256; the namespace used by native-storage-views-v1.json and authoring-boundary-review-v1.json.",
+    "legacy_path_key": "First 12 SHA256 hex characters of the captured source path. This is the legacy column field in unknown-retention-review-v1.json and reply-order-findings-v1.json; it is not a header identity or the snapshot-column namespace.",
+    "header_key": "First 12 SHA256 hex characters of the native header ID alone. Header identity can repeat across files and must not be used alone to concatenate captured histories."
+  },
+  "scope": "Only the 36 captured source views used by the two legacy-key reports and this authoring comparison. No raw IDs, paths or full source hashes are republished.",
+  "snapshot_keys_unique_in_this_crosswalk": true,
+  "original_capture_unchanged": true,
+  "entries": [
+    {
+      "legacy_path_key": "f8c982e459f9",
+      "snapshot_column": "b4c52155921b",
+      "header_key": "9e3d4b88ecb1",
+      "captured_input_positions": 6
+    },
+    {
+      "legacy_path_key": "7cfdad517062",
+      "snapshot_column": "a15de0ec3c19",
+      "header_key": "c2a966ff3e84",
+      "captured_input_positions": 4
+    },
+    {
+      "legacy_path_key": "e519eac9c84e",
+      "snapshot_column": "e80d96b1ddc1",
+      "header_key": "b8aa7836141e",
+      "captured_input_positions": 7
+    },
+    {
+      "legacy_path_key": "442d2f4c57a1",
+      "snapshot_column": "6ee880f30841",
+      "header_key": "878574b5701d",
+      "captured_input_positions": 6
+    },
+    {
+      "legacy_path_key": "99e97e66e273",
+      "snapshot_column": "15f3337d94d2",
+      "header_key": "4b107b112bf1",
+      "captured_input_positions": 5
+    },
+    {
+      "legacy_path_key": "d7d0f419cbc7",
+      "snapshot_column": "9aea23a72306",
+      "header_key": "840131dd56b2",
+      "captured_input_positions": 5
+    },
+    {
+      "legacy_path_key": "ab7a1376abe1",
+      "snapshot_column": "562e7bb79447",
+      "header_key": "909df890d093",
+      "captured_input_positions": 5
+    },
+    {
+      "legacy_path_key": "f25213f688aa",
+      "snapshot_column": "a9e23391da04",
+      "header_key": "7345b96d3763",
+      "captured_input_positions": 4
+    },
+    {
+      "legacy_path_key": "051d63f18947",
+      "snapshot_column": "e2faeb980521",
+      "header_key": "5691371177aa",
+      "captured_input_positions": 5
+    },
+    {
+      "legacy_path_key": "22e9905c43b0",
+      "snapshot_column": "938fea674f63",
+      "header_key": "0957996f40fd",
+      "captured_input_positions": 55
+    },
+    {
+      "legacy_path_key": "3dde40cedc8f",
+      "snapshot_column": "6fe85dcf37a6",
+      "header_key": "27b9d61a9799",
+      "captured_input_positions": 21
+    },
+    {
+      "legacy_path_key": "e044f87430cc",
+      "snapshot_column": "596356e364b4",
+      "header_key": "b09e26fc9708",
+      "captured_input_positions": 22
+    },
+    {
+      "legacy_path_key": "3fff96b675de",
+      "snapshot_column": "72c49d764397",
+      "header_key": "6148afa990ff",
+      "captured_input_positions": 47
+    },
+    {
+      "legacy_path_key": "af18495c8d25",
+      "snapshot_column": "2411a04578b8",
+      "header_key": "c13fcbe462fe",
+      "captured_input_positions": 4
+    },
+    {
+      "legacy_path_key": "4adc78bce9e8",
+      "snapshot_column": "07f5eabf151f",
+      "header_key": "f505d8520483",
+      "captured_input_positions": 5
+    },
+    {
+      "legacy_path_key": "af291bc589fc",
+      "snapshot_column": "0dadb9e49cdb",
+      "header_key": "9ffa06e9969b",
+      "captured_input_positions": 9
+    },
+    {
+      "legacy_path_key": "8ea40621c7c3",
+      "snapshot_column": "dd69a72b3186",
+      "header_key": "f1aca08fd9b5",
+      "captured_input_positions": 9
+    },
+    {
+      "legacy_path_key": "0eea18215964",
+      "snapshot_column": "f4ccfc0806e4",
+      "header_key": "0e3a7485609d",
+      "captured_input_positions": 7
+    },
+    {
+      "legacy_path_key": "fd5bc8b7b3d6",
+      "snapshot_column": "fc146198d418",
+      "header_key": "30ce6a3e8469",
+      "captured_input_positions": 4
+    },
+    {
+      "legacy_path_key": "58ef6a507966",
+      "snapshot_column": "e80ac5fd3f0b",
+      "header_key": "d4998e959092",
+      "captured_input_positions": 10
+    },
+    {
+      "legacy_path_key": "f3152fff00ef",
+      "snapshot_column": "701ccd52b6f2",
+      "header_key": "a37590015a82",
+      "captured_input_positions": 38
+    },
+    {
+      "legacy_path_key": "afef6db7962b",
+      "snapshot_column": "b006d9a8c817",
+      "header_key": "cdcb24ca41e3",
+      "captured_input_positions": 8
+    },
+    {
+      "legacy_path_key": "2b653f5e4b39",
+      "snapshot_column": "9f5c72150a7a",
+      "header_key": "38b75c61a07d",
+      "captured_input_positions": 5
+    },
+    {
+      "legacy_path_key": "2ba5f1ccc49d",
+      "snapshot_column": "f75d65c06ca3",
+      "header_key": "cebc91c2abaf",
+      "captured_input_positions": 10
+    },
+    {
+      "legacy_path_key": "e9f4c64c0ddd",
+      "snapshot_column": "7bf905f8d2c0",
+      "header_key": "83b330b493a3",
+      "captured_input_positions": 28
+    },
+    {
+      "legacy_path_key": "ea85c85f9575",
+      "snapshot_column": "655eac3fa9bb",
+      "header_key": "111ed8485d8c",
+      "captured_input_positions": 19
+    },
+    {
+      "legacy_path_key": "1ee193c93d44",
+      "snapshot_column": "e4fbd18a160c",
+      "header_key": "d09d21940481",
+      "captured_input_positions": 3
+    },
+    {
+      "legacy_path_key": "b34149af2f8f",
+      "snapshot_column": "dabafb660aa1",
+      "header_key": "5fd4663fcaa7",
+      "captured_input_positions": 2
+    },
+    {
+      "legacy_path_key": "435fbe538167",
+      "snapshot_column": "80c926a3f04e",
+      "header_key": "c14318897f74",
+      "captured_input_positions": 2
+    },
+    {
+      "legacy_path_key": "09bdae6ec388",
+      "snapshot_column": "ea7b0ce6a138",
+      "header_key": "8af81c96fb60",
+      "captured_input_positions": 2
+    },
+    {
+      "legacy_path_key": "1d1991f08aaa",
+      "snapshot_column": "bb56707fb1ec",
+      "header_key": "df6a0d97a316",
+      "captured_input_positions": 2
+    },
+    {
+      "legacy_path_key": "35f23ad2bddd",
+      "snapshot_column": "6da886379d27",
+      "header_key": "25c3cd4a7ec1",
+      "captured_input_positions": 2
+    },
+    {
+      "legacy_path_key": "95566e90ff56",
+      "snapshot_column": "0035e7b24072",
+      "header_key": "6d76331c3254",
+      "captured_input_positions": 3
+    },
+    {
+      "legacy_path_key": "26902db72375",
+      "snapshot_column": "acd5feea6fc8",
+      "header_key": "3be3ff2ba84f",
+      "captured_input_positions": 3
+    },
+    {
+      "legacy_path_key": "db2b8f4c0c4e",
+      "snapshot_column": "3f098759ab8f",
+      "header_key": "1d610d8b960a",
+      "captured_input_positions": 11
+    },
+    {
+      "legacy_path_key": "28c5955c6446",
+      "snapshot_column": "664bf0bd1627",
+      "header_key": "d182cb8c6d85",
+      "captured_input_positions": 9
+    }
+  ]
+}

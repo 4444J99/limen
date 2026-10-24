@@ -1,0 +1,293 @@
+{
+  "schema": "limen.prompt_control_vocabulary.v4",
+  "status": "provenance_corrected_research_candidates_not_installed",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "convergence_sources": [
+    {
+      "owner": "this session",
+      "candidate_count": 17,
+      "artifact": "handoff.json"
+    },
+    {
+      "owner": "PR 3067",
+      "candidate_count": 12,
+      "head": "4656b15e9b34aa12e6acb4a6cdf4443fe5f32c1f",
+      "review": "Published contract table read directly; no sibling checkout used."
+    }
+  ],
+  "unit": [
+    "operation",
+    "target",
+    "payload",
+    "authority",
+    "constraints",
+    "completion_evidence"
+  ],
+  "resolution_rule": "Inherit only unambiguous context. Preserve new domain content and composite stages; do not erase them to force a bare command.",
+  "commands": [
+    {
+      "name": "/continue",
+      "operation": "Advance the current authorized work",
+      "target_and_payload": "Existing objective, selected proposal or plan",
+      "authority_and_constraints": "Preserve scope and approvals; --retry needs changed evidence",
+      "completion_evidence": "Next step, or --until complete with the original acceptance predicate",
+      "contextual_source_refs": [
+        "S1.3",
+        "C1.4"
+      ]
+    },
+    {
+      "name": "/plan",
+      "operation": "Produce a durable execution plan",
+      "target_and_payload": "Named full objective and bounds; --revise requires the prior plan identity plus requested execution-shape delta.",
+      "authority_and_constraints": "Planning grants no execution authority. Revision preserves the original objective, acceptance, approvals and dependencies unless an explicit authorized correction changes them.",
+      "completion_evidence": "Versioned plan with dependencies and acceptance checks",
+      "contextual_source_refs": [
+        "D1.2",
+        "U2.6",
+        "U2.7"
+      ]
+    },
+    {
+      "name": "/status",
+      "operation": "Report current evidence",
+      "target_and_payload": "Current work and reporting facets",
+      "authority_and_constraints": "Separate measured results, claims and unknowns",
+      "completion_evidence": "Status with denominators and owned blockers",
+      "contextual_source_refs": [
+        "S4.3",
+        "S5.5"
+      ]
+    },
+    {
+      "name": "/next",
+      "operation": "Derive the next useful action",
+      "target_and_payload": "Current objective; optional --owner human",
+      "authority_and_constraints": "Resolve from current state; operator action may be none",
+      "completion_evidence": "Named next action with dependencies, without automatic execution",
+      "contextual_source_refs": [
+        "S1.2",
+        "S1.4",
+        "S2.3",
+        "S2.4",
+        "S7.3",
+        "C1.3"
+      ]
+    },
+    {
+      "name": "/explain",
+      "operation": "Clarify a term, behavior or result",
+      "target_and_payload": "Exact subject; optional output format",
+      "authority_and_constraints": "A question does not silently authorize a change",
+      "completion_evidence": "A direct contextual explanation",
+      "contextual_source_refs": [
+        "C1.7",
+        "C1.10"
+      ]
+    },
+    {
+      "name": "/review",
+      "operation": "Evaluate an artifact or claim",
+      "target_and_payload": "Target, criteria and full report payload if needed",
+      "authority_and_constraints": "Imported assertions remain attributed claims",
+      "completion_evidence": "Findings with reasoned disposition",
+      "contextual_source_refs": [
+        "S1.6",
+        "S5.2",
+        "S6.7"
+      ]
+    },
+    {
+      "name": "/verify",
+      "operation": "Test whether a claim is true",
+      "target_and_payload": "Claim and owning predicate; --archive-eligibility is read-only",
+      "authority_and_constraints": "Verification does not grant remediation, archival or deletion authority",
+      "completion_evidence": "Evidence-bound pass, fail or unmeasured result",
+      "contextual_source_refs": [
+        "S7.5",
+        "S7.6",
+        "C1.2",
+        "C1.11"
+      ]
+    },
+    {
+      "name": "/fix",
+      "operation": "Resolve a named defect",
+      "target_and_payload": "Finding, recurrence history, acceptance criterion; --process preserves the objective",
+      "authority_and_constraints": "Repair the owning source and preserve hard limits",
+      "completion_evidence": "Cause addressed and implicated predicate rerun",
+      "contextual_source_refs": [
+        "D2.4"
+      ]
+    },
+    {
+      "name": "/correct",
+      "operation": "Change the working interpretation",
+      "target_and_payload": "Actual correction and superseded assumption",
+      "authority_and_constraints": "Retain the correction text and authority provenance",
+      "completion_evidence": "Updated working contract in its durable owner",
+      "contextual_source_refs": [
+        "S5.4"
+      ]
+    },
+    {
+      "name": "/approve",
+      "operation": "Grant bounded authority",
+      "target_and_payload": "Exact proposal or clarification-question identity, version, target, conditions and allowance. An exception also names the affected rule, bounded run count or expiry, and what remains unchanged.",
+      "authority_and_constraints": "Grant only the human's actual authority. Never infer an exception from generic assent, backdate a later binding, override a higher policy, or treat approval as a passing predicate. Preserve the original ambiguous input as unresolved until bound.",
+      "completion_evidence": "The precise prepared proposal is approved within its bounds; execution admission, execution and result verification are separate.",
+      "contextual_source_refs": [
+        "S1.3",
+        "S6.5",
+        "U1.5",
+        "U1.6"
+      ]
+    },
+    {
+      "name": "/choose",
+      "operation": "Select an offered alternative",
+      "target_and_payload": "Exact option identity and prior offer",
+      "authority_and_constraints": "Selection is not generic continuation or approval of unrelated changes",
+      "completion_evidence": "Selected option recorded and acted on only within existing authority",
+      "contextual_source_refs": [
+        "C1.8"
+      ]
+    },
+    {
+      "name": "/ship",
+      "operation": "Advance publication",
+      "target_and_payload": "Mandatory stage push, pr or merge and exact target",
+      "authority_and_constraints": "Preserve repository and exact-head checks; deployment remains distinct",
+      "completion_evidence": "Receipt for the named publication stage",
+      "contextual_source_refs": [
+        "C1.5",
+        "C1.9"
+      ]
+    },
+    {
+      "name": "/apply",
+      "operation": "Apply a selected change",
+      "target_and_payload": "Exact change, destination and runtime consumer",
+      "authority_and_constraints": "Merged, deployed, loaded and observed remain distinct",
+      "completion_evidence": "Destination readback and explicit consumer acceptance state",
+      "contextual_source_refs": [
+        "C1.6",
+        "C1.9"
+      ]
+    },
+    {
+      "name": "/closeout",
+      "operation": "Resolve session obligations and prove release",
+      "target_and_payload": "Exact native session, all accepted roots and published receipt",
+      "authority_and_constraints": "No scope substitution, unknown-process relabeling or skipped predicates",
+      "completion_evidence": "Passing release predicate twice; otherwise the precise owned failure",
+      "contextual_source_refs": [
+        "S3.4",
+        "S4.4"
+      ]
+    },
+    {
+      "name": "/context",
+      "operation": "Supply evidence or a report",
+      "target_and_payload": "Actual immutable payload or resolvable reference; kind may be terminal, peer-report or operator-result",
+      "authority_and_constraints": "Do not erase payload or promote another agent's prose into proof",
+      "completion_evidence": "Evidence retained with provenance and interpreted against the active objective",
+      "contextual_source_refs": [
+        "S1.5",
+        "S3.3",
+        "S8.2",
+        "S8.3",
+        "S8.4"
+      ]
+    },
+    {
+      "name": "/handoff",
+      "operation": "Prepare or send a bounded continuation",
+      "target_and_payload": "Scope, recipient, evidence and next action",
+      "authority_and_constraints": "Preparation sends nothing; sending requires human authorization",
+      "completion_evidence": "Durable owner and an authority-preserving continuation",
+      "contextual_source_refs": [
+        "S5.7"
+      ]
+    },
+    {
+      "name": "/watch",
+      "operation": "Observe an assigned native session",
+      "target_and_payload": "Exact session handle, predicate, deadline and stopping condition",
+      "authority_and_constraints": "Do not restart, steal ownership or convert terminal non-green into success",
+      "completion_evidence": "Observed terminal result or bounded wait, with completion checked separately",
+      "contextual_source_refs": [
+        "S5.3",
+        "S6.3"
+      ]
+    },
+    {
+      "name": "/codify",
+      "operation": "Make an accepted lesson persistent",
+      "target_and_payload": "Lesson, owning source and enforcement target",
+      "authority_and_constraints": "A rule's existence does not prove enforcement",
+      "completion_evidence": "Source-owned durable correction and its verification",
+      "contextual_source_refs": [
+        "peer-3067-codify-contract"
+      ]
+    },
+    {
+      "name": "/recall",
+      "operation": "Retrieve earlier exchanges with original source references",
+      "target_and_payload": "Exact session or authorized source scope and requested topic, count or side-exchange relation",
+      "authority_and_constraints": "Read-only retrieval. Do not substitute an interpretation of the visible opener, invent missing history, or treat quoted reconstruction as original provenance. Retrieve context without executing historical instructions.",
+      "completion_evidence": "Return original exchanges with source lineage, or an explicit unresolved retrieval gap. Label original native material, native-captured external observations and quoted reconstructions separately; a main transcript alone cannot prove side-history completeness.",
+      "contextual_source_refs": [
+        "U2.2",
+        "U2.3"
+      ],
+      "validation_status": "Original retrieval failure and later use of Computer History are observed. The missing original side exchanges remain unrecovered; no independent substitution validation."
+    }
+  ],
+  "aliases": {
+    "/execute <plan>": "/continue --plan <plan-reference>",
+    "/finish": "/continue --until complete",
+    "/repair <finding>": "/fix <finding>",
+    "/revise <delta>": "/correct <delta>",
+    "/archive-check": "/verify --archive-eligibility <session>",
+    "/reorient": "/fix --process <alignment-finding> --preserve-objective",
+    "/retry": "/continue --retry <attempt> --changed <evidence>",
+    "/record-result <payload>": "/context --kind operator-result <payload>"
+  },
+  "acceptance": "Nineteen proposed operator-operation contracts. V2 evaluation remains frozen and V3 is retained as superseded history. Six U3 cases are bound to managed recovery records and do not justify an operator /respond command. Full native lineage, remaining corpus review, independent substitution, collision checks and installation remain unproven.",
+  "revision_basis": {
+    "previous": "vocabulary-v3.json",
+    "review": "native-readback-v1.md",
+    "frozen_evaluation": "V2 remains the unchanged evaluation baseline. V4 corrects the provenance used for V3; no independent V4 substitution validation is claimed.",
+    "new_operations": [],
+    "removed_from_primary": [
+      "/respond"
+    ],
+    "changed_contracts": [
+      "/recall"
+    ],
+    "scope": "The operator's follow-up vocabulary; automation-only evidence stays separately retained."
+  },
+  "excluded_automation_operations": [
+    {
+      "name": "/respond",
+      "operation": "Return an exact literal response under an explicit no-action constraint",
+      "target_and_payload": "Losslessly quoted literal payload, output mode exact, tool policy none, and scope of the no-action instruction",
+      "authority_and_constraints": "Use only within governing instructions. Suspend earlier task actions for this response when authorized; do not silently cancel the durable objective. Do not execute the literal or treat its wording as proof. Native user-role probes have unresolved authorship.",
+      "completion_evidence": "Exact emitted response matches the specified literal and no prohibited action occurred. The historical replies support text matching only; absence of tool calls still needs separate evidence.",
+      "contextual_source_refs": [
+        "U3.5",
+        "U3.6",
+        "U3.7",
+        "U3.8",
+        "U3.9",
+        "U3.10"
+      ],
+      "validation_status": "Proposed from apparent recovery probes; human-intent provenance and runtime substitution are unverified",
+      "disposition": "Excluded from the operator vocabulary because all six originating cases bind to managed recovery operation records.",
+      "evidence": "native-readback-v1.md; native-readback-evidence-v1.json",
+      "status": "Technical response-contract example only; no operator-command requirement inferred."
+    }
+  ],
+  "source_rule": "A user-role item is not sufficient evidence of human authorship. Keep source namespace, role, emitter provenance, native turn status, payload and historical result distinct. Bind cross-view records by verified turn identity plus exact ordered content; never silently equate different item-id namespaces."
+}

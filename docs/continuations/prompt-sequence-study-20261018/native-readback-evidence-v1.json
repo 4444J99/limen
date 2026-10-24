@@ -1,0 +1,127 @@
+{
+  "schema": "limen.native_readback_evidence.v1",
+  "owner_url": "https://github.com/4444J99/limen/issues/3056",
+  "publication_url": "https://github.com/4444J99/limen/pull/3087",
+  "study": "native-readback-v1.md",
+  "vocabulary": "vocabulary-v4.json",
+  "frozen_evaluation": "vocabulary-v2.json",
+  "native_views": [
+    {
+      "alias": "U1",
+      "threadId": "01a1470a-98ad-7f61-acad-55b65060196f",
+      "turns": 5,
+      "mainInputs": 7,
+      "completed": 4,
+      "interrupted": 1,
+      "probeTurns": 0
+    },
+    {
+      "alias": "U2",
+      "threadId": "01a1121e-6fb8-74f1-b93f-88aec1b923fa",
+      "turns": 10,
+      "mainInputs": 10,
+      "completed": 10,
+      "interrupted": 0,
+      "probeTurns": 0
+    },
+    {
+      "alias": "U3",
+      "threadId": "01a1032c-5252-7822-9ea7-337550141ab9",
+      "turns": 15,
+      "mainInputs": 15,
+      "completed": 13,
+      "interrupted": 2,
+      "probeTurns": 11
+    }
+  ],
+  "comparisons": [
+    {
+      "alias": "U1",
+      "captured": 7,
+      "current": 7,
+      "prefixMatches": true,
+      "nativeTurnMatches": true,
+      "userItemIdsMatching": 0,
+      "addedUserInputs": 0
+    },
+    {
+      "alias": "U2",
+      "captured": 10,
+      "current": 10,
+      "prefixMatches": true,
+      "nativeTurnMatches": true,
+      "userItemIdsMatching": 0,
+      "addedUserInputs": 0
+    },
+    {
+      "alias": "U3",
+      "captured": 10,
+      "current": 15,
+      "prefixMatches": true,
+      "nativeTurnMatches": true,
+      "userItemIdsMatching": 0,
+      "addedUserInputs": 5
+    }
+  ],
+  "provenance": {
+    "reviewed_positions": 102,
+    "identified_managed_inputs": 6,
+    "remaining_candidate_operator_context_positions": 96,
+    "all_remaining_authorship_proven": false,
+    "known_marker_matches_in_captured_corpus": 6,
+    "known_marker_files_in_captured_corpus": 1,
+    "emitter": "Domus managed_probe",
+    "source_file": "dot_local/libexec/domus-codex-history.py",
+    "source_revision": "dd00bfc5",
+    "source_clean_for_path": true,
+    "matched_saved_turn_records": 6,
+    "fixture_target_matches": true,
+    "original_side_exchanges_recovered": false,
+    "side_evidence_tier": "Computer History observation retained in native tool output",
+    "historical_segment_available": false
+  },
+  "checks": [
+    {
+      "predicate": "Current native reader: exact ordered 27-body prefix and 27 native-turn bindings match captured snapshot",
+      "result": true
+    },
+    {
+      "predicate": "jq -s -e: all six saved managed turn IDs, their ordered membership and exact input text match U3 frozen positions 5-10",
+      "exit_code": 0,
+      "result": true
+    },
+    {
+      "predicate": "jq -e: retained fixture targets U3 native session",
+      "exit_code": 0,
+      "result": true
+    },
+    {
+      "predicate": "jq -e: nineteen unique primary operations; only respond removed relative to v3; technical exclusion and six frame fields preserved",
+      "exit_code": 0,
+      "result": true
+    },
+    {
+      "predicate": "jq scan: six known marker inputs in one captured source file",
+      "exit_code": 0,
+      "result": true
+    }
+  ],
+  "claims_not_made": [
+    "Whole-corpus native completeness",
+    "Original side-fork recovery",
+    "Proven human authorship for all remaining inputs",
+    "Live restoration acceptance from a matching literal",
+    "Independent V4 substitution validation",
+    "Command installation",
+    "Regenerated or visually inspected catalog",
+    "Full scoped verification, merge/live or successful session release"
+  ],
+  "source_effects": {
+    "native_sessions_changed": false,
+    "native_prompts_sent": false,
+    "computer_history_settings_changed": false,
+    "domus_source_changed": false,
+    "private_source_bindings": "native-readback-bindings-v1.json under existing private study owner"
+  },
+  "goal_status": "active"
+}

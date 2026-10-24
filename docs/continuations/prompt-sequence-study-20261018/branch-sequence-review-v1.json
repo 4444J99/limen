@@ -1,0 +1,1082 @@
+{
+  "schema": "limen.prompt-sequence-branch-review.v1",
+  "date": "2026-10-19",
+  "owner": "https://github.com/4444J99/limen/issues/3056",
+  "publication": "https://github.com/4444J99/limen/pull/3087",
+  "status": "same_coder_contextual_candidates_not_validated_substitutions",
+  "vocabulary": "vocabulary-v5.json",
+  "counts": {
+    "source_files": 7,
+    "source_positions": 36,
+    "root_openers": 3,
+    "post_root_positions": 33,
+    "reconstructed_reference_views": 7,
+    "independent_substitutions": 0,
+    "new_operations": 0
+  },
+  "method": "Read every retained prompt and paired captured reply across the seven source files. Interpret continuation-local first inputs with the declared inherited prefix. Preserve missing replies, shared reply associations, inferred phases, excluded parent tails and unresolved native identity. Derived context frames remain separately referenced, not recoded as operator prompts.",
+  "sources": [
+    {
+      "column": "e9a469256c79",
+      "rows": [
+        {
+          "ref": "e9a469256c79:prompt:1",
+          "position": 1,
+          "candidate_operations": [],
+          "intent": "Initial request: link every listed project's chats into a directory.",
+          "required_binding": "The baseline asks for complete project/chat coverage. It establishes the artifact, not a successful completion predicate.",
+          "historical_reply": "The reply reports 68 chats across five projects and explicitly leaves historical coverage unverified.",
+          "source_line": 11,
+          "native_ordinal": 10,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            326
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "intent": "Expand the project scope with the newly supplied full list, retaining duplicate entries and distinct project identities.",
+          "required_binding": "The exact source list is new payload. Preserve its membership; do not replace it with a bare continuation.",
+          "historical_reply": "The reply reports 16 entries, 15 distinct projects and 89 chats, with two inventories unresolved.",
+          "source_line": 333,
+          "native_ordinal": 332,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            458
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:3",
+          "position": 3,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "intent": "Request project/chat prompt-response columns and resolve the still-ambiguous granularity.",
+          "required_binding": "A new presentation/output requirement is supplied; no choice between condensed and complete transcripts is yet bound.",
+          "historical_reply": "The reply asks whether to use every original pair or one condensed pair per chat.",
+          "source_line": 465,
+          "native_ordinal": 464,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            493
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:4",
+          "position": 4,
+          "candidate_operations": [
+            "/choose"
+          ],
+          "intent": "Select the offered condensed-pair option for each chat.",
+          "required_binding": "Bind this answer to the exact preceding granularity question; it grants no unrelated publication or content changes.",
+          "historical_reply": "One shared reply reports a nested directory containing condensed pairs and original chat links.",
+          "source_line": 500,
+          "native_ordinal": 499,
+          "retained_complete": true,
+          "attribution": "shared-native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            1337
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:5",
+          "position": 5,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "intent": "Nest directory, project and chat content to keep Pages readable.",
+          "required_binding": "Preserve hierarchy, all source membership and links. The structural requirement is separate from the preceding granularity choice.",
+          "historical_reply": "The same shared reply reports the project/chat hierarchy; it is one result, not two independent response observations.",
+          "source_line": 520,
+          "native_ordinal": 519,
+          "retained_complete": true,
+          "attribution": "shared-native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            1337
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:6",
+          "position": 6,
+          "candidate_operations": [
+            "/correct",
+            "/continue"
+          ],
+          "intent": "Replace condensed-pair output with every prompt, its response and delivered artifacts.",
+          "required_binding": "This explicit new granularity supersedes the earlier condensed-output selection. Keep the actual source scope and artifact-field requirement.",
+          "historical_reply": "The last captured assistant text is commentary claiming rows drafted and being added; final phase is inferred.",
+          "source_line": 1349,
+          "native_ordinal": 1348,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": true,
+          "reply_source_lines": [
+            1620
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:7",
+          "position": 7,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "intent": "Finish the now-selected full prompt/response/artifact directory.",
+          "required_binding": "Preserve the updated granularity and coverage requirements rather than reverting to summaries.",
+          "historical_reply": "The reply reports 234 rows and nested long prompts, with source truncations and historical downloads still unresolved.",
+          "source_line": 1635,
+          "native_ordinal": 1634,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            2714
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:8",
+          "position": 8,
+          "candidate_operations": [
+            "/explain",
+            "/next"
+          ],
+          "intent": "Explain how to place the existing Page into the same-named Space.",
+          "required_binding": "This is a how-to question, not automatic authorization for a move, copy or deletion. Retain the exact artifact/destination binding.",
+          "historical_reply": "The reply describes a move route and a copy fallback, reporting a connected-tool move limitation.",
+          "source_line": 2724,
+          "native_ordinal": 2723,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            2749
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:9",
+          "position": 9,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "intent": "Execute the specified create-and-copy fallback into the named Space, preserving the nested tree.",
+          "required_binding": "Bind the selected source tree, destination and preservation requirement. Historical source versions and current Page versions are distinct.",
+          "historical_reply": "The reply claims the full nested tree copied with content/link readback; it explicitly leaves visual inspection unperformed.",
+          "source_line": 2758,
+          "native_ordinal": 2757,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            4461
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:10",
+          "position": 10,
+          "candidate_operations": [
+            "/review",
+            "/fix"
+          ],
+          "intent": "Assess and repair actual layout/navigation findings on the copied directory.",
+          "required_binding": "Keep content and hierarchy intact; scope repair to usability findings and retain unverified checks.",
+          "historical_reply": "The reply reports navigation/table improvements but leaves formatting defects and says the attempt stopped.",
+          "source_line": 4469,
+          "native_ordinal": 4468,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            5396
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "e9a469256c79:prompt:11",
+          "position": 11,
+          "candidate_operations": [
+            "/next"
+          ],
+          "intent": "Derive the next action for the existing directory.",
+          "required_binding": "The current target is inherited from its source context. A next-step question does not by itself authorize execution.",
+          "historical_reply": "No reply is captured for this branch tail.",
+          "source_line": 5407,
+          "native_ordinal": 5406,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 0,
+          "phase_inferred": false,
+          "reply_source_lines": [],
+          "media_parts": 0
+        }
+      ]
+    },
+    {
+      "column": "0479e9657ab3",
+      "rows": [
+        {
+          "ref": "0479e9657ab3:prompt:1",
+          "position": 1,
+          "candidate_operations": [
+            "/next"
+          ],
+          "intent": "Derive next work for the explicitly linked copied directory.",
+          "required_binding": "This is a continuation after the inherited ten-prompt prefix, not a new session opener. The Page reference is additional target payload.",
+          "historical_reply": "The reply orders layout/navigation cleanup, coverage repair and artifact verification, preserving unresolved inventories.",
+          "source_line": 17,
+          "native_ordinal": 5418,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            42
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "0479e9657ab3:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "intent": "Carry out that entire ordered remainder: layout/navigation, coverage and artifact links.",
+          "required_binding": "Retain all requested stages and the complete remaining coverage; passing a subset is not completion.",
+          "historical_reply": "A shared reply reports partial cleanup/recovery and explicitly leaves inventories, response gaps, downloads and native visual inspection open.",
+          "source_line": 54,
+          "native_ordinal": 5455,
+          "retained_complete": true,
+          "attribution": "shared-native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            770
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "0479e9657ab3:prompt:3",
+          "position": 3,
+          "candidate_operations": [
+            "/correct",
+            "/explain"
+          ],
+          "intent": "Correct the execution route toward the intended native lane and explain the previous browser use.",
+          "required_binding": "Native connector work and native app visual control are different. The correction does not override a runtime restriction.",
+          "historical_reply": "The same shared reply explains the browser switch and claims subsequent native work; native visual acceptance remains unverified.",
+          "source_line": 230,
+          "native_ordinal": 5631,
+          "retained_complete": true,
+          "attribution": "shared-native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            770
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "0479e9657ab3:prompt:4",
+          "position": 4,
+          "candidate_operations": [
+            "/continue",
+            "/verify"
+          ],
+          "intent": "Continue natively through the named remaining responses, inventories, downloads and visual checks.",
+          "required_binding": "Keep the exact remaining-set payload and route constraint. Native access repair and actual content/visual acceptance require separate evidence.",
+          "historical_reply": "The reply reports partial recovery and some downloads, while retaining 23 responses and other native-access gaps.",
+          "source_line": 784,
+          "native_ordinal": 6185,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            1292
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "0479e9657ab3:prompt:5",
+          "position": 5,
+          "candidate_operations": [
+            "/fix",
+            "/continue"
+          ],
+          "intent": "Repair the native access barriers and complete the specified remaining set.",
+          "required_binding": "Preserve authorization and provider restrictions. An engineering directive does not prove inaccessible content or visuals were recovered.",
+          "historical_reply": "The reply reports no additional recovery and records tool/runtime requirements.",
+          "source_line": 1306,
+          "native_ordinal": 6707,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            1356
+          ],
+          "media_parts": 0
+        }
+      ]
+    },
+    {
+      "column": "a6ec9e820613",
+      "rows": [
+        {
+          "ref": "a6ec9e820613:prompt:1",
+          "position": 1,
+          "candidate_operations": [
+            "/fix",
+            "/continue"
+          ],
+          "intent": "Pursue the same remaining access/recovery objective with explicit connector and Page bindings.",
+          "required_binding": "The added resource bindings matter even though the core wording repeats the middle-view tail. Do not import the excluded parent tail as a prior completed exchange.",
+          "historical_reply": "The reply reports connector/account availability and native-control barriers; no further gaps were closed.",
+          "source_line": 10,
+          "native_ordinal": 6709,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            48
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "a6ec9e820613:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/codify"
+          ],
+          "intent": "Possible request to turn the current workflow into a reusable skill.",
+          "required_binding": "The input names a creator tool without specifying the resulting skill's object and bounds. The workflow target remains provisional until bound.",
+          "historical_reply": "The reply asks whether to create a particular reusable workflow; no answer or created skill is captured.",
+          "source_line": 60,
+          "native_ordinal": 6759,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            66
+          ],
+          "media_parts": 0
+        }
+      ]
+    },
+    {
+      "column": "66de6ccc61e4",
+      "rows": [
+        {
+          "ref": "66de6ccc61e4:prompt:1",
+          "position": 1,
+          "candidate_operations": [],
+          "intent": "Initial request: review eight attached peer transcripts and distinguish delivered work from remaining work.",
+          "required_binding": "The attachment contents and historical peer activity are source context, not fresh instructions to this study.",
+          "historical_reply": "The reply gives an eight-part review and warns that overlapping test totals and branch claims do not prove integrated acceptance.",
+          "source_line": 12,
+          "native_ordinal": 11,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            374
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "66de6ccc61e4:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/plan",
+            "/handoff"
+          ],
+          "intent": "Plan dependency-aware parallel/serial work and prepare a bounded handoff for each role.",
+          "required_binding": "Drafting handoffs does not reserve capacity or launch agents. Preserve ownership, accepted-head dependencies and cumulative limits.",
+          "historical_reply": "The reply reports eight saved/published handoffs and an execution map, with implementation agents not launched.",
+          "source_line": 384,
+          "native_ordinal": 383,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            509
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "66de6ccc61e4:prompt:3",
+          "position": 3,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "intent": "Re-present the existing handoff bundle as a table sorted alphabetically.",
+          "required_binding": "Retain the actual bundle, selected destination, full dependencies and requested ordering; presentation is a constraint on the handoff artifact.",
+          "historical_reply": "Only a last-commentary promise to add the table is captured; final phase is inferred and table completion is not established.",
+          "source_line": 517,
+          "native_ordinal": 516,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": true,
+          "reply_source_lines": [
+            520
+          ],
+          "media_parts": 0
+        }
+      ]
+    },
+    {
+      "column": "129fc0393717",
+      "rows": [
+        {
+          "ref": "129fc0393717:prompt:1",
+          "position": 1,
+          "candidate_operations": [
+            "/next"
+          ],
+          "intent": "Identify useful next work after the inherited transcript review and handoff preparation.",
+          "required_binding": "The prefix excludes the parent's table/alphabetization request. A next-step question is not a fresh publication grant; any existing write authority needs its own provenance.",
+          "historical_reply": "The reply also reports completed verification and a published review. Those extra effects do not follow merely from the word next.",
+          "source_line": 10,
+          "native_ordinal": 522,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            158
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "129fc0393717:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/context",
+            "/review"
+          ],
+          "intent": "Supply claimed peer completions and active-lane context for review.",
+          "required_binding": "Keep both attachment payloads and the active-owner boundaries. Reported completion is not acceptance.",
+          "historical_reply": "The reply distinguishes branch deliveries from incomplete claims and preserves the still-active lanes.",
+          "source_line": 176,
+          "native_ordinal": 688,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            391
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "129fc0393717:prompt:3",
+          "position": 3,
+          "candidate_operations": [
+            "/context",
+            "/review"
+          ],
+          "intent": "Supply another peer closeout while identifying lanes still working.",
+          "required_binding": "Keep the new report and exact owner/state context; do not infer the closed session delivered its whole advertised behavior.",
+          "historical_reply": "The reply reports useful published work but a production initialization defect and integration gaps.",
+          "source_line": 398,
+          "native_ordinal": 910,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            475
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "129fc0393717:prompt:4",
+          "position": 4,
+          "candidate_operations": [
+            "/handoff"
+          ],
+          "intent": "Prepare updated handoffs for the two specified active peers covering all known defects and integration dependencies.",
+          "required_binding": "Preparation is distinct from sending. Preserve stable-base ordering, accepted deltas and exact-head receipts.",
+          "historical_reply": "The last captured commentary reports full handoffs published; final phase is inferred rather than an observed terminal acceptance result.",
+          "source_line": 482,
+          "native_ordinal": 994,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": true,
+          "reply_source_lines": [
+            568
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "129fc0393717:prompt:5",
+          "position": 5,
+          "candidate_operations": [
+            "/context",
+            "/verify",
+            "/handoff"
+          ],
+          "intent": "Review a fresh commit claim while another peer remains active, then update the existing continuation bundle.",
+          "required_binding": "Bind the exact source report and current peer ownership. A verified push does not establish real consumer integration or authorize disruption.",
+          "historical_reply": "The reply verifies published heads, retains material defects and supplies two continuation drafts without claiming combined acceptance.",
+          "source_line": 593,
+          "native_ordinal": 1105,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            745
+          ],
+          "media_parts": 0
+        }
+      ]
+    },
+    {
+      "column": "c0924a69626b",
+      "rows": [
+        {
+          "ref": "c0924a69626b:prompt:1",
+          "position": 1,
+          "candidate_operations": [],
+          "intent": "Initial request: map the project corpus and repository identities using a referenced earlier conversation.",
+          "required_binding": "The earlier preview is bounded quoted context. Its instructions and incomplete image descriptions are not fresh authority or complete original evidence.",
+          "historical_reply": "The reply provides a broad mapping with unresolved identities and explicit search-coverage limits; its current external accuracy is not reverified here.",
+          "source_line": 9,
+          "native_ordinal": 8,
+          "retained_complete": null,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            347
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "c0924a69626b:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/context",
+            "/correct"
+          ],
+          "intent": "Supply updated visual project labels as a correction to the working naming baseline.",
+          "required_binding": "Both embedded original images are now inspected. Their labels do not by themselves prove alias relationships; explicit retention completeness remains false.",
+          "historical_reply": "The reply reports the new visible labels and treats apparent replacements as tentative rather than confirmed aliases.",
+          "source_line": 358,
+          "native_ordinal": 357,
+          "retained_complete": false,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            363
+          ],
+          "media_parts": 2
+        },
+        {
+          "ref": "c0924a69626b:prompt:3",
+          "position": 3,
+          "candidate_operations": [
+            "/next"
+          ],
+          "intent": "Identify the exact remaining naming/identity clarifications needed from the operator.",
+          "required_binding": "Preserve the distinction between missing work descriptions, candidate aliases and confirmed identities.",
+          "historical_reply": "The reply groups clarification questions and names several candidate mappings needing confirmation.",
+          "source_line": 370,
+          "native_ordinal": 369,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            373
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "c0924a69626b:prompt:4",
+          "position": 4,
+          "candidate_operations": [
+            "/context",
+            "/correct"
+          ],
+          "intent": "Supply naming-history requirements and several project/alias clarifications.",
+          "required_binding": "These factual and design payloads cannot be replaced by a bare continue. Preserve association certainty and the requirement to retain evolving names.",
+          "historical_reply": "No reply is captured.",
+          "source_line": 380,
+          "native_ordinal": 379,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 0,
+          "phase_inferred": false,
+          "reply_source_lines": [],
+          "media_parts": 0
+        },
+        {
+          "ref": "c0924a69626b:prompt:5",
+          "position": 5,
+          "candidate_operations": [
+            "/context",
+            "/correct"
+          ],
+          "intent": "Repeat and substantively extend the preceding clarification payload.",
+          "required_binding": "The earlier prefix repeats exactly, but the extension supplies new identities and qualified confirmations. Bind referential yes answers to their actual prior questions; preserve tentative wording.",
+          "historical_reply": "The reply updates a chat-level baseline, separates confirmed/candidate relationships and says no repository files changed.",
+          "source_line": 388,
+          "native_ordinal": 387,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            393
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "c0924a69626b:prompt:6",
+          "position": 6,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "intent": "Illustrate a four-word plain-language taxonomy for the established project set.",
+          "required_binding": "This is constrained content generation: every word must add information. An explain abstraction is provisional and cannot erase the actual authoring brief or adopt proposed names.",
+          "historical_reply": "The reply gives four keywords per described project, explicitly marking interpretation and unresolved descriptions rather than inventing missing facts.",
+          "source_line": 410,
+          "native_ordinal": 409,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            415
+          ],
+          "media_parts": 0
+        }
+      ]
+    },
+    {
+      "column": "2b3c94584076",
+      "rows": [
+        {
+          "ref": "2b3c94584076:prompt:1",
+          "position": 1,
+          "candidate_operations": [
+            "/explain"
+          ],
+          "intent": "Illustrate the four-word taxonomy with additional compound-name examples.",
+          "required_binding": "This branch starts before the parent's taxonomy request. The example pattern is a meaningful output constraint; it is not a later correction to a response outside this view.",
+          "historical_reply": "The reply proposes hyphenated descriptive names, distinguishing proposed classifications from established artistic identities.",
+          "source_line": 17,
+          "native_ordinal": 413,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            22
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "2b3c94584076:prompt:2",
+          "position": 2,
+          "candidate_operations": [
+            "/plan"
+          ],
+          "intent": "Design a persistent name manifest and callable resolver retaining all recorded names.",
+          "required_binding": "Retain stable project identity, exact spellings, certainty/provenance, collisions, lookup-only behavior and the required acceptance checks.",
+          "historical_reply": "The reply provides an implementation plan, data model, resolver behavior and tests; it does not itself demonstrate adoption.",
+          "source_line": 32,
+          "native_ordinal": 428,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            122
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "2b3c94584076:prompt:3",
+          "position": 3,
+          "candidate_operations": [
+            "/continue"
+          ],
+          "intent": "Execute the selected manifest/resolver plan.",
+          "required_binding": "Preserve the plan's evidence and privacy boundaries; proposed taxonomy entries do not become confirmed identity facts merely through implementation.",
+          "historical_reply": "The reply reports a published PR and tests, with merge still pending.",
+          "source_line": 132,
+          "native_ordinal": 528,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            323
+          ],
+          "media_parts": 0
+        },
+        {
+          "ref": "2b3c94584076:prompt:4",
+          "position": 4,
+          "candidate_operations": [
+            "/closeout"
+          ],
+          "intent": "Prove this session's release without substituting the published implementation for closure.",
+          "required_binding": "Keep the original caller/protocol requirements and outstanding delivery ownership.",
+          "historical_reply": "The reply reports a missing canonical protocol and a retained open PR; successful closeout is not claimed.",
+          "source_line": 330,
+          "native_ordinal": 726,
+          "retained_complete": true,
+          "attribution": "native-turn",
+          "reply_count": 1,
+          "phase_inferred": false,
+          "reply_source_lines": [
+            378
+          ],
+          "media_parts": 0
+        }
+      ]
+    }
+  ],
+  "views": [
+    {
+      "leaf_column": "a6ec9e820613",
+      "prompt_refs": [
+        "e9a469256c79:prompt:1",
+        "e9a469256c79:prompt:2",
+        "e9a469256c79:prompt:3",
+        "e9a469256c79:prompt:4",
+        "e9a469256c79:prompt:5",
+        "e9a469256c79:prompt:6",
+        "e9a469256c79:prompt:7",
+        "e9a469256c79:prompt:8",
+        "e9a469256c79:prompt:9",
+        "e9a469256c79:prompt:10",
+        "0479e9657ab3:prompt:1",
+        "0479e9657ab3:prompt:2",
+        "0479e9657ab3:prompt:3",
+        "0479e9657ab3:prompt:4",
+        "a6ec9e820613:prompt:1",
+        "a6ec9e820613:prompt:2"
+      ],
+      "context_frame_refs": [
+        "e9a469256c79:derived_context_frame:1",
+        "e9a469256c79:derived_context_frame:2",
+        "e9a469256c79:derived_context_frame:3",
+        "e9a469256c79:derived_context_frame:4",
+        "e9a469256c79:derived_context_frame:5",
+        "0479e9657ab3:derived_context_frame:1",
+        "0479e9657ab3:derived_context_frame:2",
+        "0479e9657ab3:derived_context_frame:3",
+        "a6ec9e820613:derived_context_frame:1",
+        "a6ec9e820613:derived_context_frame:2"
+      ],
+      "semantic_assessments": [
+        "e9a469256c79:prompt:1",
+        "e9a469256c79:prompt:2",
+        "e9a469256c79:prompt:3",
+        "e9a469256c79:prompt:4",
+        "e9a469256c79:prompt:5",
+        "e9a469256c79:prompt:6",
+        "e9a469256c79:prompt:7",
+        "e9a469256c79:prompt:8",
+        "e9a469256c79:prompt:9",
+        "e9a469256c79:prompt:10",
+        "0479e9657ab3:prompt:1",
+        "0479e9657ab3:prompt:2",
+        "0479e9657ab3:prompt:3",
+        "0479e9657ab3:prompt:4",
+        "a6ec9e820613:prompt:1",
+        "a6ec9e820613:prompt:2"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    },
+    {
+      "leaf_column": "0479e9657ab3",
+      "prompt_refs": [
+        "e9a469256c79:prompt:1",
+        "e9a469256c79:prompt:2",
+        "e9a469256c79:prompt:3",
+        "e9a469256c79:prompt:4",
+        "e9a469256c79:prompt:5",
+        "e9a469256c79:prompt:6",
+        "e9a469256c79:prompt:7",
+        "e9a469256c79:prompt:8",
+        "e9a469256c79:prompt:9",
+        "e9a469256c79:prompt:10",
+        "0479e9657ab3:prompt:1",
+        "0479e9657ab3:prompt:2",
+        "0479e9657ab3:prompt:3",
+        "0479e9657ab3:prompt:4",
+        "0479e9657ab3:prompt:5"
+      ],
+      "context_frame_refs": [
+        "e9a469256c79:derived_context_frame:1",
+        "e9a469256c79:derived_context_frame:2",
+        "e9a469256c79:derived_context_frame:3",
+        "e9a469256c79:derived_context_frame:4",
+        "e9a469256c79:derived_context_frame:5",
+        "0479e9657ab3:derived_context_frame:1",
+        "0479e9657ab3:derived_context_frame:2",
+        "0479e9657ab3:derived_context_frame:3",
+        "0479e9657ab3:derived_context_frame:4"
+      ],
+      "semantic_assessments": [
+        "e9a469256c79:prompt:1",
+        "e9a469256c79:prompt:2",
+        "e9a469256c79:prompt:3",
+        "e9a469256c79:prompt:4",
+        "e9a469256c79:prompt:5",
+        "e9a469256c79:prompt:6",
+        "e9a469256c79:prompt:7",
+        "e9a469256c79:prompt:8",
+        "e9a469256c79:prompt:9",
+        "e9a469256c79:prompt:10",
+        "0479e9657ab3:prompt:1",
+        "0479e9657ab3:prompt:2",
+        "0479e9657ab3:prompt:3",
+        "0479e9657ab3:prompt:4",
+        "0479e9657ab3:prompt:5"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    },
+    {
+      "leaf_column": "e9a469256c79",
+      "prompt_refs": [
+        "e9a469256c79:prompt:1",
+        "e9a469256c79:prompt:2",
+        "e9a469256c79:prompt:3",
+        "e9a469256c79:prompt:4",
+        "e9a469256c79:prompt:5",
+        "e9a469256c79:prompt:6",
+        "e9a469256c79:prompt:7",
+        "e9a469256c79:prompt:8",
+        "e9a469256c79:prompt:9",
+        "e9a469256c79:prompt:10",
+        "e9a469256c79:prompt:11"
+      ],
+      "context_frame_refs": [
+        "e9a469256c79:derived_context_frame:1",
+        "e9a469256c79:derived_context_frame:2",
+        "e9a469256c79:derived_context_frame:3",
+        "e9a469256c79:derived_context_frame:4",
+        "e9a469256c79:derived_context_frame:5",
+        "e9a469256c79:derived_context_frame:6"
+      ],
+      "semantic_assessments": [
+        "e9a469256c79:prompt:1",
+        "e9a469256c79:prompt:2",
+        "e9a469256c79:prompt:3",
+        "e9a469256c79:prompt:4",
+        "e9a469256c79:prompt:5",
+        "e9a469256c79:prompt:6",
+        "e9a469256c79:prompt:7",
+        "e9a469256c79:prompt:8",
+        "e9a469256c79:prompt:9",
+        "e9a469256c79:prompt:10",
+        "e9a469256c79:prompt:11"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    },
+    {
+      "leaf_column": "129fc0393717",
+      "prompt_refs": [
+        "66de6ccc61e4:prompt:1",
+        "66de6ccc61e4:prompt:2",
+        "129fc0393717:prompt:1",
+        "129fc0393717:prompt:2",
+        "129fc0393717:prompt:3",
+        "129fc0393717:prompt:4",
+        "129fc0393717:prompt:5"
+      ],
+      "context_frame_refs": [
+        "66de6ccc61e4:derived_context_frame:1",
+        "66de6ccc61e4:derived_context_frame:2",
+        "129fc0393717:derived_context_frame:1",
+        "129fc0393717:derived_context_frame:2",
+        "129fc0393717:derived_context_frame:3",
+        "129fc0393717:derived_context_frame:4"
+      ],
+      "semantic_assessments": [
+        "66de6ccc61e4:prompt:1",
+        "66de6ccc61e4:prompt:2",
+        "129fc0393717:prompt:1",
+        "129fc0393717:prompt:2",
+        "129fc0393717:prompt:3",
+        "129fc0393717:prompt:4",
+        "129fc0393717:prompt:5"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    },
+    {
+      "leaf_column": "66de6ccc61e4",
+      "prompt_refs": [
+        "66de6ccc61e4:prompt:1",
+        "66de6ccc61e4:prompt:2",
+        "66de6ccc61e4:prompt:3"
+      ],
+      "context_frame_refs": [
+        "66de6ccc61e4:derived_context_frame:1",
+        "66de6ccc61e4:derived_context_frame:2",
+        "66de6ccc61e4:derived_context_frame:3"
+      ],
+      "semantic_assessments": [
+        "66de6ccc61e4:prompt:1",
+        "66de6ccc61e4:prompt:2",
+        "66de6ccc61e4:prompt:3"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    },
+    {
+      "leaf_column": "2b3c94584076",
+      "prompt_refs": [
+        "c0924a69626b:prompt:1",
+        "c0924a69626b:prompt:2",
+        "c0924a69626b:prompt:3",
+        "c0924a69626b:prompt:4",
+        "c0924a69626b:prompt:5",
+        "2b3c94584076:prompt:1",
+        "2b3c94584076:prompt:2",
+        "2b3c94584076:prompt:3",
+        "2b3c94584076:prompt:4"
+      ],
+      "context_frame_refs": [
+        "c0924a69626b:derived_context_frame:1",
+        "c0924a69626b:derived_context_frame:2",
+        "2b3c94584076:derived_context_frame:1",
+        "2b3c94584076:derived_context_frame:2"
+      ],
+      "semantic_assessments": [
+        "c0924a69626b:prompt:1",
+        "c0924a69626b:prompt:2",
+        "c0924a69626b:prompt:3",
+        "c0924a69626b:prompt:4",
+        "c0924a69626b:prompt:5",
+        "2b3c94584076:prompt:1",
+        "2b3c94584076:prompt:2",
+        "2b3c94584076:prompt:3",
+        "2b3c94584076:prompt:4"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    },
+    {
+      "leaf_column": "c0924a69626b",
+      "prompt_refs": [
+        "c0924a69626b:prompt:1",
+        "c0924a69626b:prompt:2",
+        "c0924a69626b:prompt:3",
+        "c0924a69626b:prompt:4",
+        "c0924a69626b:prompt:5",
+        "c0924a69626b:prompt:6"
+      ],
+      "context_frame_refs": [
+        "c0924a69626b:derived_context_frame:1",
+        "c0924a69626b:derived_context_frame:2",
+        "c0924a69626b:derived_context_frame:3"
+      ],
+      "semantic_assessments": [
+        "c0924a69626b:prompt:1",
+        "c0924a69626b:prompt:2",
+        "c0924a69626b:prompt:3",
+        "c0924a69626b:prompt:4",
+        "c0924a69626b:prompt:5",
+        "c0924a69626b:prompt:6"
+      ],
+      "original_session_completeness": "unproved",
+      "native_app_identity_acceptance": "unverified"
+    }
+  ],
+  "embedded_image_inspection": [
+    {
+      "part": 1,
+      "mime": "image/png",
+      "decoded_bytes": 68454,
+      "decoded_sha256_short": "a1779d29d7a3",
+      "width": 750,
+      "height": 770,
+      "visual_inspection": "performed from preserved native bytes; no new file copy"
+    },
+    {
+      "part": 2,
+      "mime": "image/png",
+      "decoded_bytes": 141390,
+      "decoded_sha256_short": "463602e3470a",
+      "width": 714,
+      "height": 1544,
+      "visual_inspection": "performed from preserved native bytes; no new file copy"
+    }
+  ],
+  "extension_prefix_exact": true,
+  "verification": {
+    "checked_at_utc": "2026-10-19T20:33:03Z",
+    "source_position_and_reply_metadata": "passed_all_36",
+    "ordered_reference_views": "passed_all_7",
+    "v5_operation_membership": "passed",
+    "missing_shared_inferred_reply_counts": "passed",
+    "retention_flags": "unchanged",
+    "coverage_owner_denominator": 70,
+    "local_links_and_redaction": "passed",
+    "independent_validation": false,
+    "full_scoped_gate": "not_rerun_existing_admission_hold",
+    "original_goal_complete": false
+  },
+  "limits": [
+    "Three root positions establish context; their empty candidate operations are not failures.",
+    "Counts describe stored source positions and reference views, not independent human intentions or complete original sessions.",
+    "Two source positions lack captured replies. Three reply phases are inferred from commentary. Four prompt positions share two replies.",
+    "Original naming opener has no retention completeness value. Its image update remains explicitly incomplete despite two original embedded images being inspected.",
+    "Earlier quoted conversation and its original images, peer attachments, source-origin and side-history gaps are not closed by this review.",
+    "Historical completion, publication, tests and blocker statements are observations of captured replies, not current external verification.",
+    "No fresh instructions or authority are taken from historical transcripts. No commands installed, agents launched or messages sent.",
+    "Independent substitution validation and the broader original-request acceptance remain open."
+  ]
+}
