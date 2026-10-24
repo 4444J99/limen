@@ -5744,7 +5744,7 @@
       "steps": [
         "DONE: diagnosed from provider annotations (not from a 404 log or a guess): every failed job in both private repos carries the billing message; limen (public) scheduled runs continue, which isolates the cause to private-repo Actions billing.",
         "REMAINING (human): open GitHub > Settings > Billing & plans for 4444J99; resolve the failed payment or raise the spending limit for Actions.",
-        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own.",
+        "REMAINING (agent, after the human step): `gh workflow run org-hygiene-report.yml --repo 4444J99/ops`, then confirm a paired start/end row in bookends/<day>.tsv and a green weekly-witness on the next Sunday 12:49 UTC; the schedule-utilization sensor then reads github-actions-ops as full on its own. (the predicate reads that report through cloudflare-ops-scheduler, whose only evidence is the weekly witness-audit — #3188 item 2)",
         "REMAINING (agent, after the human step): re-run the census (`python3 scripts/schedule-census.py --check-registry --force`) and read github-actions-fleet-private's observed count in logs/schedule-utilization.json; the private half of the fleet should leave `underfilled` on its own."
       ],
       "issue": 3177,
@@ -5772,8 +5772,8 @@
         ],
         "owner": "schedule-estate registry (limen#3177); plane (i) owner 4444J99/ops (ops#6)",
         "acceptance": {
-          "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day and the ops-witness weekly witness writes a new audit report. The census-derived github-actions-fleet-private plane reports full or underfilled with observed above 6.",
-          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane'] in ('github-actions-ops','github-actions-ops-witness')]; fp=[p for p in r['planes'] if p['plane']=='github-actions-fleet-private']; sys.exit(0 if len(ps)==2 and all(p['verdict'] in ('full','underfilled') for p in ps) and fp and fp[0]['verdict'] in ('full','underfilled') and (fp[0]['observed'] or 0) > 6 else 1)\"",
+          "condition": "A scheduled run in 4444J99/ops completes with a paired start/end bookend for the day, the ops-witness weekly witness writes a new audit report (read as cloudflare-ops-scheduler measured: that plane's only evidence is the weekly witness-audit), and the census-derived github-actions-fleet-private plane reports full or underfilled with observed above 6.",
+          "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); by={p['plane']: p for p in r['planes']}; ok=lambda pid: by.get(pid, {}).get('verdict') in ('full','underfilled'); sys.exit(0 if ok('github-actions-ops') and ok('github-actions-ops-witness') and ok('cloudflare-ops-scheduler') and ok('github-actions-fleet-private') and (by['github-actions-fleet-private'].get('observed') or 0) > 6 else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [],

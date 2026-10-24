@@ -2246,3 +2246,122 @@ def test_real_registry_owns_the_fleet_by_fact_and_names_no_private_repository():
     text = (ROOT / S.REGISTRY_REL).read_text()
     slugs = set(re.findall(r"\b4444J99/[\w.-]+", text))
     assert slugs <= {"4444J99/limen", "4444J99/ops", "4444J99/ops-witness"}, slugs
+
+
+# ── #3188 follow-ups (review round 3 on #3178): fast-wave windows, sibling folders, configuration readbacks ──
+
+
+def test_fast_wave_sensors_resolve_the_fast_wave_period_not_the_heartbeat_ceiling(tmp_path, monkeypatch):
+    gov = tmp_path / "institutio" / "governance"
+    gov.mkdir(parents=True)
+    (gov / "sensors.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "sensors": {
+                    "diurnal": {"source": ["fast-wave"], "cadence": {"env": "LIMEN_BEAT_DIURNAL", "default": 1}},
+                    "audit": {"source": ["metabolize"], "cadence": 48},
+                }
+            }
+        )
+    )
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+    monkeypatch.delenv("LIMEN_BEAT_DIURNAL", raising=False)
+    jobs = {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}
+    diurnal, audit = jobs["beat/diurnal"], jobs["beat/audit"]
+    # heartbeat-loop.sh runs fast-wave sensors with --loop-max $FAST_WAVE_SECONDS (300 s); the canary scores them so
+    assert (diurnal.extra["loop_max_seconds"], diurnal.extra["period_source"], diurnal.cadence_hours) == (
+        300,
+        "fast-wave",
+        1,
+    )
+    assert UTIL._stamp_bound_seconds(diurnal) == 600  # 1 beat × 300 s × 2 — the canary's bound, not 3,600
+    assert (audit.extra["loop_max_seconds"], audit.extra["period_source"], audit.cadence_hours) == (
+        1800,
+        "heartbeat",
+        24,
+    )
+    assert UTIL._stamp_bound_seconds(audit) == 48 * 1800 * 2
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "120")
+    jobs = {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}
+    assert UTIL._stamp_bound_seconds(jobs["beat/diurnal"]) == 240 and S.fast_wave_seconds() == 120
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "junk")
+    assert S.fast_wave_seconds() == 300
+
+
+def test_sibling_clone_without_the_evidence_folder_is_unreadable_not_absent(tmp_path, monkeypatch):
+    clone = tmp_path / "ops-clone"
+    clone.mkdir()
+    monkeypatch.setenv("LIMEN_OPS_ROOT", str(clone))
+    rel = f"bookends/{TODAY.isoformat()}.tsv"
+    assert UTIL._sibling_file("4444J99/ops", rel, tmp_path) == (
+        None,
+        UTIL.UNREADABLE,
+    )  # no bookends/ folder: nothing observed
+    plane = _plane(evidence={"kind": "bookend-tsv", "locator": "4444J99/ops:bookends"})
+    observed, detail = UTIL.read_bookend_tsv("github-actions-ops", plane, [], TODAY, tmp_path)
+    assert observed is None and "unmeasured, not zero" in detail
+    (clone / "bookends").mkdir()
+    assert UTIL._sibling_file("4444J99/ops", rel, tmp_path) == (None, UTIL.ABSENT)  # the folder answers: no file today
+    observed, detail = UTIL.read_bookend_tsv("github-actions-ops", plane, [], TODAY, tmp_path)
+    assert observed == 0 and "confirmed absent" in detail
+
+
+def test_configuration_readback_is_unmeasured_but_not_a_stale_readback(tmp_path):
+    planes = {
+        "claude-cloud": _plane(
+            provider="anthropic",
+            surface="ui+api",
+            evidence={"kind": "claude-snapshot", "locator": "docs/receipts/claude-triggers-snapshot-*.json"},
+        )
+    }
+    write_registry(tmp_path, planes, [])
+    receipts = tmp_path / "docs" / "receipts"
+    receipts.mkdir(parents=True)
+    snapshot = receipts / "claude-triggers-snapshot-20261023.json"
+    snapshot.write_text(json.dumps({"observed_at": f"{TODAY.isoformat()}T06:00:00Z", "triggers": []}))
+    report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
+    plane = report["planes"][0]
+    assert plane["verdict"] == "unmeasured" and plane["measurement_kind"] == "configuration"
+    assert (
+        report["stale_readback"] == [] and report["status"] == "pass"
+    )  # a fresh snapshot was read: exit 3 is not permanent
+    snapshot.write_text(json.dumps({"observed_at": "2026-09-01T06:00:00Z", "triggers": []}))
+    report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
+    assert report["planes"][0]["measurement_kind"] == "unknown"
+    assert (
+        report["stale_readback"] == ["claude-cloud"] and report["status"] == "stale-readback"
+    )  # the snapshot aged out
+
+
+def test_billing_lever_predicate_requires_the_weekly_witness_and_the_fleet_private_plane():
+    import shlex
+
+    levers = json.loads((ROOT / "his-hand-levers.json").read_text())
+    lever = next(lv for lv in levers["levers"] if lv["id"] == "L-GITHUB-ACTIONS-BILLING")
+    predicate = json.dumps(lever, ensure_ascii=False)
+    m = re.search(r"schedule-utilization\.py --json \| (python3 -c .*?)(?<!\\\\)\"(?=[,}])", predicate)
+    assert m, "predicate not found"
+    argv = shlex.split(json.loads('"' + m.group(1) + '"'))
+
+    def run(verdicts, fleet_observed=7):
+        planes = [
+            {"plane": p, "verdict": v, "observed": fleet_observed if p == "github-actions-fleet-private" else 1}
+            for p, v in verdicts.items()
+        ]
+        return subprocess.run(
+            argv, input=json.dumps({"planes": planes}), capture_output=True, text=True, check=False
+        ).returncode
+
+    base = {
+        "github-actions-ops": "full",
+        "github-actions-ops-witness": "underfilled",
+        "cloudflare-ops-scheduler": "full",
+        "github-actions-fleet-private": "underfilled",
+    }
+    assert run(base) == 0
+    assert (
+        run({**base, "cloudflare-ops-scheduler": "unmeasured"}) == 1
+    )  # only the Jules API witness succeeding is not the weekly audit
+    assert run({k: v for k, v in base.items() if k != "cloudflare-ops-scheduler"}) == 1
+    assert run(base, fleet_observed=6) == 1  # the private fleet must rise above the 2026-10-23 reading
+    assert run({**base, "github-actions-fleet-private": "dark"}) == 1

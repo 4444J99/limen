@@ -302,7 +302,9 @@ def _sibling_file(repo: str, rel: str, root: Path) -> tuple[str | None, str]:
     if clone is not None:
         path = clone / rel
         if not path.exists():
-            return None, ABSENT
+            # Absence is an observation only when the folder the file would live in is present; a clone root
+            # without the evidence folder (a wrong LIMEN_OPS_ROOT, a partial checkout) is nothing observed (#3188 item 3)
+            return None, (ABSENT if path.parent.is_dir() else UNREADABLE)
         try:
             return path.read_text(encoding="utf-8"), PRESENT
         except (OSError, UnicodeDecodeError):
@@ -922,12 +924,18 @@ def evaluate(
     # had a way to look and could not, or has had no way to look for longer than the readback budget, or is
     # measured but carries slack a human must lower (readback_overdue on a non-red plane). A plane that is
     # simply not measured on THIS host (no census receipt, no launchctl) is neither stale nor measurable.
+    # A reader that completed a CONFIGURATION readback (a fresh claude-triggers snapshot: which routines are
+    # enabled, execution unmeasured by design) did look and did read; it is unmeasured but not a stale readback,
+    # or exit 3 would be permanent and could not tell a fresh snapshot from a dead witness (#3188 item 4).
     stale = [
         p["plane"]
         for p in planes
         if not p["not_this_host"]
         and (
-            (p["verdict"] == "unmeasured" and (p["evidence"] != "none" or p["readback_overdue"]))
+            (
+                p["verdict"] == "unmeasured"
+                and ((p["evidence"] != "none" and p["measurement_kind"] != "configuration") or p["readback_overdue"])
+            )
             or (p["readback_overdue"] and p["verdict"] not in RED_VERDICTS and p["verdict"] != "unmeasured")
         )
     ]
