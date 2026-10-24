@@ -1802,7 +1802,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--replace",
         action="store_true",
-        help="overwrite the receipt even when this pass read fewer repositories than the standing one",
+        help="overwrite the standing receipt even when this pass would be parked beside it (narrower scope, incomplete "
+        "where it is complete, or lower complete coverage while it is within its horizon)",
     )
     ap.add_argument("--json", action="store_true", help="print the report JSON")
     args = ap.parse_args(argv)
