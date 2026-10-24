@@ -26,7 +26,8 @@ Reads only: every GitHub call is a `gh api` GET; nothing here can start, retry, 
 Receipt: logs/schedule-census.json (atomic) + optional Markdown ledger. The organ owns its own wall-clock
 interval (`--interval-hours`, default 168) so a metabolize-pass caller stays cheap between censuses; an
 incomplete receipt (read nothing; an owner whose repository listing failed; more than a quarter of the universe
-unreachable, unscanned, partially read or errored) earns only the shorter `--retry-hours` horizon, and a pass that reads fewer repositories than the standing receipt is written beside
+unreachable, unscanned, partially read or errored) earns only the shorter `--retry-hours` horizon, and a pass that
+reads fewer repositories than the standing receipt is written beside
 it as `*.last-attempt.json` instead of over it.
 
 Every repository row carries a per-channel read status; a row whose essential channels were not all read is
@@ -217,6 +218,7 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
     silently smaller than the account set — a reduced denominator would read as complete coverage."""
     if not gh_available():
         return None
+    unlisted: list[str] = []
     if not owners:
         st, me = gh_api("user")
         if st != OK or not isinstance(me, dict):
@@ -225,8 +227,9 @@ def universe_from_gh_repo_list(owners: list[str] | None = None) -> tuple[list[di
         st, orgs = gh_api("user/orgs?per_page=100")
         if st == OK and isinstance(orgs, list):
             owners += [str(o.get("login")) for o in orgs if isinstance(o, dict) and o.get("login")]
+        else:
+            unlisted.append(f"orgs-of:{owners[0]}")  # the organizations never listed: the universe is short of them
     rows: list[dict] = []
-    unlisted: list[str] = []
     for owner in owners:
         try:
             run = subprocess.run(
@@ -717,9 +720,7 @@ def clone_is_full(clone: Path | None) -> bool:
 
 def history_from_git(clone: Path) -> dict:
     """Full-clone history: every commit touching a carrier path, with the cron lines it added/removed."""
-    log = (
-        _git(clone, "log", "--all", "--date-order", "--format=commit %H %cI", "--name-status", "--", WORKFLOW_DIR) or ""
-    )
+    log = _git(clone, *GIT_LOG, "--format=commit %H %cI", "--name-status", "--", WORKFLOW_DIR) or ""
     events: list[dict] = []
     sha = at = None
     for line in log.splitlines():
@@ -732,7 +733,7 @@ def history_from_git(clone: Path) -> dict:
         status, path = parts[0][0], parts[-1]
         change = {"A": "added", "D": "removed", "M": "modified", "R": "renamed"}.get(status, status)
         events.append({"at": at, "sha": sha[:10], "path": path, "change": change})
-    patches = _git(clone, "log", "--all", "--date-order", "--format=commit %H", "-p", "--", WORKFLOW_DIR) or ""
+    patches = _git(clone, *GIT_LOG, "--format=commit %H", "-p", "--", WORKFLOW_DIR) or ""
     # keyed by (commit, path): a commit that moves a cron in a.yml and edits a comment in b.yml must not hand
     # b.yml a scheduling attempt it never had
     added: dict[tuple[str, str], list[str]] = {}
@@ -762,11 +763,16 @@ def history_from_git(clone: Path) -> dict:
 
 
 DIFF_HEADER_RX = re.compile(r'^diff --git (?:"a/.*?"|a/.*?) (?:"b/(.*)"|b/(.*))$')
+# core.quotePath=false: --name-status and the diff headers print the same raw UTF-8 path, so a workflow named
+# café.yml keys its cron changes by (commit, path) like any other (git would otherwise octal-escape one and not
+# the other)
+GIT_LOG = ("-c", "core.quotePath=false", "log", "--all", "--date-order")
 
 
 def _diff_header_path(line: str) -> str | None:
     """`diff --git a/<old> b/<new>` → <new>: the path --name-status reports for a rename, and the only path for an
-    add, edit or delete. Quoted paths (spaces, non-ASCII) are unquoted."""
+    add, edit or delete. A quoted path has its quotes stripped (git quotes only names with a double quote,
+    backslash or control character once core.quotePath is off — practically nonexistent for a workflow)."""
     m = DIFF_HEADER_RX.match(line.rstrip())
     if not m:
         return None

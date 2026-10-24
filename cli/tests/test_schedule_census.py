@@ -528,6 +528,7 @@ def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_pat
     git("config", "user.name", "t")
     (wf / "nightly.yml").write_text("on:\n  schedule:\n    - cron: '0 2 * * *'\njobs: {}\n")
     (wf / "lint.yml").write_text("# lint\non: push\njobs: {}\n")
+    (wf / "café.yml").write_text("on:\n  schedule:\n    - cron: '5 4 * * *'\njobs: {}\n")  # non-ASCII name
     git("add", "-A")
     git("commit", "-q", "-m", "add nightly")
     (wf / "nightly.yml").write_text("on:\n  schedule:\n    - cron: '15 2 * * *'\njobs: {}\n")
@@ -551,6 +552,8 @@ def test_history_from_a_full_git_clone_records_cron_changes_and_removals(tmp_pat
         ("lint.yml", "modified", [], []),
         ("lint.yml", "added", [], []),
     ]
+    # a non-ASCII name keys its crons like any other: git prints it raw in both listings (core.quotePath=false)
+    assert [c for c in changes if c[0] == "café.yml"] == [("café.yml", "added", ["5 4 * * *"], [])]
     assert C._diff_header_path('diff --git "a/w s.yml" "b/w s.yml"') == "w s.yml"
     assert (
         C._diff_header_path("diff --git a/old.yml b/new.yml") == "new.yml" and C._diff_header_path("index 1..2") is None
@@ -704,6 +707,9 @@ def test_an_owner_whose_listing_failed_is_named_not_dropped_from_the_universe(mo
     assert C.resolve_universe([], None, tmp_path / "none.json") == (rows, src, ["unreadable"])
     monkeypatch.setenv("LIMEN_OWNERS", "unreadable")
     assert C.universe_from_gh_repo_list(["unreadable"]) is None
+    # owner discovery: the organizations call failing is named too, one call earlier than the listings
+    monkeypatch.setattr(C, "gh_api", lambda p: (C.OK, {"login": "good"}) if p == "user" else (C.ERROR, None))
+    assert C.universe_from_gh_repo_list(None) == (rows, "gh-repo-list:good", ["orgs-of:good"])
     assert C.resolve_universe([], None, tmp_path / "none.json") == ([], "none", [])
     # the receipt names the owner, is incomplete (retry horizon) and exits 2 even on a clean scan
     monkeypatch.setattr(C, "gh_api", FakeGH(_clean_table("good/a")))
