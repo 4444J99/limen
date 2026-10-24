@@ -791,7 +791,7 @@ def census_unread(data: dict | None) -> dict[str, int]:
     partially. Non-zero means 'do not lower a ceiling from this receipt'."""
     d = (data or {}).get("denominators") or {}
     out: dict[str, int] = {}
-    for key in ("unreachable", "unscanned_by_budget", "internal_errors", "scanned_partial"):
+    for key in ("unreachable", "unscanned_by_budget", "internal_errors", "scanned_partial", "universe_unlisted_owners"):
         try:
             n = int(d.get(key) or 0)
         except (TypeError, ValueError):
@@ -807,6 +807,9 @@ def census_floor_unmeasured(data: dict | None, jobs: list[Job]) -> dict[str, int
     Empty ⟺ every count is a floor and "lower the ceiling to N" is sound advice (the ratchet only falls, so
     lowering from an undercount makes the next complete census red on unchanged repositories)."""
     out = census_unread(data)
+    source = str(((data or {}).get("denominators") or {}).get("universe_source") or "")
+    if source.startswith("explicit"):
+        out["explicit_scope"] = 1  # a targeted census (--repos) is a subset of the fleet, never its floor
     partial = sum(1 for j in jobs if j.extra.get("partial"))
     unverified = sum(
         1 for j in jobs if not j.enabled and str(j.extra.get("state")) == "unknown" and not j.extra.get("archived")
@@ -895,6 +898,8 @@ def derive_census_jobs(
                             "fires_per_day": d.get("fires_per_day"),
                             "fired": by_workflow.get(name) if isinstance(name, str) and not ambiguous else None,
                             "fired_oldest_seen": fired_row.get("oldest_seen"),
+                            "fired_oldest_page_read": bool(fired_row.get("oldest_page_read")),
+                            "fired_page_oldest_seen": fired_row.get("page_oldest_seen"),
                             "fired_listed": fired_row.get("total_scheduled_runs"),
                             "fired_capped": bool(fired_row.get("listing_capped")),
                             "ambiguous": ambiguous,

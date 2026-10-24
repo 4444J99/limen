@@ -582,12 +582,17 @@ def _recent_success(job: S.Job, generated: datetime | None) -> bool:
 
 
 def _crowded_off_listing(job: S.Job, generated: datetime | None) -> bool:
-    """No row for this workflow in the repository's run summary, and the summary's oldest listed run is younger
-    than the workflow's success window: the page the census read was filled by busier workflows, so this one is
-    unmeasurable here — not 'did not succeed'."""
+    """No row for this workflow in the repository's run summary, and the summarized page's oldest run is younger
+    than the workflow's success window: that page was filled by busier workflows, so this one is unmeasurable
+    here — not 'did not succeed'. The page's edge is `page_oldest_seen`; a receipt that read the deepest page too
+    carries the repository's FIRST run in `oldest_seen`, which says nothing about the summarized page, so without
+    the edge such a workflow is unmeasurable rather than scored."""
     if job.extra.get("fired") is not None or generated is None:
         return False
-    oldest = S.census_generated_at({"generated_at": job.extra.get("fired_oldest_seen")})
+    boundary = job.extra.get("fired_page_oldest_seen")
+    if boundary is None and job.extra.get("fired_oldest_page_read"):
+        return True
+    oldest = S.census_generated_at({"generated_at": boundary or job.extra.get("fired_oldest_seen")})
     if oldest is None:
         return False
     return (generated - oldest) < _success_window(job)
@@ -614,15 +619,21 @@ def _unmeasured_receipt(path: Path, data: dict | None, state: str, age: int | No
         return None, f"{path.name} is {state} — not a {S.CENSUS_SCHEMA} receipt", {}
     if state == "incomplete":
         d = data.get("denominators") or {}
-        return None, (
-            f"{path.name} is incomplete ({d.get('scanned')}/{d.get('universe_count')} scanned, {d.get('unreachable')} unreachable, "
-            f"{d.get('unscanned_by_budget')} unscanned, {d.get('internal_errors')} errors) — the census retries on its own horizon; nothing concluded"
-        ), {}
+        return (
+            None,
+            (
+                f"{path.name} is incomplete ({d.get('scanned')}/{d.get('universe_count')} scanned, {d.get('unreachable')} unreachable, "
+                f"{d.get('unscanned_by_budget')} unscanned, {d.get('internal_errors')} errors) — the census retries on its own horizon; nothing concluded"
+            ),
+            {},
+        )
     max_age = _env_int("LIMEN_SCHEDULE_CENSUS_MAX_AGE_DAYS", 8)
     return None, f"{path.name} is {age}d old (> {max_age}d) — re-run the census before trusting the fleet counts", {}
 
 
-def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
+def read_census_receipt(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str, dict]:
     """Census planes (the undeclared fleet). Job-matched: declared = enabled residual workflows the receipt could
     measure (partial rows and ambiguous display-name joins excluded), observed = those with a recent success.
     Counts only in the detail — the rows name private repositories (R2). Overrides, in order: undeclared-off
@@ -631,7 +642,11 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
     operator lowers — reported as readback_overdue so the beat exits 3, never red."""
     path, data, state, age = _census_receipt_state(plane, today, root)
     if state == "absent":
-        return None, f"no census receipt at {path.name} on this host — the census runs where gh carries the owner's auth (not this host)", dict(NOT_THIS_HOST)
+        return (
+            None,
+            f"no census receipt at {path.name} on this host — the census runs where gh carries the owner's auth (not this host)",
+            dict(NOT_THIS_HOST),
+        )
     if state != "present":
         return _unmeasured_receipt(path, data, state, age)
     generated = S.census_generated_at(data)
@@ -643,7 +658,11 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
     measurable = [j for j in candidates if not _crowded_off_listing(j, generated)]
     observed = sum(1 for j in measurable if _recent_success(j, generated))
     counts = S.census_plane_counts(jobs)
-    ceilings = {k: v for k, v in (plane.get("ceilings") or {}).items() if isinstance(v, int) and not isinstance(v, bool)} if isinstance(plane.get("ceilings"), dict) else {}
+    ceilings = (
+        {k: v for k, v in (plane.get("ceilings") or {}).items() if isinstance(v, int) and not isinstance(v, bool)}
+        if isinstance(plane.get("ceilings"), dict)
+        else {}
+    )
     per_rule, undeclared, unverified = S.census_off_counts(plane, jobs)
     rules = [r for r in plane.get("declared_off") or [] if isinstance(r, dict) and isinstance(r.get("match"), dict)]
     off_total = sum(sum(v for k, v in c.items() if k != "archived") for c in per_rule)
@@ -673,21 +692,28 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
         f"({age}d old); {off_total} declared off by fact; {partial} on partially read rows, {ambiguous} ambiguous name join(s) and "
         f"{crowded} crowded off the run listing unmeasured"
         + (f"; {unverified} state unknown" if unverified else "")
-        + "; counts " + ", ".join(f"{k} {counts.get(k, 0)}/{v}" for k, v in sorted(ceilings.items()))
+        + "; counts "
+        + ", ".join(f"{k} {counts.get(k, 0)}/{v}" for k, v in sorted(ceilings.items()))
     )
     if undeclared:
         extra["override"] = "undeclared-off"
         detail += f"; UNDECLARED OFF: {len(undeclared)} off-state workflow(s) no declared_off match owns"
     elif over and any(x.startswith("active ") for x in over) or off_over:
         extra["override"] = "undeclared-growth"
-        detail += "; UNDECLARED GROWTH above ceilings: " + ", ".join([x for x in over if x.startswith("active ")] + off_over)
+        detail += "; UNDECLARED GROWTH above ceilings: " + ", ".join(
+            [x for x in over if x.startswith("active ")] + off_over
+        )
     elif over:
         extra["override"] = "stagger-regressed"
         detail += "; STAGGER REGRESSED above ceilings: " + ", ".join(over)
     if slack and "override" not in extra:
         if floor_unmeasured:
             # a count below its ceiling on a receipt that left something unread is an undercount, not a floor
-            detail += "; below ceilings but floor unmeasured (" + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items())) + ") — do not lower"
+            detail += (
+                "; below ceilings but floor unmeasured ("
+                + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items()))
+                + ") — do not lower"
+            )
         else:
             extra["readback_overdue"] = True
             detail += "; slack ceilings — " + "; ".join(slack)
@@ -700,13 +726,23 @@ def read_census_receipt(plane_id: str, plane: dict, jobs: list[S.Job], today: da
 _LAUNCHCTL_ROW_RX = re.compile(r"^(\S+)\s+(-?\d+)\s+(\S+)\s*$")
 
 
-def read_launchctl(plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path) -> tuple[int | None, str, dict]:
+def read_launchctl(
+    plane_id: str, plane: dict, jobs: list[S.Job], today: date, root: Path
+) -> tuple[int | None, str, dict]:
     """One read-only `launchctl list`: observed = declared Labels loaded with last exit status 0. Counts only."""
     if shutil.which("launchctl") is None:
-        return None, "no launchctl on this host (Linux, CI) — launchd planes are measured on the Mac that loads them (not this host)", dict(NOT_THIS_HOST)
+        return (
+            None,
+            "no launchctl on this host (Linux, CI) — launchd planes are measured on the Mac that loads them (not this host)",
+            dict(NOT_THIS_HOST),
+        )
     path, data, state, age = _census_receipt_state(plane, today, root)
     if state == "absent":
-        return None, f"no census receipt at {path.name} on this host — no declared Labels to look for (not this host)", dict(NOT_THIS_HOST)
+        return (
+            None,
+            f"no census receipt at {path.name} on this host — no declared Labels to look for (not this host)",
+            dict(NOT_THIS_HOST),
+        )
     if state != "present":
         return _unmeasured_receipt(path, data, state, age)
     try:
@@ -733,7 +769,11 @@ def read_launchctl(plane_id: str, plane: dict, jobs: list[S.Job], today: date, r
             extra["override"] = "undeclared-growth"
             detail += f"; UNDECLARED GROWTH: {counts['active']} Labels above ceiling {cap}"
         elif counts["active"] < cap and floor_unmeasured:
-            detail += f"; {counts['active']} Labels below ceiling {cap} but floor unmeasured (" + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items())) + ") — do not lower"
+            detail += (
+                f"; {counts['active']} Labels below ceiling {cap} but floor unmeasured ("
+                + ", ".join(f"{k} {v}" for k, v in sorted(floor_unmeasured.items()))
+                + ") — do not lower"
+            )
         elif counts["active"] < cap:
             extra["readback_overdue"] = True
             detail += f"; slack — lower ceilings.active to {counts['active']} (ceiling {cap})"
@@ -810,7 +850,9 @@ def declared_for(plane: dict, jobs: list[S.Job], today: date, now: datetime) -> 
     if kind == "voice-stamps":
         return sum(1 for j in enabled if j.cadence_hours and j.cadence_hours <= 24)
     if kind in {"census-receipt", "launchctl"}:
-        return len(enabled)  # job-matched: measurable fleet workflows / declared Labels, 1:1 against the receipt or launchctl
+        return len(
+            enabled
+        )  # job-matched: measurable fleet workflows / declared Labels, 1:1 against the receipt or launchctl
     return sum(_fires_so_far(job, today, now) for job in enabled)
 
 
