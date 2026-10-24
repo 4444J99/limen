@@ -5835,20 +5835,20 @@
     },
     {
       "id": "L-SCHED-READBACKS",
-      "label": "Post one schedule readback per UI-only scheduler — ChatGPT scheduled tasks, Gemini scheduled actions, Grok automations, Jules native scheduled tasks — naming each active task, its cadence and time zone, and where its result lands. None of the four has an API: no organ can list, create, pause or read them, so until a readback exists each plane is `unmeasured` in institutio/governance/schedules.yaml by construction (never zero), and its allotment is left on the floor by default.",
+      "label": "Complete supported native schedule access and result coverage for ChatGPT tasks, Grok Automations, Gemini Apps schedules and Jules native schedules. Collector-mediated reads already observed 15 enabled ChatGPT tasks and 20 partial Grok notification excerpts; this is bounded evidence, not complete history, verified account capacity, acceptance or delivery. Remaining supported native access and full-result/coverage gaps stay open.",
       "owner": "yours",
-      "cost": "~10 min across four apps: ChatGPT > Scheduled tasks (Pro: 15 active), Gemini app > Scheduled actions (10 active), grok.com/automations, Jules > Scheduled tab. Post each readback as one comment on limen#3177 (or paste it in a session); the agent turns it into registry rows with a delivery locator",
-      "unlocks": "ChatGPT's 10 unused slots and Gemini's 10 slots become a deliberate allocation (filled or declared idle-by-design); Grok and Jules-native stop being blind spots; schedule-utilization's `measured k/n` rises by up to four planes. Also: copy ~/.grokbot before the unify-contain v2 retirement erases the only on-disk Grok trace.",
-      "source_task": "schedule-estate registry (limen#3177; docs/plans/2026-10-23-schedule-estate-registry.md). Inventory 2026-10-23: limen holds no receipt, sensor or registry row for a ChatGPT, Grok or Gemini scheduled run; the 5 ChatGPT debt routines are known only from limen#2680's text; Jules native scheduled tasks are UI-only with no edit (delete + recreate).",
-      "gate": "vendor UIs only the account holder can open; a readback is a human act. The 2026-09-17 Gemini four-window proposal and the 'seven Eastern windows' in the ops-witness audit are conflicting unratified proposals — the readback decides, not a guess.",
+      "cost": "Remaining effort is account-specific access or browser unlock where supported connector retrieval is unavailable, plus bounded collector continuation. ChatGPT and verified vendor Gmail reads do not require human copy/paste as the steady-state collection route. Keep native IDs, task titles, prompts and result bodies private; public updates carry only source coverage and gap ownership.",
+      "unlocks": "The existing native collector can retain ChatGPT results and Grok notification evidence through a durable private union instead of leaving collected work unobserved. Gemini Apps and Jules native schedule inventory/results, Grok full native results, complete run/history coverage, verified account usage/entitlement and downstream capacity remain separate gaps. Observed enabled tasks are not unused quota. Existing ~/.grokbot preservation remains unverified and is not established by Gmail access.",
+      "source_task": "Schedule-estate registry (limen#3177; docs/operations/schedule-collection.md). Connected ChatGPT task reads observed 15 enabled tasks at 2026-10-23T19:22:57Z, with 10 correlated full results and 5 unresolved full results; bounded vendor Gmail reads observed 20 partial unresolved Grok excerpts at 2026-10-23T19:37:34Z. The historical five ChatGPT engineering rows are not an exhaustive current inventory. No Gemini Apps, Grok Bot or Jules native account access is established by these reads.",
+      "gate": "Use supported collector-mediated reads where demonstrated. Missing native account access and originating-browser unlocks remain account-holder gates; Gmail access does not establish Grok Bot or full Grok result access. Preserve existing schedule ownership and sole Jules Steward launch authority. The historical Gemini and ops-witness window proposals remain unratified; source evidence, not guessed schedules, resolves them.",
       "status": "needs_human",
       "added": "2026-10-23",
       "steps": [
-        "REMAINING (human): ChatGPT — list the active scheduled tasks (name, cadence, tz, destination); confirm whether the five 2026-09-20 debt routines are still active and where their receipts go.",
-        "REMAINING (human): Gemini — list active scheduled actions and the plan tier (Pro/Ultra decides the 10-cap); say whether any of the Sept-17 windows were ever created.",
-        "REMAINING (human): Grok — list grok.com/automations (count, names, cadence, destination); copy ~/.grokbot aside before it is retired.",
-        "REMAINING (human): Jules — list native scheduled tasks (Scheduled tab) and confirm the entitlement tier (Pro=100 per rolling 24h is unverified).",
-        "REMAINING (agent): turn each readback into schedules.yaml rows with a delivery locator; the next sensor run moves the plane from unmeasured to measured."
+        "OBSERVED (collector): 15 enabled ChatGPT tasks with partial history; retain 10 correlated and 5 unresolved full results under their actual identities and preserve full bodies privately by digest plus occurrence provenance. Continue bounded current/history collection without treating native completion as acceptance or delivery.",
+        "REMAINING (supported native access / account holder where required): Gemini Apps active schedules, cadence, time zone, destinations and independently verified entitlement/usage. The old four-window proposal is not evidence that any schedule was created; no numeric account ceiling is asserted here.",
+        "OBSERVED / REMAINING (Grok): 20 bounded vendor-mail excerpts are partial and unresolved, not exhaustive history or full native results. Continue supported window/page collection; full-result and native Grok Bot access remain unverified. Preserve the existing ~/.grokbot custody-before-retirement requirement separately; Gmail retrieval does not prove that preservation.",
+        "REMAINING (supported native access / account holder where required): Jules native scheduled-task inventory, cadence, time zone and result destinations, separately from broker-local confirmed launches. Native account entitlement, competing callers and uncertain-attempt holds remain unresolved; no new launch authority follows.",
+        "REMAINING (collector / owner): durably union source observations, exact assessments, checkpoints and the private ChatGPT body/provenance archive; keep incomplete pages/windows and inaccessible sources open with owners/next actions. Natural scheduled collection, complete account/window coverage, exact owner acceptance and delivery remain separately unverified. Existing four-plane fail-closed acceptance predicate and pending status are unchanged."
       ],
       "issue": 3177,
       "sovereignty": {
@@ -5858,8 +5858,8 @@
       "diagnosis_provenance": "schedule-estate-registry-20261023.inventory",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Declare UI-only schedulers in the SCHEDULES registry from human readbacks only; report them unmeasured until a delivery locator exists; never infer an active count.",
-        "rationale": "A plane nothing can read is a plane whose allotment is lost silently; declaring it unmeasured makes the loss a number the gauge carries until a human supplies the readback.",
+        "behavior": "Use demonstrated supported collector-mediated native reads, preserve opaque public inventory and private evidence union, and report source coverage separately from acceptance/delivery. Missing supported native account access remains unverified; human readback is an account-specific fallback, not the steady-state collection mechanism.",
+        "rationale": "Direct ChatGPT and vendor-Gmail retrieval supersede the earlier no-readback-route assumption. Partial or unresolved evidence exposes remaining full-result/history/access gaps without fabricating zero usage, account entitlement or available quota.",
         "evidence_refs": [
           "his-hand-levers.json#L-SCHED-READBACKS",
           "institutio/governance/schedules.yaml",
@@ -5877,18 +5877,18 @@
           "status": "not_currently_verified"
         },
         "dependencies": [],
-        "remaining_human_action": "Post the four readbacks.",
-        "historical_gate_requires_verification": "vendor UIs are the account holder's alone",
+        "remaining_human_action": "Provide only the remaining account-specific supported native access or originating-browser unlocks/readbacks where required (including Gemini Apps and Jules native schedules); retain existing Grok custody obligations. ChatGPT and verified vendor-mail collection continue through supported connectors. No re-enable, launch, budget or authority hold is released.",
+        "historical_gate_requires_verification": "Earlier UI-only/readback-only diagnosis is superseded for demonstrated ChatGPT and vendor-Gmail retrieval; remaining native account/browser access gates still require verification.",
         "decision_status": "chosen_pending_evidence"
       },
-      "note": "Filed from the SCHEDULES registry's first reading; the registry rows for ChatGPT come from limen#2680's 2026-09-20 configuration text and are themselves unverified until this readback."
+      "note": "Reconciled with the collector evidence projection for limen#3177. Enabled inventory and bounded retrieved artifacts are distinct from full history, account capacity, accepted output and delivered work. Existing acceptance predicate, statuses, ownership and human/launch holds remain pending and unchanged."
     },
     {
       "id": "L-SCHED-CLAUDE-REENABLE",
       "label": "Bring plane (iii) back: all 13 contracted claude.ai scheduled tasks are off. Cohort A (7) failed with ACCESS_DENIED from 2026-08-31..09-05 and auto-disabled after the vendor's 72h GitHub-connection grace; cohort B (6) succeeded on 2026-10-16 and were switched off together at 2026-10-17T00:12:48Z..00:13:36Z by an action this repo does not record. Deliveries to the session-meta rolling issues had already stopped around 2026-08-17, so 'succeeded' runs were succeeding at being blocked (gate probe fails, exit 0).",
       "owner": "yours",
       "cost": "~15 min: at claude.ai/code/routines check the GitHub connection the routines run under (session-meta, organvm-corpvs-testamentvm, domus-genoma must be reachable), state why the six were disabled on 10-17, re-enable ONE canary routine and watch it deliver for 72h before the rest",
-      "unlocks": "12 routine runs/day of estate audit (fleet, PRs, plans, atoms, docs, memory, omega) resume against a 100 runs/hour allotment; routine-freshness-audit gets deliveries to measure again; schedule-utilization's claude-cloud row leaves dark on the next snapshot export",
+      "unlocks": "The intended routine audit work may resume only through the existing human-owned repair/re-enable path. A fresh enabled trigger snapshot establishes configuration evidence; the truthful snapshot-only utilization reader still reports execution unmeasured. Separately verified real canary delivery and its exact owner predicate are required before closure; neither native success nor an arbitrary issue comment proves delivery.",
       "source_task": "schedule-estate registry (limen#3177); live list_triggers census docs/receipts/claude-triggers-snapshot-20261023.json; delivery dates read from session-meta issues 36/34/29/32/79/28/30/31 on 2026-10-23",
       "gate": "re-enabling spends subscription usage and acts through the operator's GitHub identity — a human toggle at claude.ai/code/routines. Re-enabling before the GitHub connection is repaired repeats the 72h auto-off.",
       "status": "needs_human",
@@ -5896,8 +5896,8 @@
       "steps": [
         "DONE: fire-side census exported (20 triggers, 0 enabled) and committed as a dated receipt the registry reads.",
         "REMAINING (human): repair/confirm the GitHub connection for the routine account; record the reason for the 2026-10-17 bulk disable (one sentence on limen#3177).",
-        "REMAINING (human): re-enable one canary routine (friction-federation delivered most recently, 2026-10-16); after a delivered comment within 72h, re-enable the rest you still want.",
-        "REMAINING (agent): re-export the trigger snapshot from an interactive session so claude-cloud reads measured; follow-up PR fixes routine-freshness-audit's any-comment-counts-as-delivery blind spot (limen#894)."
+        "REMAINING (human): re-enable one canary routine only through the existing human-owned path (friction-federation last delivered in the dated 2026-10-16 evidence); verify real attributable canary delivery within the existing 72h window using its exact owner predicate before the human re-enables any remaining routines.",
+        "REMAINING (agent / owner): re-export the dated trigger snapshot as configuration evidence only. Define and separately verify the exact real canary-delivery predicate; the current snapshot-only sensor cannot attest this delivery or satisfy the existing full/underfilled acceptance predicate. Keep closure pending; do not restore configuration-as-execution or any-comment-as-delivery semantics (limen#894)."
       ],
       "issue": 3177,
       "sovereignty": {
@@ -5922,14 +5922,14 @@
         ],
         "owner": "schedule-estate registry (limen#3177); routine contract cloud-routines.json (governance)",
         "acceptance": {
-          "condition": "A fresh snapshot receipt shows the chosen routines enabled and schedule-utilization reports claude-cloud as full or underfilled, not dark.",
+          "condition": "A fresh snapshot receipt shows the chosen routines enabled as configuration evidence only. Closure additionally requires separately verified real canary delivery bound to its exact owner predicate. The current snapshot-only sensor cannot attest execution/delivery or satisfy the existing fail-closed full/underfilled acceptance predicate, so acceptance remains pending; enabled configuration alone never closes this lever.",
           "predicate": "python3 scripts/schedule-utilization.py --json | python3 -c \"import json,sys; r=json.load(sys.stdin); ps=[p for p in r['planes'] if p['plane']=='claude-cloud']; sys.exit(0 if ps and all(p['verdict'] in ('full','underfilled') for p in ps) else 1)\"",
           "status": "not_currently_verified"
         },
         "dependencies": [
           "GitHub connection for the claude.ai routine account"
         ],
-        "remaining_human_action": "Repair the connection, record the 10-17 reason, re-enable a canary then the rest.",
+        "remaining_human_action": "Retain the existing human-owned repair, 10-17 reason and canary re-enable steps. Before any closure or wider human re-enable, obtain separately verified real canary delivery and its exact owner predicate; snapshot export alone is configuration evidence and the current sensor cannot attest delivery. Existing launch/subscription and uncertainty holds remain unchanged.",
         "historical_gate_requires_verification": "re-enabling spends subscription usage",
         "decision_status": "chosen_pending_evidence"
       },

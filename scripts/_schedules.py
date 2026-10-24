@@ -40,6 +40,7 @@ PLANE_WINDOWS = {"calendar-day", "rolling-24h", "per-hour", "active-tasks", "per
 PLANE_ENTITLEMENTS = {"verified", "unverified", "unpublished"}
 PLANE_FILL_POLICIES = {"declared", "floor", "idle-by-design"}
 EVIDENCE_KINDS = {
+    "native-snapshot",
     "gh-actions-runs",
     "bookend-tsv",
     "witness-audit",
@@ -168,7 +169,7 @@ class Job:
     klass: str = "unknown"
     delivery: dict = field(default_factory=dict)
     allotment: dict | None = None
-    # beat sensors only. cadence_beats is the declared `cadence` as written (beats between due-checks);
+    # beat sensors only. cadence_beats resolves the runtime environment override (beats between due-checks);
     # cadence_hours is its WORST-CASE wall-clock bound, ceil(cadence_beats × loop_max / 3600).
     cadence_hours: int | None = None
     cadence_beats: int | None = None
@@ -178,8 +179,8 @@ class Job:
         return [parse_cron(c) for c in self.crons]
 
 
-def load_registry(root: Path) -> dict:
-    data = yaml.safe_load((root / REGISTRY_REL).read_text(encoding="utf-8")) or {}
+def load_registry(root: Path, registry_path: Path | None = None) -> dict:
+    data = yaml.safe_load((registry_path or root / REGISTRY_REL).read_text(encoding="utf-8")) or {}
     if not isinstance(data, dict):
         raise ValueError("schedules.yaml must be a mapping")
     data.setdefault("planes", {})
@@ -205,7 +206,9 @@ def _workflow_on_block(doc: dict) -> dict:
     return block if isinstance(block, dict) else {}
 
 
-def derive_workflow_jobs(root: Path, plane: str, locator: str | Path = WORKFLOWS_REL, prefix: str = "limen") -> list[Job]:
+def derive_workflow_jobs(
+    root: Path, plane: str, locator: str | Path = WORKFLOWS_REL, prefix: str = "limen"
+) -> list[Job]:
     jobs: list[Job] = []
     wf_dir = root / locator
     if not wf_dir.is_dir():
@@ -254,6 +257,25 @@ def beats_to_hours(cadence_beats: int, loop_max: int) -> int:
     return max(1, -(-(cadence_beats * max(1, loop_max)) // SECONDS_PER_HOUR))
 
 
+def _positive_int(spec, *, fallback: int | None = None) -> int | None:
+    """Mirror beat-sensors.py's registry/env/default fallback order; parity is tested against the runner."""
+    if spec is None:
+        return fallback
+    value = spec
+    declared_default = fallback
+    if isinstance(spec, dict):
+        declared_default = spec.get("default", fallback)
+        value = os.environ.get(str(spec.get("env") or ""), declared_default)
+    for candidate in (value, declared_default, fallback):
+        try:
+            number = int(candidate)
+        except (TypeError, ValueError):
+            continue
+        if number > 0:
+            return number
+    return None
+
+
 def derive_sensor_jobs(
     root: Path, plane: str, locator: str | Path = SENSORS_REL, *, loop_max: int | None = None
 ) -> list[Job]:
@@ -268,14 +290,11 @@ def derive_sensor_jobs(
         if not isinstance(sensor, dict):
             continue
         cadence = sensor.get("cadence")
-        beats: int | None = None
-        if isinstance(cadence, dict):
-            default = cadence.get("default")
-            beats = int(default) if isinstance(default, (int, float)) and default > 0 else None
-        elif isinstance(cadence, (int, float)) and cadence > 0:
-            beats = int(cadence)
+        beats = _positive_int(cadence)
         if beats is None:
             continue
+        default_beats = _positive_int(cadence.get("default") if isinstance(cadence, dict) else cadence)
+        cadence_env = str(cadence.get("env") or "") if isinstance(cadence, dict) else ""
         hours = beats_to_hours(beats, ceiling)
         jobs.append(
             Job(
@@ -289,7 +308,12 @@ def derive_sensor_jobs(
                 klass="audit",
                 cadence_hours=hours,
                 cadence_beats=beats,
-                extra={"sources": list(sensor.get("source") or []), "loop_max_seconds": ceiling},
+                extra={
+                    "sources": list(sensor.get("source") or []),
+                    "loop_max_seconds": ceiling,
+                    "cadence_default_beats": default_beats,
+                    "cadence_env": cadence_env,
+                },
             )
         )
     return jobs

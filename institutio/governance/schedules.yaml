@@ -111,6 +111,26 @@
 #   note            free text
 
 schema_version: 0.1
+audit_only: true
+owner: "4444J99/limen#3177"
+provenance:
+  - {source: "peer PR3178, pinned 2ba8109995a9b7962ebd0a604e5f6677141e0396", observed_at: "2026-10-23T00:00:00Z", coverage: "dated configuration evidence"}
+  - {source: "connected ChatGPT per-task reads; private native projection", observed_at: "2026-10-23T19:22:57Z", coverage: "15 enabled tasks; partial history; 10 correlated and 5 unresolved collected full results"}
+  - {source: "connected Gmail exact vendor notification reads", observed_at: "2026-10-23T19:37:34Z", coverage: "bounded sample of 20 excerpts; partial/unresolved; not exhaustive"}
+logical_launch_authorities:
+  - {logical_job: jules-capacity-filling, launch_authority: existing-native-jules-steward, enabled: true}
+coverage_gaps:
+  - {gap: native-history-and-usage, owner: "4444J99/limen#3177", next_action: "Continue bounded native history/window collection; verify same-account entitlement, usage and downstream capacity before reporting usable remainder"}
+  - {gap: grok-full-results, owner: "4444J99/limen#3177", next_action: "Retain Gmail message/thread references and seek supported full native result retrieval; excerpts remain partial"}
+  - {gap: other-native-accounts, owner: "4444J99/limen#3177", next_action: "Obtain supported account read access for Cowork, Gemini Apps, Grok Bot and Jules; preserve separate dated Claude Code configuration snapshot"}
+  - {gap: browser-bootstrap, owner: "4444J99/limen#3177", next_action: "Originating connected browser context must be available; current bootstrap says open ChatGPT in browser with connected extension"}
+  - {gap: scheduled-collector-delivery, owner: "4444J99/limen#3177", next_action: "Preserve existing hourly Intake identity and cadence; verify one natural scheduled occurrence with durable private union and linked source evidence"}
+  - {gap: accepted-project-delivery, owner: "project owners via 4444J99/limen#3177", next_action: "Bind owner predicate and destination evidence to exact complete attributed artifacts; collection alone does not establish acceptance or delivery"}
+# Public responsibilities only. This is not an exhaustive listing of private native tasks.
+engineering_responsibilities:
+  - {role: hourly-intake, authority: existing-native-task, collection: additive-read-only}
+  - {role: jules-steward, authority: existing-native-task, launch: sole-Jules-capacity-filling-caller, uncertainty_holds: preserved}
+
 
 # The ops house rule: never schedule a GitHub cron on the hour, and no two workflows in one repo
 # share a minute. Applies to planes with provider github; violations that predate this registry
@@ -120,6 +140,10 @@ house_offsets: [11, 17, 23, 36, 49]
 planes:
 
   github-actions-limen:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: 'Existing owner configuration; OPS owns admission, no registry dispatch', state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Existing source manifest; registry is an audit projection, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: gh-actions-runs existing evidence reader; observation completeness varies, state: documented}
     provider: github
     surface: cron
     owner: fleet
@@ -138,6 +162,10 @@ planes:
     enabled: true
 
   github-actions-ops:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: 'Existing owner configuration; OPS owns admission, no registry dispatch', state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Existing source manifest; registry is an audit projection, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: bookend-tsv existing evidence reader; observation completeness varies, state: documented}
     authority: {owner_repo: "4444J99/ops", upstream_state: proposed, note: "limen holds a sibling-parity-verified mirror of rows that 4444J99/ops configures; the owner has not adopted this registry. A mirror is evidence aggregation (OPERATIONS.md), never a second scheduler: nothing here can start, retry or deploy a run."}
     provider: github
     surface: cron
@@ -152,6 +180,10 @@ planes:
     enabled: true
 
   github-actions-ops-witness:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: 'Existing owner configuration; OPS owns admission, no registry dispatch', state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Existing source manifest; registry is an audit projection, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: gh-actions-runs existing evidence reader; observation completeness varies, state: documented}
     authority: {owner_repo: "4444J99/ops-witness", upstream_state: proposed, note: "limen holds a sibling-parity-verified mirror of rows that 4444J99/ops-witness configures; the owner has not adopted this registry. A mirror is evidence aggregation (OPERATIONS.md), never a second scheduler: nothing here can start, retry or deploy a run."}
     provider: github
     surface: cron
@@ -166,12 +198,16 @@ planes:
     enabled: true
 
   cloudflare-ops-scheduler:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: 'Existing owner configuration; OPS owns admission, no registry dispatch', state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Existing source manifest; registry is an audit projection, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: witness-audit existing evidence reader; observation completeness varies, state: documented}
     authority: {owner_repo: "4444J99/ops", upstream_state: proposed, note: "limen holds a sibling-parity-verified mirror of rows that 4444J99/ops configures; the owner has not adopted this registry. A mirror is evidence aggregation (OPERATIONS.md), never a second scheduler: nothing here can start, retry or deploy a run."}
     provider: cloudflare
     surface: cron
     owner: governance
     effector: "4444J99/ops cloudflare/ owner release path (ops#6); limen never deploys or retries product work"
-    allotment: {runs: 2000, window: calendar-day, concurrency: 4, source: "4444J99/ops:cloudflare/IMPLEMENTATION.md — 2,000/day fleet attempt allowance, at most four runs in flight", entitlement: verified}
+    allotment: {runs: 2000, classification: local-policy, window: calendar-day, concurrency: 4, source: "4444J99/ops:cloudflare/IMPLEMENTATION.md — 2,000/day fleet attempt allowance, at most four runs in flight; local policy, not account entitlement", entitlement: unverified}
     fill_policy: declared
     floor: null
     jobs_source: null
@@ -198,6 +234,10 @@ planes:
     fill_policy: declared
     floor: null
     # RESIDUAL by construction: every gh-workflow cron in a PRIVATE census repository that no specific plane covers.
+    capabilities:
+      launch: {state: documented, source: "Each member repository's own Actions workflow configuration; the registry derives rows by fact at read time and never dispatches, re-enables or writes to a member repository (R1/R2)", observed_at: "2026-10-24T00:30:00Z"}
+      input: {state: documented, source: "Git-ignored census receipt logs/schedule-census.json written by scripts/schedule-census.py on the host; rows selected by carrier / scope / visibility / archived / live state, never by name", observed_at: "2026-10-24T00:30:00Z"}
+      retrieval: {state: documented, source: "census-receipt evidence reader (scripts/schedule-utilization.py): job-matched recent successes from the receipt's scheduled-run summary, counts only; absent receipt = not_this_host", observed_at: "2026-10-24T00:30:00Z"}
     jobs_source: {kind: census, locator: logs/schedule-census.json, carrier: gh-workflow, scope: residual, visibility: private}
     declared_off:
       - {match: {archived: true}, since: "per repository archive (archived_at is not in the receipt)", reason: "GitHub runs no schedule in an archived repository; archiving IS the owned off-switch. Census 2026-10-23T23:53Z: 10 repositories, 66 cron workflows (41 active-state, 20 disabled_manually, 5 state unknown)"}
@@ -216,6 +256,10 @@ planes:
     allotment: {runs: null, window: calendar-day, concurrency: null, source: "GitHub Actions minutes are free for public repositories on standard runners — no run cap published", entitlement: unpublished}
     fill_policy: declared
     floor: null
+    capabilities:
+      launch: {state: documented, source: "Each member repository's own Actions workflow configuration; the registry derives rows by fact at read time and never dispatches, re-enables or writes to a member repository (R1/R2)", observed_at: "2026-10-24T00:30:00Z"}
+      input: {state: documented, source: "Git-ignored census receipt logs/schedule-census.json written by scripts/schedule-census.py on the host; rows selected by carrier / scope / visibility / archived / live state, never by name", observed_at: "2026-10-24T00:30:00Z"}
+      retrieval: {state: documented, source: "census-receipt evidence reader (scripts/schedule-utilization.py): same rules as github-actions-fleet-private; the public half is the control for private refusals", observed_at: "2026-10-24T00:30:00Z"}
     jobs_source: {kind: census, locator: logs/schedule-census.json, carrier: gh-workflow, scope: residual, visibility: public}
     declared_off:
       - {match: {archived: true}, since: "per repository archive (archived_at is not in the receipt)", reason: "GitHub runs no schedule in an archived repository; archiving IS the owned off-switch. Census 2026-10-23T23:53Z: no archived public residual repository yet — the rule exists so the first one is owned, not undeclared"}
@@ -238,6 +282,10 @@ planes:
     # 19 plists → 15 distinct FILE STEMS — that receipt predates Label capture, so 15 is a stem count; the next census records
     # Labels (Label == stem for limen's own three plists), and the ceiling is re-pinned if the count moves. limen-beat's own
     # heartbeat stays on limen-beat.
+    capabilities:
+      launch: {state: documented, source: "The operator loads a plist on the host it was written for (launchctl bootstrap is a human act); agents never bootstrap a LaunchAgent", observed_at: "2026-10-24T00:30:00Z"}
+      input: {state: documented, source: "Git-ignored census receipt logs/schedule-census.json written by scripts/schedule-census.py on the host; rows selected by carrier / scope / visibility / archived / live state, never by name — launchd plists keyed by Label (fallback: file stem)", observed_at: "2026-10-24T00:30:00Z"}
+      retrieval: {state: documented, source: "launchctl evidence reader (scripts/schedule-utilization.py): one read-only `launchctl list`, declared Labels loaded with last exit 0; no launchctl or no receipt = not_this_host", observed_at: "2026-10-24T00:30:00Z"}
     jobs_source: {kind: census, locator: logs/schedule-census.json, carrier: launchd, scope: all}
     ceilings: {active: 15}
     evidence: {kind: launchctl, locator: "launchctl list", note: "one read-only `launchctl list`: observed = declared Labels loaded with last exit status 0; no launchctl binary (Linux, CI) or no receipt = unmeasured not_this_host"}
@@ -245,6 +293,10 @@ planes:
     enabled: true
 
   limen-beat:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: 'Existing owner configuration; OPS owns admission, no registry dispatch', state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Existing source manifest; registry is an audit projection, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: voice-stamps existing evidence reader; observation completeness varies, state: documented}
     provider: limen
     surface: launchd
     owner: tabularius
@@ -258,11 +310,15 @@ planes:
     enabled: true
 
   claude-cloud:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Peer dated Claude Code cloud trigger snapshot; configuration only, state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: cloud-routines.json contract; native account input access unverified here, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Peer dated Claude trigger snapshot; no current result read in this lane, state: documented}
     provider: anthropic
     surface: ui+api
     owner: governance
     effector: "the operator re-enables at claude.ai/code/routines (spends subscription usage — human atom); delivery gaps are routine-freshness-audit's; cloud-routines.json is the contract"
-    allotment: {runs: 100, window: per-hour, concurrency: null, source: "https://code.claude.com/docs/en/routines — 100 scheduled runs/hour/account, min interval 1h, draws down subscription usage; no daily cap stated", entitlement: verified}
+    allotment: {runs: 100, window: per-hour, concurrency: null, source: "https://code.claude.com/docs/en/routines — published ceiling only, account entitlement unverified", entitlement: unverified}
     fill_policy: floor
     floor: 13
     jobs_source: {kind: cloud-routines, locator: cloud-routines.json}
@@ -271,36 +327,83 @@ planes:
     enabled: true
 
   chatgpt-scheduled-tasks:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Existing native schedule authority; no launch in collector, state: documented}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Existing task prompt; this lane has not amended it, state: documented}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Connected per-task read returns current attempt and independently attributable latest result, state: verified}
     provider: openai
-    surface: ui
+    surface: ui+api
     owner: governance
-    effector: "the operator edits tasks in the ChatGPT app (UI-only, no API); receipts land on 4444J99/limen#2680 per the 2026-09-20 configuration"
-    allotment: {runs: 15, window: active-tasks, concurrency: null, source: "secondary reporting Sept 2026 (help-center page not retrievable): Pro = 15 active tasks; paused tasks do not count", entitlement: unverified}
+    effector: "Existing native task owner; hourly Intake collects only; sole Jules Steward launch authority and uncertain-run holds remain"
+    allotment: {runs: null, classification: unmeasured, window: active-tasks, concurrency: null, source: "inherited secondary ceiling claim unverified; exact publication not established; observed enabled inventory is independent", entitlement: unverified}
     fill_policy: declared
     floor: null
     jobs_source: null
-    evidence: {kind: issue-comments, locator: "4444J99/limen#2680", note: "any comment today = delivered; native telemetry goes to a private destination, so this undercounts"}
+    native_inventory: {enabled_count: 15, observed_at: "2026-10-23T19:22:57Z", source: "connected per-task native reads; opaque private inventory", coverage: complete, history_coverage: partial, launch_authority: native}
+    evidence: {kind: native-snapshot, locator: "logs/private/schedule-evidence/native-snapshot.json", provider: chatgpt, surface: tasks, note: "Private union snapshot; current results independently correlated; native completed is not accepted/delivered"}
     declared_on: 2026-10-23
     enabled: true
 
   grok-automations:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Native automation account write access unverified, state: unknown}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Native automation context input access unverified, state: unknown}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Connected Gmail exact vendor excerpts; complete result retrieval unverified, state: verified}
     provider: xai
     surface: ui
     owner: governance
-    effector: "the operator declares each automation here with a delivery locator (e.g. a Gmail label or a GitHub issue) — until then the plane is unmeasured by construction"
-    allotment: {runs: null, window: active-tasks, concurrency: null, source: "unpublished — no xAI document found 2026-10-23; usage draws from a weekly compute pool", entitlement: unpublished}
+    effector: "Existing native automation owner; collect exact vendor Gmail excerpts without launching or replying"
+    allotment: {runs: null, window: active-tasks, concurrency: null, source: "account entitlement and usage unmeasured", entitlement: unpublished}
     fill_policy: declared
     floor: null
     jobs_source: null
-    evidence: {kind: none, locator: null, note: "no receipt path exists anywhere in the estate; ~/.grokbot residue only (docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md)"}
+    evidence: {kind: native-snapshot, locator: "logs/private/schedule-evidence/native-snapshot.json", provider: grok, surface: automations_email, note: "20 bounded vendor mail excerpts observed; partial/unresolved; not all history and not Grok Bot access"}
+    declared_on: 2026-10-23
+    enabled: true
+
+  claude-cowork:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+    provider: anthropic
+    surface: ui
+    owner: governance
+    effector: "Native account owner verifies supported Cowork input and retrieval separately from Code cloud routines"
+    allotment: {runs: null, window: active-tasks, concurrency: null, source: "unverified native account access", entitlement: unpublished}
+    fill_policy: declared
+    floor: null
+    jobs_source: null
+    evidence: {kind: none, locator: null, note: "Cowork account access unverified; Claude Code snapshot does not establish it"}
+    declared_on: 2026-10-23
+    enabled: true
+
+  grok-bot-routines:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+    provider: xai
+    surface: ui+api
+    owner: governance
+    effector: "Native Grok Bot account owner verifies supported routine and account access"
+    allotment: {runs: null, window: active-tasks, concurrency: null, source: "unverified native account access", entitlement: unpublished}
+    fill_policy: declared
+    floor: null
+    jobs_source: null
+    evidence: {kind: none, locator: null, note: "Grok Automations notification email is not Grok Bot account/routine access"}
     declared_on: 2026-10-23
     enabled: true
 
   gemini-scheduled-actions:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
     provider: google
     surface: ui
     owner: governance
-    effector: "the operator declares each scheduled action here with a delivery locator; L-FLEET-CAPACITY (dead Gemini API key, limen#265) blocks any API-side evidence"
+    effector: "the operator declares each scheduled action here with a delivery locator; Gemini Apps native access remains unverified independently of Gemini API key status"
     allotment: {runs: 10, window: active-tasks, concurrency: null, source: "secondary reporting of Google's Gemini limits page: 10 active actions at a time (AI Pro / Ultra)", entitlement: unverified}
     fill_policy: declared
     floor: null
@@ -310,6 +413,10 @@ planes:
     enabled: true
 
   jules:
+    capabilities:
+      launch: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      input: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
+      retrieval: {observed_at: '2026-10-23T19:22:57Z', source: Native account access unverified in this lane; API/product naming does not establish shared access, state: unknown}
     provider: google
     surface: ui+api
     owner: arms-agents
@@ -318,11 +425,15 @@ planes:
     fill_policy: floor
     floor: 25
     jobs_source: null
-    evidence: {kind: board-dispatch-receipts, locator: tasks.yaml, note: "dispatch_log rows agent=jules status=dispatched in the last rolling 24h — this broker's launches only, never vendor remaining quota; competing callers (ChatGPT steward routine, Jules native scheduled tasks, CLI/manual, GitHub label webhook) are reconciled by limen#2680, not here"}
+    evidence: {kind: board-dispatch-receipts, locator: tasks.yaml, note: "public aggregate dispatch_log rows are incomplete; absence cannot establish zero authoritative launches or vendor remaining quota; competing callers (ChatGPT steward routine, Jules native scheduled tasks, CLI/manual, GitHub label webhook) are reconciled by limen#2680, not here"}
     declared_on: 2026-10-23
     enabled: true
 
   jules-native-scheduled-tasks:
+    capabilities:
+      launch: {state: unknown, source: "Peer PR3178 e2d62dc separately catalogs native schedules; native account launch access unverified in collector lane", observed_at: "2026-10-23T20:42:47Z"}
+      input: {state: unknown, source: "Peer PR3178 e2d62dc catalog evidence; native scheduled-task context input access unverified", observed_at: "2026-10-23T20:42:47Z"}
+      retrieval: {state: unknown, source: "Peer PR3178 e2d62dc catalog evidence; broker launch receipts do not establish native schedule inventory or result retrieval", observed_at: "2026-10-23T20:42:47Z"}
     provider: google
     surface: ui
     owner: governance
@@ -458,54 +569,5 @@ jobs:
     delivery: {kind: bookend-tsv, locator: "ops scheduler bookends (paged), witnessed in ops-witness audit"}
     class: ingest
     source_of_truth: "4444J99/ops:cloudflare/src/manifest.ts"
-    declared_on: 2026-10-23
-    enabled: true
-
-  # ── ChatGPT scheduled tasks — configured 2026-09-20 in the ChatGPT app (limen#2680) ─────────
-  - id: chatgpt/github-debt-intake
-    plane: chatgpt-scheduled-tasks
-    cron: "0 8 * * *"
-    tz: America/New_York
-    delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
-    class: report
-    source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
-    declared_on: 2026-10-23
-    enabled: true
-    note: "'around 08:00' — vendor windows are flexible, not exact"
-  - id: chatgpt/jules-backlog-steward
-    plane: chatgpt-scheduled-tasks
-    cron: "0 * * * *"
-    tz: America/New_York
-    delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
-    class: dispatch
-    source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-pilot-2026-09-20-r2"
-    declared_on: 2026-10-23
-    enabled: true
-    note: "the sole scheduled Jules capacity-filling caller among the five; reported zero launches as of limen#2680's last update"
-  - id: chatgpt/github-debt-landing
-    plane: chatgpt-scheduled-tasks
-    cron: "0 13,19 * * *"
-    tz: America/New_York
-    delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
-    class: landing
-    source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
-    declared_on: 2026-10-23
-    enabled: true
-  - id: chatgpt/github-debt-weekly
-    plane: chatgpt-scheduled-tasks
-    cron: "15 8 * * 1"
-    tz: America/New_York
-    delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
-    class: report
-    source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
-    declared_on: 2026-10-23
-    enabled: true
-  - id: chatgpt/github-debt-integrity
-    plane: chatgpt-scheduled-tasks
-    cron: "0 10 * * 2"
-    tz: America/New_York
-    delivery: {kind: issue-comments, locator: "4444J99/limen#2680"}
-    class: report
-    source_of_truth: "ChatGPT app > Scheduled tasks (UI only); revision chat-jules-debt-2026-09-20"
     declared_on: 2026-10-23
     enabled: true

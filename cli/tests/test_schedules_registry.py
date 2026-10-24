@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import re
+import signal
 import subprocess
 import sys
+import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -36,6 +39,7 @@ def _load(name: str, filename: str):
 S = _load("limen_test_schedules_lib", "_schedules.py")
 CHECK = _load("limen_test_check_schedules", "check-schedules.py")
 UTIL = _load("limen_test_schedule_utilization", "schedule-utilization.py")
+BEAT = _load("limen_test_schedule_beat_sensors", "beat-sensors.py")
 
 NOW = datetime(2026, 10, 23, 12, 0, tzinfo=timezone.utc)
 TODAY = NOW.date()
@@ -470,7 +474,7 @@ def test_verdict_matrix_unmeasured_is_never_red():
     jules = _plane(fill_policy="floor", floor=25, allotment={"runs": 100, "window": "rolling-24h"})
     assert UTIL.verdict_for(jules, declared=25, observed=3, fill_floor=0.5) == "underfilled"
     comments = _plane(evidence={"kind": "issue-comments", "locator": "x#1"})
-    assert UTIL.verdict_for(comments, declared=27, observed=1, fill_floor=0.5) == "full"
+    assert UTIL.verdict_for(comments, declared=27, observed=1, fill_floor=0.5) == "partial-evidence"
 
 
 def test_summarize_runs_counts_only_successes_as_observed():
@@ -592,7 +596,8 @@ def test_claude_snapshot_reader_age_and_enabled_count(tmp_path, monkeypatch):
     )
     report = UTIL.evaluate(tmp_path, TODAY, now=NOW)
     plane = report["planes"][0]
-    assert plane["declared"] == 2 and plane["observed"] == 1 and plane["verdict"] == "underfilled"
+    assert plane["declared"] == 2 and plane["observed"] is None and plane["verdict"] == "unmeasured"
+    assert plane["configured_enabled"] == 1 and plane["measurement_kind"] == "configuration"
     assert "1 last failed ACCESS_DENIED" in plane["detail"]
     monkeypatch.setenv("LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS", "1")
     report = UTIL.evaluate(tmp_path, date(2026, 10, 30), now=datetime(2026, 10, 30, 12, tzinfo=timezone.utc))
@@ -739,6 +744,100 @@ def test_receipt_is_written_atomically_with_history(tmp_path):
     ]
 
 
+def test_collection_deadline_writes_receipt_and_preserves_completed_and_local_evidence(tmp_path, monkeypatch):
+    """A remote outage consumes one shared budget, without erasing readable evidence or skipping the receipt."""
+    planes = {
+        "completed": _plane(evidence={"kind": "gh-actions-runs", "locator": "o/completed"}),
+        "outage": _plane(evidence={"kind": "bookend-tsv", "locator": "o/outage:bookends"}),
+        "unread": _plane(evidence={"kind": "issue-comments", "locator": "o/unread#1"}),
+        "local": _plane(
+            evidence={"kind": "voice-stamps", "locator": "logs/.voice"},
+            jobs_source={"kind": "sensors", "locator": "sensors.yaml"},
+        ),
+    }
+    write_registry(
+        tmp_path,
+        planes,
+        [_job("completed/job", "completed", "17 1 * * *", source_of_truth="o/completed:.github/workflows/job.yml")],
+    )
+    (tmp_path / "sensors.yaml").write_text(yaml.safe_dump({"sensors": {"local": {"cadence": 1}}}))
+    voice = tmp_path / "logs" / ".voice"
+    voice.mkdir(parents=True)
+    (voice / "local").write_text("")
+    elapsed = [0.0]
+    calls = []
+    monkeypatch.setenv("LIMEN_SCHEDULE_UTILIZATION_TIMEOUT", "4")
+    monkeypatch.setattr(time, "monotonic", lambda: elapsed[0])
+    monkeypatch.setattr(UTIL, "gh_available", lambda: True)
+
+    def remote(args, **kwargs):
+        calls.append(args)
+        if "actions/workflows" in args[-1]:
+            elapsed[0] += 0.25
+            payload = {"workflows": [{"path": ".github/workflows/job.yml", "state": "active"}]}
+        elif args[1:3] == ["run", "list"]:
+            elapsed[0] += 0.25
+            payload = [{"conclusion": "success"}]
+        else:
+            elapsed[0] += kwargs["timeout"]
+            raise subprocess.TimeoutExpired(args, kwargs["timeout"])
+        return subprocess.CompletedProcess(args, 0, stdout=json.dumps(payload), stderr="")
+
+    monkeypatch.setattr(UTIL.subprocess, "run", remote)
+    receipt = tmp_path / "logs" / "schedule-utilization.json"
+    assert UTIL.main(["--root", str(tmp_path), "--day", TODAY.isoformat(), "--receipt", str(receipt)]) == 3
+    report = json.loads(receipt.read_text())
+    by = {p["plane"]: p for p in report["planes"]}
+    assert elapsed[0] <= 2.0  # half the sensor's four-second ceiling remains for receipt/other local work
+    assert len(calls) == 3  # the later remote plane never starts another independent timeout
+    assert by["completed"]["observed"] == 1 and by["local"]["observed"] == 1
+    for pid in ("outage", "unread"):
+        assert by[pid]["observed"] is None and by[pid]["verdict"] == "unmeasured"
+        assert "collection deadline reached" in by[pid]["detail"]
+    assert report["status"] == "stale-readback" and report["red"] == []
+    assert len(receipt.with_suffix(".jsonl").read_text().splitlines()) == 4
+
+
+def test_collection_deadline_cli_finishes_before_sensor_timeout_during_outage(tmp_path):
+    """An actual blocked gh process cannot prevent the sensor from replacing its stale receipt."""
+    write_registry(
+        tmp_path,
+        {
+            "actions": _plane(evidence={"kind": "gh-actions-runs", "locator": "o/r"}),
+            "bookends": _plane(evidence={"kind": "bookend-tsv", "locator": "o/r:bookends"}),
+        },
+        [],
+    )
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    gh = bindir / "gh"
+    gh.write_text(f"#!{sys.executable}\nimport time\ntime.sleep(30)\n")
+    gh.chmod(0o755)
+    receipt = tmp_path / "receipt.json"
+    receipt.write_text('{"stale": true}\n')
+    started = time.monotonic()
+    proc = subprocess.Popen(
+        [sys.executable, str(SCRIPTS / "schedule-utilization.py"), "--root", str(tmp_path), "--receipt", str(receipt)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+        env={"PATH": str(bindir), "HOME": str(tmp_path), "LIMEN_SCHEDULE_UTILIZATION_TIMEOUT": "4"},
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=5)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.communicate()
+        pytest.fail("collector exceeded the sensor timeout without publishing a bounded outage receipt")
+    assert proc.returncode == 3, stdout + stderr
+    assert time.monotonic() - started < 4
+    report = json.loads(receipt.read_text())
+    assert report["status"] == "stale-readback" and report["measured"] == "0/2"
+    assert all(p["observed"] is None and "collection deadline reached" in p["detail"] for p in report["planes"])
+    assert len(receipt.with_suffix(".jsonl").read_text().splitlines()) == 2
+
+
 def test_real_registry_evaluates_without_network(tmp_path, monkeypatch):
     """The shipped registry must evaluate end to end with every network reader stubbed — no crash, every plane classified."""
     stubs = {kind: _reader(None, "stubbed") for kind in UTIL.READERS}
@@ -795,6 +894,78 @@ def test_sensor_cadence_is_beats_and_converts_at_worst_case_loop_max(tmp_path):
     # The shipped registry: the three cadence-48 sensors Codex named are daily, so they count.
     real = {j.id: j.cadence_hours for j in S.derive_sensor_jobs(ROOT, "limen-beat", loop_max=1800)}
     assert {real["beat/daily-execution"], real["beat/conversion-funnel"], real["beat/collaboration-hub-sync"]} == {24}
+
+
+def test_sensor_cadence_overrides_drive_freshness_and_daily_membership(tmp_path, monkeypatch):
+    """Longer and shorter host cadences must move both the daily set and each stamp's freshness bound."""
+    sensors = {
+        "host-relief": {"cadence": {"env": "LIMEN_BEAT_HOST_RELIEF", "default": 1}},
+        "moved-out": {"cadence": {"env": "TEST_CADENCE_OUT", "default": 48}},
+        "moved-in": {"cadence": {"env": "TEST_CADENCE_IN", "default": 49}},
+    }
+    (tmp_path / "sensors.yaml").write_text(yaml.safe_dump({"sensors": sensors}))
+    monkeypatch.setenv("LIMEN_BEAT_HOST_RELIEF", "16")
+    monkeypatch.setenv("TEST_CADENCE_OUT", "49")
+    monkeypatch.setenv("TEST_CADENCE_IN", "1")
+    jobs = S.derive_sensor_jobs(tmp_path, "limen-beat", "sensors.yaml", loop_max=1800)
+    by = {j.id: j for j in jobs}
+    assert {j.id: (j.cadence_beats, j.cadence_hours) for j in jobs} == {
+        "beat/host-relief": (16, 8),
+        "beat/moved-out": (49, 25),
+        "beat/moved-in": (1, 1),
+    }
+    assert by["beat/host-relief"].extra["cadence_default_beats"] == 1
+    assert by["beat/host-relief"].extra["cadence_env"] == "LIMEN_BEAT_HOST_RELIEF"
+    voice = tmp_path / "logs" / ".voice"
+    voice.mkdir(parents=True)
+    two_hours_ago = time.time() - 2 * 3600
+    for sid in sensors:
+        stamp = voice / sid
+        stamp.write_text("")
+        os.utime(stamp, (two_hours_ago, two_hours_ago))
+    plane = _plane(evidence={"kind": "voice-stamps", "locator": "logs/.voice"})
+    observed, detail = UTIL.read_voice_stamps("limen-beat", plane, jobs, TODAY, tmp_path)
+    assert observed == 1 and detail.startswith("1/2 ")
+    assert "moved-in (2h)" in detail and "host-relief" not in detail.split("late:")[1]
+    assert UTIL.declared_for(plane, jobs, TODAY, NOW) == 2
+    assert UTIL._stamp_bound_seconds(by["beat/host-relief"]) == 16 * 1800 * 2
+
+
+@pytest.mark.parametrize(
+    ("cadence", "override", "expected"),
+    [
+        ({"env": "TEST_CADENCE", "default": "4"}, "9", 9),
+        ({"env": "TEST_CADENCE", "default": "4"}, "bad", 4),
+        ({"env": "TEST_CADENCE", "default": 4}, "0", 4),
+        ({"env": "TEST_CADENCE", "default": 4}, "-2", 4),
+        ({"env": "TEST_CADENCE", "default": 4}, "", 4),
+        ({"env": "TEST_CADENCE"}, "7", 7),
+        ({"env": "TEST_CADENCE"}, "bad", None),
+        ("6", "9", 6),
+    ],
+)
+def test_sensor_cadence_uses_heartbeat_positive_integer_fallbacks(tmp_path, monkeypatch, cadence, override, expected):
+    (tmp_path / "sensors.yaml").write_text(yaml.safe_dump({"sensors": {"sample": {"cadence": cadence}}}))
+    monkeypatch.setenv("TEST_CADENCE", override)
+    jobs = S.derive_sensor_jobs(tmp_path, "limen-beat", "sensors.yaml")
+    assert BEAT._positive_int(cadence) == expected
+    assert (jobs[0].cadence_beats if jobs else None) == expected
+
+
+@pytest.mark.parametrize("flags", [(), ("--slot-map",)])
+def test_checker_exposes_resolved_sensor_cadence_override(tmp_path, flags):
+    write_registry(
+        tmp_path,
+        {"limen-beat": _plane(jobs_source={"kind": "sensors", "locator": "sensors.yaml"})},
+        [],
+    )
+    (tmp_path / "sensors.yaml").write_text(
+        yaml.safe_dump({"sensors": {"host-relief": {"cadence": {"env": "LIMEN_BEAT_HOST_RELIEF", "default": 1}}}})
+    )
+    run = run_check(tmp_path, *flags, env={"LIMEN_BEAT_HOST_RELIEF": "16"})
+    assert run.returncode == 0, run.stdout + run.stderr
+    assert "beat/host-relief" in run.stdout and "cadence override" in run.stdout
+    assert "LIMEN_BEAT_HOST_RELIEF=16" in run.stdout and "registry default 1" in run.stdout
 
 
 def test_board_reader_treats_public_projection_as_unmeasured(tmp_path, monkeypatch):
@@ -1528,13 +1699,13 @@ def test_redaction_fails_a_private_slug_and_exempts_disclosed_tokens(tmp_path):
     write_fleet_root(tmp_path, planes, jobs, receipt)
     run = run_check(tmp_path)
     assert run.returncode == 0, run.stdout
-    assert "[H]" not in run.stdout.replace("[H] no census", "")
+    assert "[I]" not in run.stdout.replace("[I] no census", "")
     # a private slug planted in a plane note fails H by file:line, and the message withholds the token
     planes["github-actions-fleet-private"]["note"] = f"growth came from {SECRET} last week"
     write_registry(tmp_path, planes, jobs)
     run = run_check(tmp_path)
     assert run.returncode == 1
-    line = next(ln for ln in run.stdout.splitlines() if "[H]" in ln and "names a private repository" in ln)
+    line = next(ln for ln in run.stdout.splitlines() if "[I]" in ln and "names a private repository" in ln)
     assert "institutio/governance/schedules.yaml:" in line and SECRET not in line and "secret-thing" not in line
     # a compound bare name in the baseline fails too; a disclosed owner repository's bare name does not
     planes["github-actions-fleet-private"].pop("note")
