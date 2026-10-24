@@ -2299,17 +2299,8 @@ def test_fast_wave_sensors_resolve_the_fast_wave_period_not_the_heartbeat_ceilin
     assert S.fast_wave_seconds() == 120 and S.env_file_value("LIMEN_LOOP_MAX", deployed) == "900"
     assert S.fast_wave_seconds({"LIMEN_VITALS_SAMPLE_SECONDS": "90", "LIMEN_ENV_FILE": str(deployed)}) == 90
     assert S.env_file_value("LIMEN_VITALS_SAMPLE_SECONDS", tmp_path / "absent.env") is None
-    assert (
-        UTIL._stamp_bound_seconds(
-            next(
-                iter(
-                    {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}["beat/diurnal"]
-                    for _ in [0]
-                )
-            )
-        )
-        == 240
-    )
+    jobs = {j.id: j for j in S.derive_sensor_jobs(tmp_path, "limen-beat", loop_max=1800)}
+    assert UTIL._stamp_bound_seconds(jobs["beat/diurnal"]) == 240  # the deployed 120 s period, read from the file
 
 
 def test_sibling_clone_without_the_evidence_folder_is_unreadable_not_absent(tmp_path, monkeypatch):
