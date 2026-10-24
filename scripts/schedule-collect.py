@@ -82,6 +82,8 @@ def read_json(path, *, with_digest=False):
 
 def write_snapshot(path, snapshot, expected_sha256):
     encoded = json.dumps(snapshot, sort_keys=True).encode("utf-8")
+    if len(encoded) > MAX_BYTES:
+        raise ValueError("export exceeds readable snapshot bound")
     target = _private_path(Path(path), create=False)
     with export_lock(target):
         target = _private_path(target, create=False)

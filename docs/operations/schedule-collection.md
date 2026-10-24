@@ -202,6 +202,13 @@ creation, file fsync, atomic rename and parent-directory fsync. Concurrent first
 one writer only. Locks have a finite 10-second acquisition deadline and remain at their stable path
 across replacements; do not unlink them while other writers may be waiting. A stale expected digest
 or busy deadline fails closed. Symlinks and unsupported nonregular paths are rejected.
+The exact serialized UTF-8 export must fit the same **16 MiB** bound as the JSON input and
+snapshot readers. A larger union is rejected before acquiring its target lock or replacing any
+bytes; an existing export remains untouched and a new export is not created. The CLI returns
+exit 2, and an explicitly requested execution receipt records an error outcome with no export
+digest. Preserve the full database and previous durable snapshot, leave checkpoint advancement
+incomplete, and route the size limit to the existing collection owner; do not discard history to
+make an export fit.
 If directory sync fails after rename, the command returns an explicit **readback required** error:
 the new target may already be visible, but crash durability is unconfirmed. This does not roll back
 the rename; keep checkpoint advancement incomplete, read the visible revision, and retry a durable
@@ -255,6 +262,28 @@ older evidence; they do not establish acceptance of a replacement artifact. Fres
 old result cannot manufacture fresh execution. Native coverage remains partial because this cache
 cannot independently attest exhaustive account/window history, so it cannot yield a whole-plane
 “full” verdict.
+
+Native source readbacks use the existing `LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS` cache-age
+policy (default **7 days**; nonpositive or invalid overrides fall back to 7). Each matching
+provider/surface/account task needs a source `last_observed_at` between the report instant and
+seven elapsed days earlier, inclusive. Immutable events without a native task ID, such as Grok
+mail, use the latest actual event readback for their provider/surface/account source. A newly
+observed message can refresh that event source while every old message and its timestamps remain
+in history. It cannot refresh a different account or an old current-task readback.
+A missing matching source, a future source timestamp, or an expired group leaves current
+`observed` null; expired groups additionally set `readback_overdue`. File modification, import
+and export times do not refresh source evidence. Existing opaque checkpoint cursors have no
+validated account-bound poll-time contract, so they cannot prove freshness after a zero-result
+poll; without a recent event readback that source remains unknown. `readback_fresh` and
+`readback_max_age_days` expose that decision. All observations and assessments are retained:
+`current_tasks`, `current_runs` and the other native counts still describe **latest known records**
+when current readback is unknown. This cache-age policy does not establish hourly Intake liveness
+or complete account/window coverage; the separate one-hour capacity freshness rule is unchanged.
+
+A successfully read, fresh Claude configuration snapshot can remain execution-unmeasured without
+triggering stale collection. Fresh native readbacks with unmeasured execution follow the same
+distinction. Missing, failed or expired reads and explicit `readback_overdue` still trigger
+`stale-readback`; a configuration read never establishes full operational readiness.
 
 Issue comments alone establish neither run completion nor delivery. Failed GitHub reads are unknown,
 not absence. Absence from public aggregate `tasks.yaml` is not authoritative zero Jules launches.

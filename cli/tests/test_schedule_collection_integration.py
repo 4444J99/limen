@@ -34,6 +34,7 @@ C = load("check-schedules")
 K = load("schedule-collect")
 NOW = "2026-10-23T12:00:00Z"
 DAY = date(2026, 10, 23)
+REPORT_NOW = datetime(2026, 10, 23, 15, tzinfo=timezone.utc)
 
 
 def artifact(**changes):
@@ -175,7 +176,7 @@ def test_native_reader_counts_current_identity_and_exact_assessments(tmp_path):
     current = E.normalize_artifact(artifact(), observed_at=NOW)
     path, _ = snapshot(tmp_path, [current, old], assess=True)
     plane = {"evidence": {"locator": str(path), "provider": "chatgpt", "surface": "external"}}
-    observed, _, extra = U.read_native_snapshot("p", plane, [], DAY, tmp_path)
+    observed, _, extra = U.read_native_snapshot("p", plane, [], DAY, tmp_path, now=REPORT_NOW)
     assert observed == 1
     counts = extra["native_counts"]
     assert counts["observations"] == 2 and counts["current_tasks"] == counts["current_runs"] == 1
@@ -189,12 +190,160 @@ def test_native_reader_stale_results_and_forged_snapshot_fail_closed(tmp_path):
     old = E.normalize_artifact(artifact(times={"completed_at": "2026-10-22T10:01:00Z"}), observed_at=NOW)
     path, result = snapshot(tmp_path, [old])
     plane = {"evidence": {"locator": str(path), "provider": "chatgpt"}}
-    count, _, extra = U.read_native_snapshot("p", plane, [], DAY, tmp_path)
+    count, _, extra = U.read_native_snapshot("p", plane, [], DAY, tmp_path, now=REPORT_NOW)
     assert count == 0 and extra["native_counts"]["observations"] == 1
     result["observations"][0]["attribution_state"] = "correlated-forged"
     path.write_text(json.dumps(result))
-    count, detail, _ = U.read_native_snapshot("p", plane, [], DAY, tmp_path)
+    count, detail, _ = U.read_native_snapshot("p", plane, [], DAY, tmp_path, now=REPORT_NOW)
     assert count is None and "invalid" in detail
+
+
+def native_report(tmp_path, path, now, *, provider="chatgpt", surface="external"):
+    registry = tmp_path / "native-registry.yaml"
+    registry.write_text(
+        yaml.safe_dump(
+            {
+                "planes": {
+                    "p": {
+                        "provider": provider,
+                        "enabled": True,
+                        "fill_policy": "declared",
+                        "native_inventory": {"enabled_count": 1},
+                        "allotment": {"window": "active-tasks"},
+                        "evidence": {
+                            "kind": "native-snapshot",
+                            "locator": str(path),
+                            "provider": provider,
+                            "surface": surface,
+                        },
+                    }
+                },
+                "jobs": [],
+            }
+        )
+    )
+    return U.evaluate(tmp_path, now.date(), now=now, registry_path=registry)
+
+
+@pytest.mark.parametrize(
+    "seconds,override,fresh",
+    [
+        (0, None, True),
+        (7 * 86400, None, True),
+        (7 * 86400 + 1, None, False),
+        (-1, None, False),
+        (86401, "1", False),
+        (7 * 86400, "junk", True),
+        (7 * 86400, "0", True),
+    ],
+)
+def test_native_readback_freshness_uses_source_time_and_preserves_history(
+    tmp_path, monkeypatch, seconds, override, fresh
+):
+    if override is not None:
+        monkeypatch.setenv("LIMEN_SCHEDULE_SNAPSHOT_MAX_AGE_DAYS", override)
+    current = E.normalize_artifact(artifact(), observed_at=NOW)
+    older = E.normalize_artifact(artifact(execution_status="running"), observed_at="2026-10-23T11:00:00Z")
+    path, _ = snapshot(tmp_path, [current, older], assess=True)
+    original = path.read_bytes()
+    now = datetime.fromisoformat(NOW.replace("Z", "+00:00")) + timedelta(seconds=seconds)
+    os.utime(path, (now.timestamp(), now.timestamp()))  # Export/file polling is not source freshness.
+    report = native_report(tmp_path, path, now)
+    plane = report["planes"][0]
+    assert plane["observed"] == ((1 if now.date() == DAY else 0) if fresh else None)
+    assert plane["readback_fresh"] is fresh
+    assert plane["readback_overdue"] is (not fresh and seconds > 0)
+    assert report["status"] == ("pass" if fresh else "stale-readback")
+    counts = plane["native_counts"]
+    assert counts["observations"] == 2 and counts["current_tasks"] == 1
+    assert counts["accepted_history"] == counts["delivered_history"] == 1
+    assert counts["accepted"] == counts["delivered"] == 1
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize("scope", ["no-match", "other-provider", "other-surface", "mixed-account", "other-task"])
+def test_native_readback_freshness_cannot_come_from_unrelated_rows(tmp_path, scope):
+    old = E.normalize_artifact(artifact(), observed_at="2026-10-01T12:00:00Z")
+    changes = {"native_task_id": "other-task", "account_ref": "account:other"}
+    if scope in ("no-match", "other-provider"):
+        changes["provider"] = "grok"
+    elif scope == "other-surface":
+        changes["surface"] = "other"
+    elif scope == "other-task":
+        changes["account_ref"] = "account:synthetic"
+    other = E.normalize_artifact(artifact(**changes), observed_at=NOW)
+    rows = [other] if scope == "no-match" else [old, other]
+    path, _ = snapshot(tmp_path, rows)
+    report = native_report(tmp_path, path, datetime.fromisoformat(NOW.replace("Z", "+00:00")))
+    plane = report["planes"][0]
+    assert plane["observed"] is None and plane["readback_fresh"] is False
+    assert report["stale_readback"] == ["p"]
+    assert plane["native_counts"]["observations"] == (
+        0 if scope == "no-match" else 2 if scope in ("mixed-account", "other-task") else 1
+    )
+    assert plane["readback_overdue"] is (scope != "no-match")
+
+
+def grok_event(message_id, observed_at, account_ref="account:one"):
+    return E.normalize_grok_email(
+        {
+            "id": message_id,
+            "threadId": f"thread:{message_id}",
+            "internalDate": "1792750200000",
+            "payload": {
+                "mimeType": "text/plain",
+                "headers": [{"name": "From", "value": "Grok <noreply@x.ai>"}],
+                "body": {"content": "Synthetic excerpt"},
+            },
+        },
+        observed_at=observed_at,
+        account_ref=account_ref,
+        owner_ref="project:synthetic",
+    )
+
+
+@pytest.mark.parametrize("account_ref,fresh", [("account:one", True), ("account:alias-unproven", False)])
+@pytest.mark.parametrize("new_message", [True, False])
+def test_immutable_event_source_freshness_retains_archive_and_account_separation(
+    tmp_path, account_ref, fresh, new_message
+):
+    old = grok_event("archived-message", "2026-10-01T12:00:00Z")
+    fresh_event = grok_event("new-message" if new_message else "archived-message", NOW, account_ref)
+    path, _ = snapshot(tmp_path, [old, fresh_event])
+    report = native_report(tmp_path, path, REPORT_NOW, provider="grok", surface="automations_email")
+    plane = report["planes"][0]
+    assert plane["observed"] == (0 if fresh else None)
+    assert plane["readback_fresh"] is fresh
+    assert plane["readback_overdue"] is (not fresh)
+    counts = plane["native_counts"]
+    assert counts["observations"] == (1 if not new_message and fresh else 2)
+    assert counts["current_tasks"] == counts["current_runs"] == 0
+    assert counts["collected_partial"] == counts["unresolved"] == counts["observations"]
+    with E.EvidenceStore(path.parent / "store.db") as store:
+        retained = next(r for r in store.export()["observations"] if r["observation_id"] == old["observation_id"])
+    assert retained["first_observed_at"] == "2026-10-01T12:00:00Z"
+    assert retained["last_observed_at"] == (NOW if not new_message and fresh else "2026-10-01T12:00:00Z")
+
+
+def test_opaque_checkpoint_does_not_claim_zero_result_poll_freshness(tmp_path):
+    path, _ = snapshot(tmp_path, [grok_event("old-message", "2026-10-01T12:00:00Z")])
+    with E.EvidenceStore(path.parent / "store.db") as store:
+        store.checkpoint(
+            "private:opaque-poll",
+            {
+                "observed_at": NOW,
+                "provider": "grok",
+                "surface": "automations_email",
+                "account_ref": "account:one",
+                "results": 0,
+            },
+            complete=True,
+        )
+        path.write_text(json.dumps(store.export()))
+    report = native_report(tmp_path, path, REPORT_NOW, provider="grok", surface="automations_email")
+    plane = report["planes"][0]
+    assert plane["observed"] is None and plane["readback_fresh"] is False and plane["readback_overdue"] is True
+    assert plane["native_counts"]["observations"] == 1
 
 
 def test_partial_native_evidence_and_comments_never_establish_full():
@@ -411,7 +560,8 @@ def test_cli_assess_exact_artifact_and_delivery_order(tmp_path):
 
 
 def test_native_snapshot_cli_report_is_partial_and_redacted(tmp_path):
-    path, _ = snapshot(tmp_path)
+    row = E.normalize_artifact(artifact(), observed_at=datetime.now(timezone.utc).isoformat())
+    path, _ = snapshot(tmp_path, [row])
     registry = tmp_path / "registry.yaml"
     registry.write_text(
         yaml.safe_dump(
@@ -493,7 +643,9 @@ def test_new_unknown_attempt_does_not_retain_old_completed_as_current(tmp_path):
         artifact(native_run_id=None, native_artifact_id=None, execution_status="unknown", times={}), observed_at=NOW
     )
     path, _ = snapshot(tmp_path, [old, unknown])
-    observed, _, extra = U.read_native_snapshot("p", {"evidence": {"locator": str(path)}}, [], DAY, tmp_path)
+    observed, _, extra = U.read_native_snapshot(
+        "p", {"evidence": {"locator": str(path)}}, [], DAY, tmp_path, now=REPORT_NOW
+    )
     assert observed == 0 and extra["native_counts"]["current_runs"] == 0
 
 
@@ -612,7 +764,9 @@ def test_repeated_latest_readback_wins_and_roundtrips_with_history(tmp_path, fir
         snapshot = store.export()
     path = private / "union.json"
     path.write_text(json.dumps(snapshot))
-    observed, _, extra = U.read_native_snapshot("p", {"evidence": {"locator": str(path)}}, [], DAY, tmp_path)
+    observed, _, extra = U.read_native_snapshot(
+        "p", {"evidence": {"locator": str(path)}}, [], DAY, tmp_path, now=REPORT_NOW
+    )
     counts = extra["native_counts"]
     assert counts["observations"] == 2 and counts["current_tasks"] == 1
     for key in ("current_runs", "collected_complete", "attributed", "accepted", "delivered"):
@@ -637,7 +791,9 @@ def test_later_historical_import_preserves_actual_old_readback_time(tmp_path):
         assert old_row["last_observed_at"] == "2026-10-23T11:00:00Z"
     path = private / "union.json"
     path.write_text(json.dumps(exported))
-    observed, _, extra = U.read_native_snapshot("p", {"evidence": {"locator": str(path)}}, [], DAY, tmp_path)
+    observed, _, extra = U.read_native_snapshot(
+        "p", {"evidence": {"locator": str(path)}}, [], DAY, tmp_path, now=REPORT_NOW
+    )
     assert observed == 0 and extra["native_counts"]["current_runs"] == 0
 
 
@@ -1136,6 +1292,63 @@ def test_empty_requested_receipt_or_window_fails_before_collection(identity_coll
     run = cli(*_identity_collect_args(c), *options)
     assert run.returncode == 2
     assert not (c["private"] / "evidence.db").exists()
+
+
+def test_oversize_union_export_preserves_prior_bytes_and_closes_error_receipt(tmp_path):
+    path, _ = snapshot(tmp_path, assess=True)
+    private = path.parent
+    original, stat_before = path.read_bytes(), path.stat()
+    long_ref = "x" * 1800
+
+    def row(index):
+        return E.normalize_artifact(
+            artifact(
+                source_ref=f"source:{index:06d}:{long_ref}",
+                native_task_id=f"task:{long_ref}",
+                native_run_id=f"run:{long_ref}",
+                native_artifact_id=f"artifact:{long_ref}",
+            ),
+            observed_at=NOW,
+        )
+
+    count = (16 * 1024 * 1024) // len(json.dumps(row(0)).encode()) + 1
+    with E.EvidenceStore(private / "store.db") as store:
+        for start in range(0, count, 1000):
+            store.ingest([row(index) for index in range(start, min(start + 1000, count))])
+        store.checkpoint("source:synthetic", {"page": "committed"}, complete=True)
+        before = store.export()
+    encoded = json.dumps(before, sort_keys=True).encode()
+    assert len(encoded) > 16 * 1024 * 1024
+    original_digest = hashlib.sha256(original).hexdigest()
+    for target, expected in ((path, original_digest), (private / "new-export.json", None)):
+        receipt = private / f"{target.name}.execution.json"
+        args = ["export", "--db", private / "store.db", "--output", target, "--receipt", receipt]
+        if expected is not None:
+            args += ["--expected-sha256", expected]
+        run = cli(*args)
+        assert run.returncode == 2, run.stdout
+        assert json.loads(run.stderr)["status"] == "error"
+        report = json.loads(receipt.read_text())
+        assert report["operation_outcome"] == {"status": "error", "exit_code": 2}
+        assert report["export_sha256"] is None
+        assert not target.with_name(f".{target.name}.lock").exists()
+    assert path.read_bytes() == original
+    assert (path.stat().st_ino, path.stat().st_mtime_ns) == (stat_before.st_ino, stat_before.st_mtime_ns)
+    assert not (private / "new-export.json").exists()
+    with E.EvidenceStore(private / "store.db") as store:
+        assert store.export() == before
+
+
+def test_snapshot_byte_limit_is_inclusive_and_matches_json_reader(tmp_path):
+    private = tmp_path / "private"
+    private.mkdir(mode=0o700)
+    target = private / "boundary.json"
+    overhead = len(json.dumps({"padding": ""}, sort_keys=True).encode())
+    value = {"padding": "x" * (16 * 1024 * 1024 - overhead)}
+    digest = K.write_snapshot(target, value, None)
+    assert target.stat().st_size == 16 * 1024 * 1024
+    assert hashlib.sha256(target.read_bytes()).hexdigest() == digest
+    assert K.read_json(target) == value
 
 
 def test_export_mismatching_readback_is_uncertain_not_a_success_receipt(tmp_path, monkeypatch, capsys):
